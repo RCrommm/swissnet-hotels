@@ -103,10 +103,10 @@ export default async function HomePage() {
               { icon: '◆', title: 'Exclusive Offers', desc: 'Partner hotels offer perks only available through SwissNet Hotels — spa credits, room upgrades, private transfers.' },
               { icon: '▲', title: 'AI-Matched', desc: 'Our AI finds the perfect hotel for your specific dates, group, and preferences in seconds.' },
             ].map(f => (
-              <div key={f.title} style={{ textAlign: 'center', padding: '2.5rem 2rem', border: '1px solid ' + border, background: 'rgba(255,255,255,0.04)' }}>
+              <div key={f.title} style={{ textAlign: 'center', padding: '2.5rem 2rem', border: '1px solid ' + border, background: '#FFFFFF' }}>
                 <div style={{ color: gold, fontSize: '1rem', marginBottom: '1.25rem' }}>{f.icon}</div>
-                <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 400, color: text, marginBottom: '0.75rem' }}>{f.title}</h3>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, lineHeight: 1.8, fontWeight: 300, margin: 0 }}>{f.desc}</p>
+                <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 400, color: '#2A1208', marginBottom: '0.75rem' }}>{f.title}</h3>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: 'rgba(42,18,8,0.6)', lineHeight: 1.8, fontWeight: 300, margin: 0 }}>{f.desc}</p>
               </div>
             ))}
           </div>
@@ -133,7 +133,7 @@ export default async function HomePage() {
             <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.5rem', fontWeight: 300, color: text, margin: '0 0 1rem' }}>Not Sure Where to Stay?</h2>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: textMuted, fontWeight: 300, lineHeight: 1.8 }}>Tell us your dates and preferences. Our concierge team will match you with the perfect Swiss hotel within 24 hours.</p>
           </div>
-          <div style={{ border: '1px solid ' + border, padding: '2.5rem', background: 'rgba(255,255,255,0.04)' }}>
+          <div style={{ border: '1px solid ' + border, padding: '2.5rem', background: '#FFFFFF' }}>
             <LeadForm />
           </div>
         </div>
