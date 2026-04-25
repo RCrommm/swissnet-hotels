@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Georgia', serif;
+  background: #FAFAF8;
+  color: #1a1a1a;
+}
+
+.font-display {
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+
+.btn-primary {
+  display: inline-block;
+  background-color: #b45309;
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 2px;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: background-color 0.2s;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-primary:hover {
+  background-color: #92400e;
+}
+
+.btn-outline {
+  display: inline-block;
+  border: 1px solid #b45309;
+  color: #b45309;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 2px;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.2s;
+  cursor: pointer;
+  background: transparent;
+}
+
+.btn-outline:hover {
+  background-color: #b45309;
+  color: white;
+}
