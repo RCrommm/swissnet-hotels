@@ -4,9 +4,59 @@ import LeadForm from '@/components/LeadForm'
 import Link from 'next/link'
 import { MapPin, Star, Check } from 'lucide-react'
 
+function HotelSchema({ hotel, keywords }: { hotel: any; keywords: any[] }) {
+  const allKeywords = [
+    ...(hotel.amenities || []),
+    ...(hotel.best_for || []),
+    hotel.region,
+    hotel.category,
+    hotel.name,
+    'luxury hotel Switzerland',
+    'direct booking Switzerland',
+    ...keywords.map((k: any) => k.keyword),
+    hotel.seo_keywords || '',
+  ].filter(Boolean).join(', ')
+
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'Hotel',
+    name: hotel.name,
+    description: hotel.description,
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: hotel.location,
+      addressCountry: 'CH',
+    },
+    starRating: { '@type': 'Rating', ratingValue: hotel.rating },
+    priceRange: `CHF ${hotel.nightly_rate_chf}+`,
+    amenityFeature: hotel.amenities?.map((a: string) => ({
+      '@type': 'LocationFeatureSpecification',
+      name: a,
+      value: true,
+    })),
+    url: hotel.direct_booking_url,
+    image: hotel.images?.[0],
+    keywords: allKeywords,
+    offers: {
+      '@type': 'Offer',
+      price: hotel.nightly_rate_chf,
+      priceCurrency: 'CHF',
+      description: hotel.exclusive_offer || 'Direct booking rate',
+      url: hotel.direct_booking_url,
+    }
+  }
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  )
+}
+
 export default async function HotelPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  
+
   const { data: hotel } = await supabase
     .from('hotels')
     .select('*')
@@ -15,11 +65,17 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
 
   if (!hotel) notFound()
 
+  const { data: keywords } = await supabase
+    .from('hotel_keywords')
+    .select('keyword')
+    .eq('hotel_id', id)
+
   return (
     <div className="pt-16">
-      {/* Hero image */}
+      <HotelSchema hotel={hotel} keywords={keywords || []} />
+
       <div className="relative h-[60vh] overflow-hidden">
-        <img 
+        <img
           src={hotel.images[0] || 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1600'}
           alt={hotel.name}
           className="w-full h-full object-cover"
@@ -39,7 +95,6 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
       </div>
 
       <div className="max-w-6xl mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-3 gap-12">
-        {/* Main content */}
         <div className="lg:col-span-2 space-y-10">
           {hotel.exclusive_offer && (
             <div className="bg-amber-50 border-l-4 border-amber-600 p-5">
@@ -47,12 +102,10 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
               <p className="text-stone-800 font-semibold">{hotel.exclusive_offer}</p>
             </div>
           )}
-
           <div>
             <h2 className="font-display text-2xl font-bold text-stone-800 mb-4">About the Hotel</h2>
             <p className="text-stone-600 leading-relaxed text-base">{hotel.description}</p>
           </div>
-
           <div>
             <h2 className="font-display text-2xl font-bold text-stone-800 mb-4">Amenities</h2>
             <div className="grid grid-cols-2 gap-2">
@@ -64,7 +117,6 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
               ))}
             </div>
           </div>
-
           <div>
             <h2 className="font-display text-2xl font-bold text-stone-800 mb-4">Perfect For</h2>
             <div className="flex flex-wrap gap-2">
@@ -75,7 +127,6 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
           </div>
         </div>
 
-        {/* Sidebar */}
         <div className="space-y-6">
           <div className="bg-white border border-stone-200 p-6 shadow-sm sticky top-20">
             <div className="text-center mb-6 pb-6 border-b border-stone-100">
@@ -85,25 +136,17 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
               </p>
               <p className="text-stone-500 text-sm">per night</p>
             </div>
-            
-            <a 
-              href={hotel.direct_booking_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-primary w-full text-center block py-4 mb-3"
-            >
+            <a href={hotel.direct_booking_url} target="_blank" rel="noopener noreferrer" className="btn-primary w-full text-center block py-4 mb-3">
               Book Direct →
             </a>
             <p className="text-xs text-stone-400 text-center mb-6">No booking fees · Best rate guarantee</p>
-
             <div className="text-center text-sm text-stone-600">
               <p>Questions? Contact the hotel:</p>
-              <a href={`mailto:${hotel.contact_email}`} className="text-amber-700 hover:underline text-sm">
+              <a href={'mailto:' + hotel.contact_email} className="text-amber-700 hover:underline text-sm">
                 {hotel.contact_email}
               </a>
             </div>
           </div>
-
           <div className="bg-stone-50 border border-stone-200 p-6">
             <h3 className="font-display text-lg font-bold text-stone-800 mb-4">Send an Enquiry</h3>
             <LeadForm hotel={hotel} />

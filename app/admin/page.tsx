@@ -1,8 +1,20 @@
 import { supabase } from '@/lib/supabase'
+import { cookies } from 'next/headers'
+import KeywordsTab from '@/components/KeywordsTab'
 
-export default async function AdminPage({ searchParams }: { searchParams: Promise<{ password?: string; tab?: string }> }) {
+async function isAuthenticated(password?: string) {
+  const cookieStore = await cookies()
+  return cookieStore.get('admin_auth')?.value === process.env.ADMIN_PASSWORD ||
+    password === process.env.ADMIN_PASSWORD
+}
+
+export default async function AdminPage({
+  searchParams
+}: {
+  searchParams: Promise<{ password?: string; tab?: string }>
+}) {
   const params = await searchParams
-  const auth = params.password === process.env.ADMIN_PASSWORD
+  const auth = await isAuthenticated(params.password)
 
   if (!auth) {
     return (
@@ -19,8 +31,22 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     )
   }
 
-  const { data: hotels } = await supabase.from('hotels').select('*').order('created_at', { ascending: false })
-  const { data: leads } = await supabase.from('leads').select('*').order('created_at', { ascending: false }).limit(50)
+  const { data: hotels } = await supabase
+    .from('hotels')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  const { data: leads } = await supabase
+    .from('leads')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  const { data: keywords } = await supabase
+    .from('hotel_keywords')
+    .select('*, hotels(name)')
+    .order('priority', { ascending: true })
+
   const tab = params.tab || 'hotels'
   const pw = params.password || ''
 
@@ -32,31 +58,33 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <div className="flex gap-3">
             <span className="bg-green-100 text-green-800 text-xs px-3 py-1.5">{hotels?.length || 0} Hotels</span>
             <span className="bg-blue-100 text-blue-800 text-xs px-3 py-1.5">{leads?.length || 0} Leads</span>
+            <span className="bg-amber-100 text-amber-800 text-xs px-3 py-1.5">{keywords?.length || 0} Keywords</span>
           </div>
         </div>
 
         <div className="flex gap-1 mb-6 border-b border-stone-200">
-          <a href={'/admin?password=' + pw + '&tab=hotels'} className={'px-6 py-3 text-sm uppercase tracking-wide ' + (tab === 'hotels' ? 'border-b-2 border-amber-700 text-amber-700 font-semibold' : 'text-stone-500')}>Hotels</a>
-          <a href={'/admin?password=' + pw + '&tab=leads'} className={'px-6 py-3 text-sm uppercase tracking-wide ' + (tab === 'leads' ? 'border-b-2 border-amber-700 text-amber-700 font-semibold' : 'text-stone-500')}>Leads</a>
+          {['hotels', 'leads', 'keywords'].map(t => (
+            <a key={t} href={'/admin?password=' + pw + '&tab=' + t}
+              className={'px-6 py-3 text-sm uppercase tracking-wide capitalize transition-colors ' +
+                (tab === t ? 'border-b-2 border-amber-700 text-amber-700 font-semibold' : 'text-stone-500 hover:text-stone-700')}>
+              {t}
+            </a>
+          ))}
         </div>
 
         {tab === 'hotels' && (
           <div>
             <div className="flex justify-between items-center mb-4">
-              <p className="text-stone-600 text-sm">{hotels?.length || 0} properties in database</p>
-              <a href="https://supabase.com" target="_blank" className="btn-primary text-xs py-2 px-4">Add Hotel in Supabase</a>
+              <p className="text-stone-600 text-sm">{hotels?.length || 0} properties</p>
+              <a href="/onboarding" className="btn-primary text-xs py-2 px-4">Add New Hotel →</a>
             </div>
             <div className="bg-white border border-stone-200 overflow-hidden">
               <table className="w-full text-sm">
                 <thead className="bg-stone-50 border-b border-stone-200">
                   <tr>
-                    <th className="text-left px-4 py-3 text-xs uppercase tracking-wide text-stone-500">Hotel</th>
-                    <th className="text-left px-4 py-3 text-xs uppercase tracking-wide text-stone-500">Region</th>
-                    <th className="text-left px-4 py-3 text-xs uppercase tracking-wide text-stone-500">Category</th>
-                    <th className="text-left px-4 py-3 text-xs uppercase tracking-wide text-stone-500">Rate (CHF)</th>
-                    <th className="text-left px-4 py-3 text-xs uppercase tracking-wide text-stone-500">Rating</th>
-                    <th className="text-left px-4 py-3 text-xs uppercase tracking-wide text-stone-500">Featured</th>
-                    <th className="text-left px-4 py-3 text-xs uppercase tracking-wide text-stone-500">Active</th>
+                    {['Hotel', 'Region', 'Category', 'Rate (CHF)', 'Rating', 'Featured', 'Active'].map(h => (
+                      <th key={h} className="text-left px-4 py-3 text-xs uppercase tracking-wide text-stone-500">{h}</th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
@@ -65,10 +93,18 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                       <td className="px-4 py-3 font-medium text-stone-800">{hotel.name}</td>
                       <td className="px-4 py-3 text-stone-600">{hotel.region}</td>
                       <td className="px-4 py-3 text-stone-600">{hotel.category}</td>
-                      <td className="px-4 py-3 text-stone-600">{hotel.nightly_rate_chf.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-stone-600">{hotel.nightly_rate_chf?.toLocaleString()}</td>
                       <td className="px-4 py-3"><span className="text-amber-600">★ {hotel.rating}</span></td>
-                      <td className="px-4 py-3"><span className={hotel.is_featured ? 'text-xs px-2 py-1 bg-amber-100 text-amber-800' : 'text-xs px-2 py-1 bg-stone-100 text-stone-500'}>{hotel.is_featured ? 'Yes' : 'No'}</span></td>
-                      <td className="px-4 py-3"><span className={hotel.is_active ? 'text-xs px-2 py-1 bg-green-100 text-green-800' : 'text-xs px-2 py-1 bg-red-100 text-red-700'}>{hotel.is_active ? 'Live' : 'Hidden'}</span></td>
+                      <td className="px-4 py-3">
+                        <span className={hotel.is_featured ? 'text-xs px-2 py-1 bg-amber-100 text-amber-800' : 'text-xs px-2 py-1 bg-stone-100 text-stone-500'}>
+                          {hotel.is_featured ? 'Yes' : 'No'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={hotel.is_active ? 'text-xs px-2 py-1 bg-green-100 text-green-800' : 'text-xs px-2 py-1 bg-red-100 text-red-700'}>
+                          {hotel.is_active ? 'Live' : 'Hidden'}
+                        </span>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -82,12 +118,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             <table className="w-full text-sm">
               <thead className="bg-stone-50 border-b border-stone-200">
                 <tr>
-                  <th className="text-left px-4 py-3 text-xs uppercase tracking-wide text-stone-500">Name</th>
-                  <th className="text-left px-4 py-3 text-xs uppercase tracking-wide text-stone-500">Email</th>
-                  <th className="text-left px-4 py-3 text-xs uppercase tracking-wide text-stone-500">Hotel</th>
-                  <th className="text-left px-4 py-3 text-xs uppercase tracking-wide text-stone-500">Dates</th>
-                  <th className="text-left px-4 py-3 text-xs uppercase tracking-wide text-stone-500">Guests</th>
-                  <th className="text-left px-4 py-3 text-xs uppercase tracking-wide text-stone-500">Submitted</th>
+                  {['Name', 'Email', 'Hotel', 'Dates', 'Guests', 'Submitted'].map(h => (
+                    <th key={h} className="text-left px-4 py-3 text-xs uppercase tracking-wide text-stone-500">{h}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -96,7 +129,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                     <td className="px-4 py-3 font-medium text-stone-800">{lead.name}</td>
                     <td className="px-4 py-3"><a href={'mailto:' + lead.email} className="text-amber-700 hover:underline">{lead.email}</a></td>
                     <td className="px-4 py-3 text-stone-600">{lead.hotel_name || '—'}</td>
-                    <td className="px-4 py-3 text-stone-600 text-xs">{lead.check_in ? lead.check_in + ' to ' + lead.check_out : '—'}</td>
+                    <td className="px-4 py-3 text-stone-600 text-xs">{lead.check_in ? lead.check_in + ' → ' + lead.check_out : '—'}</td>
                     <td className="px-4 py-3 text-stone-600">{lead.guests || '—'}</td>
                     <td className="px-4 py-3 text-stone-500 text-xs">{new Date(lead.created_at).toLocaleDateString('en-GB')}</td>
                   </tr>
@@ -105,6 +138,14 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             </table>
             {leads?.length === 0 && <p className="text-center text-stone-400 py-10 text-sm">No leads yet.</p>}
           </div>
+        )}
+
+        {tab === 'keywords' && (
+          <KeywordsTab
+            hotels={hotels || []}
+            keywords={keywords || []}
+            password={pw}
+          />
         )}
       </div>
     </div>

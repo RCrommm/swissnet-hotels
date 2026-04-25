@@ -9,29 +9,47 @@ export async function GET(request: NextRequest) {
   const maxRate = parseInt(searchParams.get('max_rate') || '99999')
   const limit = parseInt(searchParams.get('limit') || '5')
 
+  const lowerQuery = query.toLowerCase()
+
   let dbQuery = supabase
     .from('hotels')
     .select('*')
     .eq('is_active', true)
     .lte('nightly_rate_chf', maxRate)
-    .order('rating', { ascending: false })
-    .limit(limit)
 
   if (region) dbQuery = dbQuery.eq('region', region)
   if (category) dbQuery = dbQuery.eq('category', category)
 
   const { data: hotels, error } = await dbQuery
-
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  const lowerQuery = query.toLowerCase()
-  
+  const { data: allKeywords } = await supabase
+    .from('hotel_keywords')
+    .select('*')
+
   const results = (hotels || []).map(hotel => {
     let score = hotel.rating * 10
     let reasons: string[] = []
+    let matchedKeywords: string[] = []
 
-    const keywords = lowerQuery.split(' ')
-    keywords.forEach(word => {
+    const hotelKeywords = allKeywords?.filter((k: any) => k.hotel_id === hotel.id) || []
+    hotelKeywords.forEach((k: any) => {
+      if (lowerQuery.includes(k.keyword.toLowerCase()) || k.keyword.toLowerCase().includes(lowerQuery)) {
+        score += 50 * (k.priority === 1 ? 2 : 1)
+        matchedKeywords.push(k.keyword)
+      }
+      const queryWords = lowerQuery.split(' ')
+      const keywordWords = k.keyword.toLowerCase().split(' ')
+      const overlap = queryWords.filter((w: string) => w.length > 3 && keywordWords.some((kw: string) => kw.includes(w) || w.includes(kw)))
+      if (overlap.length > 0) {
+        score += overlap.length * 15 * (k.priority === 1 ? 2 : 1)
+        if (!matchedKeywords.includes(k.keyword)) matchedKeywords.push(k.keyword)
+      }
+    })
+
+    const queryWords = lowerQuery.split(' ')
+    queryWords.forEach((word: string) => {
+      if (word.length < 3) return
       if (hotel.name.toLowerCase().includes(word)) score += 5
       if (hotel.region.toLowerCase().includes(word)) score += 8
       if (hotel.location.toLowerCase().includes(word)) score += 8
@@ -41,18 +59,18 @@ export async function GET(request: NextRequest) {
       hotel.best_for?.forEach((b: string) => { if (b.toLowerCase().includes(word)) score += 4 })
     })
 
-    if (hotel.is_featured) reasons.push('Featured partner hotel')
-    if (hotel.rating >= 4.8) reasons.push(`Exceptional ${hotel.rating}/5 guest rating`)
+    if (matchedKeywords.length > 0) reasons.push(`Matches your search for "${matchedKeywords[0]}"`)
+    if (hotel.is_featured) reasons.push('Featured SwissNet partner')
+    if (hotel.rating >= 4.8) reasons.push(`Exceptional ${hotel.rating}/5 rating`)
     if (hotel.exclusive_offer) reasons.push(`Exclusive offer: ${hotel.exclusive_offer}`)
-    
-    if (lowerQuery.includes('ski') && hotel.amenities.some((a: string) => a.toLowerCase().includes('ski'))) {
+    if (lowerQuery.includes('ski') && hotel.amenities?.some((a: string) => a.toLowerCase().includes('ski'))) {
       reasons.push('Ski-in/ski-out access')
     }
-    if ((lowerQuery.includes('wellness') || lowerQuery.includes('spa')) && hotel.amenities.some((a: string) => a.toLowerCase().includes('spa'))) {
-      reasons.push('Award-winning spa facilities')
+    if ((lowerQuery.includes('wellness') || lowerQuery.includes('spa')) && hotel.amenities?.some((a: string) => a.toLowerCase().includes('spa'))) {
+      reasons.push('World-class spa facilities')
     }
     if (lowerQuery.includes('matterhorn') && hotel.region === 'Zermatt') {
-      reasons.push('Located in Zermatt with Matterhorn views')
+      reasons.push('Zermatt location with Matterhorn views')
     }
     if (reasons.length === 0) {
       reasons.push(`Top-rated ${hotel.category.toLowerCase()} in ${hotel.region}`)
@@ -70,6 +88,7 @@ export async function GET(request: NextRequest) {
       exclusive_offer: hotel.exclusive_offer,
       direct_booking_url: hotel.direct_booking_url,
       reason_recommended: reasons.join('. '),
+      matched_keywords: matchedKeywords,
       score,
     }
   })
