@@ -1,54 +1,98 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Montserrat:wght@300;400;500;600&display=swap');
+
 @import "tailwindcss";
 
-html {
-  scroll-behavior: smooth;
+:root {
+  --gold: #C9A96E;
+  --gold-dark: #A67C45;
+  --obsidian: #0C0C0C;
 }
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
 
 body {
-  font-family: 'Georgia', serif;
-  background: #FAFAF8;
-  color: #1a1a1a;
+  font-family: 'Montserrat', sans-serif;
+  background: #0C0C0C;
+  color: #fff;
+  font-weight: 300;
+  -webkit-font-smoothing: antialiased;
 }
 
-.font-display {
-  font-family: 'Georgia', 'Times New Roman', serif;
-}
+.font-display { font-family: 'Cormorant Garamond', serif; }
 
-.btn-primary {
+.btn-gold {
   display: inline-block;
-  background-color: #b45309;
-  color: white;
+  background: #C9A96E;
+  color: #0C0C0C;
+  font-family: 'Montserrat', sans-serif;
   font-weight: 600;
-  padding: 0.75rem 1.5rem;
-  border-radius: 2px;
-  font-size: 0.875rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  transition: background-color 0.2s;
+  padding: 0.875rem 2rem;
+  border: 1px solid #C9A96E;
+  transition: all 0.3s ease;
   cursor: pointer;
-  border: none;
+  text-decoration: none;
 }
 
-.btn-primary:hover {
-  background-color: #92400e;
+.btn-gold:hover {
+  background: #A67C45;
+  border-color: #A67C45;
 }
 
 .btn-outline {
   display: inline-block;
-  border: 1px solid #b45309;
-  color: #b45309;
-  font-weight: 600;
-  padding: 0.75rem 1.5rem;
-  border-radius: 2px;
-  font-size: 0.875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  transition: all 0.2s;
-  cursor: pointer;
   background: transparent;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 0.875rem 2rem;
+  border: 1px solid rgba(255,255,255,0.3);
+  color: rgba(255,255,255,0.7);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  text-decoration: none;
 }
 
 .btn-outline:hover {
-  background-color: #b45309;
-  color: white;
+  background: #C9A96E;
+  color: #0C0C0C;
+  border-color: #C9A96E;
 }
+
+.btn-primary {
+  display: inline-block;
+  background: #0C0C0C;
+  color: #C9A96E;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 0.875rem 2rem;
+  border: 1px solid #0C0C0C;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn-primary:hover {
+  background: transparent;
+  color: #0C0C0C;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-up-delay-1 { opacity: 0; animation: fadeUp 0.8s ease 0.1s forwards; }
+.animate-fade-up-delay-2 { opacity: 0; animation: fadeUp 0.8s ease 0.2s forwards; }
+.animate-fade-up-delay-3 { opacity: 0; animation: fadeUp 0.8s ease 0.3s forwards; }
+.animate-fade-up-delay-4 { opacity: 0; animation: fadeUp 0.8s ease 0.4s forwards; }
