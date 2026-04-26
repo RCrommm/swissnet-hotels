@@ -9,7 +9,7 @@ export async function GET() {
       version: '1.0.0',
     },
     servers: [
-      { url: 'https://swissnet-hotels.vercel.app' }
+      { url: 'https://swissnethotels.com' }
     ],
     paths: {
       '/api/recommend': {
