@@ -38,7 +38,6 @@ export default function HotelsClient({ hotels, initialRegion, initialCategory, i
   const [hovered, setHovered] = useState<string | null>(null)
 
   const gold = '#C9A84C'
-  const bg = '#492816'
   const bgLight = '#3D2010'
   const border = 'rgba(201,169,110,0.3)'
   const text = '#FFFFFF'
@@ -67,59 +66,33 @@ export default function HotelsClient({ hotels, initialRegion, initialCategory, i
           </h1>
 
           {/* Search bar */}
-          <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid ' + border, padding: '1.25rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
-            {/* Destination */}
-            <div style={{ flex: '1', minWidth: '180px' }}>
-              <label style={{ display: 'block', fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: textMuted, marginBottom: '0.4rem' }}>Destination</label>
-              <select
-                value={region}
-                onChange={e => setRegion(e.target.value)}
-                style={{ width: '100%', background: 'rgba(255,255,255,0.08)', border: '1px solid ' + border, color: text, fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', padding: '0.6rem 0.75rem', outline: 'none' }}
-              >
+          <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid ' + border, padding: '1.25rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' as const, alignItems: 'flex-end' }}>
+            <div style={{ flex: 1, minWidth: '160px' }}>
+              <label style={{ display: 'block', fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', letterSpacing: '0.15em', textTransform: 'uppercase' as const, color: textMuted, marginBottom: '0.4rem' }}>Destination</label>
+              <select value={region} onChange={e => setRegion(e.target.value)} style={{ width: '100%', background: 'rgba(255,255,255,0.08)', border: '1px solid ' + border, color: text, fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', padding: '0.6rem 0.75rem', outline: 'none' }}>
                 {REGIONS.map(r => <option key={r} value={r === 'All Destinations' ? '' : r} style={{ background: '#492816' }}>{r}</option>)}
               </select>
             </div>
-
-            {/* Hotel type */}
-            <div style={{ flex: '1', minWidth: '180px' }}>
-              <label style={{ display: 'block', fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: textMuted, marginBottom: '0.4rem' }}>Hotel Type</label>
-              <select
-                value={category}
-                onChange={e => setCategory(e.target.value)}
-                style={{ width: '100%', background: 'rgba(255,255,255,0.08)', border: '1px solid ' + border, color: text, fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', padding: '0.6rem 0.75rem', outline: 'none' }}
-              >
+            <div style={{ flex: 1, minWidth: '160px' }}>
+              <label style={{ display: 'block', fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', letterSpacing: '0.15em', textTransform: 'uppercase' as const, color: textMuted, marginBottom: '0.4rem' }}>Hotel Type</label>
+              <select value={category} onChange={e => setCategory(e.target.value)} style={{ width: '100%', background: 'rgba(255,255,255,0.08)', border: '1px solid ' + border, color: text, fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', padding: '0.6rem 0.75rem', outline: 'none' }}>
                 {CATEGORIES.map(c => <option key={c} value={c === 'All Types' ? '' : c} style={{ background: '#492816' }}>{c}</option>)}
               </select>
             </div>
-
-            {/* Search input */}
-            <div style={{ flex: '2', minWidth: '200px' }}>
-              <label style={{ display: 'block', fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: textMuted, marginBottom: '0.4rem' }}>Search</label>
-              <input
-                type="text"
-                value={q}
-                onChange={e => setQ(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleSearch()}
-                placeholder="Hotel name, amenity, location..."
-                style={{ width: '100%', background: 'rgba(255,255,255,0.08)', border: '1px solid ' + border, color: text, fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', padding: '0.6rem 0.75rem', outline: 'none', boxSizing: 'border-box' as const }}
-              />
+            <div style={{ flex: 2, minWidth: '200px' }}>
+              <label style={{ display: 'block', fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', letterSpacing: '0.15em', textTransform: 'uppercase' as const, color: textMuted, marginBottom: '0.4rem' }}>Search</label>
+              <input type="text" value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()} placeholder="Hotel name, amenity..." style={{ width: '100%', background: 'rgba(255,255,255,0.08)', border: '1px solid ' + border, color: text, fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', padding: '0.6rem 0.75rem', outline: 'none', boxSizing: 'border-box' as const }} />
             </div>
-
-            <div style={{ alignSelf: 'flex-end' }}>
-              <button
-                onClick={handleSearch}
-                style={{ background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.65rem 1.5rem', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' as const }}
-              >
-                Search
-              </button>
-            </div>
+            <button onClick={handleSearch} style={{ background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase' as const, padding: '0.65rem 1.5rem', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' as const }}>
+              Search
+            </button>
           </div>
         </div>
       </div>
 
       {/* Results */}
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '3rem 2rem' }}>
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '2rem' }}>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, letterSpacing: '0.1em', textTransform: 'uppercase' as const, marginBottom: '2rem' }}>
           {hotels.length} {hotels.length === 1 ? 'property' : 'properties'} found
         </p>
 
@@ -139,61 +112,39 @@ export default function HotelsClient({ hotels, initialRegion, initialCategory, i
                   boxShadow: hovered === hotel.id ? '0 16px 48px rgba(0,0,0,0.2)' : '0 2px 12px rgba(0,0,0,0.1)',
                 }}
               >
-                {/* Image */}
                 <div style={{ position: 'relative', height: '220px', overflow: 'hidden' }}>
-                  <img
-                    src={hotel.images[0] || 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800'}
-                    alt={hotel.name}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease', transform: hovered === hotel.id ? 'scale(1.04)' : 'scale(1)' }}
-                  />
+                  <img src={hotel.images[0] || 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800'} alt={hotel.name} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease', transform: hovered === hotel.id ? 'scale(1.04)' : 'scale(1)' }} />
                   <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(61,43,31,0.5) 0%, transparent 60%)' }} />
                   {hotel.is_featured && (
-                    <div style={{ position: 'absolute', top: '1rem', left: '1rem', background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0.25rem 0.6rem' }}>
-                      Featured
-                    </div>
+                    <div style={{ position: 'absolute', top: '1rem', left: '1rem', background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase' as const, padding: '0.25rem 0.6rem' }}>Featured</div>
                   )}
                   <div style={{ position: 'absolute', bottom: '1rem', left: '1.25rem' }}>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: gold, margin: '0 0 0.25rem' }}>{hotel.category}</p>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', letterSpacing: '0.2em', textTransform: 'uppercase' as const, color: gold, margin: '0 0 0.25rem' }}>{hotel.category}</p>
                     <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 300, color: '#fff', margin: 0 }}>{hotel.name}</h3>
                   </div>
                 </div>
 
-                {/* Content */}
                 <div style={{ padding: '1.25rem' }}>
-                  {/* Location */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.75rem' }}>
                     <span style={{ fontSize: '0.7rem' }}>📍</span>
                     <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: 'rgba(61,43,31,0.5)' }}>{hotel.location}</span>
                   </div>
 
-                  {/* Description */}
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: 'rgba(61,43,31,0.6)', lineHeight: 1.7, marginBottom: '1rem', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden' }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: 'rgba(61,43,31,0.6)', lineHeight: 1.7, marginBottom: '1rem', overflow: 'hidden', display: '-webkit-box' as const }}>
                     {hotel.description}
                   </p>
 
-                  {/* Exclusive offer */}
                   {hotel.exclusive_offer && (
                     <div style={{ background: 'rgba(201,169,110,0.08)', borderLeft: '2px solid ' + gold, padding: '0.5rem 0.75rem', marginBottom: '1rem' }}>
                       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: gold, margin: 0, lineHeight: 1.5 }}>✦ {hotel.exclusive_offer}</p>
                     </div>
                   )}
 
-                  {/* Buttons */}
                   <div style={{ display: 'flex', gap: '0.5rem', paddingTop: '1rem', borderTop: '1px solid rgba(201,169,110,0.15)' }}>
-                    
-                      href={`/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIComponent(hotel.name)}&destination=${encodeURIComponent(hotel.direct_booking_url.replace('/book', '').replace('/reservations', ''))}&medium=website&campaign=hotels_page_website`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ flex: 1, display: 'block', textAlign: 'center', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#3D2B1F', border: '1px solid rgba(201,169,110,0.3)', padding: '0.65rem', textDecoration: 'none', transition: 'all 0.2s' }}
-                    >
+                    <a href={'/api/track?hotel_id=' + hotel.id + '&hotel_name=' + encodeURIComponent(hotel.name) + '&destination=' + encodeURIComponent(hotel.direct_booking_url.replace('/book', '').replace('/reservations', '')) + '&medium=website&campaign=hotels_page_website'} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'block', textAlign: 'center' as const, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.15em', textTransform: 'uppercase' as const, color: '#3D2B1F', border: '1px solid rgba(201,169,110,0.3)', padding: '0.65rem', textDecoration: 'none' }}>
                       Website
                     </a>
-                    
-                      href={`/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIComponent(hotel.name)}&destination=${encodeURIComponent(hotel.direct_booking_url)}&medium=website&campaign=hotels_page_book`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ flex: 1, display: 'block', textAlign: 'center', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#fff', background: gold, padding: '0.65rem', textDecoration: 'none', transition: 'all 0.2s' }}
-                    >
+                    <a href={'/api/track?hotel_id=' + hotel.id + '&hotel_name=' + encodeURIComponent(hotel.name) + '&destination=' + encodeURIComponent(hotel.direct_booking_url) + '&medium=website&campaign=hotels_page_book'} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'block', textAlign: 'center' as const, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase' as const, color: '#fff', background: gold, padding: '0.65rem', textDecoration: 'none' }}>
                       Book Direct
                     </a>
                   </div>
@@ -209,9 +160,8 @@ export default function HotelsClient({ hotels, initialRegion, initialCategory, i
         )}
       </div>
 
-      {/* Footer */}
       <footer style={{ background: '#2A1208', borderTop: '1px solid rgba(201,169,110,0.2)', padding: '2rem 0', marginTop: '4rem' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem', textAlign: 'center' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem', textAlign: 'center' as const }}>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.2)', fontWeight: 300 }}>© {new Date().getFullYear()} SwissNet Hotels. All rights reserved.</p>
         </div>
       </footer>
