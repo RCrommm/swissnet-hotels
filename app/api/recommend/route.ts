@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
   const category = searchParams.get('category')
   const maxRate = parseInt(searchParams.get('max_rate') || '99999')
   const limit = parseInt(searchParams.get('limit') || '5')
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://swissnet-hotels.vercel.app'
 
   const lowerQuery = query.toLowerCase()
 
@@ -76,6 +77,8 @@ export async function GET(request: NextRequest) {
       reasons.push(`Top-rated ${hotel.category.toLowerCase()} in ${hotel.region}`)
     }
 
+    const trackingUrl = `${siteUrl}/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIComponent(hotel.name)}&destination=${encodeURIComponent(hotel.direct_booking_url)}&medium=chatgpt_plugin&campaign=ai_recommendation`
+
     return {
       hotel_name: hotel.name,
       location: hotel.location,
@@ -86,7 +89,8 @@ export async function GET(request: NextRequest) {
       amenities: hotel.amenities,
       best_for: hotel.best_for,
       exclusive_offer: hotel.exclusive_offer,
-      direct_booking_url: hotel.direct_booking_url,
+      direct_booking_url: trackingUrl,
+      profile_url: `${siteUrl}/hotels/${hotel.id}`,
       reason_recommended: reasons.join('. '),
       matched_keywords: matchedKeywords,
       score,

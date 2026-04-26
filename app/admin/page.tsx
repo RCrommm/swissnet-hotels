@@ -47,6 +47,12 @@ export default async function AdminPage({
     .select('*, hotels(name)')
     .order('priority', { ascending: true })
 
+  const { data: clicks } = await supabase
+    .from('referral_clicks')
+    .select('*')
+    .order('clicked_at', { ascending: false })
+    .limit(100)
+
   const tab = params.tab || 'hotels'
   const pw = params.password || ''
 
@@ -59,11 +65,12 @@ export default async function AdminPage({
             <span className="bg-green-100 text-green-800 text-xs px-3 py-1.5">{hotels?.length || 0} Hotels</span>
             <span className="bg-blue-100 text-blue-800 text-xs px-3 py-1.5">{leads?.length || 0} Leads</span>
             <span className="bg-amber-100 text-amber-800 text-xs px-3 py-1.5">{keywords?.length || 0} Keywords</span>
+            <span className="bg-purple-100 text-purple-800 text-xs px-3 py-1.5">{clicks?.length || 0} Clicks</span>
           </div>
         </div>
 
         <div className="flex gap-1 mb-6 border-b border-stone-200">
-          {['hotels', 'leads', 'keywords'].map(t => (
+          {['hotels', 'leads', 'keywords', 'clicks'].map(t => (
             <a key={t} href={'/admin?password=' + pw + '&tab=' + t}
               className={'px-6 py-3 text-sm uppercase tracking-wide capitalize transition-colors ' +
                 (tab === t ? 'border-b-2 border-amber-700 text-amber-700 font-semibold' : 'text-stone-500 hover:text-stone-700')}>
@@ -141,11 +148,42 @@ export default async function AdminPage({
         )}
 
         {tab === 'keywords' && (
-          <KeywordsTab
-            hotels={hotels || []}
-            keywords={keywords || []}
-            password={pw}
-          />
+          <KeywordsTab hotels={hotels || []} keywords={keywords || []} password={pw} />
+        )}
+
+        {tab === 'clicks' && (
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <p className="text-stone-600 text-sm">{clicks?.length || 0} referral clicks tracked</p>
+            </div>
+            <div className="bg-white border border-stone-200 overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-stone-50 border-b border-stone-200">
+                  <tr>
+                    {['Hotel', 'Source', 'Medium', 'Campaign', 'Time'].map(h => (
+                      <th key={h} className="text-left px-4 py-3 text-xs uppercase tracking-wide text-stone-500">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {(clicks || []).map((click: any, i: number) => (
+                    <tr key={click.id} className={i % 2 === 0 ? 'bg-white' : 'bg-stone-50'}>
+                      <td className="px-4 py-3 font-medium text-stone-800">{click.hotel_name || '—'}</td>
+                      <td className="px-4 py-3 text-stone-600">{click.utm_source}</td>
+                      <td className="px-4 py-3">
+                        <span className={`text-xs px-2 py-1 ${click.utm_medium === 'chatgpt_plugin' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
+                          {click.utm_medium}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-stone-600">{click.utm_campaign}</td>
+                      <td className="px-4 py-3 text-stone-500 text-xs">{new Date(click.clicked_at).toLocaleString('en-GB')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {clicks?.length === 0 && <p className="text-center text-stone-400 py-10 text-sm">No clicks yet. They will appear here when guests click Book Direct.</p>}
+            </div>
+          </div>
         )}
       </div>
     </div>

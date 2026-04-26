@@ -2,7 +2,6 @@ import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import LeadForm from '@/components/LeadForm'
 import Link from 'next/link'
-import { MapPin, Star, Check } from 'lucide-react'
 
 function HotelSchema({ hotel, keywords }: { hotel: any; keywords: any[] }) {
   const allKeywords = [
@@ -81,9 +80,12 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
   const border = 'rgba(201,169,110,0.25)'
   const text = '#3D2B1F'
   const textMuted = 'rgba(61,43,31,0.5)'
+  const bg = '#F8F5EF'
+
+  const trackingUrl = `/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIComponent(hotel.name)}&destination=${encodeURIComponent(hotel.direct_booking_url)}&medium=website&campaign=hotel_profile`
 
   return (
-    <div style={{ background: '#F8F5EF', minHeight: '100vh' }}>
+    <div style={{ background: bg, minHeight: '100vh' }}>
       <HotelSchema hotel={hotel} keywords={keywords || []} />
 
       {/* Hero image */}
@@ -97,7 +99,7 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
         <div style={{ position: 'absolute', bottom: '2rem', left: 0, right: 0, maxWidth: '1200px', margin: '0 auto', padding: '0 2rem' }}>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: gold, marginBottom: '0.5rem' }}>{hotel.category} · {hotel.region}</p>
           <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 300, color: '#fff', margin: '0 0 0.5rem' }}>{hotel.name}</h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'rgba(255,255,255,0.8)', fontSize: '0.8rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'rgba(255,255,255,0.8)', fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem' }}>
             <span>📍 {hotel.location}</span>
             <span>·</span>
             <span>★ {hotel.rating} / 5.0</span>
@@ -179,7 +181,7 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: '0.25rem 0 0' }}>per night</p>
             </div>
 
-            <a href={hotel.direct_booking_url} target="_blank" rel="noopener noreferrer" style={{ display: 'block', background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '1rem', textAlign: 'center', textDecoration: 'none', marginBottom: '0.75rem' }}>
+            <a href={trackingUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '1rem', textAlign: 'center', textDecoration: 'none', marginBottom: '0.75rem' }}>
               Book Direct →
             </a>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, textAlign: 'center', margin: '0 0 1.5rem' }}>No booking fees · Best rate guarantee</p>

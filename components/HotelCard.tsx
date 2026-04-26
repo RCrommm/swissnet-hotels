@@ -10,6 +10,8 @@ export default function HotelCard({ hotel }: { hotel: Hotel }) {
   const textMuted = 'rgba(61,43,31,0.5)'
   const border = 'rgba(201,169,110,0.25)'
 
+  const trackingUrl = `/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIComponent(hotel.name)}&destination=${encodeURIComponent(hotel.direct_booking_url)}&medium=website&campaign=hotel_card`
+
   return (
     <div
       onMouseEnter={() => setHovered(true)}
@@ -71,7 +73,7 @@ export default function HotelCard({ hotel }: { hotel: Hotel }) {
           <svg width="12" height="12" fill="none" stroke={gold} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
           </svg>
-          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, letterSpacing: '0.05em' }}>
+          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>
             {hotel.location}
           </span>
           <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
@@ -130,7 +132,7 @@ export default function HotelCard({ hotel }: { hotel: Hotel }) {
             }}>
               View
             </Link>
-            <a href={hotel.direct_booking_url} target="_blank" rel="noopener noreferrer" style={{
+            <a href={trackingUrl} target="_blank" rel="noopener noreferrer" style={{
               fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600,
               letterSpacing: '0.15em', textTransform: 'uppercase',
               color: '#fff', background: gold,
