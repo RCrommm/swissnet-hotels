@@ -150,7 +150,11 @@ export default function KeywordsTab({ hotels, keywords: initialKeywords, passwor
         </p>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <label style={{ ...labelStyle, margin: 0 }}>Filter by hotel</label>
-          <select value={filterHotel} onChange={e => setFilterHotel(e.target.value)} style={{ background: '#fff', border: '1px solid ' + border, color: text, fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', padding: '0.4rem 0.75rem', outline: 'none' }}>
+          <select
+            value={filterHotel}
+            onChange={e => setFilterHotel(e.target.value)}
+            style={{ background: '#fff', border: '1px solid ' + border, color: text, fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', padding: '0.4rem 0.75rem', outline: 'none' }}
+          >
             <option value="">All hotels</option>
             {hotels.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
           </select>
@@ -168,8 +172,8 @@ export default function KeywordsTab({ hotels, keywords: initialKeywords, passwor
             </tr>
           </thead>
           <tbody>
-            {filteredKeywords.map((kw, i) => (
-              <tr key={kw.id} style={{ background: i % 2 === 0 ? '#fff' : bgSection, borderBottom: '1px solid ' + border }}>
+            {filteredKeywords.map((kw) => (
+              <tr key={kw.id} style={{ background: '#fff', borderBottom: '1px solid ' + border }}>
                 <td style={{ padding: '0.875rem 1rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: text, fontWeight: 500 }}>{kw.keyword}</td>
                 <td style={{ padding: '0.875rem 1rem', color: textMuted }}>{kw.hotels?.name || '—'}</td>
                 <td style={{ padding: '0.875rem 1rem' }}>
