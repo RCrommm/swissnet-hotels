@@ -114,7 +114,7 @@ export default function HotelsClient({ hotels, initialRegion, initialCategory, i
               >
                 <div style={{ position: 'relative', height: '220px', overflow: 'hidden' }}>
                   <img src={hotel.images[0] || 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800'} alt={hotel.name} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease', transform: hovered === hotel.id ? 'scale(1.04)' : 'scale(1)' }} />
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(61,43,31,0.5) 0%, transparent 60%)' }} />
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 50%, transparent 100%)' }} />
                   {hotel.is_featured && (
                     <div style={{ position: 'absolute', top: '1rem', left: '1rem', background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase' as const, padding: '0.25rem 0.6rem' }}>Featured</div>
                   )}
