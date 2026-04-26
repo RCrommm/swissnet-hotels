@@ -35,12 +35,12 @@ export default async function HomePage() {
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 500, letterSpacing: '0.3em', textTransform: 'uppercase', color: gold, margin: 0 }}>AI-Powered Discovery</p>
             <span style={{ width: '40px', height: '1px', background: gold, display: 'inline-block' }} />
           </div>
-          <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(3rem, 8vw, 6rem)', fontWeight: 300, color: '#FFFFFF', lineHeight: 1.1, margin: '0 0 1.5rem', letterSpacing: '-0.02em' }} className="animate-fade-up-delay-2">
-            Switzerland's Finest<br />
-            <span style={{ fontStyle: 'italic', color: gold }}>Hotels, Directly</span>
+          <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(2.5rem, 6vw, 5rem)', fontWeight: 300, color: '#FFFFFF', lineHeight: 1.1, margin: '0 0 1.5rem', letterSpacing: '-0.02em' }} className="animate-fade-up-delay-2">
+            Get Your Hotel Found<br />
+            <span style={{ fontStyle: 'italic', color: gold }}>in AI Search.</span>
           </h1>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', fontWeight: 300, color: 'rgba(255,255,255,0.7)', lineHeight: 1.8, maxWidth: '520px', margin: '0 auto 2.5rem' }} className="animate-fade-up-delay-3">
-            Discover and book Switzerland's most exceptional luxury hotels. No OTA fees. Direct rates. Exclusive offers you won't find anywhere else.
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', fontWeight: 300, color: 'rgba(255,255,255,0.7)', lineHeight: 1.8, maxWidth: '560px', margin: '0 auto 2.5rem' }} className="animate-fade-up-delay-3">
+            SwissNet AI helps luxury hotels appear in ChatGPT, Claude, Gemini, and AI travel search — while reducing OTA dependence.
           </p>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }} className="animate-fade-up-delay-4">
             <Link href="/hotels" style={{ display: 'inline-block', background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.875rem 2rem', border: '1px solid ' + gold, textDecoration: 'none' }}>Explore Hotels</Link>
