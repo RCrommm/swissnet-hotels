@@ -1,5 +1,4 @@
 'use client'
-import Link from 'next/link'
 import { Hotel } from '@/types/hotel'
 import { useState } from 'react'
 
@@ -10,7 +9,15 @@ export default function HotelCard({ hotel }: { hotel: Hotel }) {
   const textMuted = 'rgba(61,43,31,0.5)'
   const border = 'rgba(201,169,110,0.25)'
 
-  const trackingUrl = `/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIComponent(hotel.name)}&destination=${encodeURIComponent(hotel.direct_booking_url)}&medium=website&campaign=hotel_card`
+  const hotelHomepage = hotel.direct_booking_url
+    .replace('/book', '')
+    .replace('/reservations', '')
+    .replace('/en/book', '')
+    .replace('/booking', '')
+
+  const homepageTrackingUrl = `/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIComponent(hotel.name)}&destination=${encodeURIComponent(hotelHomepage)}&medium=website&campaign=hotel_homepage`
+
+  const bookTrackingUrl = `/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIComponent(hotel.name)}&destination=${encodeURIComponent(hotel.direct_booking_url)}&medium=website&campaign=hotel_card`
 
   return (
     <div
@@ -124,15 +131,15 @@ export default function HotelCard({ hotel }: { hotel: Hotel }) {
             </p>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <Link href={`/hotels/${hotel.id}`} style={{
+            <a href={homepageTrackingUrl} target="_blank" rel="noopener noreferrer" style={{
               fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 500,
               letterSpacing: '0.15em', textTransform: 'uppercase',
               color: text, border: '1px solid ' + border,
               padding: '0.6rem 1rem', textDecoration: 'none', transition: 'all 0.2s',
             }}>
-              View
-            </Link>
-            <a href={trackingUrl} target="_blank" rel="noopener noreferrer" style={{
+              Website
+            </a>
+            <a href={bookTrackingUrl} target="_blank" rel="noopener noreferrer" style={{
               fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600,
               letterSpacing: '0.15em', textTransform: 'uppercase',
               color: '#fff', background: gold,
