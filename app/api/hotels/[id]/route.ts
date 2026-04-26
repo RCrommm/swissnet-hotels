@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 
 export async function PATCH(
   request: NextRequest,
@@ -17,6 +18,11 @@ export async function PATCH(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  // Revalidate the hotel profile page and hotels list
+  revalidatePath('/hotels')
+  revalidatePath('/hotels/' + id)
+  revalidatePath('/')
+
   return NextResponse.json({ success: true, hotel: data })
 }
 
@@ -32,6 +38,9 @@ export async function DELETE(
     .eq('id', id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  revalidatePath('/hotels')
+  revalidatePath('/')
 
   return NextResponse.json({ success: true })
 }
