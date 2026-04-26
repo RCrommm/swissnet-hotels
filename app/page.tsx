@@ -69,23 +69,91 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Featured Hotels */}
+      {/* AI Hotel Preview */}
       <section style={{ maxWidth: '1200px', margin: '0 auto', padding: '6rem 2rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '1rem' }}>
             <span style={{ width: '30px', height: '1px', background: gold, display: 'inline-block' }} />
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.3em', textTransform: 'uppercase', color: gold, margin: 0 }}>Handpicked Selection</p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.3em', textTransform: 'uppercase', color: gold, margin: 0 }}>Join Us</p>
             <span style={{ width: '30px', height: '1px', background: gold, display: 'inline-block' }} />
           </div>
-          <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 300, color: text, margin: 0 }}>Featured Properties</h2>
+          <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 300, color: text, margin: '0 0 1rem' }}>AI Hotel Preview</h2>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: textMuted, fontWeight: 300, maxWidth: '560px', margin: '0 auto' }}>
+            This is what your hotel looks like when a traveller searches on ChatGPT. Professional cards, live rates, and a direct booking button — all powered by SwissNet AI.
+          </p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.5rem' }}>
-          {(featuredHotels || []).map(hotel => (
-            <HotelCard key={hotel.id} hotel={hotel} />
-          ))}
+
+        {/* ChatGPT mockup */}
+        <div style={{ border: '1px solid ' + border, background: 'rgba(255,255,255,0.03)', overflow: 'hidden' }}>
+          <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1rem 1.5rem', borderBottom: '1px solid ' + border, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ff5f57' }} />
+            <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ffbd2e' }} />
+            <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#28c840' }} />
+            <div style={{ flex: 1, background: 'rgba(255,255,255,0.08)', borderRadius: '4px', padding: '0.3rem 0.75rem', marginLeft: '0.5rem' }}>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', margin: 0 }}>chatgpt.com</p>
+            </div>
+          </div>
+
+          <div style={{ padding: '2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
+              <div style={{ background: 'rgba(201,169,110,0.15)', border: '1px solid ' + border, padding: '0.75rem 1.25rem', maxWidth: '500px', borderRadius: '8px 8px 2px 8px' }}>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: text, margin: 0 }}>What are the best luxury hotels with a Matterhorn view in Zermatt for a couples relaxing retreat?</p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#10a37f', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <p style={{ color: '#fff', fontSize: '0.7rem', fontWeight: 700, margin: 0 }}>AI</p>
+              </div>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: textMuted, marginBottom: '1.5rem', lineHeight: 1.7 }}>
+                  Here are the best luxury hotels in Zermatt offering breathtaking Matterhorn views, perfect for a romantic and relaxing retreat.
+                </p>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+                  {(featuredHotels || []).slice(0, 3).map((hotel, i) => (
+                    <div key={hotel.id} style={{ background: '#fff', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.1)' }}>
+                      <div style={{ position: 'relative', height: '160px', overflow: 'hidden' }}>
+                        <img src={hotel.images[0] || 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=600'} alt={hotel.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <div style={{ position: 'absolute', top: '0.5rem', left: '0.5rem', background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.2rem 0.5rem', borderRadius: '2px' }}>
+                          {i === 0 ? 'Best for Couples' : i === 1 ? 'Wellness Retreat' : 'Iconic Luxury'}
+                        </div>
+                      </div>
+                      <div style={{ padding: '0.875rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                          <h4 style={{ fontFamily: 'Georgia, serif', fontSize: '0.9rem', color: '#1a1a1a', margin: 0, fontWeight: 600 }}>{hotel.name}</h4>
+                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: '#666' }}>★ {hotel.rating}</span>
+                        </div>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: '#888', margin: '0 0 0.5rem' }}>📍 {hotel.location}</p>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginBottom: '0.75rem' }}>
+                          {hotel.amenities.slice(0, 2).map((a: string) => (
+                            <span key={a} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: '#666', background: '#f5f5f5', padding: '0.2rem 0.4rem', borderRadius: '2px' }}>{a}</span>
+                          ))}
+                        </div>
+                        <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <p style={{ fontFamily: 'Georgia, serif', fontSize: '1.1rem', color: gold, margin: 0, fontWeight: 700 }}>CHF {hotel.nightly_rate_chf.toLocaleString()}</p>
+                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: '#aaa', margin: 0 }}>/night · Best Price</p>
+                          </div>
+                          <a href={`/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIComponent(hotel.name)}&destination=${encodeURIComponent(hotel.direct_booking_url)}&medium=website&campaign=ai_preview`} target="_blank" rel="noopener noreferrer" style={{ background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.4rem 0.875rem', borderRadius: '4px', textDecoration: 'none' }}>
+                            Book Now
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.25)', margin: '0.75rem 0 0', fontStyle: 'italic' }}>
+                  Powered by SwissNet AI · swissnet-hotels.com
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
-        <div style={{ textAlign: 'center', marginTop: '3rem' }}>
-          <Link href="/hotels" style={{ display: 'inline-block', background: 'transparent', fontFamily: 'Montserrat, sans-serif', fontWeight: 500, fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.875rem 2rem', border: '1px solid rgba(255,255,255,0.3)', color: text, textDecoration: 'none' }}>View All Hotels</Link>
+
+        <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+          <a href="#contact" style={{ display: 'inline-block', background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.875rem 2rem', textDecoration: 'none' }}>Get Your Hotel Listed →</a>
         </div>
       </section>
 
@@ -123,24 +191,14 @@ export default async function HomePage() {
           <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 300, color: text, margin: '0 0 1rem' }}>Official Partners</h2>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: textMuted, fontWeight: 300 }}>Switzerland's finest luxury hotels trust SwissNet AI to drive direct bookings.</p>
         </div>
-
-        {/* Partner logos grid — add logos here */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.5rem' }}>
           {[1, 2, 3, 4, 5, 6].map(i => (
-            <div key={i} style={{
-              height: '100px',
-              border: '1px solid ' + border,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'rgba(255,255,255,0.04)',
-            }}>
+            <div key={i} style={{ height: '100px', border: '1px solid ' + border, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.04)' }}>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.2)', margin: 0 }}>Partner Logo</p>
             </div>
           ))}
         </div>
-
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.2)', textAlign: 'center', marginTop: '1.5rem', letterSpacing: '0.1em' }}>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.2)', textAlign: 'center', marginTop: '1.5rem' }}>
           Interested in joining? <a href="#contact" style={{ color: gold, textDecoration: 'none' }}>Get in touch →</a>
         </p>
       </section>
