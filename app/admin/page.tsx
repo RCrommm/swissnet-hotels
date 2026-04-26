@@ -1,254 +1,161 @@
-'use client'
-import { useState } from 'react'
+export const dynamic = 'force-dynamic'
 
-const REGIONS = ['Zermatt', 'St. Moritz', 'Verbier', 'Davos', 'Interlaken', 'Lucerne', 'Geneva', 'Zurich', 'Gstaad', 'Lugano']
-const CATEGORIES = ['Ski Resort', 'Wellness Retreat', 'City Luxury', 'Mountain Lodge', 'Lake Resort']
+import { supabase } from '@/lib/supabase'
+import { cookies } from 'next/headers'
+import KeywordsTab from '@/components/KeywordsTab'
+import HotelsTab from '@/components/HotelsTab'
 
-interface Props {
-  hotels: any[]
-  password: string
+async function isAuthenticated(password?: string) {
+  const cookieStore = await cookies()
+  return cookieStore.get('admin_auth')?.value === process.env.ADMIN_PASSWORD ||
+    password === process.env.ADMIN_PASSWORD
 }
 
-export default function HotelsTab({ hotels: initialHotels, password }: Props) {
-  const [hotels, setHotels] = useState(initialHotels)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [editForm, setEditForm] = useState<any>(null)
-  const [saving, setSaving] = useState(false)
-  const [saveSuccess, setSaveSuccess] = useState(false)
+export default async function AdminPage({
+  searchParams
+}: {
+  searchParams: Promise<{ password?: string; tab?: string }>
+}) {
+  const params = await searchParams
+  const auth = await isAuthenticated(params.password)
 
-  const gold = '#C9A84C'
-  const border = 'rgba(201,169,110,0.2)'
-  const text = '#2A1A0E'
-  const textMuted = 'rgba(42,26,14,0.45)'
-  const bg = '#F8F5EF'
-  const bgSection = '#F2EAE0'
-
-  const startEdit = (hotel: any) => {
-    setEditingId(hotel.id)
-    setEditForm({
-      name: hotel.name || '',
-      location: hotel.location || '',
-      region: hotel.region || '',
-      category: hotel.category || '',
-      rating: hotel.rating || '',
-      nightly_rate_chf: hotel.nightly_rate_chf || '',
-      description: hotel.description || '',
-      direct_booking_url: hotel.direct_booking_url || '',
-      exclusive_offer: hotel.exclusive_offer || '',
-      contact_email: hotel.contact_email || '',
-      is_active: hotel.is_active || false,
-      is_featured: hotel.is_featured || false,
-      images: hotel.images || ['', '', ''],
-      amenities: hotel.amenities?.join(', ') || '',
-      best_for: hotel.best_for?.join(', ') || '',
-      seo_keywords: hotel.seo_keywords || '',
-    })
+  if (!auth) {
+    return (
+      <div className="pt-20 min-h-screen flex items-center justify-center bg-stone-50">
+        <div className="bg-white border border-stone-200 p-10 max-w-sm w-full shadow-sm">
+          <h1 className="font-display text-2xl font-bold text-stone-800 mb-6 text-center">Admin Access</h1>
+          <form action="/admin" method="get">
+            <input name="password" type="password" placeholder="Enter admin password" className="w-full border border-stone-300 px-4 py-3 text-sm mb-4 focus:outline-none focus:border-amber-700" />
+            <button type="submit" className="btn-primary w-full py-3">Enter</button>
+          </form>
+          {params.password && <p className="text-red-600 text-sm text-center mt-3">Incorrect password</p>}
+        </div>
+      </div>
+    )
   }
 
-  const handleSave = async () => {
-    if (!editingId) return
-    setSaving(true)
+  const { data: hotels } = await supabase
+    .from('hotels')
+    .select('*')
+    .order('created_at', { ascending: false })
 
-    const payload = {
-      ...editForm,
-      rating: parseFloat(editForm.rating),
-      nightly_rate_chf: parseInt(editForm.nightly_rate_chf),
-      amenities: editForm.amenities.split(',').map((a: string) => a.trim()).filter(Boolean),
-      best_for: editForm.best_for.split(',').map((b: string) => b.trim()).filter(Boolean),
-      images: editForm.images.filter(Boolean),
-    }
+  const { data: leads } = await supabase
+    .from('leads')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(50)
 
-    try {
-      const res = await fetch('/api/hotels/' + editingId, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
+  const { data: keywords } = await supabase
+    .from('hotel_keywords')
+    .select('*, hotels(name)')
+    .order('priority', { ascending: true })
 
-      if (res.ok) {
-        const data = await res.json()
-        setHotels(prev => prev.map(h => h.id === editingId ? { ...h, ...payload } : h))
-        setEditingId(null)
-        setSaveSuccess(true)
-        setTimeout(() => setSaveSuccess(false), 2000)
-      }
-    } finally {
-      setSaving(false)
-    }
-  }
+  const { data: clicks } = await supabase
+    .from('referral_clicks')
+    .select('*')
+    .order('clicked_at', { ascending: false })
+    .limit(100)
 
-  const inputStyle = {
-    width: '100%',
-    background: '#fff',
-    border: '1px solid ' + border,
-    color: text,
-    fontFamily: 'Montserrat, sans-serif',
-    fontSize: '0.75rem',
-    padding: '0.5rem 0.75rem',
-    outline: 'none',
-    boxSizing: 'border-box' as const,
-  }
+  const tab = params.tab || 'hotels'
+  const pw = params.password || ''
 
-  const labelStyle = {
-    display: 'block',
-    fontFamily: 'Montserrat, sans-serif',
-    fontSize: '0.55rem',
-    letterSpacing: '0.15em',
-    textTransform: 'uppercase' as const,
-    color: textMuted,
-    marginBottom: '0.3rem',
-  }
+  const hotelsList = hotels || []
+  const leadsList = leads || []
+  const keywordsList = keywords || []
+  const clicksList = clicks || []
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: 0 }}>{hotels.length} properties</p>
-        <a href="/onboarding" style={{ background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase' as const, padding: '0.5rem 1.25rem', textDecoration: 'none' }}>
-          + Add New Hotel
-        </a>
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '1rem' }}>
-        {hotels.map(hotel => (
-          <div key={hotel.id} style={{ background: '#fff', border: '1px solid ' + border, overflow: 'hidden', boxShadow: '0 2px 12px rgba(201,169,110,0.06)' }}>
-
-            {/* Hotel header row */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', borderBottom: editingId === hotel.id ? '1px solid ' + border : 'none', background: editingId === hotel.id ? bgSection : '#fff' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div>
-                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: text, margin: '0 0 0.2rem', fontWeight: 400 }}>{hotel.name}</p>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, margin: 0 }}>{hotel.location} · {hotel.category} · ★ {hotel.rating} · CHF {hotel.nightly_rate_chf?.toLocaleString()}/night</p>
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, padding: '0.2rem 0.6rem', background: hotel.is_active ? 'rgba(22,163,74,0.1)' : 'rgba(220,38,38,0.1)', color: hotel.is_active ? '#16a34a' : '#dc2626' }}>
-                  {hotel.is_active ? 'Live' : 'Hidden'}
-                </span>
-                {hotel.is_featured && (
-                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, padding: '0.2rem 0.6rem', background: 'rgba(201,169,110,0.15)', color: gold }}>
-                    Featured
-                  </span>
-                )}
-                <button
-                  onClick={() => editingId === hotel.id ? setEditingId(null) : startEdit(hotel)}
-                  style={{ background: editingId === hotel.id ? bgSection : gold, color: editingId === hotel.id ? textMuted : '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' as const, padding: '0.4rem 1rem', border: editingId === hotel.id ? '1px solid ' + border : 'none', cursor: 'pointer' }}
-                >
-                  {editingId === hotel.id ? 'Cancel' : 'Edit'}
-                </button>
-              </div>
-            </div>
-
-            {/* Edit form */}
-            {editingId === hotel.id && editForm && (
-              <div style={{ padding: '1.5rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                  <div>
-                    <label style={labelStyle}>Hotel Name</label>
-                    <input type="text" value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} style={inputStyle} />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Location</label>
-                    <input type="text" value={editForm.location} onChange={e => setEditForm({ ...editForm, location: e.target.value })} style={inputStyle} />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Region</label>
-                    <select value={editForm.region} onChange={e => setEditForm({ ...editForm, region: e.target.value })} style={{ ...inputStyle, background: bg }}>
-                      {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Category</label>
-                    <select value={editForm.category} onChange={e => setEditForm({ ...editForm, category: e.target.value })} style={{ ...inputStyle, background: bg }}>
-                      {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Rating</label>
-                    <input type="number" min="1" max="5" step="0.1" value={editForm.rating} onChange={e => setEditForm({ ...editForm, rating: e.target.value })} style={inputStyle} />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Nightly Rate (CHF)</label>
-                    <input type="number" value={editForm.nightly_rate_chf} onChange={e => setEditForm({ ...editForm, nightly_rate_chf: e.target.value })} style={inputStyle} />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Contact Email</label>
-                    <input type="email" value={editForm.contact_email} onChange={e => setEditForm({ ...editForm, contact_email: e.target.value })} style={inputStyle} />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Direct Booking URL</label>
-                    <input type="url" value={editForm.direct_booking_url} onChange={e => setEditForm({ ...editForm, direct_booking_url: e.target.value })} style={inputStyle} />
-                  </div>
-                </div>
-
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={labelStyle}>Description</label>
-                  <textarea value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })} rows={3} style={{ ...inputStyle, resize: 'none' }} />
-                </div>
-
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={labelStyle}>Exclusive Offer</label>
-                  <input type="text" value={editForm.exclusive_offer} onChange={e => setEditForm({ ...editForm, exclusive_offer: e.target.value })} style={inputStyle} />
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                  <div>
-                    <label style={labelStyle}>Amenities (comma separated)</label>
-                    <input type="text" value={editForm.amenities} onChange={e => setEditForm({ ...editForm, amenities: e.target.value })} style={inputStyle} placeholder="Spa, Pool, Fine Dining" />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Best For (comma separated)</label>
-                    <input type="text" value={editForm.best_for} onChange={e => setEditForm({ ...editForm, best_for: e.target.value })} style={inputStyle} placeholder="Couples, Wellness, Ski" />
-                  </div>
-                </div>
-
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={labelStyle}>SEO Keywords</label>
-                  <input type="text" value={editForm.seo_keywords} onChange={e => setEditForm({ ...editForm, seo_keywords: e.target.value })} style={inputStyle} placeholder="luxury hotel geneva, romantic hotel switzerland" />
-                </div>
-
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={labelStyle}>Images (URLs)</label>
-                  <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '0.5rem' }}>
-                    {[0, 1, 2].map(i => (
-                      <input key={i} type="url" value={editForm.images[i] || ''} onChange={e => {
-                        const newImages = [...editForm.images]
-                        newImages[i] = e.target.value
-                        setEditForm({ ...editForm, images: newImages })
-                      }} style={inputStyle} placeholder={`Image ${i + 1} URL`} />
-                    ))}
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1.5rem' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                    <input type="checkbox" checked={editForm.is_active} onChange={e => setEditForm({ ...editForm, is_active: e.target.checked })} />
-                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text }}>Active (visible on site)</span>
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                    <input type="checkbox" checked={editForm.is_featured} onChange={e => setEditForm({ ...editForm, is_featured: e.target.checked })} />
-                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text }}>Featured (shown on homepage)</span>
-                  </label>
-                </div>
-
-                <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    style={{ background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase' as const, padding: '0.75rem 2rem', border: 'none', cursor: 'pointer' }}
-                  >
-                    {saving ? 'Saving...' : saveSuccess ? '✓ Saved' : 'Save Changes'}
-                  </button>
-                  <button
-                    onClick={() => setEditingId(null)}
-                    style={{ background: 'transparent', color: textMuted, fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', letterSpacing: '0.15em', textTransform: 'uppercase' as const, padding: '0.75rem 1.5rem', border: '1px solid ' + border, cursor: 'pointer' }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            )}
+    <div className="pt-20 min-h-screen bg-stone-50">
+      <div className="max-w-6xl mx-auto px-6 py-10">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="font-display text-3xl font-bold text-stone-800">Admin Dashboard</h1>
+          <div className="flex gap-3">
+            <span className="bg-green-100 text-green-800 text-xs px-3 py-1.5">{hotelsList.length} Hotels</span>
+            <span className="bg-blue-100 text-blue-800 text-xs px-3 py-1.5">{leadsList.length} Leads</span>
+            <span className="bg-amber-100 text-amber-800 text-xs px-3 py-1.5">{keywordsList.length} Keywords</span>
+            <span className="bg-purple-100 text-purple-800 text-xs px-3 py-1.5">{clicksList.length} Clicks</span>
           </div>
-        ))}
+        </div>
+
+        <div className="flex gap-1 mb-6 border-b border-stone-200">
+          {['hotels', 'leads', 'keywords', 'clicks'].map(t => (
+            <a key={t} href={'/admin?password=' + pw + '&tab=' + t}
+              className={'px-6 py-3 text-sm uppercase tracking-wide capitalize transition-colors ' +
+                (tab === t ? 'border-b-2 border-amber-700 text-amber-700 font-semibold' : 'text-stone-500 hover:text-stone-700')}>
+              {t}
+            </a>
+          ))}
+        </div>
+
+        {tab === 'hotels' && (
+          <HotelsTab hotels={hotelsList} password={pw} />
+        )}
+
+        {tab === 'leads' && (
+          <div className="bg-white border border-stone-200 overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-stone-50 border-b border-stone-200">
+                <tr>
+                  {['Name', 'Email', 'Hotel', 'Dates', 'Guests', 'Submitted'].map(h => (
+                    <th key={h} className="text-left px-4 py-3 text-xs uppercase tracking-wide text-stone-500">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {leadsList.map((lead, i) => (
+                  <tr key={lead.id} className={i % 2 === 0 ? 'bg-white' : 'bg-stone-50'}>
+                    <td className="px-4 py-3 font-medium text-stone-800">{lead.name}</td>
+                    <td className="px-4 py-3"><a href={'mailto:' + lead.email} className="text-amber-700 hover:underline">{lead.email}</a></td>
+                    <td className="px-4 py-3 text-stone-600">{lead.hotel_name || '—'}</td>
+                    <td className="px-4 py-3 text-stone-600 text-xs">{lead.check_in ? lead.check_in + ' → ' + lead.check_out : '—'}</td>
+                    <td className="px-4 py-3 text-stone-600">{lead.guests || '—'}</td>
+                    <td className="px-4 py-3 text-stone-500 text-xs">{new Date(lead.created_at).toLocaleDateString('en-GB')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {leadsList.length === 0 && <p className="text-center text-stone-400 py-10 text-sm">No leads yet.</p>}
+          </div>
+        )}
+
+        {tab === 'keywords' && (
+          <KeywordsTab hotels={hotelsList} keywords={keywordsList} password={pw} />
+        )}
+
+        {tab === 'clicks' && (
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <p className="text-stone-600 text-sm">{clicksList.length} referral clicks tracked</p>
+            </div>
+            <div className="bg-white border border-stone-200 overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-stone-50 border-b border-stone-200">
+                  <tr>
+                    {['Hotel', 'Source', 'Medium', 'Campaign', 'Time'].map(h => (
+                      <th key={h} className="text-left px-4 py-3 text-xs uppercase tracking-wide text-stone-500">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {clicksList.map((click: any, i: number) => (
+                    <tr key={click.id} className={i % 2 === 0 ? 'bg-white' : 'bg-stone-50'}>
+                      <td className="px-4 py-3 font-medium text-stone-800">{click.hotel_name || '—'}</td>
+                      <td className="px-4 py-3 text-stone-600">{click.utm_source}</td>
+                      <td className="px-4 py-3">
+                        <span className={`text-xs px-2 py-1 ${click.utm_medium === 'chatgpt_plugin' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
+                          {click.utm_medium}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-stone-600">{click.utm_campaign}</td>
+                      <td className="px-4 py-3 text-stone-500 text-xs">{new Date(click.clicked_at).toLocaleString('en-GB')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {clicksList.length === 0 && <p className="text-center text-stone-400 py-10 text-sm">No clicks yet.</p>}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
