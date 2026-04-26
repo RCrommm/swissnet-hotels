@@ -42,7 +42,11 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
 
   const totalRevenue = filteredBookings.reduce((sum, b) => sum + (b.total_chf || 0), 0)
   const otaSaved = Math.round(totalRevenue * 0.18)
+  const commission = Math.round(totalRevenue * 0.03)
   const aiScore = filteredAI.length > 0 ? Math.min(100, Math.round((filteredAI.filter((a: any) => a.appeared).length / filteredAI.length) * 100)) : 0
+  const aiConversions = filteredBookings.filter((b: any) => b.source === 'chatgpt' || b.source === 'ai').length
+  const totalHotels = competitors.length + 1
+  const rankLabel = `#1 out of ${totalHotels}`
 
   const keywordCounts: Record<string, number> = {}
   filteredAI.forEach((a: any) => {
@@ -58,7 +62,7 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
   const recommendations = [
     filteredLeads.filter((l: any) => l.message?.toLowerCase().includes('spa') || l.message?.toLowerCase().includes('wellness')).length > 0 && 'Spa & wellness enquiries are up — consider featuring a spa package offer',
     filteredAI.some((a: any) => a.keyword?.toLowerCase().includes('couple')) && 'High couples search volume this period — promote your romantic packages',
-    competitors.some((c: any) => c.rating > hotel?.rating) && `Competitor ${competitors.find((c: any) => c.rating > hotel?.rating)?.name} has a higher rating — focus on guest experience`,
+    competitors.some((c: any) => c.rating > hotel?.rating) && `A competitor in ${hotel?.region} has a higher rating — focus on guest experience`,
     filteredClicks.length < filteredViews.length * 0.1 && 'Click-through rate is below 10% — consider updating your exclusive offer',
   ].filter(Boolean).slice(0, 3)
 
@@ -108,20 +112,20 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
           </p>
         </div>
 
-        {/* KPI Row */}
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' as const }}>
-          {kpiCard('Direct Revenue Generated', 'CHF ' + totalRevenue.toLocaleString(), `${filteredBookings.length} confirmed bookings`, true)}
-          {kpiCard('Qualified Leads', String(filteredLeads.length), 'Direct booking enquiries')}
-          {kpiCard('OTA Fees Saved', 'CHF ' + otaSaved.toLocaleString(), '~18% commission avoided', true)}
+        {/* KPI Row 1 */}
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' as const }}>
+          {kpiCard('Revenue Through AI', totalRevenue > 0 ? 'CHF ' + totalRevenue.toLocaleString() : 'CHF 0', `${filteredBookings.length} bookings via SwissNet`, true)}
+          {kpiCard('Conversions via AI', String(aiConversions), 'Direct bookings from AI search')}
+          {kpiCard('Website & Book Clicks', String(filteredClicks.length), filteredViews.length > 0 ? Math.round((filteredClicks.length / filteredViews.length) * 100) + '% click-through rate' : '0% click-through rate')}
           {kpiCard('AI Visibility Score', aiScore + '/100', `${filteredAI.length} queries tracked`, true)}
         </div>
 
-        {/* Secondary stats */}
+        {/* KPI Row 2 */}
         <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' as const }}>
-          {kpiCard('Profile Views', String(filteredViews.length), `Last ${days} days`)}
-          {kpiCard('Book Direct Clicks', String(filteredClicks.length), filteredViews.length > 0 ? Math.round((filteredClicks.length / filteredViews.length) * 100) + '% click rate' : '0% click rate')}
-          {kpiCard('Avg Booking Value', filteredBookings.length > 0 ? 'CHF ' + Math.round(totalRevenue / filteredBookings.length).toLocaleString() : 'CHF 0', 'Per booking')}
-          {kpiCard('Commission %', '3%', 'SwissNet rate')}
+          {kpiCard('Avg Booking Value', filteredBookings.length > 0 ? 'CHF ' + Math.round(totalRevenue / filteredBookings.length).toLocaleString() : 'CHF 0', 'Per confirmed booking')}
+          {kpiCard('OTA Fees Saved', 'CHF ' + otaSaved.toLocaleString(), '~18% commission avoided', true)}
+          {kpiCard('Competitor Ranking', rankLabel, `In ${hotel?.region} on SwissNet`)}
+          {kpiCard('Total Commission', 'CHF ' + commission.toLocaleString(), '3% of AI-driven revenue')}
         </div>
 
         {/* Tabs */}
@@ -142,10 +146,7 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
         {/* OVERVIEW TAB */}
         {activeTab === 'overview' && (
           <div>
-            {/* Charts row */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
-
-              {/* Performance over time */}
               <div style={{ background: card, border: '1px solid ' + border, padding: '1.5rem', boxShadow: '0 2px 16px rgba(201,169,110,0.07)' }}>
                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: text, margin: '0 0 1.25rem', fontWeight: 400 }}>Performance Over Time</p>
                 <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '0.75rem' }}>
@@ -168,7 +169,6 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
                 </div>
               </div>
 
-              {/* Traffic sources */}
               <div style={{ background: card, border: '1px solid ' + border, padding: '1.5rem', boxShadow: '0 2px 16px rgba(201,169,110,0.07)' }}>
                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: text, margin: '0 0 1.25rem', fontWeight: 400 }}>Traffic Sources</p>
                 <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '0.75rem' }}>
@@ -182,15 +182,14 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
                         <div style={{ width: Math.round(((count as number) / filteredViews.length) * 100) + '%', height: '100%', background: gold, borderRadius: '3px' }} />
                       </div>
                     </div>
-                  )) : <p style={{ fontSize: '0.7rem', color: textMuted }}>No data for this period</p>}
+                  )) : (
+                    <p style={{ fontSize: '0.7rem', color: textMuted }}>No traffic data for this period</p>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* Insights row */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
-
-              {/* Top search queries */}
               <div style={{ background: card, border: '1px solid ' + border, padding: '1.5rem', boxShadow: '0 2px 16px rgba(201,169,110,0.07)' }}>
                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: text, margin: '0 0 1.25rem', fontWeight: 400 }}>Top Search Queries</p>
                 {topKeywords.length > 0 ? topKeywords.map(([keyword, count], i) => (
@@ -200,19 +199,16 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
                     <span style={{ fontSize: '0.65rem', color: gold, fontWeight: 600, background: 'rgba(201,169,110,0.1)', padding: '0.2rem 0.5rem' }}>{count}×</span>
                   </div>
                 )) : (
-                  <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '0.75rem' }}>
-                    {['Best luxury hotel Zermatt Matterhorn', 'Romantic spa hotel Switzerland', 'Family ski resort St Moritz'].map((q, i) => (
-                      <div key={q} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', paddingBottom: '0.75rem', borderBottom: i < 2 ? '1px solid ' + border : 'none' }}>
-                        <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', color: gold, minWidth: '20px', textAlign: 'center' as const }}>#{i + 1}</span>
-                        <span style={{ fontSize: '0.7rem', color: textMuted, flex: 1 }}>{q}</span>
-                        <span style={{ fontSize: '0.65rem', color: textMuted, background: bgSection, padding: '0.2rem 0.5rem' }}>sample</span>
-                      </div>
-                    ))}
-                  </div>
+                  ['Best luxury hotel Zermatt Matterhorn', 'Romantic spa hotel Switzerland', 'Family ski resort Zermatt'].map((q, i) => (
+                    <div key={q} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', paddingBottom: '0.75rem', borderBottom: i < 2 ? '1px solid ' + border : 'none' }}>
+                      <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', color: gold, minWidth: '20px', textAlign: 'center' as const }}>#{i + 1}</span>
+                      <span style={{ fontSize: '0.7rem', color: textMuted, flex: 1 }}>{q}</span>
+                      <span style={{ fontSize: '0.65rem', color: textMuted, background: bgSection, padding: '0.2rem 0.5rem' }}>sample</span>
+                    </div>
+                  ))
                 )}
               </div>
 
-              {/* Smart recommendations */}
               <div style={{ background: card, border: '1px solid ' + border, padding: '1.5rem', boxShadow: '0 2px 16px rgba(201,169,110,0.07)' }}>
                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: text, margin: '0 0 1.25rem', fontWeight: 400 }}>Smart Recommendations</p>
                 {recommendations.length > 0 ? recommendations.map((rec, i) => (
@@ -222,24 +218,21 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
                   </div>
                 )) : (
                   <>
-                    <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', padding: '0.875rem', background: 'rgba(201,169,110,0.06)', borderLeft: '2px solid ' + gold }}>
-                      <span style={{ color: gold, fontSize: '0.8rem' }}>✦</span>
-                      <p style={{ fontSize: '0.7rem', color: text, margin: 0, lineHeight: 1.6 }}>Add a spa package for February demand — wellness searches are peaking</p>
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', padding: '0.875rem', background: 'rgba(201,169,110,0.06)', borderLeft: '2px solid ' + gold }}>
-                      <span style={{ color: gold, fontSize: '0.8rem' }}>✦</span>
-                      <p style={{ fontSize: '0.7rem', color: text, margin: 0, lineHeight: 1.6 }}>Couples searches are up 24% this week — consider a romantic package</p>
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.75rem', padding: '0.875rem', background: 'rgba(201,169,110,0.06)', borderLeft: '2px solid ' + gold }}>
-                      <span style={{ color: gold, fontSize: '0.8rem' }}>✦</span>
-                      <p style={{ fontSize: '0.7rem', color: text, margin: 0, lineHeight: 1.6 }}>Update your exclusive offer — it hasn't changed in 30+ days</p>
-                    </div>
+                    {[
+                      'Add a spa package for February demand — wellness searches are peaking',
+                      'Couples searches are up 24% this week — consider a romantic package',
+                      'Update your exclusive offer — it hasn\'t changed in 30+ days',
+                    ].map((rec, i) => (
+                      <div key={i} style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', padding: '0.875rem', background: 'rgba(201,169,110,0.06)', borderLeft: '2px solid ' + gold }}>
+                        <span style={{ color: gold, fontSize: '0.8rem', flexShrink: 0 }}>✦</span>
+                        <p style={{ fontSize: '0.7rem', color: text, margin: 0, lineHeight: 1.6 }}>{rec}</p>
+                      </div>
+                    ))}
                   </>
                 )}
               </div>
             </div>
 
-            {/* Recent leads */}
             <div style={{ background: card, border: '1px solid ' + border, padding: '1.5rem', boxShadow: '0 2px 16px rgba(201,169,110,0.07)' }}>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: text, margin: '0 0 1.25rem', fontWeight: 400 }}>Recent Leads</p>
               <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontSize: '0.7rem' }}>
@@ -283,7 +276,7 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
                 <div style={{ width: '100%', height: '6px', background: bgSection, borderRadius: '3px', marginTop: '1.5rem' }}>
                   <div style={{ width: aiScore + '%', height: '100%', background: gold, borderRadius: '3px' }} />
                 </div>
-                <p style={{ fontSize: '0.6rem', color: textMuted, marginTop: '0.75rem' }}>{filteredAI.filter((a: any) => a.appeared).length} of {filteredAI.length} AI queries</p>
+                <p style={{ fontSize: '0.6rem', color: textMuted, marginTop: '0.75rem' }}>{filteredAI.filter((a: any) => a.appeared).length} of {filteredAI.length} AI queries matched</p>
               </div>
             </div>
             <div style={{ background: card, border: '1px solid ' + border, padding: '1.5rem' }}>
@@ -325,7 +318,7 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
             <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: text, margin: '0 0 1rem' }}>All Leads</p>
             <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontSize: '0.7rem' }}>
               <thead>
-                <tr>{['Name', 'Email', 'Hotel', 'Check In', 'Check Out', 'Guests', 'Message', 'Est. Value', 'Received'].map(h => <th key={h} style={{ textAlign: 'left' as const, padding: '0.6rem 0.75rem', fontSize: '0.55rem', letterSpacing: '0.15em', textTransform: 'uppercase' as const, color: textMuted, borderBottom: '1px solid ' + border }}>{h}</th>)}</tr>
+                <tr>{['Name', 'Email', 'Check In', 'Check Out', 'Guests', 'Est. Value', 'Received'].map(h => <th key={h} style={{ textAlign: 'left' as const, padding: '0.6rem 0.75rem', fontSize: '0.55rem', letterSpacing: '0.15em', textTransform: 'uppercase' as const, color: textMuted, borderBottom: '1px solid ' + border }}>{h}</th>)}</tr>
               </thead>
               <tbody>
                 {filteredLeads.map((lead: any, i: number) => {
@@ -335,11 +328,9 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
                     <tr key={lead.id} style={{ background: i % 2 === 0 ? card : bgSection }}>
                       <td style={{ padding: '0.75rem', fontWeight: 500, color: text }}>{lead.name}</td>
                       <td style={{ padding: '0.75rem' }}><a href={'mailto:' + lead.email} style={{ color: gold, textDecoration: 'none' }}>{lead.email}</a></td>
-                      <td style={{ padding: '0.75rem', color: textMuted }}>{lead.hotel_name || '—'}</td>
                       <td style={{ padding: '0.75rem', color: textMuted, fontSize: '0.65rem' }}>{lead.check_in || '—'}</td>
                       <td style={{ padding: '0.75rem', color: textMuted, fontSize: '0.65rem' }}>{lead.check_out || '—'}</td>
                       <td style={{ padding: '0.75rem', color: textMuted }}>{lead.guests || '—'}</td>
-                      <td style={{ padding: '0.75rem', color: textMuted, maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{lead.message || '—'}</td>
                       <td style={{ padding: '0.75rem', color: gold, fontWeight: 600 }}>{estValue > 0 ? 'CHF ' + estValue.toLocaleString() : '—'}</td>
                       <td style={{ padding: '0.75rem', color: textMuted, fontSize: '0.65rem' }}>{new Date(lead.created_at).toLocaleDateString('en-GB')}</td>
                     </tr>
@@ -366,7 +357,7 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
                   <td style={{ padding: '0.75rem', color: text }}>★ {hotel?.rating}</td>
                   <td style={{ padding: '0.75rem', color: text }}>CHF {hotel?.nightly_rate_chf?.toLocaleString()}</td>
                   <td style={{ padding: '0.75rem' }}><span style={{ background: 'rgba(201,169,110,0.15)', color: gold, fontSize: '0.6rem', padding: '0.2rem 0.5rem' }}>Baseline</span></td>
-                  <td style={{ padding: '0.75rem', color: gold, fontWeight: 600 }}>#1</td>
+                  <td style={{ padding: '0.75rem', color: gold, fontWeight: 600 }}>#1 of {totalHotels}</td>
                 </tr>
                 {competitors.map((c: any, i: number) => (
                   <tr key={c.name} style={{ background: i % 2 === 0 ? card : bgSection }}>
@@ -379,12 +370,12 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
                         {c.nightly_rate_chf > hotel?.nightly_rate_chf ? '↓ cheaper than you' : '↑ more expensive'}
                       </span>
                     </td>
-                    <td style={{ padding: '0.75rem', color: textMuted }}>#{i + 2}</td>
+                    <td style={{ padding: '0.75rem', color: textMuted }}>#{i + 2} of {totalHotels}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            {competitors.length === 0 && <p style={{ fontSize: '0.7rem', color: textMuted, marginTop: '1rem' }}>No competitors in this region</p>}
+            {competitors.length === 0 && <p style={{ fontSize: '0.7rem', color: textMuted, marginTop: '1rem' }}>No competitors in this region yet</p>}
           </div>
         )}
 
@@ -409,7 +400,7 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
             </div>
             <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(201,169,110,0.06)', borderLeft: '2px solid ' + gold }}>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text, margin: 0 }}>
-                To update your hotel details, contact <a href="mailto:hotels@swissnethostels.com" style={{ color: gold, textDecoration: 'none' }}>hotels@swissnethostels.com</a> or ask your SwissNet account manager.
+                To update your hotel details, contact <a href="mailto:hotels@swissnethostels.com" style={{ color: gold, textDecoration: 'none' }}>hotels@swissnethostels.com</a>
               </p>
             </div>
           </div>
