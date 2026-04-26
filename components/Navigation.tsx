@@ -98,7 +98,7 @@ export default function Navigation() {
           </div>
 
           {/* Pricing */}
-          <a href="/#contact" style={{
+          <a href="/#pricing" style={{
             fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 500,
             letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', textDecoration: 'none', transition: 'color 0.2s',
           }}

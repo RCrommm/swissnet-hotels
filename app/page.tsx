@@ -73,10 +73,10 @@ export default async function HomePage() {
           </p>
         </div>
         <img
-  src="/images/chatgpt-preview.webp"
-  alt="SwissNet AI in ChatGPT"
-  style={{ width: '100%', borderRadius: '12px', boxShadow: '0 24px 80px rgba(0,0,0,0.3)' }}
-/>
+          src="/images/chatgpt-preview.webp"
+          alt="SwissNet AI in ChatGPT"
+          style={{ width: '100%', borderRadius: '12px', boxShadow: '0 24px 80px rgba(0,0,0,0.3)' }}
+        />
         <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
           <a href="#contact" style={{ display: 'inline-block', background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.875rem 2rem', textDecoration: 'none' }}>Get Your Hotel Listed →</a>
         </div>
@@ -148,10 +148,11 @@ export default async function HomePage() {
             {/* Visibility Plan */}
             <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid ' + border, padding: '2.5rem' }}>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: textMuted, margin: '0 0 1rem' }}>Visibility Plan</p>
-              <div style={{ marginBottom: '1.5rem' }}>
+              <div style={{ marginBottom: '0.5rem' }}>
                 <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 300, color: text }}>CHF 499</span>
                 <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted }}> / month</span>
               </div>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: gold, margin: '0 0 1.5rem', letterSpacing: '0.05em' }}>+ 3% commission on SwissNet bookings</p>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted, lineHeight: 1.7, marginBottom: '2rem' }}>
                 Perfect for hotels wanting a strong AI presence and performance tracking.
               </p>
@@ -173,7 +174,7 @@ export default async function HomePage() {
                   </div>
                 ))}
               </div>
-              <a href="#contact" style={{ display: 'block', textAlign: 'center', border: '1px solid ' + border, color: text, fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.875rem', textDecoration: 'none', transition: 'all 0.2s' }}>
+              <a href="#contact" style={{ display: 'block', textAlign: 'center', border: '1px solid ' + border, color: text, fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.875rem', textDecoration: 'none' }}>
                 Get Started
               </a>
             </div>
@@ -184,10 +185,11 @@ export default async function HomePage() {
                 Most Popular
               </div>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(42,18,8,0.5)', margin: '0 0 1rem' }}>Growth Plan</p>
-              <div style={{ marginBottom: '1.5rem' }}>
+              <div style={{ marginBottom: '0.5rem' }}>
                 <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 300, color: '#2A1208' }}>CHF 999</span>
                 <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(42,18,8,0.5)' }}> / month</span>
               </div>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: gold, margin: '0 0 1.5rem', letterSpacing: '0.05em' }}>+ 3% commission on SwissNet bookings</p>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(42,18,8,0.6)', lineHeight: 1.7, marginBottom: '2rem' }}>
                 For hotels wanting active growth, priority placement, and maximum AI visibility.
               </p>
@@ -214,13 +216,6 @@ export default async function HomePage() {
                 Get Started
               </a>
             </div>
-          </div>
-
-          {/* Commission note */}
-          <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted, lineHeight: 1.8 }}>
-              Both plans include a <span style={{ color: gold, fontWeight: 600 }}>3% commission</span> on bookings tracked through SwissNet Hotels — whether from our website or clearly referenced by AI agents.
-            </p>
           </div>
         </div>
       </section>
