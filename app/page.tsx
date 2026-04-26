@@ -74,7 +74,11 @@ export default async function HomePage() {
           </p>
         </div>
 
-        <AISearchPreview />
+        <img 
+  src="/images/chatgpt-preview.webp" 
+  alt="SwissNet AI in ChatGPT" 
+  style={{ width: '100%', borderRadius: '12px', boxShadow: '0 24px 80px rgba(0,0,0,0.3)' }}
+/>
 
         <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
           <a href="#contact" style={{ display: 'inline-block', background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.875rem 2rem', textDecoration: 'none' }}>Get Your Hotel Listed →</a>
