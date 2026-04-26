@@ -2,7 +2,6 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import HotelCard from '@/components/HotelCard'
 import ContactForm from '@/components/ContactForm'
-import RegionGrid from '@/components/RegionGrid'
 import Navigation from '@/components/Navigation'
 
 export default async function HomePage() {
@@ -59,7 +58,7 @@ export default async function HomePage() {
           {[
             { n: '15+', label: 'Partner Hotels' },
             { n: '10', label: 'Swiss Regions' },
-            { n: '0%', label: 'OTA Commission' },
+            { n: '15%+', label: 'Saved vs OTAs' },
             { n: 'AI', label: 'Powered Discovery' },
           ].map(s => (
             <div key={s.label}>
@@ -113,12 +112,37 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Regions */}
+      {/* Official Partners */}
       <section style={{ maxWidth: '1200px', margin: '0 auto', padding: '6rem 2rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-          <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 300, color: text, margin: 0 }}>Explore by Region</h2>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '1rem' }}>
+            <span style={{ width: '30px', height: '1px', background: gold, display: 'inline-block' }} />
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.3em', textTransform: 'uppercase', color: gold, margin: 0 }}>Trusted By</p>
+            <span style={{ width: '30px', height: '1px', background: gold, display: 'inline-block' }} />
+          </div>
+          <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 300, color: text, margin: '0 0 1rem' }}>Official Partners</h2>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: textMuted, fontWeight: 300 }}>Switzerland's finest luxury hotels trust SwissNet AI to drive direct bookings.</p>
         </div>
-        <RegionGrid />
+
+        {/* Partner logos grid — add logos here */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.5rem' }}>
+          {[1, 2, 3, 4, 5, 6].map(i => (
+            <div key={i} style={{
+              height: '100px',
+              border: '1px solid ' + border,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'rgba(255,255,255,0.04)',
+            }}>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.2)', margin: 0 }}>Partner Logo</p>
+            </div>
+          ))}
+        </div>
+
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.2)', textAlign: 'center', marginTop: '1.5rem', letterSpacing: '0.1em' }}>
+          Interested in joining? <a href="#contact" style={{ color: gold, textDecoration: 'none' }}>Get in touch →</a>
+        </p>
       </section>
 
       {/* Contact */}
