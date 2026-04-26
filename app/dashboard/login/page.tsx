@@ -27,40 +27,65 @@ export default function LoginPage() {
   }
 
   const gold = '#C9A84C'
-  const bg = '#F8F5EF'
-  const border = 'rgba(201,169,110,0.25)'
-  const text = '#2A2118'
-  const textMuted = 'rgba(42,33,24,0.45)'
+  const bg = '#492816'
+  const bgLight = '#3D2010'
+  const border = 'rgba(201,169,110,0.3)'
+  const text = '#FFFFFF'
+  const textMuted = 'rgba(255,255,255,0.6)'
 
   return (
     <div style={{ minHeight: '100vh', background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
-      <div style={{ width: '100%', maxWidth: '400px' }}>
+      <div style={{ width: '100%', maxWidth: '420px' }}>
+
         <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', color: gold, margin: '0 0 0.5rem' }}>
-            SwissNet <span style={{ fontStyle: 'italic', color: text }}>Hotels</span>
-          </p>
+          <a href="/" style={{ textDecoration: 'none' }}>
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', color: gold, margin: '0 0 0.5rem' }}>
+              SwissNet <span style={{ fontStyle: 'italic', color: text }}>Hotels</span>
+            </p>
+          </a>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: textMuted, margin: 0 }}>
             Hotel Partner Portal
           </p>
         </div>
 
-        <div style={{ border: '1px solid ' + border, padding: '2.5rem', background: '#fff', boxShadow: '0 4px 24px rgba(201,169,110,0.08)' }}>
+        <div style={{ border: '1px solid ' + border, padding: '2.5rem', background: bgLight }}>
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <div>
-              <label style={{ display: 'block', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: textMuted, marginBottom: '0.5rem' }}>Email</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
-                style={{ width: '100%', background: bg, border: '1px solid ' + border, color: text, fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', padding: '0.75rem 1rem', outline: 'none', boxSizing: 'border-box' as const }}
-                placeholder="you@hotel.com" />
+              <label style={{ display: 'block', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: textMuted, marginBottom: '0.5rem' }}>
+                Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid ' + border, color: text, fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', padding: '0.75rem 1rem', outline: 'none', boxSizing: 'border-box' as const }}
+                placeholder="you@hotel.com"
+              />
             </div>
             <div>
-              <label style={{ display: 'block', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: textMuted, marginBottom: '0.5rem' }}>Password</label>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} required
-                style={{ width: '100%', background: bg, border: '1px solid ' + border, color: text, fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', padding: '0.75rem 1rem', outline: 'none', boxSizing: 'border-box' as const }}
-                placeholder="••••••••" />
+              <label style={{ display: 'block', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: textMuted, marginBottom: '0.5rem' }}>
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                style={{ width: '100%', background: 'rgba(255,255,255,0.06)', border: '1px solid ' + border, color: text, fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', padding: '0.75rem 1rem', outline: 'none', boxSizing: 'border-box' as const }}
+                placeholder="••••••••"
+              />
             </div>
-            {error && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: '#dc2626', margin: 0 }}>{error}</p>}
-            <button type="submit" disabled={loading}
-              style={{ background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.875rem', border: 'none', cursor: 'pointer', marginTop: '0.5rem' }}>
+
+            {error && (
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: '#fca5a5', margin: 0 }}>{error}</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              style={{ background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.875rem', border: 'none', cursor: 'pointer', marginTop: '0.5rem', transition: 'background 0.2s' }}
+            >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
