@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import ContactForm from '@/components/ContactForm'
 import Navigation from '@/components/Navigation'
-import AISearchPreview from '@/components/AISearchPreview'
 
 export default async function HomePage() {
   const gold = '#C9A84C'
