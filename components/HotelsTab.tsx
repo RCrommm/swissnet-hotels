@@ -10,7 +10,7 @@ interface Props {
 }
 
 export default function HotelsTab({ hotels: initialHotels, password }: Props) {
-  const [hotels, setHotels] = useState(initialHotels)
+  const [hotels, setHotels] = useState<any[]>(initialHotels || [])
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState<any>(null)
   const [saving, setSaving] = useState(false)
@@ -38,7 +38,7 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
       contact_email: hotel.contact_email || '',
       is_active: hotel.is_active || false,
       is_featured: hotel.is_featured || false,
-      images: hotel.images || ['', '', ''],
+      images: hotel.images?.length ? hotel.images : ['', '', ''],
       amenities: hotel.amenities?.join(', ') || '',
       best_for: hotel.best_for?.join(', ') || '',
       seo_keywords: hotel.seo_keywords || '',
@@ -46,7 +46,7 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
   }
 
   const handleSave = async () => {
-    if (!editingId) return
+    if (!editingId || !editForm) return
     setSaving(true)
 
     const payload = {
@@ -66,7 +66,6 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
       })
 
       if (res.ok) {
-        const data = await res.json()
         setHotels(prev => prev.map(h => h.id === editingId ? { ...h, ...payload } : h))
         setEditingId(null)
         setSaveSuccess(true)
@@ -77,7 +76,7 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
     }
   }
 
-  const inputStyle = {
+  const inputStyle: React.CSSProperties = {
     width: '100%',
     background: '#fff',
     border: '1px solid ' + border,
@@ -86,15 +85,15 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
     fontSize: '0.75rem',
     padding: '0.5rem 0.75rem',
     outline: 'none',
-    boxSizing: 'border-box' as const,
+    boxSizing: 'border-box',
   }
 
-  const labelStyle = {
+  const labelStyle: React.CSSProperties = {
     display: 'block',
     fontFamily: 'Montserrat, sans-serif',
     fontSize: '0.55rem',
     letterSpacing: '0.15em',
-    textTransform: 'uppercase' as const,
+    textTransform: 'uppercase',
     color: textMuted,
     marginBottom: '0.3rem',
   }
@@ -103,22 +102,22 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: 0 }}>{hotels.length} properties</p>
-        <a href="/onboarding" style={{ background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase' as const, padding: '0.5rem 1.25rem', textDecoration: 'none' }}>
+        <a href="/onboarding" style={{ background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0.5rem 1.25rem', textDecoration: 'none' }}>
           + Add New Hotel
         </a>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '1rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         {hotels.map(hotel => (
           <div key={hotel.id} style={{ background: '#fff', border: '1px solid ' + border, overflow: 'hidden', boxShadow: '0 2px 12px rgba(201,169,110,0.06)' }}>
 
-            {/* Hotel header row */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', borderBottom: editingId === hotel.id ? '1px solid ' + border : 'none', background: editingId === hotel.id ? bgSection : '#fff' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div>
-                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: text, margin: '0 0 0.2rem', fontWeight: 400 }}>{hotel.name}</p>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, margin: 0 }}>{hotel.location} · {hotel.category} · ★ {hotel.rating} · CHF {hotel.nightly_rate_chf?.toLocaleString()}/night</p>
-                </div>
+            {/* Hotel header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', background: editingId === hotel.id ? bgSection : '#fff', borderBottom: editingId === hotel.id ? '1px solid ' + border : 'none' }}>
+              <div>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: text, margin: '0 0 0.2rem', fontWeight: 400 }}>{hotel.name}</p>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, margin: 0 }}>
+                  {hotel.location} · {hotel.category} · ★ {hotel.rating} · CHF {hotel.nightly_rate_chf?.toLocaleString()}/night
+                </p>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, padding: '0.2rem 0.6rem', background: hotel.is_active ? 'rgba(22,163,74,0.1)' : 'rgba(220,38,38,0.1)', color: hotel.is_active ? '#16a34a' : '#dc2626' }}>
@@ -131,7 +130,7 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
                 )}
                 <button
                   onClick={() => editingId === hotel.id ? setEditingId(null) : startEdit(hotel)}
-                  style={{ background: editingId === hotel.id ? bgSection : gold, color: editingId === hotel.id ? textMuted : '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' as const, padding: '0.4rem 1rem', border: editingId === hotel.id ? '1px solid ' + border : 'none', cursor: 'pointer' }}
+                  style={{ background: editingId === hotel.id ? 'transparent' : gold, color: editingId === hotel.id ? textMuted : '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.4rem 1rem', border: editingId === hotel.id ? '1px solid ' + border : 'none', cursor: 'pointer' }}
                 >
                   {editingId === hotel.id ? 'Cancel' : 'Edit'}
                 </button>
@@ -153,17 +152,19 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
                   <div>
                     <label style={labelStyle}>Region</label>
                     <select value={editForm.region} onChange={e => setEditForm({ ...editForm, region: e.target.value })} style={{ ...inputStyle, background: bg }}>
+                      <option value="">Select region</option>
                       {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
                     </select>
                   </div>
                   <div>
                     <label style={labelStyle}>Category</label>
                     <select value={editForm.category} onChange={e => setEditForm({ ...editForm, category: e.target.value })} style={{ ...inputStyle, background: bg }}>
+                      <option value="">Select category</option>
                       {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label style={labelStyle}>Rating</label>
+                    <label style={labelStyle}>Rating (1-5)</label>
                     <input type="number" min="1" max="5" step="0.1" value={editForm.rating} onChange={e => setEditForm({ ...editForm, rating: e.target.value })} style={inputStyle} />
                   </div>
                   <div>
@@ -187,7 +188,7 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
 
                 <div style={{ marginBottom: '1rem' }}>
                   <label style={labelStyle}>Exclusive Offer</label>
-                  <input type="text" value={editForm.exclusive_offer} onChange={e => setEditForm({ ...editForm, exclusive_offer: e.target.value })} style={inputStyle} />
+                  <input type="text" value={editForm.exclusive_offer} onChange={e => setEditForm({ ...editForm, exclusive_offer: e.target.value })} style={inputStyle} placeholder="3-night stay includes spa credit" />
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
@@ -206,9 +207,9 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
                   <input type="text" value={editForm.seo_keywords} onChange={e => setEditForm({ ...editForm, seo_keywords: e.target.value })} style={inputStyle} placeholder="luxury hotel geneva, romantic hotel switzerland" />
                 </div>
 
-                <div style={{ marginBottom: '1rem' }}>
+                <div style={{ marginBottom: '1.5rem' }}>
                   <label style={labelStyle}>Images (URLs)</label>
-                  <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     {[0, 1, 2].map(i => (
                       <input key={i} type="url" value={editForm.images[i] || ''} onChange={e => {
                         const newImages = [...editForm.images]
@@ -219,7 +220,7 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', marginBottom: '1.5rem' }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                     <input type="checkbox" checked={editForm.is_active} onChange={e => setEditForm({ ...editForm, is_active: e.target.checked })} />
                     <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text }}>Active (visible on site)</span>
@@ -231,17 +232,10 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    style={{ background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase' as const, padding: '0.75rem 2rem', border: 'none', cursor: 'pointer' }}
-                  >
+                  <button onClick={handleSave} disabled={saving} style={{ background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0.75rem 2rem', border: 'none', cursor: 'pointer' }}>
                     {saving ? 'Saving...' : saveSuccess ? '✓ Saved' : 'Save Changes'}
                   </button>
-                  <button
-                    onClick={() => setEditingId(null)}
-                    style={{ background: 'transparent', color: textMuted, fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', letterSpacing: '0.15em', textTransform: 'uppercase' as const, padding: '0.75rem 1.5rem', border: '1px solid ' + border, cursor: 'pointer' }}
-                  >
+                  <button onClick={() => setEditingId(null)} style={{ background: 'transparent', color: textMuted, fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0.75rem 1.5rem', border: '1px solid ' + border, cursor: 'pointer' }}>
                     Cancel
                   </button>
                 </div>
