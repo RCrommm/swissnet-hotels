@@ -14,6 +14,14 @@ export default function KeywordsTab({ hotels, keywords: initialKeywords, passwor
   const [priority, setPriority] = useState('1')
   const [loading, setLoading] = useState(false)
   const [filterHotel, setFilterHotel] = useState('')
+  const [success, setSuccess] = useState(false)
+
+  const gold = '#C9A84C'
+  const border = 'rgba(201,169,110,0.2)'
+  const text = '#2A1A0E'
+  const textMuted = 'rgba(42,26,14,0.45)'
+  const bg = '#F8F5EF'
+  const bgSection = '#F2EAE0'
 
   const filteredKeywords = filterHotel
     ? keywords.filter(k => k.hotel_id === filterHotel)
@@ -33,6 +41,8 @@ export default function KeywordsTab({ hotels, keywords: initialKeywords, passwor
         const hotel = hotels.find(h => h.id === selectedHotel)
         setKeywords(prev => [...prev, { ...data.keyword, hotels: { name: hotel?.name } }])
         setNewKeyword('')
+        setSuccess(true)
+        setTimeout(() => setSuccess(false), 2000)
       }
     } finally {
       setLoading(false)
@@ -44,89 +54,140 @@ export default function KeywordsTab({ hotels, keywords: initialKeywords, passwor
     setKeywords(prev => prev.filter(k => k.id !== id))
   }
 
+  const inputStyle = {
+    background: '#fff',
+    border: '1px solid ' + border,
+    color: text,
+    fontFamily: 'Montserrat, sans-serif',
+    fontSize: '0.75rem',
+    padding: '0.65rem 0.875rem',
+    outline: 'none',
+    width: '100%',
+    boxSizing: 'border-box' as const,
+  }
+
+  const labelStyle = {
+    display: 'block',
+    fontFamily: 'Montserrat, sans-serif',
+    fontSize: '0.55rem',
+    letterSpacing: '0.15em',
+    textTransform: 'uppercase' as const,
+    color: textMuted,
+    marginBottom: '0.4rem',
+  }
+
   return (
     <div>
       {/* Add keyword form */}
-      <div className="bg-white border border-stone-200 p-6 mb-6">
-        <h3 className="text-sm font-semibold text-stone-800 uppercase tracking-wide mb-4">Add Keyword</h3>
-        <div className="flex gap-3 flex-wrap">
-          <select
-            value={selectedHotel}
-            onChange={e => setSelectedHotel(e.target.value)}
-            className="border border-stone-300 px-3 py-2 text-sm focus:outline-none focus:border-amber-700 bg-white min-w-[200px]"
-          >
-            <option value="">Select hotel</option>
-            {hotels.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
-          </select>
-          <input
-            type="text"
-            value={newKeyword}
-            onChange={e => setNewKeyword(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleAdd()}
-            placeholder="luxury ski hotel zermatt"
-            className="border border-stone-300 px-3 py-2 text-sm focus:outline-none focus:border-amber-700 flex-1 min-w-[200px]"
-          />
-          <select
-            value={priority}
-            onChange={e => setPriority(e.target.value)}
-            className="border border-stone-300 px-3 py-2 text-sm focus:outline-none focus:border-amber-700 bg-white"
-          >
-            <option value="1">Priority 1 (highest)</option>
-            <option value="2">Priority 2</option>
-            <option value="3">Priority 3</option>
-          </select>
+      <div style={{ background: '#fff', border: '1px solid ' + border, padding: '1.75rem', marginBottom: '1.5rem', boxShadow: '0 2px 16px rgba(201,169,110,0.07)' }}>
+        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', color: text, margin: '0 0 1.25rem', fontWeight: 400 }}>Add Keyword</p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 1fr auto', gap: '0.875rem', alignItems: 'flex-end' }}>
+          <div>
+            <label style={labelStyle}>Hotel</label>
+            <select value={selectedHotel} onChange={e => setSelectedHotel(e.target.value)} style={{ ...inputStyle, background: bg }}>
+              <option value="">Select hotel</option>
+              {hotels.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
+            </select>
+          </div>
+
+          <div>
+            <label style={labelStyle}>Keyword Phrase</label>
+            <input
+              type="text"
+              value={newKeyword}
+              onChange={e => setNewKeyword(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleAdd()}
+              placeholder="e.g. best luxury ski hotel zermatt february"
+              style={inputStyle}
+            />
+          </div>
+
+          <div>
+            <label style={labelStyle}>Priority</label>
+            <select value={priority} onChange={e => setPriority(e.target.value)} style={{ ...inputStyle, background: bg }}>
+              <option value="1">Priority 1 — Highest</option>
+              <option value="2">Priority 2</option>
+              <option value="3">Priority 3</option>
+            </select>
+          </div>
+
           <button
             onClick={handleAdd}
             disabled={loading || !selectedHotel || !newKeyword}
-            className="btn-primary text-xs py-2 px-6"
+            style={{
+              background: success ? '#16a34a' : gold,
+              color: '#fff',
+              fontFamily: 'Montserrat, sans-serif',
+              fontSize: '0.65rem',
+              fontWeight: 600,
+              letterSpacing: '0.15em',
+              textTransform: 'uppercase' as const,
+              padding: '0.65rem 1.25rem',
+              border: 'none',
+              cursor: loading || !selectedHotel || !newKeyword ? 'not-allowed' : 'pointer',
+              opacity: !selectedHotel || !newKeyword ? 0.5 : 1,
+              whiteSpace: 'nowrap' as const,
+              transition: 'background 0.2s',
+            }}
           >
-            {loading ? 'Adding...' : 'Add Keyword'}
+            {loading ? 'Adding...' : success ? '✓ Added' : 'Add Keyword'}
           </button>
         </div>
-        <p className="text-xs text-stone-400 mt-3">
-          Priority 1 = highest boost in AI search results. Use exact phrases people type into ChatGPT.
-        </p>
+
+        <div style={{ marginTop: '1rem', padding: '0.875rem', background: bgSection, borderLeft: '2px solid ' + gold }}>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: 0, lineHeight: 1.6 }}>
+            <span style={{ color: gold, fontWeight: 600 }}>Priority 1</span> = highest boost in AI search results. Use exact phrases people type into ChatGPT — e.g. <em>"best romantic hotel zermatt matterhorn view"</em>. The more specific, the better.
+          </p>
+        </div>
       </div>
 
-      {/* Filter */}
-      <div className="flex gap-3 mb-4 items-center">
-        <p className="text-stone-600 text-sm">{filteredKeywords.length} keywords</p>
-        <select
-          value={filterHotel}
-          onChange={e => setFilterHotel(e.target.value)}
-          className="border border-stone-300 px-3 py-2 text-sm focus:outline-none focus:border-amber-700 bg-white ml-auto"
-        >
-          <option value="">All hotels</option>
-          {hotels.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
-        </select>
+      {/* Filter + count */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: 0 }}>
+          {filteredKeywords.length} keyword{filteredKeywords.length !== 1 ? 's' : ''}
+          {filterHotel && ` for ${hotels.find(h => h.id === filterHotel)?.name}`}
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <label style={{ ...labelStyle, margin: 0 }}>Filter by hotel</label>
+          <select value={filterHotel} onChange={e => setFilterHotel(e.target.value)} style={{ background: '#fff', border: '1px solid ' + border, color: text, fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', padding: '0.4rem 0.75rem', outline: 'none' }}>
+            <option value="">All hotels</option>
+            {hotels.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
+          </select>
+        </div>
       </div>
 
       {/* Keywords table */}
-      <div className="bg-white border border-stone-200 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-stone-50 border-b border-stone-200">
-            <tr>
+      <div style={{ background: '#fff', border: '1px solid ' + border, overflow: 'hidden', boxShadow: '0 2px 16px rgba(201,169,110,0.07)' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontSize: '0.7rem' }}>
+          <thead>
+            <tr style={{ background: bgSection }}>
               {['Keyword', 'Hotel', 'Priority', 'Added', 'Action'].map(h => (
-                <th key={h} className="text-left px-4 py-3 text-xs uppercase tracking-wide text-stone-500">{h}</th>
+                <th key={h} style={{ textAlign: 'left' as const, padding: '0.75rem 1rem', fontSize: '0.55rem', letterSpacing: '0.15em', textTransform: 'uppercase' as const, color: textMuted, borderBottom: '1px solid ' + border }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {filteredKeywords.map((kw, i) => (
-              <tr key={kw.id} className={i % 2 === 0 ? 'bg-white' : 'bg-stone-50'}>
-                <td className="px-4 py-3 font-medium text-stone-800">{kw.keyword}</td>
-                <td className="px-4 py-3 text-stone-600">{kw.hotels?.name || '—'}</td>
-                <td className="px-4 py-3">
-                  <span className={`text-xs px-2 py-1 ${kw.priority === 1 ? 'bg-amber-100 text-amber-800' : kw.priority === 2 ? 'bg-blue-100 text-blue-800' : 'bg-stone-100 text-stone-600'}`}>
+              <tr key={kw.id} style={{ background: i % 2 === 0 ? '#fff' : bgSection, borderBottom: '1px solid ' + border }}>
+                <td style={{ padding: '0.875rem 1rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: text, fontWeight: 500 }}>{kw.keyword}</td>
+                <td style={{ padding: '0.875rem 1rem', color: textMuted }}>{kw.hotels?.name || '—'}</td>
+                <td style={{ padding: '0.875rem 1rem' }}>
+                  <span style={{
+                    fontFamily: 'Montserrat, sans-serif',
+                    fontSize: '0.55rem',
+                    fontWeight: 600,
+                    letterSpacing: '0.1em',
+                    padding: '0.2rem 0.6rem',
+                    background: kw.priority === 1 ? 'rgba(201,169,110,0.15)' : kw.priority === 2 ? 'rgba(59,130,246,0.1)' : bgSection,
+                    color: kw.priority === 1 ? gold : kw.priority === 2 ? '#3b82f6' : textMuted,
+                  }}>
                     P{kw.priority}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-stone-500 text-xs">{new Date(kw.created_at).toLocaleDateString('en-GB')}</td>
-                <td className="px-4 py-3">
-                  <button
-                    onClick={() => handleDelete(kw.id)}
-                    className="text-xs text-red-500 hover:text-red-700 transition-colors"
-                  >
+                <td style={{ padding: '0.875rem 1rem', color: textMuted, fontSize: '0.65rem' }}>{new Date(kw.created_at).toLocaleDateString('en-GB')}</td>
+                <td style={{ padding: '0.875rem 1rem' }}>
+                  <button onClick={() => handleDelete(kw.id)} style={{ background: 'none', border: 'none', color: '#dc2626', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', cursor: 'pointer', padding: 0 }}>
                     Delete
                   </button>
                 </td>
@@ -134,14 +195,19 @@ export default function KeywordsTab({ hotels, keywords: initialKeywords, passwor
             ))}
           </tbody>
         </table>
-        {filteredKeywords.length === 0 && <p className="text-center text-stone-400 py-10 text-sm">No keywords yet.</p>}
+        {filteredKeywords.length === 0 && (
+          <div style={{ padding: '3rem', textAlign: 'center' as const }}>
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: textMuted }}>No keywords yet</p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>Add your first keyword above to boost hotel visibility in AI search</p>
+          </div>
+        )}
       </div>
 
       {/* Test section */}
-      <div className="bg-amber-50 border border-amber-200 p-5 mt-6">
-        <p className="text-xs font-semibold text-amber-800 uppercase tracking-wide mb-2">Test your keywords</p>
-        <p className="text-xs text-amber-700 mb-3">Open this URL in your browser to see which hotels appear for a query:</p>
-        <code className="text-xs text-amber-900 bg-amber-100 px-3 py-2 block rounded">
+      <div style={{ background: '#fff', border: '1px solid ' + border, padding: '1.25rem', marginTop: '1.5rem' }}>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, color: textMuted, letterSpacing: '0.15em', textTransform: 'uppercase' as const, margin: '0 0 0.5rem' }}>Test Your Keywords</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: '0 0 0.75rem' }}>Open this URL to see which hotels appear for a query:</p>
+        <code style={{ fontFamily: 'monospace', fontSize: '0.7rem', color: text, background: bgSection, padding: '0.5rem 0.875rem', display: 'block', border: '1px solid ' + border }}>
           /api/recommend?q=luxury+ski+hotel+zermatt&limit=3
         </code>
       </div>
