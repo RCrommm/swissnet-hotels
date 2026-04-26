@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import HotelCard from '@/components/HotelCard'
 import ContactForm from '@/components/ContactForm'
 import Navigation from '@/components/Navigation'
 
@@ -19,6 +18,45 @@ export default async function HomePage() {
   const border = 'rgba(201,169,110,0.3)'
   const text = '#FFFFFF'
   const textMuted = 'rgba(255,255,255,0.6)'
+
+  const mockHotels = [
+    {
+      name: 'Mont Cervin Palace',
+      location: 'Zermatt, Switzerland',
+      rating: 4.9,
+      rate: 920,
+      booking_rate: 980,
+      expedia_rate: 995,
+      image: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=600',
+      tag: 'Best for Couples',
+      amenities: ['Matterhorn View', 'Fine Dining'],
+      desc: 'Timeless elegance in the heart of Zermatt. Luxurious rooms with iconic Matterhorn views and award-winning spa for the ultimate couples escape.',
+    },
+    {
+      name: 'Hotel Monte Rosa',
+      location: 'Zermatt, Switzerland',
+      rating: 4.8,
+      rate: 785,
+      booking_rate: 840,
+      expedia_rate: 860,
+      image: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=600',
+      tag: 'Wellness Retreat',
+      amenities: ['Matterhorn View', 'Wellness Spa'],
+      desc: 'A serene wellness retreat with panoramic Matterhorn views, exceptional cuisine, and one of Zermatt\'s finest spa areas.',
+    },
+    {
+      name: 'Schweizerhof Zermatt',
+      location: 'Zermatt, Switzerland',
+      rating: 4.9,
+      rate: 600,
+      booking_rate: 640,
+      expedia_rate: 670,
+      image: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=600',
+      tag: 'Iconic Luxury',
+      amenities: ['Matterhorn View', 'Michelin Dining'],
+      desc: 'Zermatt\'s legendary grand hotel. Unmatched service, elegant rooms, and stunning Matterhorn views in a historic setting.',
+    },
+  ]
 
   return (
     <div style={{ background: bg, minHeight: '100vh' }}>
@@ -83,70 +121,113 @@ export default async function HomePage() {
           </p>
         </div>
 
-        {/* ChatGPT mockup */}
-        <div style={{ border: '1px solid ' + border, background: 'rgba(255,255,255,0.03)', overflow: 'hidden' }}>
-          <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1rem 1.5rem', borderBottom: '1px solid ' + border, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        {/* ChatGPT mockup — white background like real ChatGPT */}
+        <div style={{ background: '#ffffff', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+          {/* Browser bar */}
+          <div style={{ background: '#f5f5f5', padding: '0.75rem 1.25rem', borderBottom: '1px solid #e5e5e5', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ff5f57' }} />
             <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ffbd2e' }} />
             <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#28c840' }} />
-            <div style={{ flex: 1, background: 'rgba(255,255,255,0.08)', borderRadius: '4px', padding: '0.3rem 0.75rem', marginLeft: '0.5rem' }}>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)', margin: 0 }}>chatgpt.com</p>
+            <div style={{ flex: 1, background: '#fff', borderRadius: '6px', padding: '0.25rem 0.75rem', marginLeft: '0.75rem', border: '1px solid #e5e5e5' }}>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: '#999', margin: 0 }}>chatgpt.com</p>
             </div>
           </div>
 
-          <div style={{ padding: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
-              <div style={{ background: 'rgba(201,169,110,0.15)', border: '1px solid ' + border, padding: '0.75rem 1.25rem', maxWidth: '500px', borderRadius: '8px 8px 2px 8px' }}>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: text, margin: 0 }}>What are the best luxury hotels with a Matterhorn view in Zermatt for a couples relaxing retreat?</p>
+          {/* ChatGPT sidebar + content */}
+          <div style={{ display: 'flex' }}>
+            {/* Sidebar */}
+            <div style={{ width: '220px', background: '#f9f9f9', borderRight: '1px solid #e5e5e5', padding: '1rem', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                <div style={{ width: '28px', height: '28px', background: '#000', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <p style={{ color: '#fff', fontSize: '0.6rem', fontWeight: 700, margin: 0 }}>✦</p>
+                </div>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', fontWeight: 600, color: '#1a1a1a', margin: 0 }}>ChatGPT</p>
+              </div>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: '#888', margin: '0 0 0.5rem' }}>New chat</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: '#888', margin: '0 0 0.5rem' }}>Search chats</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: '#888', margin: 0 }}>Library</p>
+              <div style={{ marginTop: '2rem', padding: '0.75rem', background: '#fff', border: '1px solid #e5e5e5', borderRadius: '8px' }}>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, color: '#1a1a1a', margin: '0 0 0.2rem' }}>SwissNet AI</p>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: '#888', margin: '0 0 0.2rem' }}>AI-Powered Hotel Discovery</p>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: gold, margin: 0 }}>swissnet-hotels.com</p>
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#10a37f', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <p style={{ color: '#fff', fontSize: '0.7rem', fontWeight: 700, margin: 0 }}>AI</p>
-              </div>
-              <div style={{ flex: 1 }}>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: textMuted, marginBottom: '1.5rem', lineHeight: 1.7 }}>
-                  Here are the best luxury hotels in Zermatt offering breathtaking Matterhorn views, perfect for a romantic and relaxing retreat.
-                </p>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
-                  {(featuredHotels || []).slice(0, 3).map((hotel, i) => (
-                    <div key={hotel.id} style={{ background: '#fff', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.1)' }}>
-                      <div style={{ position: 'relative', height: '160px', overflow: 'hidden' }}>
-                        <img src={hotel.images[0] || 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=600'} alt={hotel.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        <div style={{ position: 'absolute', top: '0.5rem', left: '0.5rem', background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.2rem 0.5rem', borderRadius: '2px' }}>
-                          {i === 0 ? 'Best for Couples' : i === 1 ? 'Wellness Retreat' : 'Iconic Luxury'}
-                        </div>
-                      </div>
-                      <div style={{ padding: '0.875rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                          <h4 style={{ fontFamily: 'Georgia, serif', fontSize: '0.9rem', color: '#1a1a1a', margin: 0, fontWeight: 600 }}>{hotel.name}</h4>
-                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: '#666' }}>★ {hotel.rating}</span>
-                        </div>
-                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: '#888', margin: '0 0 0.5rem' }}>📍 {hotel.location}</p>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginBottom: '0.75rem' }}>
-                          {hotel.amenities.slice(0, 2).map((a: string) => (
-                            <span key={a} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: '#666', background: '#f5f5f5', padding: '0.2rem 0.4rem', borderRadius: '2px' }}>{a}</span>
-                          ))}
-                        </div>
-                        <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div>
-                            <p style={{ fontFamily: 'Georgia, serif', fontSize: '1.1rem', color: gold, margin: 0, fontWeight: 700 }}>CHF {hotel.nightly_rate_chf.toLocaleString()}</p>
-                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: '#aaa', margin: 0 }}>/night · Best Price</p>
-                          </div>
-                          <a href={`/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIComponent(hotel.name)}&destination=${encodeURIComponent(hotel.direct_booking_url)}&medium=website&campaign=ai_preview`} target="_blank" rel="noopener noreferrer" style={{ background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.4rem 0.875rem', borderRadius: '4px', textDecoration: 'none' }}>
-                            Book Now
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+            {/* Main content */}
+            <div style={{ flex: 1, padding: '1.5rem 2rem', overflowX: 'auto' }}>
+              {/* User question */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
+                <div style={{ background: '#f0f0f0', padding: '0.75rem 1rem', maxWidth: '480px', borderRadius: '18px 18px 4px 18px' }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: '#1a1a1a', margin: 0 }}>What are the best luxury hotels with a Matterhorn view in Zermatt for a couples relaxing retreat?</p>
                 </div>
+              </div>
 
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.25)', margin: '0.75rem 0 0', fontStyle: 'italic' }}>
-                  Powered by SwissNet AI · swissnet-hotels.com
-                </p>
+              {/* AI response */}
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+                <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <p style={{ color: '#fff', fontSize: '0.65rem', fontWeight: 700, margin: 0 }}>✦</p>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: '#1a1a1a', marginBottom: '1.25rem', lineHeight: 1.7 }}>
+                    Here are some of the best luxury hotels in Zermatt offering breathtaking Matterhorn views, perfect for a romantic and relaxing retreat.
+                  </p>
+
+                  {/* Hotel cards */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.875rem', marginBottom: '1rem' }}>
+                    {mockHotels.map((hotel, i) => (
+                      <div key={i} style={{ background: '#fff', borderRadius: '10px', overflow: 'hidden', border: '1px solid #e5e5e5', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                        <div style={{ position: 'relative', height: '150px', overflow: 'hidden' }}>
+                          <img src={hotel.image} alt={hotel.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <div style={{ position: 'absolute', top: '0.5rem', left: '0.5rem', background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', padding: '0.2rem 0.5rem', borderRadius: '3px' }}>
+                            {hotel.tag}
+                          </div>
+                        </div>
+                        <div style={{ padding: '0.875rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.3rem' }}>
+                            <h4 style={{ fontFamily: 'Georgia, serif', fontSize: '0.85rem', color: '#1a1a1a', margin: 0, fontWeight: 600, lineHeight: 1.3 }}>{hotel.name}</h4>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: '#666', flexShrink: 0, marginLeft: '0.5rem' }}>★ {hotel.rating}</span>
+                          </div>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: '#888', margin: '0 0 0.5rem' }}>📍 {hotel.location}</p>
+                          <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+                            {hotel.amenities.map(a => (
+                              <span key={a} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', color: '#555', background: '#f5f5f5', padding: '0.15rem 0.4rem', borderRadius: '3px' }}>{a}</span>
+                            ))}
+                          </div>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: '#666', margin: '0 0 0.75rem', lineHeight: 1.5 }}>{hotel.desc}</p>
+
+                          <div style={{ background: '#f9f9f9', borderRadius: '6px', padding: '0.5rem', marginBottom: '0.5rem' }}>
+                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', color: '#10a37f', fontWeight: 700, letterSpacing: '0.05em', margin: '0 0 0.3rem' }}>✓ BEST PRICE GUARANTEED</p>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div>
+                                <p style={{ fontFamily: 'Georgia, serif', fontSize: '1rem', color: gold, margin: 0, fontWeight: 700 }}>CHF {hotel.rate}</p>
+                                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', color: '#aaa', margin: 0 }}>/night</p>
+                              </div>
+                              <div style={{ fontSize: '0.55rem', color: '#888', fontFamily: 'Montserrat, sans-serif' }}>
+                                <p style={{ margin: '0 0 0.15rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                  <span style={{ background: '#003580', color: '#fff', padding: '0.1rem 0.3rem', borderRadius: '2px', fontWeight: 700, fontSize: '0.5rem' }}>B</span>
+                                  Booking.com CHF {hotel.booking_rate}
+                                </p>
+                                <p style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                  <span style={{ color: '#ff6600', fontWeight: 700 }}>✈</span>
+                                  Expedia CHF {hotel.expedia_rate}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', gap: '0.4rem' }}>
+                            <button style={{ flex: 1, background: '#fff', border: '1px solid #ddd', borderRadius: '6px', padding: '0.4rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: '#333', cursor: 'pointer', fontWeight: 500 }}>View Details</button>
+                            <button style={{ flex: 1, background: gold, border: 'none', borderRadius: '6px', padding: '0.4rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: '#fff', cursor: 'pointer', fontWeight: 700 }}>Book Now</button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: '#aaa', margin: 0, fontStyle: 'italic' }}>
+                    Prices are indicative and may vary depending on dates and availability. Always book directly through the hotel for the best rate and benefits.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
