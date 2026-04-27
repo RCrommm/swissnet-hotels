@@ -23,14 +23,26 @@ const AI_QUERIES = [
 ]
 
 export async function GET() {
+  // Check if cron is enabled
+  const { data: setting } = await supabase
+    .from('settings')
+    .select('value')
+    .eq('key', 'ai_visibility_cron_enabled')
+    .single()
+
+  if (setting?.value !== 'true') {
+    return NextResponse.json({ message: 'AI visibility cron is disabled' })
+  }
+
+  // Only check partner hotels
   const { data: hotels, error: hotelsError } = await supabase
     .from('hotels')
     .select('id, name')
     .eq('is_active', true)
-    .eq('is_partner', true) 
+    .eq('is_partner', true)
 
   if (hotelsError) return NextResponse.json({ error: hotelsError.message })
-  if (!hotels?.length) return NextResponse.json({ error: 'No hotels found' })
+  if (!hotels?.length) return NextResponse.json({ error: 'No partner hotels found' })
 
   const results: any[] = []
   const errors: any[] = []
@@ -55,14 +67,17 @@ export async function GET() {
       for (const hotel of hotels) {
         const hotelNameLower = hotel.name.toLowerCase()
         const responseLower = responseText.toLowerCase()
-        const nameParts: string[] = hotelNameLower.split(' ').filter((w: string) => w.length > 3)
-        const appeared: boolean = nameParts.some((part: string) => responseLower.includes(part)) ||
-          responseLower.includes(hotelNameLower)
+
+        // Precise matching — full name or last 2 words of name
+        const lastTwoWords = hotel.name.split(' ').slice(-2).join(' ').toLowerCase()
+        const appeared: boolean =
+          responseLower.includes(hotelNameLower) ||
+          responseLower.includes(lastTwoWords)
 
         let snippet: string | null = null
         if (appeared) {
-          const searchTerm: string = nameParts.find((part: string) => responseLower.includes(part)) || hotelNameLower
-          const idx = responseLower.indexOf(searchTerm)
+          const matchTerm = responseLower.includes(hotelNameLower) ? hotelNameLower : lastTwoWords
+          const idx = responseLower.indexOf(matchTerm)
           snippet = responseText.substring(Math.max(0, idx - 50), idx + 150).trim()
           totalAppearances++
         }
