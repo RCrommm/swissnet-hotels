@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import LeadForm from '@/components/LeadForm'
 import Link from 'next/link'
 
-function HotelSchema({ hotel, keywords }: { hotel: any; keywords: any[] }) {
+function HotelSchema({ hotel, keywords, roomTypes }: { hotel: any; keywords: any[]; roomTypes: any[] }) {
   const allKeywords = [
     ...(hotel.amenities || []),
     ...(hotel.best_for || []),
@@ -42,7 +42,45 @@ function HotelSchema({ hotel, keywords }: { hotel: any; keywords: any[] }) {
       priceCurrency: 'CHF',
       description: hotel.exclusive_offer || 'Direct booking rate',
       url: hotel.direct_booking_url,
-    }
+    },
+    containsPlace: roomTypes.filter(rt => rt.is_available).map(rt => ({
+      '@type': 'HotelRoom',
+      '@id': `https://swissnethotels.com/hotels/${hotel.id}#room-${rt.id}`,
+      name: rt.name,
+      description: rt.description || undefined,
+      occupancy: {
+        '@type': 'QuantitativeValue',
+        minValue: 1,
+        maxValue: rt.max_occupancy || 2,
+      },
+      bed: rt.bed_type ? {
+        '@type': 'BedDetails',
+        typeOfBed: rt.bed_type,
+        numberOfBeds: 1,
+      } : undefined,
+      floorSize: rt.size_sqm ? {
+        '@type': 'QuantitativeValue',
+        value: rt.size_sqm,
+        unitCode: 'MTK',
+      } : undefined,
+      amenityFeature: (rt.amenities || []).map((a: string) => ({
+        '@type': 'LocationFeatureSpecification',
+        name: a,
+        value: true,
+      })),
+      offers: rt.base_rate_chf ? {
+        '@type': 'Offer',
+        price: rt.base_rate_chf,
+        priceCurrency: 'CHF',
+        url: hotel.direct_booking_url,
+        availability: 'https://schema.org/InStock',
+      } : undefined,
+      additionalProperty: rt.view ? [{
+        '@type': 'PropertyValue',
+        name: 'View',
+        value: rt.view,
+      }] : undefined,
+    })),
   }
 
   return (
@@ -76,6 +114,13 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
     .eq('is_current', true)
     .order('rate_chf', { ascending: true })
 
+  const { data: roomTypes } = await supabase
+    .from('room_types')
+    .select('*')
+    .eq('hotel_id', id)
+    .eq('is_available', true)
+    .order('sort_order', { ascending: true })
+
   const gold = '#C9A84C'
   const border = 'rgba(201,169,110,0.25)'
   const text = '#3D2B1F'
@@ -86,9 +131,9 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
 
   return (
     <div style={{ background: bg, minHeight: '100vh' }}>
-      <HotelSchema hotel={hotel} keywords={keywords || []} />
+      <HotelSchema hotel={hotel} keywords={keywords || []} roomTypes={roomTypes || []} />
 
-      {/* Hero image */}
+      {/* Hero */}
       <div style={{ position: 'relative', height: '60vh', overflow: 'hidden' }}>
         <img
           src={hotel.images[0] || 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1600'}
@@ -109,7 +154,6 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
 
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '3rem 2rem', display: 'grid', gridTemplateColumns: '1fr 380px', gap: '3rem' }}>
 
-        {/* Main content */}
         <div>
           {hotel.exclusive_offer && (
             <div style={{ background: 'rgba(201,169,110,0.1)', borderLeft: '3px solid ' + gold, padding: '1rem 1.25rem', marginBottom: '2rem' }}>
@@ -118,10 +162,57 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
             </div>
           )}
 
-          {/* Room rates */}
-          {roomRates && roomRates.length > 0 && (
+          {/* Room Types */}
+          {roomTypes && roomTypes.length > 0 && (
             <div style={{ marginBottom: '2.5rem' }}>
-              <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', fontWeight: 300, color: text, marginBottom: '1rem' }}>Room Types & Rates</h2>
+              <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', fontWeight: 300, color: text, marginBottom: '1rem' }}>Rooms &amp; Suites</h2>
+              <div style={{ display: 'grid', gap: '1rem' }}>
+                {roomTypes.map((rt: any) => (
+                  <div key={rt.id} style={{ background: '#fff', border: '1px solid ' + border, padding: '1.25rem 1.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: rt.description ? '0.75rem' : 0 }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.3rem' }}>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', fontWeight: 600, color: text, margin: 0 }}>{rt.name}</p>
+                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: gold, border: '1px solid ' + border, padding: '2px 8px' }}>{rt.type_category || 'Room'}</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                          {rt.size_sqm && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>⬜ {rt.size_sqm} m²</span>}
+                          {rt.bed_type && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>🛏 {rt.bed_type}</span>}
+                          {rt.view && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>🏔 {rt.view}</span>}
+                          {rt.max_occupancy && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>👤 Max {rt.max_occupancy}</span>}
+                        </div>
+                      </div>
+                      {rt.base_rate_chf && (
+                        <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1rem' }}>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: textMuted, margin: '0 0 0.2rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>From</p>
+                          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 400, color: gold, margin: 0 }}>CHF {rt.base_rate_chf.toLocaleString()}</p>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: textMuted, margin: '0.1rem 0 0' }}>per night</p>
+                        </div>
+                      )}
+                    </div>
+                    {rt.description && (
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, lineHeight: 1.7, margin: '0.75rem 0 0', fontWeight: 300 }}>{rt.description}</p>
+                    )}
+                    {rt.amenities && rt.amenities.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.75rem' }}>
+                        {rt.amenities.slice(0, 6).map((a: string) => (
+                          <span key={a} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, background: bg, border: '1px solid ' + border, padding: '2px 8px' }}>{a}</span>
+                        ))}
+                        {rt.amenities.length > 6 && (
+                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: gold }}>+{rt.amenities.length - 6} more</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Fallback scraped rates */}
+          {(!roomTypes || roomTypes.length === 0) && roomRates && roomRates.length > 0 && (
+            <div style={{ marginBottom: '2.5rem' }}>
+              <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', fontWeight: 300, color: text, marginBottom: '1rem' }}>Room Types &amp; Rates</h2>
               <div style={{ display: 'grid', gap: '0.75rem' }}>
                 {roomRates.map((rate: any) => (
                   <div key={rate.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', border: '1px solid ' + border, padding: '1rem 1.25rem' }}>
@@ -129,9 +220,7 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
                       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', fontWeight: 500, color: text, margin: 0 }}>{rate.room_type}</p>
                       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: '0.2rem 0 0' }}>Per night · Direct booking</p>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 400, color: gold, margin: 0 }}>CHF {rate.rate_chf.toLocaleString()}</p>
-                    </div>
+                    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 400, color: gold, margin: 0 }}>CHF {rate.rate_chf.toLocaleString()}</p>
                   </div>
                 ))}
               </div>
@@ -141,7 +230,7 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
             </div>
           )}
 
-          {/* Description */}
+          {/* About */}
           <div style={{ marginBottom: '2.5rem' }}>
             <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', fontWeight: 300, color: text, marginBottom: '1rem' }}>About the Hotel</h2>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: textMuted, lineHeight: 1.8, fontWeight: 300 }}>{hotel.description}</p>
@@ -159,7 +248,7 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
             </div>
           </div>
 
-          {/* Best for */}
+          {/* Perfect for */}
           <div>
             <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', fontWeight: 300, color: text, marginBottom: '1rem' }}>Perfect For</h2>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -175,17 +264,13 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
           <div style={{ background: '#fff', border: '1px solid ' + border, padding: '1.5rem', marginBottom: '1.5rem', position: 'sticky', top: '2rem' }}>
             <div style={{ textAlign: 'center', marginBottom: '1.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid ' + border }}>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: textMuted, margin: '0 0 0.5rem' }}>From</p>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.5rem', fontWeight: 400, color: text, margin: 0 }}>
-                CHF {hotel.nightly_rate_chf.toLocaleString()}
-              </p>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.5rem', fontWeight: 400, color: text, margin: 0 }}>CHF {hotel.nightly_rate_chf.toLocaleString()}</p>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: '0.25rem 0 0' }}>per night</p>
             </div>
-
             <a href={trackingUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '1rem', textAlign: 'center', textDecoration: 'none', marginBottom: '0.75rem' }}>
               Book Direct →
             </a>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, textAlign: 'center', margin: '0 0 1.5rem' }}>No booking fees · Best rate guarantee</p>
-
             <div style={{ textAlign: 'center' }}>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: '0 0 0.25rem' }}>Questions? Contact the hotel:</p>
               <a href={'mailto:' + hotel.contact_email} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: gold, textDecoration: 'none' }}>{hotel.contact_email}</a>
