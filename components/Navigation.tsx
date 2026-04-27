@@ -39,7 +39,7 @@ export default function Navigation() {
 
        <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
   <img
-    src="/logo.png"
+    src="/Logo.png"
     alt="SwissNet Hotels"
     style={{
       height: '44px',
