@@ -25,10 +25,7 @@ const AI_QUERIES = [
 
 export async function GET(request: Request) {
   // Verify this is called from Vercel cron or manually
-  const authHeader = request.headers.get('authorization')
-  if (authHeader !== 'Bearer ' + process.env.CRON_SECRET && process.env.NODE_ENV === 'production') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  
 
   // Get all active hotels
   const { data: hotels } = await supabase

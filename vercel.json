@@ -1,8 +1,8 @@
 {
   "crons": [
     {
-      "path": "/api/cron/scrape-rates",
-      "schedule": "0 2 * * *"
+      "path": "/api/cron/ai-visibility",
+      "schedule": "0 8 * * *"
     }
   ]
 }
