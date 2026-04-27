@@ -65,9 +65,8 @@ export default async function AdminPage({
   const keywordsList = keywords || []
   const clicksList = clicks || []
 
-  // For room types tab — use selected hotel or default to first
   const selectedHotelId = params.hotel_id || hotelsList[0]?.id || ''
-  const selectedHotel = hotelsList.find(h => h.id === selectedHotelId) || hotelsList[0]
+  const selectedHotel = hotelsList.find((h: any) => h.id === selectedHotelId) || hotelsList[0]
 
   return (
     <div className="pt-20 min-h-screen bg-stone-50">
@@ -92,42 +91,23 @@ export default async function AdminPage({
           ))}
         </div>
 
-        {tab === 'hotels' && (
-          <HotelsTab hotels={hotelsList} password={pw} />
-        )}
+        {tab === 'hotels' && <HotelsTab hotels={hotelsList} password={pw} />}
 
         {tab === 'rooms' && (
           <div>
-            {/* Hotel selector */}
-            <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 13, color: '#78716c', fontWeight: 500 }}>Editing room types for:</span>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {hotelsList.map(h => (
-                  
-                    key={h.id}
-                    href={`/admin?password=${pw}&tab=rooms&hotel_id=${h.id}`}
-                    style={{
-                      padding: '6px 16px',
-                      borderRadius: 6,
-                      fontSize: 12,
-                      fontWeight: 600,
-                      textDecoration: 'none',
-                      border: '1px solid',
-                      borderColor: selectedHotelId === h.id ? '#C9A84C' : '#e7e5e4',
-                      background: selectedHotelId === h.id ? '#C9A84C' : '#fff',
-                      color: selectedHotelId === h.id ? '#1a0e06' : '#78716c',
-                    }}
-                  >
-                    {h.name}
-                  </a>
-                ))}
-              </div>
+              {hotelsList.map((h: any) => (
+                <a key={h.id} href={`/admin?password=${pw}&tab=rooms&hotel_id=${h.id}`} style={{
+                  padding: '6px 16px', borderRadius: 6, fontSize: 12, fontWeight: 600,
+                  textDecoration: 'none', border: '1px solid',
+                  borderColor: selectedHotelId === h.id ? '#C9A84C' : '#e7e5e4',
+                  background: selectedHotelId === h.id ? '#C9A84C' : '#fff',
+                  color: selectedHotelId === h.id ? '#1a0e06' : '#78716c',
+                }}>{h.name}</a>
+              ))}
             </div>
-
-            <RoomTypesTab
-              hotelId={selectedHotelId}
-              hotelName={selectedHotel?.name || ''}
-            />
+            <RoomTypesTab hotelId={selectedHotelId} hotelName={selectedHotel?.name || ''} />
           </div>
         )}
 
@@ -142,7 +122,7 @@ export default async function AdminPage({
                 </tr>
               </thead>
               <tbody>
-                {leadsList.map((lead, i) => (
+                {leadsList.map((lead: any, i: number) => (
                   <tr key={lead.id} className={i % 2 === 0 ? 'bg-white' : 'bg-stone-50'}>
                     <td className="px-4 py-3 font-medium text-stone-800">{lead.name}</td>
                     <td className="px-4 py-3"><a href={'mailto:' + lead.email} className="text-amber-700 hover:underline">{lead.email}</a></td>
@@ -158,9 +138,7 @@ export default async function AdminPage({
           </div>
         )}
 
-        {tab === 'keywords' && (
-          <KeywordsTab hotels={hotelsList} keywords={keywordsList} password={pw} />
-        )}
+        {tab === 'keywords' && <KeywordsTab hotels={hotelsList} keywords={keywordsList} password={pw} />}
 
         {tab === 'clicks' && (
           <div>
