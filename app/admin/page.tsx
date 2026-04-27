@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import KeywordsTab from '@/components/KeywordsTab'
 import HotelsTab from '@/components/HotelsTab'
 import SchemaTab from '@/components/SchemaTab'
+import AIVisibilityToggle from '@/components/AIVisibilityToggle'
 
 async function isAuthenticated(password?: string) {
   const cookieStore = await cookies()
@@ -57,6 +58,18 @@ export default async function AdminPage({
     .order('clicked_at', { ascending: false })
     .limit(100)
 
+  const { data: cronSetting } = await supabase
+    .from('settings')
+    .select('value')
+    .eq('key', 'ai_visibility_cron_enabled')
+    .single()
+
+  const { data: visibilityStats } = await supabase
+    .from('ai_visibility_scores')
+    .select('hotel_name, appeared, checked_at')
+    .order('checked_at', { ascending: false })
+    .limit(500)
+
   const tab = params.tab || 'hotels'
   const pw = params.password || ''
 
@@ -64,6 +77,15 @@ export default async function AdminPage({
   const leadsList = leads || []
   const keywordsList = keywords || []
   const clicksList = clicks || []
+  const cronEnabled = cronSetting?.value === 'true'
+
+  // Calculate visibility score per hotel
+  const visibilityByHotel: Record<string, { appeared: number; total: number }> = {}
+  for (const row of visibilityStats || []) {
+    if (!visibilityByHotel[row.hotel_name]) visibilityByHotel[row.hotel_name] = { appeared: 0, total: 0 }
+    visibilityByHotel[row.hotel_name].total++
+    if (row.appeared) visibilityByHotel[row.hotel_name].appeared++
+  }
 
   return (
     <div className="pt-20 min-h-screen bg-stone-50">
@@ -79,7 +101,7 @@ export default async function AdminPage({
         </div>
 
         <div className="flex gap-1 mb-6 border-b border-stone-200">
-          {['hotels', 'schema', 'leads', 'keywords', 'clicks'].map(t => (
+          {['hotels', 'schema', 'ai visibility', 'leads', 'keywords', 'clicks'].map(t => (
             <a key={t} href={'/admin?password=' + pw + '&tab=' + t}
               className={'px-6 py-3 text-sm uppercase tracking-wide capitalize transition-colors ' +
                 (tab === t ? 'border-b-2 border-amber-700 text-amber-700 font-semibold' : 'text-stone-500 hover:text-stone-700')}>
@@ -91,6 +113,87 @@ export default async function AdminPage({
         {tab === 'hotels' && <HotelsTab hotels={hotelsList} password={pw} />}
 
         {tab === 'schema' && <SchemaTab hotels={hotelsList} />}
+
+        {tab === 'ai visibility' && (
+          <div>
+            {/* Toggle + run button */}
+            <AIVisibilityToggle enabled={cronEnabled} />
+
+            {/* Visibility scores per hotel */}
+            <div style={{ marginTop: 24 }}>
+              <h2 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, color: '#78716c', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 16 }}>
+                AI Visibility Scores — Partner Hotels
+              </h2>
+              {Object.keys(visibilityByHotel).length === 0 ? (
+                <div style={{ background: '#fff', border: '1px solid #e7e5e4', borderRadius: 8, padding: '40px', textAlign: 'center', color: '#a8a29e', fontSize: 14 }}>
+                  No data yet — run the cron job to start tracking.
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gap: 12 }}>
+                  {Object.entries(visibilityByHotel)
+                    .sort((a, b) => (b[1].appeared / b[1].total) - (a[1].appeared / a[1].total))
+                    .map(([hotelName, stats]) => {
+                      const score = Math.round((stats.appeared / stats.total) * 100)
+                      const color = score >= 50 ? '#16a34a' : score >= 20 ? '#C9A84C' : '#dc2626'
+                      return (
+                        <div key={hotelName} style={{ background: '#fff', border: '1px solid #e7e5e4', borderRadius: 8, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16 }}>
+                          <div style={{ flex: 1 }}>
+                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 14, fontWeight: 600, color: '#3D2B1F', margin: '0 0 4px' }}>{hotelName}</p>
+                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: '#a8a29e', margin: 0 }}>
+                              Appeared in {stats.appeared} of {stats.total} AI queries
+                            </p>
+                          </div>
+                          {/* Score bar */}
+                          <div style={{ width: 200 }}>
+                            <div style={{ height: 6, background: '#f5f5f4', borderRadius: 3, overflow: 'hidden' }}>
+                              <div style={{ height: '100%', width: score + '%', background: color, borderRadius: 3, transition: 'width 0.5s' }} />
+                            </div>
+                          </div>
+                          <div style={{ textAlign: 'right', minWidth: 60 }}>
+                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 22, fontWeight: 700, color, margin: 0 }}>{score}%</p>
+                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, color: '#a8a29e', margin: 0 }}>AI visibility</p>
+                          </div>
+                        </div>
+                      )
+                    })}
+                </div>
+              )}
+            </div>
+
+            {/* Recent queries */}
+            <div style={{ marginTop: 32 }}>
+              <h2 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, color: '#78716c', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 16 }}>
+                Recent Query Results
+              </h2>
+              <div className="bg-white border border-stone-200 overflow-hidden rounded-lg">
+                <table className="w-full text-sm">
+                  <thead className="bg-stone-50 border-b border-stone-200">
+                    <tr>
+                      {['Hotel', 'Query', 'Appeared', 'Date'].map(h => (
+                        <th key={h} className="text-left px-4 py-3 text-xs uppercase tracking-wide text-stone-500">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(visibilityStats || []).filter(r => r.appeared).slice(0, 20).map((row: any, i: number) => (
+                      <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-stone-50'}>
+                        <td className="px-4 py-3 font-medium text-stone-800 text-xs">{row.hotel_name}</td>
+                        <td className="px-4 py-3 text-stone-600 text-xs">{row.query}</td>
+                        <td className="px-4 py-3">
+                          <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">✓ Yes</span>
+                        </td>
+                        <td className="px-4 py-3 text-stone-500 text-xs">{new Date(row.checked_at).toLocaleDateString('en-GB')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {(visibilityStats || []).filter(r => r.appeared).length === 0 && (
+                  <p className="text-center text-stone-400 py-10 text-sm">No appearances yet.</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {tab === 'leads' && (
           <div className="bg-white border border-stone-200 overflow-hidden">
