@@ -27,7 +27,7 @@ export async function GET() {
     .from('hotels')
     .select('id, name')
     .eq('is_active', true)
-.eq('is_partner', true)
+    .eq('is_partner', true) 
 
   if (hotelsError) return NextResponse.json({ error: hotelsError.message })
   if (!hotels?.length) return NextResponse.json({ error: 'No hotels found' })
