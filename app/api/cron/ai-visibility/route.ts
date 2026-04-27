@@ -38,7 +38,7 @@ export async function GET() {
   for (const query of AI_QUERIES) {
     try {
       const message = await client.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-opus-4-5',
         max_tokens: 500,
         messages: [{
           role: 'user',
