@@ -37,16 +37,10 @@ export default function Navigation() {
     }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem', height: '72px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
 
-       <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
-  <img
-    src="/Logo.png"
-    alt="SwissNet Hotels"
-    style={{
-      height: '44px',
-      width: 'auto',
-      objectFit: 'contain'
-    }}
-  />
+    <Link href="/" style={{ textDecoration: 'none' }}>
+  <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 400, color: gold, letterSpacing: '0.05em' }}>
+    SwissNet <span style={{ fontStyle: 'italic', color: '#fff' }}>Hotels</span>
+  </div>
 </Link>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }} className="hidden md:flex">
