@@ -1,6 +1,7 @@
 'use client'
 import { Hotel } from '@/types/hotel'
 import { useState } from 'react'
+import Link from 'next/link'
 
 export default function HotelCard({ hotel }: { hotel: Hotel }) {
   const [hovered, setHovered] = useState(false)
@@ -30,8 +31,14 @@ export default function HotelCard({ hotel }: { hotel: Hotel }) {
         transition: 'all 0.4s ease',
         transform: hovered ? 'translateY(-6px)' : 'translateY(0)',
         boxShadow: hovered ? '0 20px 60px rgba(61,43,31,0.15)' : '0 2px 12px rgba(201,169,110,0.08)',
+        position: 'relative',
       }}
     >
+      {/* Clickable overlay to hotel profile */}
+      <Link href={`/hotels/${hotel.id}`} style={{
+        position: 'absolute', inset: 0, zIndex: 1,
+      }} aria-label={`View ${hotel.name} profile`} />
+
       {/* Image */}
       <div style={{ position: 'relative', height: '260px', overflow: 'hidden' }}>
         <img
@@ -45,13 +52,25 @@ export default function HotelCard({ hotel }: { hotel: Hotel }) {
         />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(61,43,31,0.6) 0%, transparent 50%)' }} />
 
-        {hotel.is_featured && (
+        {hotel.is_partner && (
+          <div style={{
+            position: 'absolute', top: '1rem', left: '1rem',
+            background: gold, color: '#1a0e06',
+            fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem',
+            fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase',
+            padding: '0.3rem 0.8rem', borderRadius: 20, zIndex: 2,
+          }}>
+            ✦ Partner
+          </div>
+        )}
+
+        {!hotel.is_partner && hotel.is_featured && (
           <div style={{
             position: 'absolute', top: '1rem', left: '1rem',
             background: gold, color: '#fff',
             fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem',
             fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase',
-            padding: '0.3rem 0.8rem',
+            padding: '0.3rem 0.8rem', zIndex: 2,
           }}>
             Featured
           </div>
@@ -130,12 +149,12 @@ export default function HotelCard({ hotel }: { hotel: Hotel }) {
               <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, fontWeight: 300 }}> /night</span>
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', position: 'relative', zIndex: 2 }}>
             <a href={homepageTrackingUrl} target="_blank" rel="noopener noreferrer" style={{
               fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 500,
               letterSpacing: '0.15em', textTransform: 'uppercase',
               color: text, border: '1px solid ' + border,
-              padding: '0.6rem 1rem', textDecoration: 'none', transition: 'all 0.2s',
+              padding: '0.6rem 1rem', textDecoration: 'none',
             }}>
               Website
             </a>
@@ -143,7 +162,7 @@ export default function HotelCard({ hotel }: { hotel: Hotel }) {
               fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600,
               letterSpacing: '0.15em', textTransform: 'uppercase',
               color: '#fff', background: gold,
-              padding: '0.6rem 1rem', textDecoration: 'none', transition: 'all 0.2s',
+              padding: '0.6rem 1rem', textDecoration: 'none',
             }}>
               Book
             </a>
