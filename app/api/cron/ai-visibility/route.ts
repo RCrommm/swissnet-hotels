@@ -4,7 +4,6 @@ import Anthropic from '@anthropic-ai/sdk'
 
 const client = new Anthropic()
 
-// Real queries people ask AI about Swiss luxury hotels
 const AI_QUERIES = [
   'best luxury hotel in Zermatt with Matterhorn view',
   'best 5 star hotel in Geneva Switzerland',
@@ -23,24 +22,21 @@ const AI_QUERIES = [
   'best boutique luxury hotel Switzerland',
 ]
 
-export async function GET(request: Request) {
-  // Verify this is called from Vercel cron or manually
-  
-
-  // Get all active hotels
-  const { data: hotels } = await supabase
+export async function GET() {
+  const { data: hotels, error: hotelsError } = await supabase
     .from('hotels')
     .select('id, name')
     .eq('is_active', true)
 
+  if (hotelsError) return NextResponse.json({ error: hotelsError.message })
   if (!hotels?.length) return NextResponse.json({ error: 'No hotels found' })
 
   const results = []
+  const errors = []
   let totalAppearances = 0
 
   for (const query of AI_QUERIES) {
     try {
-      // Ask Claude the query
       const message = await client.messages.create({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 500,
@@ -55,25 +51,22 @@ export async function GET(request: Request) {
         .map(b => (b as any).text)
         .join(' ')
 
-      // Check which hotels appear in the response
       for (const hotel of hotels) {
         const hotelNameLower = hotel.name.toLowerCase()
         const responseLower = responseText.toLowerCase()
+        const nameParts = hotelNameLower.split(' ').filter(w => w.length > 3)
+        const appeared = nameParts.some(part => responseLower.includes(part)) ||
+          responseLower.includes(hotelNameLower)
 
-        // Check for hotel name or common abbreviations
-        const appeared = responseLower.includes(hotelNameLower) ||
-          responseLower.includes(hotelNameLower.split(' ').slice(-2).join(' '))
-
-        // Extract snippet if appeared
         let snippet = null
         if (appeared) {
-          const idx = responseLower.indexOf(hotelNameLower.split(' ').slice(-2).join(' '))
+          const searchTerm = nameParts.find(part => responseLower.includes(part)) || hotelNameLower
+          const idx = responseLower.indexOf(searchTerm)
           snippet = responseText.substring(Math.max(0, idx - 50), idx + 150).trim()
           totalAppearances++
         }
 
-        // Log to database
-        await supabase.from('ai_visibility_scores').insert({
+        const { error: insertError } = await supabase.from('ai_visibility_scores').insert({
           hotel_id: hotel.id,
           hotel_name: hotel.name,
           query,
@@ -82,19 +75,15 @@ export async function GET(request: Request) {
           checked_at: new Date().toISOString(),
         })
 
-        results.push({
-          hotel: hotel.name,
-          query,
-          appeared,
-          snippet,
-        })
+        if (insertError) errors.push({ hotel: hotel.name, error: insertError.message })
+
+        results.push({ hotel: hotel.name, query, appeared, snippet })
       }
 
-      // Small delay between queries to avoid rate limiting
       await new Promise(r => setTimeout(r, 500))
 
     } catch (err: any) {
-      console.error('Query failed:', query, err.message)
+      errors.push({ query, error: err.message })
     }
   }
 
@@ -103,6 +92,7 @@ export async function GET(request: Request) {
     queries_run: AI_QUERIES.length,
     hotels_checked: hotels.length,
     total_appearances: totalAppearances,
-    results,
+    insert_errors: errors,
+    sample_results: results.filter(r => r.appeared).slice(0, 10),
   })
 }
