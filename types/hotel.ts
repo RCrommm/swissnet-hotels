@@ -15,6 +15,8 @@ export interface Hotel {
   contact_email: string
   is_featured: boolean
   is_active: boolean
+  is_partner: boolean
+  show_schema: boolean
   created_at: string
 }
 
