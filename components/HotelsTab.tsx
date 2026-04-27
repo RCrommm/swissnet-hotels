@@ -15,6 +15,9 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
   const [editForm, setEditForm] = useState<any>(null)
   const [saving, setSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
+  const [fetchingImage, setFetchingImage] = useState<string | null>(null)
+  const [fetchingAll, setFetchingAll] = useState(false)
+  const [fetchResults, setFetchResults] = useState<Record<string, 'success' | 'error'>>({})
 
   const gold = '#C9A84C'
   const border = 'rgba(201,169,110,0.2)'
@@ -38,6 +41,8 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
       contact_email: hotel.contact_email || '',
       is_active: hotel.is_active || false,
       is_featured: hotel.is_featured || false,
+      is_partner: hotel.is_partner || false,
+      show_schema: hotel.show_schema || false,
       images: hotel.images?.length ? hotel.images : ['', '', ''],
       amenities: hotel.amenities?.join(', ') || '',
       best_for: hotel.best_for?.join(', ') || '',
@@ -48,7 +53,6 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
   const handleSave = async () => {
     if (!editingId || !editForm) return
     setSaving(true)
-
     const payload = {
       ...editForm,
       rating: parseFloat(editForm.rating),
@@ -57,14 +61,12 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
       best_for: editForm.best_for.split(',').map((b: string) => b.trim()).filter(Boolean),
       images: editForm.images.filter(Boolean),
     }
-
     try {
       const res = await fetch('/api/hotels/' + editingId, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
-
       if (res.ok) {
         setHotels(prev => prev.map(h => h.id === editingId ? { ...h, ...payload } : h))
         setEditingId(null)
@@ -76,68 +78,136 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
     }
   }
 
+  const fetchImageForHotel = async (hotel: any) => {
+    setFetchingImage(hotel.id)
+    try {
+      const res = await fetch('/api/fetch-hotel-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hotel_id: hotel.id, url: hotel.direct_booking_url }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setHotels(prev => prev.map(h => h.id === hotel.id ? { ...h, images: [data.image_url] } : h))
+        setFetchResults(prev => ({ ...prev, [hotel.id]: 'success' }))
+      } else {
+        setFetchResults(prev => ({ ...prev, [hotel.id]: 'error' }))
+      }
+    } catch {
+      setFetchResults(prev => ({ ...prev, [hotel.id]: 'error' }))
+    } finally {
+      setFetchingImage(null)
+      setTimeout(() => setFetchResults(prev => { const n = { ...prev }; delete n[hotel.id]; return n }), 3000)
+    }
+  }
+
+  const fetchAllImages = async () => {
+    setFetchingAll(true)
+    const missing = hotels.filter(h => !h.images?.[0] || h.images[0].includes('unsplash'))
+    for (const hotel of missing) {
+      setFetchingImage(hotel.id)
+      try {
+        const res = await fetch('/api/fetch-hotel-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ hotel_id: hotel.id, url: hotel.direct_booking_url }),
+        })
+        const data = await res.json()
+        if (data.success) {
+          setHotels(prev => prev.map(h => h.id === hotel.id ? { ...h, images: [data.image_url] } : h))
+          setFetchResults(prev => ({ ...prev, [hotel.id]: 'success' }))
+        } else {
+          setFetchResults(prev => ({ ...prev, [hotel.id]: 'error' }))
+        }
+      } catch {
+        setFetchResults(prev => ({ ...prev, [hotel.id]: 'error' }))
+      }
+      setFetchingImage(null)
+      // Small delay between requests to avoid rate limiting
+      await new Promise(r => setTimeout(r, 800))
+    }
+    setFetchingAll(false)
+  }
+
   const inputStyle: React.CSSProperties = {
-    width: '100%',
-    background: '#fff',
-    border: '1px solid ' + border,
-    color: text,
-    fontFamily: 'Montserrat, sans-serif',
-    fontSize: '0.75rem',
-    padding: '0.5rem 0.75rem',
-    outline: 'none',
-    boxSizing: 'border-box',
+    width: '100%', background: '#fff', border: '1px solid ' + border,
+    color: text, fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem',
+    padding: '0.5rem 0.75rem', outline: 'none', boxSizing: 'border-box',
   }
 
   const labelStyle: React.CSSProperties = {
-    display: 'block',
-    fontFamily: 'Montserrat, sans-serif',
-    fontSize: '0.55rem',
-    letterSpacing: '0.15em',
-    textTransform: 'uppercase',
-    color: textMuted,
-    marginBottom: '0.3rem',
+    display: 'block', fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem',
+    letterSpacing: '0.15em', textTransform: 'uppercase', color: textMuted, marginBottom: '0.3rem',
   }
+
+  const missingImages = hotels.filter(h => !h.images?.[0] || h.images[0].includes('unsplash')).length
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: 0 }}>{hotels.length} properties</p>
-        <a href="/onboarding" style={{ background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0.5rem 1.25rem', textDecoration: 'none' }}>
-          + Add New Hotel
-        </a>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          {missingImages > 0 && (
+            <button
+              onClick={fetchAllImages}
+              disabled={fetchingAll}
+              style={{ background: fetchingAll ? bgSection : 'rgba(201,169,110,0.15)', color: gold, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.5rem 1.25rem', border: '1px solid ' + gold + '55', cursor: fetchingAll ? 'not-allowed' : 'pointer', borderRadius: 6 }}
+            >
+              {fetchingAll ? `Fetching images... (${Object.keys(fetchResults).length}/${missingImages})` : `🖼 Auto-fetch ${missingImages} missing images`}
+            </button>
+          )}
+          <a href="/onboarding" style={{ background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0.5rem 1.25rem', textDecoration: 'none', borderRadius: 6 }}>
+            + Add New Hotel
+          </a>
+        </div>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         {hotels.map(hotel => (
-          <div key={hotel.id} style={{ background: '#fff', border: '1px solid ' + border, overflow: 'hidden', boxShadow: '0 2px 12px rgba(201,169,110,0.06)' }}>
+          <div key={hotel.id} style={{ background: '#fff', border: '1px solid ' + border, overflow: 'hidden', boxShadow: '0 2px 12px rgba(201,169,110,0.06)', borderRadius: 8 }}>
 
-            {/* Hotel header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', background: editingId === hotel.id ? bgSection : '#fff', borderBottom: editingId === hotel.id ? '1px solid ' + border : 'none' }}>
-              <div>
-                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: text, margin: '0 0 0.2rem', fontWeight: 400 }}>{hotel.name}</p>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, margin: 0 }}>
-                  {hotel.location} · {hotel.category} · ★ {hotel.rating} · CHF {hotel.nightly_rate_chf?.toLocaleString()}/night
-                </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                {/* Thumbnail */}
+                <div style={{ width: 56, height: 42, borderRadius: 6, overflow: 'hidden', flexShrink: 0, background: bgSection }}>
+                  {hotel.images?.[0] ? (
+                    <img src={hotel.images[0]} alt={hotel.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🏨</div>
+                  )}
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: text, margin: 0, fontWeight: 400 }}>{hotel.name}</p>
+                    {hotel.is_partner && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, background: gold, color: '#1a0e06', padding: '2px 8px', borderRadius: 20 }}>✦ Partner</span>}
+                  </div>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, margin: 0 }}>
+                    {hotel.location} · {hotel.category} · ★ {hotel.rating} · CHF {hotel.nightly_rate_chf?.toLocaleString()}/night
+                  </p>
+                </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, padding: '0.2rem 0.6rem', background: hotel.is_active ? 'rgba(22,163,74,0.1)' : 'rgba(220,38,38,0.1)', color: hotel.is_active ? '#16a34a' : '#dc2626' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, padding: '0.2rem 0.6rem', borderRadius: 4, background: hotel.is_active ? 'rgba(22,163,74,0.1)' : 'rgba(220,38,38,0.1)', color: hotel.is_active ? '#16a34a' : '#dc2626' }}>
                   {hotel.is_active ? 'Live' : 'Hidden'}
                 </span>
-                {hotel.is_featured && (
-                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, padding: '0.2rem 0.6rem', background: 'rgba(201,169,110,0.15)', color: gold }}>
-                    Featured
-                  </span>
-                )}
+                {/* Fetch image button */}
+                <button
+                  onClick={() => fetchImageForHotel(hotel)}
+                  disabled={fetchingImage === hotel.id || fetchingAll}
+                  title="Auto-fetch image from hotel website"
+                  style={{ background: fetchResults[hotel.id] === 'success' ? 'rgba(22,163,74,0.1)' : fetchResults[hotel.id] === 'error' ? 'rgba(220,38,38,0.1)' : bgSection, color: fetchResults[hotel.id] === 'success' ? '#16a34a' : fetchResults[hotel.id] === 'error' ? '#dc2626' : textMuted, fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, padding: '0.2rem 0.6rem', border: '1px solid ' + border, borderRadius: 4, cursor: 'pointer' }}
+                >
+                  {fetchingImage === hotel.id ? '...' : fetchResults[hotel.id] === 'success' ? '✓ Got image' : fetchResults[hotel.id] === 'error' ? '✗ No image' : '🖼 Fetch image'}
+                </button>
                 <button
                   onClick={() => editingId === hotel.id ? setEditingId(null) : startEdit(hotel)}
-                  style={{ background: editingId === hotel.id ? 'transparent' : gold, color: editingId === hotel.id ? textMuted : '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.4rem 1rem', border: editingId === hotel.id ? '1px solid ' + border : 'none', cursor: 'pointer' }}
+                  style={{ background: editingId === hotel.id ? 'transparent' : gold, color: editingId === hotel.id ? textMuted : '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.4rem 1rem', border: editingId === hotel.id ? '1px solid ' + border : 'none', cursor: 'pointer', borderRadius: 4 }}
                 >
                   {editingId === hotel.id ? 'Cancel' : 'Edit'}
                 </button>
               </div>
             </div>
 
-            {/* Edit form */}
             {editingId === hotel.id && editForm && (
               <div style={{ padding: '1.5rem' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
@@ -208,7 +278,16 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
                 </div>
 
                 <div style={{ marginBottom: '1.5rem' }}>
-                  <label style={labelStyle}>Images (URLs)</label>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <label style={labelStyle}>Images (URLs)</label>
+                    <button
+                      onClick={() => fetchImageForHotel({ id: editingId, direct_booking_url: editForm.direct_booking_url })}
+                      disabled={fetchingImage === editingId}
+                      style={{ background: 'rgba(201,169,110,0.15)', color: gold, fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, padding: '0.2rem 0.75rem', border: '1px solid ' + gold + '44', borderRadius: 4, cursor: 'pointer' }}
+                    >
+                      {fetchingImage === editingId ? 'Fetching...' : '🖼 Auto-fetch from website'}
+                    </button>
+                  </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     {[0, 1, 2].map(i => (
                       <input key={i} type="url" value={editForm.images[i] || ''} onChange={e => {
@@ -220,22 +299,30 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                    <input type="checkbox" checked={editForm.is_active} onChange={e => setEditForm({ ...editForm, is_active: e.target.checked })} />
-                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text }}>Active (visible on site)</span>
+                    <input type="checkbox" checked={editForm.is_active} onChange={e => setEditForm({ ...editForm, is_active: e.target.checked })} style={{ accentColor: gold }} />
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text }}>Active</span>
                   </label>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                    <input type="checkbox" checked={editForm.is_featured} onChange={e => setEditForm({ ...editForm, is_featured: e.target.checked })} />
-                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text }}>Featured (shown on homepage)</span>
+                    <input type="checkbox" checked={editForm.is_featured} onChange={e => setEditForm({ ...editForm, is_featured: e.target.checked })} style={{ accentColor: gold }} />
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text }}>Featured</span>
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={editForm.is_partner} onChange={e => setEditForm({ ...editForm, is_partner: e.target.checked })} style={{ accentColor: gold }} />
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text }}>✦ Partner</span>
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={editForm.show_schema} onChange={e => setEditForm({ ...editForm, show_schema: e.target.checked })} style={{ accentColor: gold }} />
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text }}>Show Schema</span>
                   </label>
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  <button onClick={handleSave} disabled={saving} style={{ background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0.75rem 2rem', border: 'none', cursor: 'pointer' }}>
+                  <button onClick={handleSave} disabled={saving} style={{ background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0.75rem 2rem', border: 'none', cursor: 'pointer', borderRadius: 6 }}>
                     {saving ? 'Saving...' : saveSuccess ? '✓ Saved' : 'Save Changes'}
                   </button>
-                  <button onClick={() => setEditingId(null)} style={{ background: 'transparent', color: textMuted, fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0.75rem 1.5rem', border: '1px solid ' + border, cursor: 'pointer' }}>
+                  <button onClick={() => setEditingId(null)} style={{ background: 'transparent', color: textMuted, fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0.75rem 1.5rem', border: '1px solid ' + border, cursor: 'pointer', borderRadius: 6 }}>
                     Cancel
                   </button>
                 </div>
