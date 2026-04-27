@@ -31,8 +31,8 @@ export async function GET() {
   if (hotelsError) return NextResponse.json({ error: hotelsError.message })
   if (!hotels?.length) return NextResponse.json({ error: 'No hotels found' })
 
-  const results = []
-  const errors = []
+  const results: any[] = []
+  const errors: any[] = []
   let totalAppearances = 0
 
   for (const query of AI_QUERIES) {
@@ -54,13 +54,13 @@ export async function GET() {
       for (const hotel of hotels) {
         const hotelNameLower = hotel.name.toLowerCase()
         const responseLower = responseText.toLowerCase()
-        const nameParts = hotelNameLower.split(' ').filter(w => w.length > 3)
-        const appeared = nameParts.some(part => responseLower.includes(part)) ||
+        const nameParts: string[] = hotelNameLower.split(' ').filter((w: string) => w.length > 3)
+        const appeared: boolean = nameParts.some((part: string) => responseLower.includes(part)) ||
           responseLower.includes(hotelNameLower)
 
-        let snippet = null
+        let snippet: string | null = null
         if (appeared) {
-          const searchTerm = nameParts.find(part => responseLower.includes(part)) || hotelNameLower
+          const searchTerm: string = nameParts.find((part: string) => responseLower.includes(part)) || hotelNameLower
           const idx = responseLower.indexOf(searchTerm)
           snippet = responseText.substring(Math.max(0, idx - 50), idx + 150).trim()
           totalAppearances++
@@ -76,7 +76,6 @@ export async function GET() {
         })
 
         if (insertError) errors.push({ hotel: hotel.name, error: insertError.message })
-
         results.push({ hotel: hotel.name, query, appeared, snippet })
       }
 
