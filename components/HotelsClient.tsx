@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 const REGIONS = ['All Destinations', 'Zermatt', 'St. Moritz', 'Verbier', 'Davos', 'Interlaken', 'Lucerne', 'Geneva', 'Zurich', 'Gstaad', 'Lugano']
 const CATEGORIES = ['All Types', 'Ski Resort', 'Wellness Retreat', 'City Luxury', 'Mountain Lodge', 'Lake Resort']
@@ -21,6 +22,8 @@ interface Hotel {
   exclusive_offer: string
   contact_email: string
   is_featured: boolean
+  is_partner: boolean
+  show_schema: boolean
 }
 
 interface Props {
@@ -62,7 +65,7 @@ export default function HotelsClient({ hotels, initialRegion, initialCategory, i
             <span style={{ width: '30px', height: '1px', background: gold, display: 'inline-block' }} />
           </div>
           <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 300, color: text, textAlign: 'center', margin: '0 0 2.5rem' }}>
-            Partner Luxury Hotels
+            Luxury Hotels
           </h1>
 
           {/* Search bar */}
@@ -105,19 +108,28 @@ export default function HotelsClient({ hotels, initialRegion, initialCategory, i
                 onMouseLeave={() => setHovered(null)}
                 style={{
                   background: '#FFFFFF',
-                  border: '1px solid rgba(201,169,110,0.25)',
+                  border: hotel.is_partner ? `1px solid ${gold}88` : '1px solid rgba(201,169,110,0.25)',
                   overflow: 'hidden',
                   transition: 'all 0.4s ease',
                   transform: hovered === hotel.id ? 'translateY(-4px)' : 'translateY(0)',
                   boxShadow: hovered === hotel.id ? '0 16px 48px rgba(0,0,0,0.2)' : '0 2px 12px rgba(0,0,0,0.1)',
+                  position: 'relative',
                 }}
               >
+                {/* Clickable overlay to profile page */}
+                <Link href={`/hotels/${hotel.id}`} style={{ position: 'absolute', inset: 0, zIndex: 1 }} aria-label={`View ${hotel.name} profile`} />
+
                 <div style={{ position: 'relative', height: '220px', overflow: 'hidden' }}>
                   <img src={hotel.images[0] || 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800'} alt={hotel.name} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease', transform: hovered === hotel.id ? 'scale(1.04)' : 'scale(1)' }} />
                   <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 50%, transparent 100%)' }} />
-                  {hotel.is_featured && (
-                    <div style={{ position: 'absolute', top: '1rem', left: '1rem', background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase' as const, padding: '0.25rem 0.6rem' }}>Featured</div>
+
+                  {/* Partner badge */}
+                  {hotel.is_partner && (
+                    <div style={{ position: 'absolute', top: '1rem', left: '1rem', background: gold, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase' as const, padding: '0.25rem 0.75rem', borderRadius: 20, zIndex: 2 }}>
+                      ✦ Partner
+                    </div>
                   )}
+
                   <div style={{ position: 'absolute', bottom: '1rem', left: '1.25rem' }}>
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', letterSpacing: '0.2em', textTransform: 'uppercase' as const, color: gold, margin: '0 0 0.25rem' }}>{hotel.category}</p>
                     <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 300, color: '#fff', margin: 0 }}>{hotel.name}</h3>
@@ -128,9 +140,11 @@ export default function HotelsClient({ hotels, initialRegion, initialCategory, i
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.75rem' }}>
                     <span style={{ fontSize: '0.7rem' }}>📍</span>
                     <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: 'rgba(61,43,31,0.5)' }}>{hotel.location}</span>
+                    <span style={{ marginLeft: 'auto', color: gold, fontSize: '0.7rem' }}>★</span>
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: 'rgba(61,43,31,0.5)', fontWeight: 500 }}>{hotel.rating}</span>
                   </div>
 
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: 'rgba(61,43,31,0.6)', lineHeight: 1.7, marginBottom: '1rem', overflow: 'hidden', display: '-webkit-box' as const }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: 'rgba(61,43,31,0.6)', lineHeight: 1.7, marginBottom: '1rem', overflow: 'hidden', display: '-webkit-box' as const, WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>
                     {hotel.description}
                   </p>
 
@@ -140,13 +154,22 @@ export default function HotelsClient({ hotels, initialRegion, initialCategory, i
                     </div>
                   )}
 
-                  <div style={{ display: 'flex', gap: '0.5rem', paddingTop: '1rem', borderTop: '1px solid rgba(201,169,110,0.15)' }}>
-                    <a href={'/api/track?hotel_id=' + hotel.id + '&hotel_name=' + encodeURIComponent(hotel.name) + '&destination=' + encodeURIComponent(hotel.direct_booking_url.replace('/book', '').replace('/reservations', '')) + '&medium=website&campaign=hotels_page_website'} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'block', textAlign: 'center' as const, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.15em', textTransform: 'uppercase' as const, color: '#3D2B1F', border: '1px solid rgba(201,169,110,0.3)', padding: '0.65rem', textDecoration: 'none' }}>
-                      Website
-                    </a>
-                    <a href={'/api/track?hotel_id=' + hotel.id + '&hotel_name=' + encodeURIComponent(hotel.name) + '&destination=' + encodeURIComponent(hotel.direct_booking_url) + '&medium=website&campaign=hotels_page_book'} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'block', textAlign: 'center' as const, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase' as const, color: '#fff', background: gold, padding: '0.65rem', textDecoration: 'none' }}>
-                      Book Direct
-                    </a>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '1rem', borderTop: '1px solid rgba(201,169,110,0.15)' }}>
+                    <div>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: 'rgba(61,43,31,0.4)', letterSpacing: '0.1em', textTransform: 'uppercase' as const, margin: '0 0 0.2rem' }}>From</p>
+                      <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', fontWeight: 400, color: '#3D2B1F', margin: 0 }}>
+                        CHF {hotel.nightly_rate_chf.toLocaleString()}
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: 'rgba(61,43,31,0.4)', fontWeight: 300 }}> /night</span>
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem', position: 'relative', zIndex: 2 }}>
+                      <a href={'/api/track?hotel_id=' + hotel.id + '&hotel_name=' + encodeURIComponent(hotel.name) + '&destination=' + encodeURIComponent(hotel.direct_booking_url.replace('/book', '').replace('/reservations', '')) + '&medium=website&campaign=hotels_page_website'} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.15em', textTransform: 'uppercase' as const, color: '#3D2B1F', border: '1px solid rgba(201,169,110,0.3)', padding: '0.6rem 1rem', textDecoration: 'none' }}>
+                        Website
+                      </a>
+                      <a href={'/api/track?hotel_id=' + hotel.id + '&hotel_name=' + encodeURIComponent(hotel.name) + '&destination=' + encodeURIComponent(hotel.direct_booking_url) + '&medium=website&campaign=hotels_page_book'} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase' as const, color: '#fff', background: gold, padding: '0.6rem 1rem', textDecoration: 'none' }}>
+                        Book Direct
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
