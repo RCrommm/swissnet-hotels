@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { cookies } from 'next/headers'
 import KeywordsTab from '@/components/KeywordsTab'
 import HotelsTab from '@/components/HotelsTab'
-import RoomTypesTab from '@/components/RoomTypesTab'
+import SchemaTab from '@/components/SchemaTab'
 
 async function isAuthenticated(password?: string) {
   const cookieStore = await cookies()
@@ -15,7 +15,7 @@ async function isAuthenticated(password?: string) {
 export default async function AdminPage({
   searchParams
 }: {
-  searchParams: Promise<{ password?: string; tab?: string; hotel_id?: string }>
+  searchParams: Promise<{ password?: string; tab?: string }>
 }) {
   const params = await searchParams
   const auth = await isAuthenticated(params.password)
@@ -65,9 +65,6 @@ export default async function AdminPage({
   const keywordsList = keywords || []
   const clicksList = clicks || []
 
-  const selectedHotelId = params.hotel_id || hotelsList[0]?.id || ''
-  const selectedHotel = hotelsList.find((h: any) => h.id === selectedHotelId) || hotelsList[0]
-
   return (
     <div className="pt-20 min-h-screen bg-stone-50">
       <div className="max-w-6xl mx-auto px-6 py-10">
@@ -82,7 +79,7 @@ export default async function AdminPage({
         </div>
 
         <div className="flex gap-1 mb-6 border-b border-stone-200">
-          {['hotels', 'rooms', 'leads', 'keywords', 'clicks'].map(t => (
+          {['hotels', 'schema', 'leads', 'keywords', 'clicks'].map(t => (
             <a key={t} href={'/admin?password=' + pw + '&tab=' + t}
               className={'px-6 py-3 text-sm uppercase tracking-wide capitalize transition-colors ' +
                 (tab === t ? 'border-b-2 border-amber-700 text-amber-700 font-semibold' : 'text-stone-500 hover:text-stone-700')}>
@@ -93,23 +90,7 @@ export default async function AdminPage({
 
         {tab === 'hotels' && <HotelsTab hotels={hotelsList} password={pw} />}
 
-        {tab === 'rooms' && (
-          <div>
-            <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 13, color: '#78716c', fontWeight: 500 }}>Editing room types for:</span>
-              {hotelsList.map((h: any) => (
-                <a key={h.id} href={`/admin?password=${pw}&tab=rooms&hotel_id=${h.id}`} style={{
-                  padding: '6px 16px', borderRadius: 6, fontSize: 12, fontWeight: 600,
-                  textDecoration: 'none', border: '1px solid',
-                  borderColor: selectedHotelId === h.id ? '#C9A84C' : '#e7e5e4',
-                  background: selectedHotelId === h.id ? '#C9A84C' : '#fff',
-                  color: selectedHotelId === h.id ? '#1a0e06' : '#78716c',
-                }}>{h.name}</a>
-              ))}
-            </div>
-            <RoomTypesTab hotelId={selectedHotelId} hotelName={selectedHotel?.name || ''} />
-          </div>
-        )}
+        {tab === 'schema' && <SchemaTab hotels={hotelsList} />}
 
         {tab === 'leads' && (
           <div className="bg-white border border-stone-200 overflow-hidden">
