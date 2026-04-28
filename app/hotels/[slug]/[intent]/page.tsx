@@ -87,8 +87,8 @@ export async function generateStaticParams() {
   return params
 }
 
-export default async function IntentPage({ params }: { params: Promise<{ id: string; intent: string }> }) {
-  const { id, intent } = await params
+export default async function IntentPage({ params }: { params: Promise<{ slug: string; intent: string }> }) {
+  const { slug, intent } = await params
   const intentData = INTENTS[intent]
   if (!intentData) notFound()
 
@@ -100,11 +100,11 @@ export default async function IntentPage({ params }: { params: Promise<{ id: str
 
   if (!hotel || (!hotel.is_partner && !hotel.show_schema)) notFound()
 
-  const { data: content } = await supabase
-    .from('hotel_content')
-    .select('*')
-    .eq('hotel_id', id)
-    .single()
+  const { data: hotel } = await supabase
+  .from('hotels')
+  .select('*')
+  .or(`slug.eq.${slug},id.eq.${slug}`)
+  .single()
 
   const gold = '#C9A84C'
   const border = 'rgba(201,169,110,0.25)'

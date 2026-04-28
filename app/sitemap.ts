@@ -24,7 +24,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .eq('is_active', true)
 
   const hotelPages: MetadataRoute.Sitemap = (hotels || []).map(hotel => ({
-    url: `${baseUrl}/hotels/${hotel.id}`,
+    url: `${baseUrl}/hotels/${hotel.slug || hotel.id}`,
     lastModified: new Date(hotel.updated_at || new Date()),
     changeFrequency: 'weekly' as const,
     priority: hotel.is_partner ? 0.9 : 0.7,
@@ -35,7 +35,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const partnerHotels = (hotels || []).filter(h => h.is_partner)
   const intentPages: MetadataRoute.Sitemap = partnerHotels.flatMap(hotel =>
     intents.map(intent => ({
-      url: `${baseUrl}/hotels/${hotel.id}/${intent}`,
+      url: `${baseUrl}/hotels/${hotel.slug || hotel.id}/${intent}`,
       lastModified: new Date(),
       changeFrequency: 'monthly' as const,
       priority: 0.8,
