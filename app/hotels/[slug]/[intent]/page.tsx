@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
+export const dynamic = 'force-dynamic'
 import Link from 'next/link'
 
 const INTENTS: Record<string, {
