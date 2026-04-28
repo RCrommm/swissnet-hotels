@@ -265,9 +265,16 @@ export default async function HomePage() {
           </div>
           <div>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginBottom: '1rem' }}>Explore</p>
-            {['All Hotels', 'Zermatt', 'St. Moritz', 'Wellness'].map(l => (
-              <a key={l} href={'/hotels' + (l !== 'All Hotels' ? '?region=' + l : '')} style={{ display: 'block', fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', textDecoration: 'none', marginBottom: '0.5rem', fontWeight: 300 }}>{l}</a>
-            ))}
+            {[
+            { label: 'All Hotels', href: '/hotels' },
+            { label: 'Zermatt', href: '/destinations/zermatt' },
+            { label: 'Geneva', href: '/destinations/geneva' },
+            { label: 'St. Moritz', href: '/destinations/st-moritz' },
+            { label: 'Interlaken', href: '/destinations/interlaken' },
+          ].map(l => (
+            <a key={l.label} href={l.href} style={{ display: 'block', fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', textDecoration: 'none', marginBottom: '0.5rem', fontWeight: 300 }}>{l.label}</a>
+          ))}
+          
           </div>
           <div>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginBottom: '1rem' }}>For Hotels</p>
