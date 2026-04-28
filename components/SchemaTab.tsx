@@ -1,27 +1,23 @@
-// components/SchemaTab.tsx
-'use client';
-import { useState } from 'react';
-import RoomTypesTab from '@/components/RoomTypesTab';
-import SpaSchema from '@/components/schema/SpaSchema';
-import RestaurantsSchema from '@/components/schema/RestaurantsSchema';
-import OffersSchema from '@/components/schema/OffersSchema';
+'use client'
+import { useState } from 'react'
+import RoomTypesTab from '@/components/RoomTypesTab'
+import SpaSchema from '@/components/schema/SpaSchema'
+import RestaurantsSchema from '@/components/schema/RestaurantsSchema'
+import OffersSchema from '@/components/schema/OffersSchema'
+import ContentSchema from '@/components/schema/ContentSchema'
 
 const COLORS = {
-  bg: '#492816',
-  bgLight: '#3D2010',
-  bgCard: '#5C3320',
-  gold: '#C9A84C',
-  text: '#F5EDD8',
-  textMuted: '#C4A882',
+  bg: '#492816', bgLight: '#3D2010', bgCard: '#5C3320',
+  gold: '#C9A84C', text: '#F5EDD8', textMuted: '#C4A882',
   border: 'rgba(201,168,76,0.25)',
-};
+}
 
-const SECTIONS = ['Rooms', 'Spa & Wellness', 'Restaurants', 'Special Offers'];
+const SECTIONS = ['Rooms', 'Spa & Wellness', 'Restaurants', 'Special Offers', 'Content']
 
 export default function SchemaTab({ hotels }: { hotels: any[] }) {
-  const [hotelId, setHotelId] = useState(hotels[0]?.id || '');
-  const [section, setSection] = useState('Rooms');
-  const hotel = hotels.find(h => h.id === hotelId) || hotels[0];
+  const [hotelId, setHotelId] = useState(hotels[0]?.id || '')
+  const [section, setSection] = useState('Rooms')
+  const hotel = hotels.find(h => h.id === hotelId) || hotels[0]
 
   return (
     <div style={{ padding: '8px 0' }}>
@@ -58,7 +54,8 @@ export default function SchemaTab({ hotels }: { hotels: any[] }) {
         {section === 'Spa & Wellness' && <SpaSchema hotelId={hotelId} hotelName={hotel?.name || ''} />}
         {section === 'Restaurants' && <RestaurantsSchema hotelId={hotelId} hotelName={hotel?.name || ''} />}
         {section === 'Special Offers' && <OffersSchema hotelId={hotelId} hotelName={hotel?.name || ''} />}
+        {section === 'Content' && <ContentSchema hotelId={hotelId} hotelName={hotel?.name || ''} />}
       </div>
     </div>
-  );
+  )
 }
