@@ -116,7 +116,7 @@ export default async function HomePage() {
           <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 300, color: text, margin: '0 0 1rem' }}>Official Partners</h2>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: textMuted, fontWeight: 300 }}>Switzerland's finest luxury hotels trust SwissNet AI to drive direct bookings.</p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
   {[
     { name: 'La Réserve Genève', location: 'Geneva', logo: null },
     { name: 'La Réserve Zurich', location: 'Zurich', logo: null },
@@ -129,9 +129,7 @@ export default async function HomePage() {
     { name: 'Alpengold Hotel', location: 'Davos', logo: null },
     { name: 'Monte Rosa Zermatt', location: 'Zermatt', logo: null },
   ].map(p => (
-    <div key={p.name} style={{ height: '110px', border: '1px solid ' + border, display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.04)', padding: '1rem', gap: '0.5rem', transition: 'border-color 0.2s', cursor: 'default' }}
-      onMouseEnter={e => (e.currentTarget.style.borderColor = gold)}
-      onMouseLeave={e => (e.currentTarget.style.borderColor = border)}>
+    <div key={p.name} style={{ height: '110px', border: '1px solid ' + border, display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.04)', padding: '1rem', gap: '0.5rem' }}>
       {p.logo ? (
         <img src={p.logo} alt={p.name} style={{ maxHeight: '50px', maxWidth: '140px', objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.7 }} />
       ) : (
