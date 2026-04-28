@@ -66,13 +66,21 @@ function HotelSchema({ hotel, keywords, roomTypes, faqs }: { hotel: any; keyword
 export default async function HotelPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
 
-  // Fetch by slug OR id for backwards compatibility
-  const { data: hotel } = await supabase
+  // Try slug first, then id
+let { data: hotel } = await supabase
+  .from('hotels')
+  .select('*')
+  .eq('slug', slug)
+  .single()
+
+if (!hotel) {
+  const { data: hotelById } = await supabase
     .from('hotels')
     .select('*')
-    .or(`slug.eq.${slug},id.eq.${slug}`)
+    .eq('id', slug)
     .single()
-
+  hotel = hotelById
+}
   if (!hotel) notFound()
 
   const { data: keywords } = await supabase.from('hotel_keywords').select('keyword').eq('hotel_id', hotel.id)
