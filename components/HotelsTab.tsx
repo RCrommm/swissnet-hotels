@@ -15,6 +15,7 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
   const [editForm, setEditForm] = useState<any>(null)
   const [saving, setSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
+  const [search, setSearch] = useState('')
   const [fetchingImage, setFetchingImage] = useState<string | null>(null)
   const [fetchingAll, setFetchingAll] = useState(false)
   const [fetchResults, setFetchResults] = useState<Record<string, 'success' | 'error'>>({})
@@ -25,6 +26,13 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
   const textMuted = 'rgba(42,26,14,0.45)'
   const bg = '#F8F5EF'
   const bgSection = '#F2EAE0'
+
+  const filteredHotels = hotels.filter(h =>
+    !search ||
+    h.name?.toLowerCase().includes(search.toLowerCase()) ||
+    h.location?.toLowerCase().includes(search.toLowerCase()) ||
+    h.region?.toLowerCase().includes(search.toLowerCase())
+  )
 
   const startEdit = (hotel: any) => {
     setEditingId(hotel.id)
@@ -123,7 +131,6 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
         setFetchResults(prev => ({ ...prev, [hotel.id]: 'error' }))
       }
       setFetchingImage(null)
-      // Small delay between requests to avoid rate limiting
       await new Promise(r => setTimeout(r, 800))
     }
     setFetchingAll(false)
@@ -144,16 +151,28 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
 
   return (
     <div>
+      {/* Header with search */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: 0 }}>{hotels.length} properties</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1 }}>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: 0, whiteSpace: 'nowrap' }}>
+            {filteredHotels.length} of {hotels.length} properties
+          </p>
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search by name, location or region..."
+            style={{ background: '#fff', border: '1px solid ' + border, borderRadius: 6, padding: '6px 14px', fontSize: 13, color: text, outline: 'none', width: 280, fontFamily: 'Montserrat, sans-serif' }}
+          />
+          {search && (
+            <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', color: textMuted, cursor: 'pointer', fontSize: 12 }}>✕ Clear</button>
+          )}
+        </div>
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
           {missingImages > 0 && (
-            <button
-              onClick={fetchAllImages}
-              disabled={fetchingAll}
-              style={{ background: fetchingAll ? bgSection : 'rgba(201,169,110,0.15)', color: gold, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.5rem 1.25rem', border: '1px solid ' + gold + '55', cursor: fetchingAll ? 'not-allowed' : 'pointer', borderRadius: 6 }}
-            >
-              {fetchingAll ? `Fetching images... (${Object.keys(fetchResults).length}/${missingImages})` : `🖼 Auto-fetch ${missingImages} missing images`}
+            <button onClick={fetchAllImages} disabled={fetchingAll}
+              style={{ background: fetchingAll ? bgSection : 'rgba(201,169,110,0.15)', color: gold, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.5rem 1.25rem', border: '1px solid ' + gold + '55', cursor: fetchingAll ? 'not-allowed' : 'pointer', borderRadius: 6 }}>
+              {fetchingAll ? `Fetching...` : `🖼 Auto-fetch ${missingImages} images`}
             </button>
           )}
           <a href="/onboarding" style={{ background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0.5rem 1.25rem', textDecoration: 'none', borderRadius: 6 }}>
@@ -162,13 +181,17 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        {hotels.map(hotel => (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        {filteredHotels.length === 0 && (
+          <div style={{ background: '#fff', border: '1px solid ' + border, borderRadius: 8, padding: '40px', textAlign: 'center', color: textMuted, fontSize: 14 }}>
+            No hotels match "{search}"
+          </div>
+        )}
+        {filteredHotels.map(hotel => (
           <div key={hotel.id} style={{ background: '#fff', border: '1px solid ' + border, overflow: 'hidden', boxShadow: '0 2px 12px rgba(201,169,110,0.06)', borderRadius: 8 }}>
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', background: editingId === hotel.id ? bgSection : '#fff', borderBottom: editingId === hotel.id ? '1px solid ' + border : 'none' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                {/* Thumbnail */}
                 <div style={{ width: 56, height: 42, borderRadius: 6, overflow: 'hidden', flexShrink: 0, background: bgSection }}>
                   {hotel.images?.[0] ? (
                     <img src={hotel.images[0]} alt={hotel.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -177,32 +200,24 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
                   )}
                 </div>
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: 2 }}>
                     <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: text, margin: 0, fontWeight: 400 }}>{hotel.name}</p>
                     {hotel.is_partner && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, background: gold, color: '#1a0e06', padding: '2px 8px', borderRadius: 20 }}>✦ Partner</span>}
+                    {!hotel.is_active && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 600, background: 'rgba(220,38,38,0.1)', color: '#dc2626', padding: '2px 8px', borderRadius: 20 }}>Hidden</span>}
                   </div>
                   <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, margin: 0 }}>
                     {hotel.location} · {hotel.category} · ★ {hotel.rating} · CHF {hotel.nightly_rate_chf?.toLocaleString()}/night
                   </p>
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, padding: '0.2rem 0.6rem', borderRadius: 4, background: hotel.is_active ? 'rgba(22,163,74,0.1)' : 'rgba(220,38,38,0.1)', color: hotel.is_active ? '#16a34a' : '#dc2626' }}>
-                  {hotel.is_active ? 'Live' : 'Hidden'}
-                </span>
-                {/* Fetch image button */}
-                <button
-                  onClick={() => fetchImageForHotel(hotel)}
-                  disabled={fetchingImage === hotel.id || fetchingAll}
-                  title="Auto-fetch image from hotel website"
-                  style={{ background: fetchResults[hotel.id] === 'success' ? 'rgba(22,163,74,0.1)' : fetchResults[hotel.id] === 'error' ? 'rgba(220,38,38,0.1)' : bgSection, color: fetchResults[hotel.id] === 'success' ? '#16a34a' : fetchResults[hotel.id] === 'error' ? '#dc2626' : textMuted, fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, padding: '0.2rem 0.6rem', border: '1px solid ' + border, borderRadius: 4, cursor: 'pointer' }}
-                >
-                  {fetchingImage === hotel.id ? '...' : fetchResults[hotel.id] === 'success' ? '✓ Got image' : fetchResults[hotel.id] === 'error' ? '✗ No image' : '🖼 Fetch image'}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <button onClick={() => fetchImageForHotel(hotel)} disabled={fetchingImage === hotel.id || fetchingAll}
+                  title="Auto-fetch image"
+                  style={{ background: fetchResults[hotel.id] === 'success' ? 'rgba(22,163,74,0.1)' : fetchResults[hotel.id] === 'error' ? 'rgba(220,38,38,0.1)' : bgSection, color: fetchResults[hotel.id] === 'success' ? '#16a34a' : fetchResults[hotel.id] === 'error' ? '#dc2626' : textMuted, fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, padding: '0.2rem 0.6rem', border: '1px solid ' + border, borderRadius: 4, cursor: 'pointer' }}>
+                  {fetchingImage === hotel.id ? '...' : fetchResults[hotel.id] === 'success' ? '✓ Got image' : fetchResults[hotel.id] === 'error' ? '✗ Failed' : '🖼 Fetch'}
                 </button>
-                <button
-                  onClick={() => editingId === hotel.id ? setEditingId(null) : startEdit(hotel)}
-                  style={{ background: editingId === hotel.id ? 'transparent' : gold, color: editingId === hotel.id ? textMuted : '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.4rem 1rem', border: editingId === hotel.id ? '1px solid ' + border : 'none', cursor: 'pointer', borderRadius: 4 }}
-                >
+                <button onClick={() => editingId === hotel.id ? setEditingId(null) : startEdit(hotel)}
+                  style={{ background: editingId === hotel.id ? 'transparent' : gold, color: editingId === hotel.id ? textMuted : '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.4rem 1rem', border: editingId === hotel.id ? '1px solid ' + border : 'none', cursor: 'pointer', borderRadius: 4 }}>
                   {editingId === hotel.id ? 'Cancel' : 'Edit'}
                 </button>
               </div>
@@ -211,14 +226,8 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
             {editingId === hotel.id && editForm && (
               <div style={{ padding: '1.5rem' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                  <div>
-                    <label style={labelStyle}>Hotel Name</label>
-                    <input type="text" value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} style={inputStyle} />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Location</label>
-                    <input type="text" value={editForm.location} onChange={e => setEditForm({ ...editForm, location: e.target.value })} style={inputStyle} />
-                  </div>
+                  <div><label style={labelStyle}>Hotel Name</label><input type="text" value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} style={inputStyle} /></div>
+                  <div><label style={labelStyle}>Location</label><input type="text" value={editForm.location} onChange={e => setEditForm({ ...editForm, location: e.target.value })} style={inputStyle} /></div>
                   <div>
                     <label style={labelStyle}>Region</label>
                     <select value={editForm.region} onChange={e => setEditForm({ ...editForm, region: e.target.value })} style={{ ...inputStyle, background: bg }}>
@@ -233,22 +242,10 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
                       {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
-                  <div>
-                    <label style={labelStyle}>Rating (1-5)</label>
-                    <input type="number" min="1" max="5" step="0.1" value={editForm.rating} onChange={e => setEditForm({ ...editForm, rating: e.target.value })} style={inputStyle} />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Nightly Rate (CHF)</label>
-                    <input type="number" value={editForm.nightly_rate_chf} onChange={e => setEditForm({ ...editForm, nightly_rate_chf: e.target.value })} style={inputStyle} />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Contact Email</label>
-                    <input type="email" value={editForm.contact_email} onChange={e => setEditForm({ ...editForm, contact_email: e.target.value })} style={inputStyle} />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Direct Booking URL</label>
-                    <input type="url" value={editForm.direct_booking_url} onChange={e => setEditForm({ ...editForm, direct_booking_url: e.target.value })} style={inputStyle} />
-                  </div>
+                  <div><label style={labelStyle}>Rating (1-5)</label><input type="number" min="1" max="5" step="0.1" value={editForm.rating} onChange={e => setEditForm({ ...editForm, rating: e.target.value })} style={inputStyle} /></div>
+                  <div><label style={labelStyle}>Nightly Rate (CHF)</label><input type="number" value={editForm.nightly_rate_chf} onChange={e => setEditForm({ ...editForm, nightly_rate_chf: e.target.value })} style={inputStyle} /></div>
+                  <div><label style={labelStyle}>Contact Email</label><input type="email" value={editForm.contact_email} onChange={e => setEditForm({ ...editForm, contact_email: e.target.value })} style={inputStyle} /></div>
+                  <div><label style={labelStyle}>Direct Booking URL</label><input type="url" value={editForm.direct_booking_url} onChange={e => setEditForm({ ...editForm, direct_booking_url: e.target.value })} style={inputStyle} /></div>
                 </div>
 
                 <div style={{ marginBottom: '1rem' }}>
@@ -262,29 +259,20 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                  <div>
-                    <label style={labelStyle}>Amenities (comma separated)</label>
-                    <input type="text" value={editForm.amenities} onChange={e => setEditForm({ ...editForm, amenities: e.target.value })} style={inputStyle} placeholder="Spa, Pool, Fine Dining" />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Best For (comma separated)</label>
-                    <input type="text" value={editForm.best_for} onChange={e => setEditForm({ ...editForm, best_for: e.target.value })} style={inputStyle} placeholder="Couples, Wellness, Ski" />
-                  </div>
+                  <div><label style={labelStyle}>Amenities (comma separated)</label><input type="text" value={editForm.amenities} onChange={e => setEditForm({ ...editForm, amenities: e.target.value })} style={inputStyle} placeholder="Spa, Pool, Fine Dining" /></div>
+                  <div><label style={labelStyle}>Best For (comma separated)</label><input type="text" value={editForm.best_for} onChange={e => setEditForm({ ...editForm, best_for: e.target.value })} style={inputStyle} placeholder="Couples, Wellness, Ski" /></div>
                 </div>
 
                 <div style={{ marginBottom: '1rem' }}>
                   <label style={labelStyle}>SEO Keywords</label>
-                  <input type="text" value={editForm.seo_keywords} onChange={e => setEditForm({ ...editForm, seo_keywords: e.target.value })} style={inputStyle} placeholder="luxury hotel geneva, romantic hotel switzerland" />
+                  <input type="text" value={editForm.seo_keywords} onChange={e => setEditForm({ ...editForm, seo_keywords: e.target.value })} style={inputStyle} />
                 </div>
 
                 <div style={{ marginBottom: '1.5rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                     <label style={labelStyle}>Images (URLs)</label>
-                    <button
-                      onClick={() => fetchImageForHotel({ id: editingId, direct_booking_url: editForm.direct_booking_url })}
-                      disabled={fetchingImage === editingId}
-                      style={{ background: 'rgba(201,169,110,0.15)', color: gold, fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, padding: '0.2rem 0.75rem', border: '1px solid ' + gold + '44', borderRadius: 4, cursor: 'pointer' }}
-                    >
+                    <button onClick={() => fetchImageForHotel({ id: editingId, direct_booking_url: editForm.direct_booking_url })} disabled={fetchingImage === editingId}
+                      style={{ background: 'rgba(201,169,110,0.15)', color: gold, fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, padding: '0.2rem 0.75rem', border: '1px solid ' + gold + '44', borderRadius: 4, cursor: 'pointer' }}>
                       {fetchingImage === editingId ? 'Fetching...' : '🖼 Auto-fetch from website'}
                     </button>
                   </div>
@@ -300,29 +288,26 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
                 </div>
 
                 <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                    <input type="checkbox" checked={editForm.is_active} onChange={e => setEditForm({ ...editForm, is_active: e.target.checked })} style={{ accentColor: gold }} />
-                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text }}>Active</span>
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                    <input type="checkbox" checked={editForm.is_featured} onChange={e => setEditForm({ ...editForm, is_featured: e.target.checked })} style={{ accentColor: gold }} />
-                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text }}>Featured</span>
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                    <input type="checkbox" checked={editForm.is_partner} onChange={e => setEditForm({ ...editForm, is_partner: e.target.checked })} style={{ accentColor: gold }} />
-                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text }}>✦ Partner</span>
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                    <input type="checkbox" checked={editForm.show_schema} onChange={e => setEditForm({ ...editForm, show_schema: e.target.checked })} style={{ accentColor: gold }} />
-                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text }}>Show Schema</span>
-                  </label>
+                  {[
+                    { key: 'is_active', label: 'Active' },
+                    { key: 'is_featured', label: 'Featured' },
+                    { key: 'is_partner', label: '✦ Partner' },
+                    { key: 'show_schema', label: 'Show Schema' },
+                  ].map(f => (
+                    <label key={f.key} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={editForm[f.key]} onChange={e => setEditForm({ ...editForm, [f.key]: e.target.checked })} style={{ accentColor: gold }} />
+                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text }}>{f.label}</span>
+                    </label>
+                  ))}
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  <button onClick={handleSave} disabled={saving} style={{ background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0.75rem 2rem', border: 'none', cursor: 'pointer', borderRadius: 6 }}>
+                  <button onClick={handleSave} disabled={saving}
+                    style={{ background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0.75rem 2rem', border: 'none', cursor: 'pointer', borderRadius: 6 }}>
                     {saving ? 'Saving...' : saveSuccess ? '✓ Saved' : 'Save Changes'}
                   </button>
-                  <button onClick={() => setEditingId(null)} style={{ background: 'transparent', color: textMuted, fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0.75rem 1.5rem', border: '1px solid ' + border, cursor: 'pointer', borderRadius: 6 }}>
+                  <button onClick={() => setEditingId(null)}
+                    style={{ background: 'transparent', color: textMuted, fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0.75rem 1.5rem', border: '1px solid ' + border, cursor: 'pointer', borderRadius: 6 }}>
                     Cancel
                   </button>
                 </div>
