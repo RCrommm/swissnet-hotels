@@ -14,9 +14,21 @@ const hotelLinks = [
   { label: 'City Luxury', href: '/hotels?category=City+Luxury' },
 ]
 
+const destinationLinks = [
+  { label: 'Zermatt', href: '/destinations/zermatt' },
+  { label: 'Geneva', href: '/destinations/geneva' },
+  { label: 'St. Moritz', href: '/destinations/st-moritz' },
+  { label: 'Interlaken', href: '/destinations/interlaken' },
+  { label: 'Zurich', href: '/destinations/zurich' },
+  { label: 'Gstaad', href: '/destinations/gstaad' },
+  { label: 'Lucerne', href: '/destinations/lucerne' },
+  { label: 'Verbier', href: '/destinations/verbier' },
+]
+
 export default function Navigation() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [hotelsOpen, setHotelsOpen] = useState(false)
+  const [destinationsOpen, setDestinationsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
@@ -26,6 +38,18 @@ export default function Navigation() {
   }, [])
 
   const gold = '#C9A84C'
+  const linkStyle = {
+    fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 500,
+    letterSpacing: '0.2em', textTransform: 'uppercase' as const,
+    color: 'rgba(255,255,255,0.7)', textDecoration: 'none', transition: 'color 0.2s',
+  }
+
+  const dropdownItemStyle = {
+    display: 'block', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem',
+    fontWeight: 500, letterSpacing: '0.15em', textTransform: 'uppercase' as const,
+    color: 'rgba(255,255,255,0.7)', textDecoration: 'none',
+    padding: '0.6rem 1.25rem', transition: 'all 0.2s',
+  }
 
   return (
     <nav style={{
@@ -37,59 +61,64 @@ export default function Navigation() {
     }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem', height: '72px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
 
-    <Link href="/" style={{ textDecoration: 'none' }}>
-  <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 400, color: gold, letterSpacing: '0.05em' }}>
-    SwissNet <span style={{ fontStyle: 'italic', color: '#fff' }}>Hotels</span>
-  </div>
-</Link>
+        <Link href="/" style={{ textDecoration: 'none' }}>
+          <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 400, color: gold, letterSpacing: '0.05em' }}>
+            SwissNet <span style={{ fontStyle: 'italic', color: '#fff' }}>Hotels</span>
+          </div>
+        </Link>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }} className="hidden md:flex">
 
           {/* Home */}
-          <Link href="/" style={{
-            fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 500,
-            letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', textDecoration: 'none', transition: 'color 0.2s',
-          }}
-          onMouseEnter={e => (e.currentTarget.style.color = gold)}
-          onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}>
+          <Link href="/" style={linkStyle}
+            onMouseEnter={e => (e.currentTarget.style.color = gold)}
+            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}>
             Home
           </Link>
 
           {/* Hotels dropdown */}
           <div style={{ position: 'relative' }}
             onMouseEnter={() => setHotelsOpen(true)}
-            onMouseLeave={() => setHotelsOpen(false)}
-          >
-            <button style={{
-              fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 500,
-              letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)',
-              background: 'none', border: 'none', cursor: 'pointer', transition: 'color 0.2s',
-              display: 'flex', alignItems: 'center', gap: '0.3rem', padding: 0,
-            }}
-            onMouseEnter={e => (e.currentTarget.style.color = gold)}
-            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}>
+            onMouseLeave={() => setHotelsOpen(false)}>
+            <button style={{ ...linkStyle, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem', padding: 0 }}
+              onMouseEnter={e => (e.currentTarget.style.color = gold)}
+              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}>
               Hotels
               <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
-
             {hotelsOpen && (
-              <div style={{
-                position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)',
-                background: 'rgba(73,40,22,0.98)', border: '1px solid rgba(201,169,110,0.2)',
-                padding: '0.75rem 0', minWidth: '200px', marginTop: '0.5rem',
-                backdropFilter: 'blur(10px)',
-              }}>
+              <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', background: 'rgba(73,40,22,0.98)', border: '1px solid rgba(201,169,110,0.2)', padding: '0.75rem 0', minWidth: '200px', marginTop: '0.5rem', backdropFilter: 'blur(10px)' }}>
                 {hotelLinks.map(item => (
-                  <Link key={item.label} href={item.href} style={{
-                    display: 'block', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem',
-                    fontWeight: 500, letterSpacing: '0.15em', textTransform: 'uppercase',
-                    color: 'rgba(255,255,255,0.7)', textDecoration: 'none',
-                    padding: '0.6rem 1.25rem', transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.color = gold; e.currentTarget.style.background = 'rgba(201,169,110,0.1)' }}
-                  onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; e.currentTarget.style.background = 'transparent' }}>
+                  <Link key={item.label} href={item.href} style={dropdownItemStyle}
+                    onMouseEnter={e => { e.currentTarget.style.color = gold; e.currentTarget.style.background = 'rgba(201,169,110,0.1)' }}
+                    onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; e.currentTarget.style.background = 'transparent' }}>
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Destinations dropdown */}
+          <div style={{ position: 'relative' }}
+            onMouseEnter={() => setDestinationsOpen(true)}
+            onMouseLeave={() => setDestinationsOpen(false)}>
+            <button style={{ ...linkStyle, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem', padding: 0 }}
+              onMouseEnter={e => (e.currentTarget.style.color = gold)}
+              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}>
+              Destinations
+              <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {destinationsOpen && (
+              <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', background: 'rgba(73,40,22,0.98)', border: '1px solid rgba(201,169,110,0.2)', padding: '0.75rem 0', minWidth: '200px', marginTop: '0.5rem', backdropFilter: 'blur(10px)' }}>
+                {destinationLinks.map(item => (
+                  <Link key={item.label} href={item.href} style={dropdownItemStyle}
+                    onMouseEnter={e => { e.currentTarget.style.color = gold; e.currentTarget.style.background = 'rgba(201,169,110,0.1)' }}
+                    onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; e.currentTarget.style.background = 'transparent' }}>
                     {item.label}
                   </Link>
                 ))}
@@ -98,30 +127,19 @@ export default function Navigation() {
           </div>
 
           {/* Pricing */}
-          <a href="/#pricing" style={{
-            fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 500,
-            letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', textDecoration: 'none', transition: 'color 0.2s',
-          }}
-          onMouseEnter={e => (e.currentTarget.style.color = gold)}
-          onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}>
+          <a href="/#pricing" style={linkStyle}
+            onMouseEnter={e => (e.currentTarget.style.color = gold)}
+            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}>
             Pricing
           </a>
 
           <div style={{ width: '1px', height: '16px', background: 'rgba(201,169,110,0.3)' }} />
 
-          <Link href="/dashboard/login" style={{
-            fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 500,
-            letterSpacing: '0.2em', textTransform: 'uppercase', color: gold, textDecoration: 'none',
-          }}>
+          <Link href="/dashboard/login" style={{ ...linkStyle, color: gold }}>
             Hotel Login
           </Link>
 
-          <a href="/#contact" style={{
-            display: 'inline-block', background: gold, color: '#fff',
-            fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: '0.65rem',
-            letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.6rem 1.5rem',
-            border: '1px solid ' + gold, textDecoration: 'none', transition: 'all 0.3s ease',
-          }}>
+          <a href="/#contact" style={{ display: 'inline-block', background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.6rem 1.5rem', border: '1px solid ' + gold, textDecoration: 'none' }}>
             Book Demo
           </a>
         </div>
@@ -138,10 +156,13 @@ export default function Navigation() {
           {[
             { label: 'Home', href: '/' },
             { label: 'All Hotels', href: '/hotels' },
-            { label: 'Zermatt', href: '/hotels?region=Zermatt' },
-            { label: 'St. Moritz', href: '/hotels?region=St.+Moritz' },
+            { label: 'Zermatt', href: '/destinations/zermatt' },
+            { label: 'Geneva', href: '/destinations/geneva' },
+            { label: 'St. Moritz', href: '/destinations/st-moritz' },
+            { label: 'Interlaken', href: '/destinations/interlaken' },
+            { label: 'Ski Resorts', href: '/hotels?category=Ski+Resort' },
             { label: 'Wellness', href: '/hotels?category=Wellness+Retreat' },
-            { label: 'Pricing', href: '/#contact' },
+            { label: 'Pricing', href: '/#pricing' },
             { label: 'Hotel Login', href: '/dashboard/login' },
           ].map(item => (
             <Link key={item.label} href={item.href} onClick={() => setMenuOpen(false)} style={{
