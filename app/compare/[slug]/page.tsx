@@ -21,8 +21,18 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
 
   const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-')
 
-const hotelA = allHotels.find(h => (h as any).slug === slugA || normalize(h.name) === slugA)
-const hotelB = allHotels.find(h => (h as any).slug === slugB || normalize(h.name) === slugB) 
+const hotelA = allHotels.find(h => 
+  (h as any).slug === slugA || 
+  normalize(h.name) === slugA ||
+  (h as any).slug?.includes(slugA) ||
+  slugA.includes((h as any).slug?.split('-').slice(0,2).join('-'))
+)
+const hotelB = allHotels.find(h => 
+  (h as any).slug === slugB || 
+  normalize(h.name) === slugB ||
+  (h as any).slug?.includes(slugB) ||
+  slugB.includes((h as any).slug?.split('-').slice(0,2).join('-'))
+)
   if (!hotelA || !hotelB) notFound()
 
   const gold = '#C9A84C'
