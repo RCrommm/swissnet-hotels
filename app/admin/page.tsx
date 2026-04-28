@@ -60,16 +60,21 @@ export default async function AdminPage({
     .order('clicked_at', { ascending: false })
     .limit(100)
 
+  const { data: views } = await supabase
+    .from('hotel_views')
+    .select('*')
+    .order('viewed_at', { ascending: false })
+    .limit(200)
+
   const { data: cronSetting } = await supabase
     .from('settings')
     .select('value')
     .eq('key', 'ai_visibility_cron_enabled')
     .single()
 
-  // Only fetch visibility stats for partner hotels
   const { data: visibilityStats } = await supabase
     .from('ai_visibility_scores')
-    .select('hotel_id, hotel_name, appeared, checked_at')
+    .select('hotel_id, hotel_name, appeared, checked_at, query')
     .order('checked_at', { ascending: false })
     .limit(500)
 
@@ -82,15 +87,41 @@ export default async function AdminPage({
   const leadsList = leads || []
   const keywordsList = keywords || []
   const clicksList = clicks || []
+  const viewsList = views || []
   const cronEnabled = cronSetting?.value === 'true'
 
-  // Calculate visibility score — partner hotels only
+  // Visibility scores — partner hotels only
   const visibilityByHotel: Record<string, { appeared: number; total: number }> = {}
   for (const row of visibilityStats || []) {
     if (!partnerNames.has(row.hotel_name)) continue
     if (!visibilityByHotel[row.hotel_name]) visibilityByHotel[row.hotel_name] = { appeared: 0, total: 0 }
     visibilityByHotel[row.hotel_name].total++
     if (row.appeared) visibilityByHotel[row.hotel_name].appeared++
+  }
+
+  // Analytics — views per hotel
+  const viewsByHotel: Record<string, number> = {}
+  for (const v of viewsList) {
+    viewsByHotel[v.hotel_name] = (viewsByHotel[v.hotel_name] || 0) + 1
+  }
+
+  // Analytics — clicks per hotel
+  const clicksByHotel: Record<string, number> = {}
+  for (const c of clicksList) {
+    if (c.hotel_name) clicksByHotel[c.hotel_name] = (clicksByHotel[c.hotel_name] || 0) + 1
+  }
+
+  // Analytics — leads per hotel
+  const leadsByHotel: Record<string, number> = {}
+  for (const l of leadsList) {
+    if (l.hotel_name) leadsByHotel[l.hotel_name] = (leadsByHotel[l.hotel_name] || 0) + 1
+  }
+
+  // Views by source
+  const viewsBySource: Record<string, number> = {}
+  for (const v of viewsList) {
+    const src = v.utm_source || 'direct'
+    viewsBySource[src] = (viewsBySource[src] || 0) + 1
   }
 
   return (
@@ -102,14 +133,14 @@ export default async function AdminPage({
             <span className="bg-green-100 text-green-800 text-xs px-3 py-1.5">{hotelsList.length} Hotels</span>
             <span className="bg-amber-100 text-amber-800 text-xs px-3 py-1.5">{partnerHotels.length} Partners</span>
             <span className="bg-blue-100 text-blue-800 text-xs px-3 py-1.5">{leadsList.length} Leads</span>
-            <span className="bg-purple-100 text-purple-800 text-xs px-3 py-1.5">{clicksList.length} Clicks</span>
+            <span className="bg-purple-100 text-purple-800 text-xs px-3 py-1.5">{viewsList.length} Views</span>
           </div>
         </div>
 
-        <div className="flex gap-1 mb-6 border-b border-stone-200">
-          {['hotels', 'schema', 'ai visibility', 'leads', 'keywords', 'clicks'].map(t => (
+        <div className="flex gap-1 mb-6 border-b border-stone-200 flex-wrap">
+          {['hotels', 'schema', 'ai visibility', 'analytics', 'leads', 'keywords', 'clicks'].map(t => (
             <a key={t} href={'/admin?password=' + pw + '&tab=' + t}
-              className={'px-6 py-3 text-sm uppercase tracking-wide capitalize transition-colors ' +
+              className={'px-5 py-3 text-sm uppercase tracking-wide capitalize transition-colors ' +
                 (tab === t ? 'border-b-2 border-amber-700 text-amber-700 font-semibold' : 'text-stone-500 hover:text-stone-700')}>
               {t}
             </a>
@@ -123,12 +154,9 @@ export default async function AdminPage({
         {tab === 'ai visibility' && (
           <div>
             <AIVisibilityToggle enabled={cronEnabled} />
-
             <div style={{ marginTop: 24, marginBottom: 24 }}>
               <AIVisibilityQueries hotels={partnerHotels} />
             </div>
-
-            {/* Visibility scores — partner hotels only */}
             <div style={{ marginTop: 24 }}>
               <h2 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, color: '#78716c', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 16 }}>
                 AI Visibility Scores — Partner Hotels Only
@@ -170,8 +198,6 @@ export default async function AdminPage({
                 </div>
               )}
             </div>
-
-            {/* Recent appearances */}
             <div style={{ marginTop: 32 }}>
               <h2 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, color: '#78716c', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 16 }}>
                 Recent Appearances
@@ -202,9 +228,128 @@ export default async function AdminPage({
                   </tbody>
                 </table>
                 {(visibilityStats || []).filter(r => partnerNames.has(r.hotel_name) && r.appeared).length === 0 && (
-                  <p className="text-center text-stone-400 py-10 text-sm">No appearances yet — run queries to start tracking.</p>
+                  <p className="text-center text-stone-400 py-10 text-sm">No appearances yet.</p>
                 )}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ANALYTICS TAB */}
+        {tab === 'analytics' && (
+          <div>
+            {/* Summary KPIs */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 16, marginBottom: 28 }}>
+              {[
+                { label: 'Total Views', value: viewsList.length, color: '#C9A84C' },
+                { label: 'Total Clicks', value: clicksList.length, color: '#8B5CF6' },
+                { label: 'Total Leads', value: leadsList.length, color: '#16a34a' },
+                { label: 'Conversion', value: viewsList.length > 0 ? Math.round((leadsList.length / viewsList.length) * 100) + '%' : '0%', color: '#3b82f6' },
+              ].map(k => (
+                <div key={k.label} style={{ background: '#fff', border: '1px solid #e7e5e4', borderRadius: 8, padding: '20px 24px' }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, fontWeight: 600, color: '#a8a29e', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 8px' }}>{k.label}</p>
+                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 32, fontWeight: 400, color: k.color, margin: 0 }}>{k.value}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Views by source */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 28 }}>
+              <div style={{ background: '#fff', border: '1px solid #e7e5e4', borderRadius: 8, padding: '20px 24px' }}>
+                <h3 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 700, color: '#78716c', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 16px' }}>Views by Source</h3>
+                {Object.keys(viewsBySource).length === 0 ? (
+                  <p style={{ fontSize: 13, color: '#a8a29e' }}>No views yet</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {Object.entries(viewsBySource).sort((a, b) => (b[1] as number) - (a[1] as number)).map(([source, count]) => (
+                      <div key={source}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                          <span style={{ fontSize: 13, color: '#3D2B1F', textTransform: 'capitalize' }}>{source}</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: '#C9A84C' }}>{count as number}</span>
+                        </div>
+                        <div style={{ height: 5, background: '#f5f5f4', borderRadius: 3 }}>
+                          <div style={{ height: '100%', width: Math.round(((count as number) / viewsList.length) * 100) + '%', background: '#C9A84C', borderRadius: 3 }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Per hotel summary */}
+              <div style={{ background: '#fff', border: '1px solid #e7e5e4', borderRadius: 8, padding: '20px 24px' }}>
+                <h3 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 700, color: '#78716c', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 16px' }}>Per Hotel Summary</h3>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                  <thead>
+                    <tr>
+                      {['Hotel', 'Views', 'Clicks', 'Leads', 'Conv.'].map(h => (
+                        <th key={h} style={{ textAlign: 'left', padding: '4px 8px', color: '#a8a29e', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', borderBottom: '1px solid #f5f5f4' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {hotelsList.filter(h => h.is_active).slice(0, 15).map((hotel: any, i: number) => {
+                      const v = viewsByHotel[hotel.name] || 0
+                      const c = clicksByHotel[hotel.name] || 0
+                      const l = leadsByHotel[hotel.name] || 0
+                      const conv = v > 0 ? Math.round((l / v) * 100) : 0
+                      return (
+                        <tr key={hotel.id} style={{ background: i % 2 === 0 ? '#fff' : '#fafaf9' }}>
+                          <td style={{ padding: '6px 8px', color: '#3D2B1F', fontWeight: hotel.is_partner ? 600 : 400 }}>
+                            {hotel.is_partner && <span style={{ color: '#C9A84C', marginRight: 4 }}>✦</span>}
+                            {hotel.name.split(' ').slice(0, 3).join(' ')}
+                          </td>
+                          <td style={{ padding: '6px 8px', color: v > 0 ? '#C9A84C' : '#a8a29e', fontWeight: 600 }}>{v}</td>
+                          <td style={{ padding: '6px 8px', color: c > 0 ? '#8B5CF6' : '#a8a29e', fontWeight: 600 }}>{c}</td>
+                          <td style={{ padding: '6px 8px', color: l > 0 ? '#16a34a' : '#a8a29e', fontWeight: 600 }}>{l}</td>
+                          <td style={{ padding: '6px 8px', color: conv > 0 ? '#3b82f6' : '#a8a29e' }}>{conv}%</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Recent views */}
+            <div style={{ background: '#fff', border: '1px solid #e7e5e4', borderRadius: 8, overflow: 'hidden' }}>
+              <div style={{ padding: '16px 20px', borderBottom: '1px solid #e7e5e4' }}>
+                <h3 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 700, color: '#78716c', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Recent Profile Views</h3>
+              </div>
+              <table className="w-full text-sm">
+                <thead className="bg-stone-50 border-b border-stone-200">
+                  <tr>
+                    {['Hotel', 'Source', 'Referrer', 'Time'].map(h => (
+                      <th key={h} className="text-left px-4 py-3 text-xs uppercase tracking-wide text-stone-500">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {viewsList.slice(0, 30).map((view: any, i: number) => (
+                    <tr key={view.id} className={i % 2 === 0 ? 'bg-white' : 'bg-stone-50'}>
+                      <td className="px-4 py-3 font-medium text-stone-800 text-xs">{view.hotel_name || '—'}</td>
+                      <td className="px-4 py-3">
+                        <span style={{
+                          fontSize: 11, padding: '2px 8px', borderRadius: 20, fontWeight: 600,
+                          background: view.utm_source === 'chatgpt' ? 'rgba(22,163,74,0.1)' :
+                            view.utm_source === 'google' ? 'rgba(59,130,246,0.1)' :
+                            view.utm_source === 'perplexity' ? 'rgba(139,92,246,0.1)' : 'rgba(201,169,110,0.1)',
+                          color: view.utm_source === 'chatgpt' ? '#16a34a' :
+                            view.utm_source === 'google' ? '#3b82f6' :
+                            view.utm_source === 'perplexity' ? '#8B5CF6' : '#C9A84C',
+                        }}>
+                          {view.utm_source || 'direct'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-stone-500 text-xs" style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {view.referrer || '—'}
+                      </td>
+                      <td className="px-4 py-3 text-stone-500 text-xs">{new Date(view.viewed_at).toLocaleString('en-GB')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {viewsList.length === 0 && <p className="text-center text-stone-400 py-10 text-sm">No views yet — views appear when someone visits a hotel profile page.</p>}
             </div>
           </div>
         )}
