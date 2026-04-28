@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import LeadForm from '@/components/LeadForm'
 import Link from 'next/link'
+import ViewTracker from '@/components/ViewTracker'
 
 function HotelSchema({ hotel, keywords, roomTypes }: { hotel: any; keywords: any[]; roomTypes: any[] }) {
   const allKeywords = [
@@ -114,7 +115,6 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
     .eq('is_current', true)
     .order('rate_chf', { ascending: true })
 
-  // Only fetch rich schema data if partner or show_schema is enabled
   const showSchema = hotel.is_partner || hotel.show_schema
 
   const { data: roomTypes } = showSchema ? await supabase
@@ -155,6 +155,7 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
   return (
     <div style={{ background: bg, minHeight: '100vh' }}>
       <HotelSchema hotel={hotel} keywords={keywords || []} roomTypes={roomTypes || []} />
+      <ViewTracker hotelId={hotel.id} hotelName={hotel.name} />
 
       {/* Hero */}
       <div style={{ position: 'relative', height: '60vh', overflow: 'hidden' }}>
@@ -168,12 +169,7 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: gold, margin: 0 }}>{hotel.category} · {hotel.region}</p>
             {hotel.is_partner && (
-              <span style={{
-                fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700,
-                letterSpacing: '0.15em', textTransform: 'uppercase',
-                background: gold, color: '#1a0e06',
-                padding: '3px 10px', borderRadius: 20,
-              }}>
+              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', background: gold, color: '#1a0e06', padding: '3px 10px', borderRadius: 20 }}>
                 ✦ SwissNet Partner
               </span>
             )}
@@ -285,7 +281,7 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
             </div>
           )}
 
-          {/* Fallback scraped rates — only for non-partner hotels with no room types */}
+          {/* Fallback scraped rates */}
           {!showSchema && roomRates && roomRates.length > 0 && (
             <div style={{ marginBottom: '2.5rem' }}>
               <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', fontWeight: 300, color: text, marginBottom: '1rem' }}>Room Types &amp; Rates</h2>
@@ -341,16 +337,10 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
               {restaurants.map((r: any) => (
                 <div key={r.id} style={{ background: '#fff', border: '1px solid ' + border, padding: '1.25rem 1.5rem', marginBottom: '0.75rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', fontWeight: 600, color: text, margin: 0 }}>{r.name}</p>
-                        {r.michelin_stars > 0 && (
-                          <span style={{ color: gold, fontSize: '0.75rem' }}>{'★'.repeat(r.michelin_stars)}</span>
-                        )}
-                        {r.cuisine_type && (
-                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: gold, border: '1px solid ' + border, padding: '2px 8px' }}>{r.cuisine_type}</span>
-                        )}
-                      </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', fontWeight: 600, color: text, margin: 0 }}>{r.name}</p>
+                      {r.michelin_stars > 0 && <span style={{ color: gold, fontSize: '0.75rem' }}>{'★'.repeat(r.michelin_stars)}</span>}
+                      {r.cuisine_type && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: gold, border: '1px solid ' + border, padding: '2px 8px' }}>{r.cuisine_type}</span>}
                     </div>
                     {r.price_range && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>{r.price_range}</span>}
                   </div>
