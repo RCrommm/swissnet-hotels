@@ -177,7 +177,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   {hotelsList.map((hotel, i) => (
-                    <Link key={hotel.id} href={`/hotels/${hotel.id}`} style={{ textDecoration: 'none' }}>
+                    <Link key={hotel.id} href={`/hotels/${(hotel as any).slug || hotel.id}`} style={{ textDecoration: 'none' }}>
                       <div style={{ background: '#fff', border: hotel.is_partner ? `1px solid ${gold}88` : `1px solid ${border}`, padding: '1.25rem 1.5rem', display: 'flex', gap: '1.25rem', alignItems: 'flex-start', transition: 'box-shadow 0.2s' }}>
                         {/* Rank */}
                         <div style={{ flexShrink: 0, width: 32, height: 32, background: i === 0 ? gold : bg, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
