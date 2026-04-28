@@ -4,7 +4,7 @@ import Anthropic from '@anthropic-ai/sdk'
 
 const client = new Anthropic()
 
-const AI_QUERIES = [
+const DEFAULT_QUERIES = [
   'best luxury hotel in Zermatt with Matterhorn view',
   'best 5 star hotel in Geneva Switzerland',
   'most romantic hotel in Zermatt Switzerland',
@@ -15,31 +15,28 @@ const AI_QUERIES = [
   'luxury wellness hotel Switzerland Alps',
   'best 5 star hotel St Moritz Switzerland',
   'top rated luxury hotels Geneva lake view',
-  'best alpine luxury hotel Switzerland',
-  'finest hotels in Swiss Alps',
-  'best hotel Zermatt ski in ski out',
-  'luxury hotel Interlaken Jungfrau view',
-  'best boutique luxury hotel Switzerland',
 ]
 
-export async function GET() {
-  // Check if cron is enabled
-  const { data: setting } = await supabase
-    .from('settings')
-    .select('value')
-    .eq('key', 'ai_visibility_cron_enabled')
-    .single()
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url)
+  const hotelIdParam = searchParams.get('hotel_id')
 
-  if (setting?.value !== 'true') {
-    return NextResponse.json({ message: 'AI visibility cron is disabled' })
+  // Check if cron is enabled (skip for manual per-hotel runs)
+  if (!hotelIdParam) {
+    const { data: setting } = await supabase
+      .from('settings')
+      .select('value')
+      .eq('key', 'ai_visibility_cron_enabled')
+      .single()
+    if (setting?.value !== 'true') {
+      return NextResponse.json({ message: 'AI visibility cron is disabled' })
+    }
   }
 
-  // Only check partner hotels
-  const { data: hotels, error: hotelsError } = await supabase
-    .from('hotels')
-    .select('id, name')
-    .eq('is_active', true)
-    .eq('is_partner', true)
+  // Get hotels to check
+  let hotelsQuery = supabase.from('hotels').select('id, name, region').eq('is_active', true).eq('is_partner', true)
+  if (hotelIdParam) hotelsQuery = hotelsQuery.eq('id', hotelIdParam)
+  const { data: hotels, error: hotelsError } = await hotelsQuery
 
   if (hotelsError) return NextResponse.json({ error: hotelsError.message })
   if (!hotels?.length) return NextResponse.json({ error: 'No partner hotels found' })
@@ -48,27 +45,36 @@ export async function GET() {
   const errors: any[] = []
   let totalAppearances = 0
 
-  for (const query of AI_QUERIES) {
-    try {
-      const message = await client.messages.create({
-        model: 'claude-opus-4-5',
-        max_tokens: 500,
-        messages: [{
-          role: 'user',
-          content: `${query}. Please recommend 3-5 specific hotels by name.`
-        }]
-      })
+  for (const hotel of hotels) {
+    // Get custom queries for this hotel, fallback to defaults
+    const { data: customQueries } = await supabase
+      .from('ai_visibility_queries')
+      .select('query')
+      .eq('hotel_id', hotel.id)
+      .eq('is_active', true)
 
-      const responseText = message.content
-        .filter(b => b.type === 'text')
-        .map(b => (b as any).text)
-        .join(' ')
+    const queriesToRun = customQueries?.length
+      ? customQueries.map(q => q.query)
+      : DEFAULT_QUERIES
 
-      for (const hotel of hotels) {
+    for (const query of queriesToRun) {
+      try {
+        const message = await client.messages.create({
+          model: 'claude-opus-4-5',
+          max_tokens: 500,
+          messages: [{
+            role: 'user',
+            content: `${query}. Please recommend 3-5 specific hotels by name.`
+          }]
+        })
+
+        const responseText = message.content
+          .filter(b => b.type === 'text')
+          .map(b => (b as any).text)
+          .join(' ')
+
         const hotelNameLower = hotel.name.toLowerCase()
         const responseLower = responseText.toLowerCase()
-
-        // Precise matching — full name or last 2 words of name
         const lastTwoWords = hotel.name.split(' ').slice(-2).join(' ').toLowerCase()
         const appeared: boolean =
           responseLower.includes(hotelNameLower) ||
@@ -92,22 +98,22 @@ export async function GET() {
         })
 
         if (insertError) errors.push({ hotel: hotel.name, error: insertError.message })
-        results.push({ hotel: hotel.name, query, appeared, snippet })
+        results.push({ hotel: hotel.name, query, appeared })
+
+        await new Promise(r => setTimeout(r, 400))
+
+      } catch (err: any) {
+        errors.push({ query, hotel: hotel.name, error: err.message })
       }
-
-      await new Promise(r => setTimeout(r, 500))
-
-    } catch (err: any) {
-      errors.push({ query, error: err.message })
     }
   }
 
   return NextResponse.json({
     success: true,
-    queries_run: AI_QUERIES.length,
+    queries_run: results.length,
     hotels_checked: hotels.length,
     total_appearances: totalAppearances,
-    insert_errors: errors,
-    sample_results: results.filter(r => r.appeared).slice(0, 10),
+    insert_errors: errors.length ? errors : undefined,
+    sample_results: results.filter(r => r.appeared).slice(0, 5),
   })
 }

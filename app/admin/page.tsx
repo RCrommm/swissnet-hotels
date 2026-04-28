@@ -6,6 +6,7 @@ import KeywordsTab from '@/components/KeywordsTab'
 import HotelsTab from '@/components/HotelsTab'
 import SchemaTab from '@/components/SchemaTab'
 import AIVisibilityToggle from '@/components/AIVisibilityToggle'
+import AIVisibilityQueries from '@/components/AIVisibilityQueries'
 
 async function isAuthenticated(password?: string) {
   const cookieStore = await cookies()
@@ -115,9 +116,11 @@ export default async function AdminPage({
         {tab === 'schema' && <SchemaTab hotels={hotelsList} />}
 
         {tab === 'ai visibility' && (
-          <div>
-            {/* Toggle + run button */}
-            <AIVisibilityToggle enabled={cronEnabled} />
+        <div>
+          <AIVisibilityToggle enabled={cronEnabled} />
+          <div style={{ marginTop: 24, marginBottom: 24 }}>
+            <AIVisibilityQueries hotels={hotelsList} />
+          </div>
 
             {/* Visibility scores per hotel */}
             <div style={{ marginTop: 24 }}>
