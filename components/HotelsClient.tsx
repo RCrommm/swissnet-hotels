@@ -8,6 +8,7 @@ const CATEGORIES = ['All Types', 'Ski Resort', 'Wellness Retreat', 'City Luxury'
 
 interface Hotel {
   id: string
+  slug?: string
   name: string
   location: string
   region: string
@@ -118,7 +119,7 @@ export default function HotelsClient({ hotels, initialRegion, initialCategory, i
                   onMouseLeave={() => setHovered(null)}
                   style={{ background: '#FFFFFF', border: hotel.is_partner ? '1px solid ' + gold + '99' : '1px solid rgba(201,169,110,0.2)', borderRadius: 20, overflow: 'hidden', transition: 'all 0.35s ease', transform: isHovered ? 'translateY(-6px)' : 'translateY(0)', boxShadow: isHovered ? '0 20px 56px rgba(0,0,0,0.22)' : '0 2px 16px rgba(0,0,0,0.08)', position: 'relative' }}
                 >
-                  <Link href={'/hotels/' + hotel.id} style={{ position: 'absolute', inset: 0, zIndex: 1 }} aria-label={'View ' + hotel.name} />
+                  <Link href={'/hotels/' + (hotel.slug || hotel.id)} style={{ position: 'absolute', inset: 0, zIndex: 1 }} aria-label={'View ' + hotel.name} />
                   <div style={{ position: 'relative', height: '230px', overflow: 'hidden' }}>
                     <img src={hotel.images[0] || 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800'} alt={hotel.name} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease', transform: isHovered ? 'scale(1.05)' : 'scale(1)' }} />
                     <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.15) 55%, transparent 100%)' }} />
