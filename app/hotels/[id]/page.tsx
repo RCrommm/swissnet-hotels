@@ -4,36 +4,25 @@ import LeadForm from '@/components/LeadForm'
 import Link from 'next/link'
 import ViewTracker from '@/components/ViewTracker'
 
-function HotelSchema({ hotel, keywords, roomTypes }: { hotel: any; keywords: any[]; roomTypes: any[] }) {
+function HotelSchema({ hotel, keywords, roomTypes, faqs }: { hotel: any; keywords: any[]; roomTypes: any[]; faqs: any[] }) {
   const allKeywords = [
     ...(hotel.amenities || []),
     ...(hotel.best_for || []),
-    hotel.region,
-    hotel.category,
-    hotel.name,
-    'luxury hotel Switzerland',
-    'direct booking Switzerland',
+    hotel.region, hotel.category, hotel.name,
+    'luxury hotel Switzerland', 'direct booking Switzerland',
     ...keywords.map((k: any) => k.keyword),
     hotel.seo_keywords || '',
   ].filter(Boolean).join(', ')
 
-  const schema = {
+  const hotelSchema = {
     '@context': 'https://schema.org',
     '@type': 'Hotel',
     name: hotel.name,
     description: hotel.description,
-    address: {
-      '@type': 'PostalAddress',
-      addressLocality: hotel.location,
-      addressCountry: 'CH',
-    },
+    address: { '@type': 'PostalAddress', addressLocality: hotel.location, addressCountry: 'CH' },
     starRating: { '@type': 'Rating', ratingValue: hotel.rating },
     priceRange: `CHF ${hotel.nightly_rate_chf}+`,
-    amenityFeature: hotel.amenities?.map((a: string) => ({
-      '@type': 'LocationFeatureSpecification',
-      name: a,
-      value: true,
-    })),
+    amenityFeature: hotel.amenities?.map((a: string) => ({ '@type': 'LocationFeatureSpecification', name: a, value: true })),
     url: hotel.direct_booking_url,
     image: hotel.images?.[0],
     keywords: allKeywords,
@@ -49,100 +38,53 @@ function HotelSchema({ hotel, keywords, roomTypes }: { hotel: any; keywords: any
       '@id': `https://swissnethotels.com/hotels/${hotel.id}#room-${rt.id}`,
       name: rt.name,
       description: rt.description || undefined,
-      occupancy: {
-        '@type': 'QuantitativeValue',
-        minValue: 1,
-        maxValue: rt.max_occupancy || 2,
-      },
-      bed: rt.bed_type ? {
-        '@type': 'BedDetails',
-        typeOfBed: rt.bed_type,
-        numberOfBeds: 1,
-      } : undefined,
-      floorSize: rt.size_sqm ? {
-        '@type': 'QuantitativeValue',
-        value: rt.size_sqm,
-        unitCode: 'MTK',
-      } : undefined,
-      amenityFeature: (rt.amenities || []).map((a: string) => ({
-        '@type': 'LocationFeatureSpecification',
-        name: a,
-        value: true,
-      })),
-      offers: rt.base_rate_chf ? {
-        '@type': 'Offer',
-        price: rt.base_rate_chf,
-        priceCurrency: 'CHF',
-        url: hotel.direct_booking_url,
-        availability: 'https://schema.org/InStock',
-      } : undefined,
-      additionalProperty: rt.view ? [{
-        '@type': 'PropertyValue',
-        name: 'View',
-        value: rt.view,
-      }] : undefined,
+      occupancy: { '@type': 'QuantitativeValue', minValue: 1, maxValue: rt.max_occupancy || 2 },
+      bed: rt.bed_type ? { '@type': 'BedDetails', typeOfBed: rt.bed_type, numberOfBeds: 1 } : undefined,
+      floorSize: rt.size_sqm ? { '@type': 'QuantitativeValue', value: rt.size_sqm, unitCode: 'MTK' } : undefined,
+      amenityFeature: (rt.amenities || []).map((a: string) => ({ '@type': 'LocationFeatureSpecification', name: a, value: true })),
+      offers: rt.base_rate_chf ? { '@type': 'Offer', price: rt.base_rate_chf, priceCurrency: 'CHF', url: hotel.direct_booking_url, availability: 'https://schema.org/InStock' } : undefined,
     })),
   }
 
+  const faqSchema = faqs.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map(f => ({
+      '@type': 'Question',
+      name: f.question,
+      acceptedAnswer: { '@type': 'Answer', text: f.answer },
+    }))
+  } : null
+
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-    />
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(hotelSchema) }} />
+      {faqSchema && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />}
+    </>
   )
 }
 
 export default async function HotelPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
-  const { data: hotel } = await supabase
-    .from('hotels')
-    .select('*')
-    .eq('id', id)
-    .single()
-
+  const { data: hotel } = await supabase.from('hotels').select('*').eq('id', id).single()
   if (!hotel) notFound()
 
-  const { data: keywords } = await supabase
-    .from('hotel_keywords')
-    .select('keyword')
-    .eq('hotel_id', id)
-
-  const { data: roomRates } = await supabase
-    .from('room_rates')
-    .select('*')
-    .eq('hotel_id', id)
-    .eq('is_current', true)
-    .order('rate_chf', { ascending: true })
+  const { data: keywords } = await supabase.from('hotel_keywords').select('keyword').eq('hotel_id', id)
+  const { data: roomRates } = await supabase.from('room_rates').select('*').eq('hotel_id', id).eq('is_current', true).order('rate_chf', { ascending: true })
 
   const showSchema = hotel.is_partner || hotel.show_schema
 
-  const { data: roomTypes } = showSchema ? await supabase
-    .from('room_types')
-    .select('*')
-    .eq('hotel_id', id)
-    .eq('is_available', true)
-    .order('sort_order', { ascending: true }) : { data: [] }
+  const { data: roomTypes } = showSchema ? await supabase.from('room_types').select('*').eq('hotel_id', id).eq('is_available', true).order('sort_order', { ascending: true }) : { data: [] }
+  const { data: spaData } = showSchema ? await supabase.from('hotel_spa').select('*').eq('hotel_id', id).eq('is_available', true) : { data: [] }
+  const { data: restaurants } = showSchema ? await supabase.from('hotel_restaurants').select('*').eq('hotel_id', id).eq('is_available', true).order('sort_order', { ascending: true }) : { data: [] }
+  const { data: offers } = showSchema ? await supabase.from('hotel_offers').select('*').eq('hotel_id', id).eq('is_available', true).order('sort_order', { ascending: true }) : { data: [] }
+  const { data: content } = await supabase.from('hotel_content').select('*').eq('hotel_id', id).single()
 
-  const { data: spaData } = showSchema ? await supabase
-    .from('hotel_spa')
-    .select('*')
-    .eq('hotel_id', id)
-    .eq('is_available', true) : { data: [] }
-
-  const { data: restaurants } = showSchema ? await supabase
-    .from('hotel_restaurants')
-    .select('*')
-    .eq('hotel_id', id)
-    .eq('is_available', true)
-    .order('sort_order', { ascending: true }) : { data: [] }
-
-  const { data: offers } = showSchema ? await supabase
-    .from('hotel_offers')
-    .select('*')
-    .eq('hotel_id', id)
-    .eq('is_available', true)
-    .order('sort_order', { ascending: true }) : { data: [] }
+  const faqs = content?.faqs || []
+  const verdict = content?.verdict || null
+  const bestForExtended = content?.best_for_extended || []
+  const alternatives = content?.nearby_alternatives || []
 
   const gold = '#C9A84C'
   const border = 'rgba(201,169,110,0.25)'
@@ -154,16 +96,12 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
 
   return (
     <div style={{ background: bg, minHeight: '100vh' }}>
-      <HotelSchema hotel={hotel} keywords={keywords || []} roomTypes={roomTypes || []} />
+      <HotelSchema hotel={hotel} keywords={keywords || []} roomTypes={roomTypes || []} faqs={faqs} />
       <ViewTracker hotelId={hotel.id} hotelName={hotel.name} />
 
       {/* Hero */}
       <div style={{ position: 'relative', height: '60vh', overflow: 'hidden' }}>
-        <img
-          src={hotel.images[0] || 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1600'}
-          alt={hotel.name}
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-        />
+        <img src={hotel.images[0] || 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1600'} alt={hotel.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(61,43,31,0.7) 0%, transparent 50%)' }} />
         <div style={{ position: 'absolute', bottom: '2rem', left: 0, right: 0, maxWidth: '1200px', margin: '0 auto', padding: '0 2rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
@@ -192,6 +130,28 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
             </div>
           )}
 
+          {/* Verdict */}
+          {verdict && (
+            <div style={{ marginBottom: '2.5rem', background: '#fff', border: '1px solid ' + border, padding: '1.5rem' }}>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: gold, marginBottom: '0.75rem' }}>Our Verdict</p>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', fontWeight: 300, color: text, lineHeight: 1.7, margin: 0, fontStyle: 'italic' }}>{verdict}</p>
+            </div>
+          )}
+
+          {/* Best For */}
+          {bestForExtended.length > 0 && (
+            <div style={{ marginBottom: '2.5rem' }}>
+              <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', fontWeight: 300, color: text, marginBottom: '1rem' }}>Perfect For</h2>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                {bestForExtended.map((b: string) => (
+                  <span key={b} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: text, border: '1px solid ' + border, padding: '0.35rem 0.875rem', background: '#fff', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span style={{ color: gold }}>✦</span> {b}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Special Offers */}
           {showSchema && offers && offers.length > 0 && (
             <div style={{ marginBottom: '2.5rem' }}>
@@ -202,24 +162,13 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.3rem' }}>
                         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', fontWeight: 600, color: text, margin: 0 }}>{offer.name}</p>
-                        {offer.discount_percent && (
-                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, background: gold, color: '#1a0e06', padding: '2px 8px', borderRadius: 20 }}>
-                            -{offer.discount_percent}%
-                          </span>
-                        )}
+                        {offer.discount_percent && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, background: gold, color: '#1a0e06', padding: '2px 8px', borderRadius: 20 }}>-{offer.discount_percent}%</span>}
                       </div>
                       {offer.description && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted, margin: '0 0 0.5rem', lineHeight: 1.6 }}>{offer.description}</p>}
                       {offer.includes?.length > 0 && (
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                          {offer.includes.map((inc: string) => (
-                            <span key={inc} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, background: bg, border: '1px solid ' + border, padding: '2px 8px' }}>✓ {inc}</span>
-                          ))}
+                          {offer.includes.map((inc: string) => <span key={inc} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, background: bg, border: '1px solid ' + border, padding: '2px 8px' }}>✓ {inc}</span>)}
                         </div>
-                      )}
-                      {offer.valid_through && (
-                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, margin: '0.5rem 0 0' }}>
-                          Valid until {new Date(offer.valid_through).toLocaleDateString('en-GB')}
-                        </p>
                       )}
                     </div>
                     {offer.price_from && (
@@ -262,17 +211,11 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
                         </div>
                       )}
                     </div>
-                    {rt.description && (
-                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, lineHeight: 1.7, margin: '0.75rem 0 0', fontWeight: 300 }}>{rt.description}</p>
-                    )}
+                    {rt.description && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, lineHeight: 1.7, margin: '0.75rem 0 0', fontWeight: 300 }}>{rt.description}</p>}
                     {rt.amenities && rt.amenities.length > 0 && (
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.75rem' }}>
-                        {rt.amenities.slice(0, 6).map((a: string) => (
-                          <span key={a} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, background: bg, border: '1px solid ' + border, padding: '2px 8px' }}>{a}</span>
-                        ))}
-                        {rt.amenities.length > 6 && (
-                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: gold }}>+{rt.amenities.length - 6} more</span>
-                        )}
+                        {rt.amenities.slice(0, 6).map((a: string) => <span key={a} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, background: bg, border: '1px solid ' + border, padding: '2px 8px' }}>{a}</span>)}
+                        {rt.amenities.length > 6 && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: gold }}>+{rt.amenities.length - 6} more</span>}
                       </div>
                     )}
                   </div>
@@ -310,7 +253,7 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
                 <div key={spa.id} style={{ background: '#fff', border: '1px solid ' + border, padding: '1.25rem 1.5rem', marginBottom: '0.75rem' }}>
                   <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', fontWeight: 600, color: text, margin: '0 0 0.5rem' }}>{spa.name}</p>
                   {spa.description && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, lineHeight: 1.7, margin: '0 0 0.75rem', fontWeight: 300 }}>{spa.description}</p>}
-                  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+                  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: spa.facilities?.length ? '0.75rem' : 0 }}>
                     {spa.size_sqm && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>⬜ {spa.size_sqm} m²</span>}
                     {spa.pool && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>🏊 Pool</span>}
                     {spa.sauna && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>🧖 Sauna</span>}
@@ -320,9 +263,7 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
                   </div>
                   {spa.facilities?.length > 0 && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                      {spa.facilities.map((f: string) => (
-                        <span key={f} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, background: bg, border: '1px solid ' + border, padding: '2px 8px' }}>{f}</span>
-                      ))}
+                      {spa.facilities.map((f: string) => <span key={f} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, background: bg, border: '1px solid ' + border, padding: '2px 8px' }}>{f}</span>)}
                     </div>
                   )}
                 </div>
@@ -375,13 +316,42 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
             </div>
           )}
 
-          {/* Perfect for */}
-          {hotel.best_for?.length > 0 && (
+          {/* FAQs */}
+          {faqs.length > 0 && (
             <div style={{ marginBottom: '2.5rem' }}>
-              <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', fontWeight: 300, color: text, marginBottom: '1rem' }}>Perfect For</h2>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                {hotel.best_for.map((b: string) => (
-                  <span key={b} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: text, border: '1px solid ' + border, padding: '0.35rem 0.75rem', background: '#fff' }}>{b}</span>
+              <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', fontWeight: 300, color: text, marginBottom: '1rem' }}>Frequently Asked Questions</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {faqs.map((faq: any, i: number) => (
+                  <div key={i} style={{ background: '#fff', border: '1px solid ' + border, padding: '1.25rem 1.5rem' }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', fontWeight: 600, color: text, margin: '0 0 0.5rem' }}>
+                      <span style={{ color: gold, marginRight: '0.5rem' }}>Q.</span>{faq.question}
+                    </p>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: textMuted, lineHeight: 1.7, margin: 0, fontWeight: 300 }}>
+                      <span style={{ color: gold, marginRight: '0.5rem' }}>A.</span>{faq.answer}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Nearby Alternatives */}
+          {alternatives.length > 0 && (
+            <div style={{ marginBottom: '2.5rem' }}>
+              <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', fontWeight: 300, color: text, marginBottom: '1rem' }}>You Might Also Consider</h2>
+              <div style={{ display: 'grid', gap: '0.75rem' }}>
+                {alternatives.map((alt: any, i: number) => (
+                  <div key={i} style={{ background: '#fff', border: '1px solid ' + border, padding: '1rem 1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', fontWeight: 600, color: text, margin: '0 0 0.25rem' }}>{alt.name}</p>
+                      {alt.reason && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted, margin: 0 }}>{alt.reason}</p>}
+                    </div>
+                    {alt.url && (
+                      <a href={alt.url} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: gold, textDecoration: 'none', whiteSpace: 'nowrap', marginLeft: '1rem' }}>
+                        View →
+                      </a>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
@@ -426,7 +396,6 @@ export default async function HotelPage({ params }: { params: Promise<{ id: stri
               <a href={'mailto:' + hotel.contact_email} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: gold, textDecoration: 'none' }}>{hotel.contact_email}</a>
             </div>
           </div>
-
           <div style={{ background: '#fff', border: '1px solid ' + border, padding: '1.5rem' }}>
             <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', fontWeight: 400, color: text, marginBottom: '1rem' }}>Send an Enquiry</h3>
             <LeadForm hotel={hotel} />
