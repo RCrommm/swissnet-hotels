@@ -93,7 +93,33 @@ If no specific rates found, make reasonable estimates based on the hotel type an
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-    return NextResponse.json({ success: true, rooms: data })
+// Also update base_rate_chf in room_types for partner hotels
+const { data: hotelData } = await supabase
+  .from('hotels')
+  .select('is_partner')
+  .eq('id', hotel_id)
+  .single()
+
+if (hotelData?.is_partner && rooms.length > 0) {
+  const lowestRate = Math.min(...rooms.map((r: any) => r.rate_chf))
+  
+  // Update nightly_rate_chf on the hotel itself
+  await supabase
+    .from('hotels')
+    .update({ nightly_rate_chf: lowestRate })
+    .eq('id', hotel_id)
+
+  // Update base_rate_chf on existing room_types if names match
+  for (const room of rooms) {
+    await supabase
+      .from('room_types')
+      .update({ base_rate_chf: room.rate_chf })
+      .eq('hotel_id', hotel_id)
+      .ilike('name', `%${room.room_type.split(' ')[0]}%`)
+  }
+}
+
+return NextResponse.json({ success: true, rooms: data })
 
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Failed' }, { status: 422 })
