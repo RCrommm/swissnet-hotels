@@ -26,6 +26,7 @@ interface Hotel {
   is_partner: boolean
   show_schema: boolean
   star_rating?: number
+  star_classification?: number
 }
 
 interface Props {
