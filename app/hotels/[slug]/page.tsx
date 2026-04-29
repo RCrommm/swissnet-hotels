@@ -395,10 +395,19 @@ if (!hotel) {
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.5rem', fontWeight: 400, color: text, margin: 0 }}>CHF {hotel.nightly_rate_chf.toLocaleString()}</p>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: '0.25rem 0 0' }}>per night</p>
             </div>
-            <a href={trackingUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '1rem', textAlign: 'center', textDecoration: 'none', marginBottom: '0.75rem' }}>
-              Book Direct →
-            </a>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, textAlign: 'center', margin: '0 0 1.5rem' }}>No booking fees · Best rate guarantee</p>
+            {hotel.is_partner ? (
+  <>
+    <a href={trackingUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '1rem', textAlign: 'center', textDecoration: 'none', marginBottom: '0.75rem' }}>
+      Book Direct →
+    </a>
+    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, textAlign: 'center', margin: '0 0 1.5rem' }}>No booking fees · Best rate guarantee</p>
+  </>
+) : (
+  <div style={{ background: 'rgba(201,169,110,0.06)', border: '1px solid ' + gold + '44', padding: '1rem', textAlign: 'center', marginBottom: '1.5rem' }}>
+    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: '0 0 0.5rem' }}>Direct booking available</p>
+    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: gold, margin: 0 }}>for SwissNet Partner hotels</p>
+  </div>
+)}
             <div style={{ textAlign: 'center' }}>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: '0 0 0.25rem' }}>Questions? Contact the hotel:</p>
               <a href={'mailto:' + hotel.contact_email} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: gold, textDecoration: 'none' }}>{hotel.contact_email}</a>
