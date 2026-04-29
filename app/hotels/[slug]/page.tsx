@@ -377,18 +377,7 @@ if (!hotel) {
             </div>
           )}
 
-          {!showSchema && (
-            <div style={{ background: 'rgba(201,169,110,0.06)', border: '1px solid ' + gold + '44', padding: '1.5rem', marginBottom: '2.5rem' }}>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: gold, margin: '0 0 0.5rem' }}>SwissNet Partner Programme</p>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', fontWeight: 300, color: text, margin: '0 0 0.5rem' }}>Claim your full profile</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, lineHeight: 1.7, margin: '0 0 1rem' }}>
-                Showcase your rooms, spa, restaurants and exclusive offers to AI-powered travellers searching on ChatGPT, Perplexity and Google AI.
-              </p>
-              <a href="/partner" style={{ display: 'inline-block', background: gold, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0.75rem 1.5rem', textDecoration: 'none' }}>
-                Become a Partner →
-              </a>
-            </div>
-          )}
+          
         </div>
 
         {/* Sidebar */}
