@@ -62,6 +62,11 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
   const totalQueries = aiVisibility?.length || 0
   const appearedQueries = aiVisibility?.filter((r: any) => r.appeared)?.length || 0
   const visibilityScore = totalQueries > 0 ? Math.round((appearedQueries / totalQueries) * 100) : 0
+  const platformScore = (platformId: string) => {
+  const platformQueries = aiVisibility?.filter((r: any) => r.platform === platformId) || []
+  const platformAppeared = platformQueries.filter((r: any) => r.appeared).length
+  return platformQueries.length > 0 ? Math.round((platformAppeared / platformQueries.length) * 100) : null
+}
 
   const now = new Date()
   const periodStart = new Date(now.getTime() - period * 24 * 60 * 60 * 1000)
@@ -270,7 +275,11 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
                     <p style={{ fontSize: '1.5rem', margin: '0 0 0.5rem' }}>{src.icon}</p>
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', fontWeight: 600, color: TEXT, margin: '0 0 0.25rem' }}>{src.label}</p>
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED, margin: '0 0 0.5rem' }}>{src.note}</p>
-                    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', color: GOLD, margin: 0 }}>{visibilityScore > 0 ? visibilityScore + '%' : '—'}</p>
+                    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', color: GOLD, margin: 0 }}>
+  {platformScore(src.label === 'ChatGPT' ? 'chatgpt' : src.label === 'Perplexity' ? 'perplexity' : 'google') !== null
+    ? platformScore(src.label === 'ChatGPT' ? 'chatgpt' : src.label === 'Perplexity' ? 'perplexity' : 'google') + '%'
+    : '—'}
+</p>
                   </div>
                 ))}
               </div>
