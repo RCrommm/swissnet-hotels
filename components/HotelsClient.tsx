@@ -158,8 +158,12 @@ export default function HotelsClient({ hotels, initialRegion, initialCategory, i
                         <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.45rem', fontWeight: 400, color: '#3D2B1F', margin: 0 }}>CHF {hotel.nightly_rate_chf.toLocaleString()}<span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: 'rgba(61,43,31,0.4)', fontWeight: 300 }}> /night</span></p>
                       </div>
                       <div style={{ display: 'flex', gap: '0.5rem', position: 'relative', zIndex: 2 }}>
-                        <a href={websiteUrl} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: '#3D2B1F', border: '1px solid rgba(201,169,110,0.35)', borderRadius: 8, padding: '0.6rem 0.875rem', textDecoration: 'none' }}>Website</a>
-                        <a href={bookUrl} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: '#1a0e06', background: gold, borderRadius: 8, padding: '0.6rem 0.875rem', textDecoration: 'none' }}>Book Direct</a>
+                        {hotel.is_partner && (
+                          <>
+                            <a href={websiteUrl} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: '#3D2B1F', border: '1px solid rgba(201,169,110,0.35)', borderRadius: 8, padding: '0.6rem 0.875rem', textDecoration: 'none' }}>Website</a>
+                            <a href={bookUrl} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: '#1a0e06', background: gold, borderRadius: 8, padding: '0.6rem 0.875rem', textDecoration: 'none' }}>Book Direct</a>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
