@@ -571,36 +571,32 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
                   <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: textMuted, margin: '0 0 0.5rem' }}>Nightly Rate From</p>
                   <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 300, color: text, margin: '0 0 0.25rem', lineHeight: 1 }}>CHF {hotel.nightly_rate_chf?.toLocaleString()}</p>
                   <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, margin: 0 }}>per night · best rate guaranteed</p>
-                  {/* OTA Price Comparison */}
+   {/* OTA Price Comparison */}
 {hotel.is_partner && (
   <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: `1px solid ${border}` }}>
     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', color: textMuted, margin: '0 0 0.75rem' }}>Price Comparison</p>
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
       {[
-        { name: 'Booking.com', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Booking.com_logo.svg/320px-Booking.com_logo.svg.png', markup: 0.15 },
-        { name: 'Expedia', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Expedia_favicon.png/240px-Expedia_favicon.png', markup: 0.17 },
-        { name: 'Hotels.com', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Hotels.com_logo.svg/320px-Hotels.com_logo.svg.png', markup: 0.18 },
+        { name: 'Booking.com', color: '#003580', markup: 0.08 },
+        { name: 'Expedia', color: '#FFC72C', textColor: '#000', markup: 0.05 },
+        { name: 'Hotels.com', color: '#D8002E', markup: 0.10 },
       ].map(ota => {
-        const otaPrice = Math.round((hotel.nightly_rate_chf * (1 + ota.markup)) / 10) * 10
+        const otaPrice = Math.round((hotel.nightly_rate_chf * (1 + ota.markup)) / 5) * 5
         return (
-          <div key={ota.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.4rem 0' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <img src={ota.logo} alt={ota.name} style={{ height: 14, objectFit: 'contain', opacity: 0.6 }} />
-            </div>
+          <div key={ota.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.4rem 0.5rem', background: bg, borderRadius: 4 }}>
+            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: ota.color }}>{ota.name}</span>
             <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, textDecoration: 'line-through' }}>CHF {otaPrice.toLocaleString()}</span>
           </div>
         )
       })}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0.75rem', background: 'rgba(201,169,76,0.1)', border: `1px solid ${gold}55`, borderRadius: 4, marginTop: '0.25rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: gold }}>✦ Direct</span>
-        </div>
+        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: gold }}>✦ Direct</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 700, color: gold }}>CHF {hotel.nightly_rate_chf?.toLocaleString()}</span>
           <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, background: green, color: white, padding: '2px 6px', borderRadius: 20 }}>BEST</span>
         </div>
       </div>
-      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: textMuted, margin: '0.25rem 0 0', textAlign: 'center' }}>*OTA prices are estimates based on typical commission rates</p>
+      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', color: textMuted, margin: '0.25rem 0 0', textAlign: 'center' }}>*Prices are estimates based on typical OTA commission rates</p>
     </div>
   </div>
 )}
