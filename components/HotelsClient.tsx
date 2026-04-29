@@ -109,7 +109,7 @@ export default function HotelsClient({ hotels, initialRegion, initialCategory, i
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '1.5rem' }}>
             {hotels.map(hotel => {
               const isHovered = hovered === hotel.id
-              const starCount = hotel.star_rating || Math.round(hotel.rating)
+              const starCount = hotel.star_rating || (hotel.rating >= 4.5 ? 5 : 4)
               const websiteUrl = '/api/track?hotel_id=' + hotel.id + '&hotel_name=' + encodeURIComponent(hotel.name) + '&destination=' + encodeURIComponent(hotel.direct_booking_url.replace('/book', '').replace('/reservations', '')) + '&medium=website&campaign=hotels_page_website'
               const bookUrl = '/api/track?hotel_id=' + hotel.id + '&hotel_name=' + encodeURIComponent(hotel.name) + '&destination=' + encodeURIComponent(hotel.direct_booking_url) + '&medium=website&campaign=hotels_page_book'
               return (
