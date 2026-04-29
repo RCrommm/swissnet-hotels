@@ -62,6 +62,8 @@ function SchemaMarkup({ hotel, keywords, roomTypes, faqs, restaurants, spaData }
       offers: rt.base_rate_chf ? { '@type': 'Offer', price: rt.base_rate_chf, priceCurrency: 'CHF', url: hotel.direct_booking_url } : undefined,
     })),
     hasMap: `https://www.google.com/maps/search/${encodeURIComponent(hotel.name + ' ' + hotel.location)}`,
+    dateModified: hotel.updated_at ? new Date(hotel.updated_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+datePublished: hotel.created_at ? new Date(hotel.created_at).toISOString().split('T')[0] : undefined,
     sameAs: [
   hotel.tripadvisor_url,
   hotel.booking_url,
