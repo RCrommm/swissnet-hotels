@@ -18,6 +18,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }))
 
+  const promptSlugs = [
+    'luxury-hotels-zermatt', 'ski-hotels-zermatt', 'luxury-hotels-geneva',
+    'luxury-hotels-zurich', 'luxury-hotels-interlaken', 'luxury-hotels-bern',
+    'ski-hotels-switzerland', 'wellness-hotels-switzerland', 'romantic-hotels-switzerland',
+    'luxury-hotels-switzerland', 'business-hotels-switzerland',
+    'wellness-hotels-flims', 'ski-hotels-crans-montana', 'ski-hotels-davos'
+  ]
+  const promptPages: MetadataRoute.Sitemap = promptSlugs.map(slug => ({
+    url: `${baseUrl}/best/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.9,
+  }))
+
   const { data: hotels } = await supabase
     .from('hotels')
     .select('id, slug, updated_at, is_partner')
@@ -41,5 +55,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }))
   )
 
-  return [...staticPages, ...destinationPages, ...hotelPages, ...intentPages]
+  return [...staticPages, ...destinationPages, ...promptPages, ...hotelPages, ...intentPages]
 }
