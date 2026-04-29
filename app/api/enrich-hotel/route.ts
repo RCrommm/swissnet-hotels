@@ -2,17 +2,14 @@ import { supabase } from '@/lib/supabase'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
-    export async function POST(request: NextRequest) {
   const secret = request.headers.get('x-api-secret')
   if (secret !== process.env.ADMIN_PASSWORD) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-  
-  // rest of your code...
+
   const { hotel_id, hotel_name, hotel_url, location } = await request.json()
   if (!hotel_id || !hotel_name) return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
 
-  // Fetch hotel website
   let websiteText = ''
   if (hotel_url) {
     try {
@@ -29,7 +26,7 @@ export async function POST(request: NextRequest) {
         .trim()
         .slice(0, 6000)
     } catch {
-      websiteText = `Hotel: ${hotel_name}, Location: ${location}`
+      websiteText = 'Hotel: ' + hotel_name + ', Location: ' + location
     }
   }
 
@@ -45,24 +42,7 @@ export async function POST(request: NextRequest) {
       max_tokens: 2000,
       messages: [{
         role: 'user',
-        content: `You are enriching a hotel listing for ${hotel_name} in ${location}, Switzerland.
-
-Website content: ${websiteText}
-
-Return ONLY this JSON with no other text:
-{
-  "description": "2-3 sentence compelling description of the hotel",
-  "amenities": ["Spa", "Pool", "Fine Dining", "Fitness Center", "Concierge"],
-  "best_for": ["Couples", "Wellness", "Ski Lovers"],
-  "faqs": [
-    {"question": "What makes ${hotel_name} special?", "answer": "detailed answer"},
-    {"question": "Is ${hotel_name} good for a honeymoon?", "answer": "detailed answer"},
-    {"question": "What are the best rooms at ${hotel_name}?", "answer": "detailed answer"},
-    {"question": "What dining options does ${hotel_name} offer?", "answer": "detailed answer"},
-    {"question": "Where is ${hotel_name} located?", "answer": "detailed answer"}
-  ],
-  "verdict": "One strong sentence about who this hotel is best for and why"
-}`
+        content: 'You are enriching a hotel listing for ' + hotel_name + ' in ' + location + ', Switzerland. Use the website content below to write accurate information.\n\nWebsite content: ' + websiteText + '\n\nReturn ONLY this JSON with no other text:\n{\n  "description": "2-3 sentence compelling description of the hotel",\n  "amenities": ["Spa", "Pool", "Fine Dining", "Fitness Center", "Concierge"],\n  "best_for": ["Couples", "Wellness", "Ski Lovers"],\n  "faqs": [\n    {"question": "What makes ' + hotel_name + ' special?", "answer": "detailed answer"},\n    {"question": "Is ' + hotel_name + ' good for a honeymoon?", "answer": "detailed answer"},\n    {"question": "What are the best rooms at ' + hotel_name + '?", "answer": "detailed answer"},\n    {"question": "What dining options does ' + hotel_name + ' offer?", "answer": "detailed answer"},\n    {"question": "Where is ' + hotel_name + ' located?", "answer": "detailed answer"}\n  ],\n  "verdict": "One strong sentence about who this hotel is best for and why"\n}'
       }]
     })
   })
@@ -74,14 +54,12 @@ Return ONLY this JSON with no other text:
     const content = claudeData.content[0].text.replace(/```json|```/g, '').trim()
     const enriched = JSON.parse(content)
 
-    // Update hotels table
     await supabase.from('hotels').update({
       description: enriched.description,
       amenities: enriched.amenities,
       best_for: enriched.best_for,
     }).eq('id', hotel_id)
 
-    // Upsert hotel_content
     await supabase.from('hotel_content').upsert({
       hotel_id,
       verdict: enriched.verdict,
