@@ -57,6 +57,7 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
       amenities: hotel.amenities?.join(', ') || '',
       best_for: hotel.best_for?.join(', ') || '',
       seo_keywords: hotel.seo_keywords || '',
+      star_classification: hotel.star_classification || 4,
     })
   }
 
@@ -279,6 +280,14 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
                     </select>
                   </div>
                   <div><label style={labelStyle}>Rating (1-5)</label><input type="number" min="1" max="5" step="0.1" value={editForm.rating} onChange={e => setEditForm({ ...editForm, rating: e.target.value })} style={inputStyle} /></div>
+<div>
+  <label style={labelStyle}>Star Classification</label>
+  <select value={editForm.star_classification || 4} onChange={e => setEditForm({ ...editForm, star_classification: parseInt(e.target.value) })} style={{ ...inputStyle, background: bg }}>
+    <option value={3}>3 Stars</option>
+    <option value={4}>4 Stars</option>
+    <option value={5}>5 Stars</option>
+  </select>
+</div>
                   <div><label style={labelStyle}>Nightly Rate (CHF)</label><input type="number" value={editForm.nightly_rate_chf} onChange={e => setEditForm({ ...editForm, nightly_rate_chf: e.target.value })} style={inputStyle} /></div>
                   <div><label style={labelStyle}>Contact Email</label><input type="email" value={editForm.contact_email} onChange={e => setEditForm({ ...editForm, contact_email: e.target.value })} style={inputStyle} /></div>
                   <div><label style={labelStyle}>Direct Booking URL</label><input type="url" value={editForm.direct_booking_url} onChange={e => setEditForm({ ...editForm, direct_booking_url: e.target.value })} style={inputStyle} /></div>
