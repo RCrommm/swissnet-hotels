@@ -57,6 +57,10 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
       amenities: hotel.amenities?.join(', ') || '',
       best_for: hotel.best_for?.join(', ') || '',
       seo_keywords: hotel.seo_keywords || '',
+      tripadvisor_url: hotel.tripadvisor_url || '',
+booking_url: hotel.booking_url || '',
+google_maps_url: hotel.google_maps_url || '',
+wikipedia_url: hotel.wikipedia_url || '',
       star_classification: hotel.star_classification || 4,
     })
   }
@@ -71,6 +75,10 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
       amenities: editForm.amenities.split(',').map((a: string) => a.trim()).filter(Boolean),
       best_for: editForm.best_for.split(',').map((b: string) => b.trim()).filter(Boolean),
       images: editForm.images.filter(Boolean),
+      tripadvisor_url: editForm.tripadvisor_url || null,
+booking_url: editForm.booking_url || null,
+google_maps_url: editForm.google_maps_url || null,
+wikipedia_url: editForm.wikipedia_url || null,
     }
     try {
       const res = await fetch('/api/hotels/' + editingId, {
@@ -308,6 +316,15 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
                   <label style={labelStyle}>SEO Keywords</label>
                   <input type="text" value={editForm.seo_keywords} onChange={e => setEditForm({ ...editForm, seo_keywords: e.target.value })} style={inputStyle} />
                 </div>
+                <div style={{ marginBottom: '1rem' }}>
+  <label style={labelStyle}>External Profile URLs (for AI trust signals)</label>
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+    <input type="url" value={editForm.tripadvisor_url} onChange={e => setEditForm({ ...editForm, tripadvisor_url: e.target.value })} style={inputStyle} placeholder="TripAdvisor URL" />
+    <input type="url" value={editForm.booking_url} onChange={e => setEditForm({ ...editForm, booking_url: e.target.value })} style={inputStyle} placeholder="Booking.com URL" />
+    <input type="url" value={editForm.google_maps_url} onChange={e => setEditForm({ ...editForm, google_maps_url: e.target.value })} style={inputStyle} placeholder="Google Maps URL" />
+    <input type="url" value={editForm.wikipedia_url} onChange={e => setEditForm({ ...editForm, wikipedia_url: e.target.value })} style={inputStyle} placeholder="Wikipedia URL (if exists)" />
+  </div>
+</div>
                 <div style={{ marginBottom: '1.5rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                     <label style={labelStyle}>Images (URLs)</label>

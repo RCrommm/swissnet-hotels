@@ -62,6 +62,14 @@ function SchemaMarkup({ hotel, keywords, roomTypes, faqs, restaurants, spaData }
       offers: rt.base_rate_chf ? { '@type': 'Offer', price: rt.base_rate_chf, priceCurrency: 'CHF', url: hotel.direct_booking_url } : undefined,
     })),
     hasMap: `https://www.google.com/maps/search/${encodeURIComponent(hotel.name + ' ' + hotel.location)}`,
+    sameAs: [
+  hotel.tripadvisor_url,
+  hotel.booking_url,
+  hotel.google_maps_url,
+  hotel.wikipedia_url,
+  hotel.direct_booking_url,
+  `https://www.google.com/search?q=${encodeURIComponent(hotel.name + ' ' + hotel.location)}`,
+].filter(Boolean),
   }
 
   const faqSchema = faqs?.length > 0 ? {
