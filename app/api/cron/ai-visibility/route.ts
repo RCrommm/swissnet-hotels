@@ -138,7 +138,7 @@ export async function GET(request: Request) {
   // Log cost — Haiku ~$0.001 per query
 const estimatedCost = results.length * 0.001
 
-await supabase.from('cron_costs').insert({
+const { error: costError } = await supabase.from('cron_costs').insert({
   hotels_checked: hotels.length,
   queries_run: results.length,
   platforms_checked: platformsToRun.length,
@@ -154,6 +154,7 @@ return NextResponse.json({
   platforms_checked: platformsToRun.length,
   total_appearances: totalAppearances,
   estimated_cost_usd: estimatedCost,
+  cost_log_error: costError?.message || null,
   insert_errors: errors.length ? errors : undefined,
   sample_results: results.filter(r => r.appeared).slice(0, 5),
 })
