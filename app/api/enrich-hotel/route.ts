@@ -2,6 +2,13 @@ import { supabase } from '@/lib/supabase'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
+    export async function POST(request: NextRequest) {
+  const secret = request.headers.get('x-api-secret')
+  if (secret !== process.env.ADMIN_PASSWORD) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  
+  // rest of your code...
   const { hotel_id, hotel_name, hotel_url, location } = await request.json()
   if (!hotel_id || !hotel_name) return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
 

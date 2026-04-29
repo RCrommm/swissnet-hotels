@@ -143,7 +143,10 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
     try {
       const res = await fetch('/api/enrich-hotel', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+  'Content-Type': 'application/json',
+  'x-api-secret': 'RCrom2004Romeo',
+},
         body: JSON.stringify({
           hotel_id: hotel.id,
           hotel_name: hotel.name,
