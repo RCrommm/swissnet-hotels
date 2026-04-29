@@ -585,6 +585,7 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
         return (
           <div key={ota.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.4rem 0.5rem', background: bg, borderRadius: 4 }}>
             <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: ota.color }}>{ota.name}</span>
+            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>CHF {otaPrice.toLocaleString()}</span>
           </div>
         )
       })}
