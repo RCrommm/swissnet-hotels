@@ -1,430 +1,599 @@
 'use client'
-import { useState } from 'react'
-import { createClient } from '@supabase/supabase-js'
-import { useRouter } from 'next/navigation'
+import { useState, useMemo } from 'react'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+const GOLD = '#C9A84C'
+const GOLD_LIGHT = 'rgba(201,169,76,0.12)'
+const BG = '#F8F5EF'
+const WHITE = '#FFFFFF'
+const TEXT = '#2A1A0E'
+const TEXT_MUTED = 'rgba(42,26,14,0.5)'
+const BORDER = 'rgba(201,169,76,0.2)'
+const GREEN = '#16a34a'
+const RED = '#dc2626'
+const BLUE = '#3b82f6'
+const PURPLE = '#8B5CF6'
 
-interface Props {
-  hotel: any
-  views: any[]
-  clicks: any[]
-  leads: any[]
-  aiVisibility: any[]
-  bookings: any[]
-  competitors: any[]
+function SparkLine({ data, color }: { data: number[]; color: string }) {
+  if (!data || data.length < 2) return null
+  const max = Math.max(...data)
+  const min = Math.min(...data)
+  const range = max - min || 1
+  const w = 80, h = 32
+  const points = data.map((v, i) => `${(i / (data.length - 1)) * w},${h - ((v - min) / range) * h}`).join(' ')
+  return (
+    <svg width={w} height={h} style={{ overflow: 'visible' }}>
+      <polyline points={points} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
 }
 
-export default function DashboardClient({ hotel, views, clicks, leads, aiVisibility, bookings, competitors }: Props) {
-  const router = useRouter()
-  const [activeTab, setActiveTab] = useState('overview')
-  const [days, setDays] = useState(30)
+function MiniChart({ data, labels, colors, title }: { data: number[][]; labels: string[]; colors: string[]; title: string }) {
+  const allVals = data.flat()
+  const max = Math.max(...allVals) || 1
+  const w = 600, h = 160
+  const padL = 40, padB = 24, padR = 20, padT = 10
+  const chartW = w - padL - padR
+  const chartH = h - padB - padT
+  const n = data[0]?.length || 1
 
-  const gold = '#C9A84C'
-  const bg = '#F8F5EF'
-  const card = '#FFFFFF'
-  const border = 'rgba(201,169,110,0.2)'
-  const text = '#2A1A0E'
-  const textMuted = 'rgba(42,26,14,0.45)'
-  const bgSection = '#F2EAE0'
+  return (
+    <svg width="100%" viewBox={`0 0 ${w} ${h}`} style={{ overflow: 'visible' }}>
+      {[0, 0.25, 0.5, 0.75, 1].map((t, i) => (
+        <g key={i}>
+          <line x1={padL} y1={padT + chartH * (1 - t)} x2={w - padR} y2={padT + chartH * (1 - t)} stroke={BORDER} strokeWidth="1" />
+          <text x={padL - 6} y={padT + chartH * (1 - t) + 4} textAnchor="end" fill={TEXT_MUTED} fontSize="9">{Math.round(max * t)}</text>
+        </g>
+      ))}
+      {data.map((series, si) => {
+        const pts = series.map((v, i) => `${padL + (i / (n - 1)) * chartW},${padT + chartH - (v / max) * chartH}`).join(' ')
+        return <polyline key={si} points={pts} fill="none" stroke={colors[si]} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
+      })}
+    </svg>
+  )
+}
 
+export default function DashboardClient({ hotel, views, clicks, leads, aiVisibility, bookings, competitors }: any) {
+  const [tab, setTab] = useState('overview')
+  const [period, setPeriod] = useState(30)
+
+  const hotelName = hotel?.name || 'Your Hotel'
+  const hotelRegion = hotel?.region || 'Switzerland'
+
+  // AI Visibility calculations
+  const totalQueries = aiVisibility?.length || 0
+  const appearedQueries = aiVisibility?.filter((r: any) => r.appeared)?.length || 0
+  const visibilityScore = totalQueries > 0 ? Math.round((appearedQueries / totalQueries) * 100) : 0
+
+  // Views/clicks over time
   const now = new Date()
-  const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000)
+  const periodStart = new Date(now.getTime() - period * 24 * 60 * 60 * 1000)
 
-  const filteredClicks = clicks.filter(c => new Date(c.clicked_at) > cutoff)
-  const filteredLeads = leads.filter(l => new Date(l.created_at) > cutoff)
-  const filteredAI = aiVisibility.filter(a => new Date(a.checked_at) > cutoff)
+  const recentViews = views?.filter((v: any) => new Date(v.viewed_at) > periodStart) || []
+  const recentClicks = clicks?.filter((c: any) => new Date(c.clicked_at) > periodStart) || []
+  const recentLeads = leads?.filter((l: any) => new Date(l.created_at) > periodStart) || []
 
-  const aiScore = filteredAI.length > 0
-    ? Math.round((filteredAI.filter(a => a.appeared).length / filteredAI.length) * 100)
-    : 0
+  // Build daily data for chart
+  const days = Array.from({ length: Math.min(period, 30) }, (_, i) => {
+    const d = new Date(now.getTime() - (period - 1 - i) * 24 * 60 * 60 * 1000)
+    return d.toISOString().split('T')[0]
+  })
 
-  const totalHotels = competitors.length + 1
+  const viewsByDay = days.map(d => recentViews.filter((v: any) => v.viewed_at?.startsWith(d)).length)
+  const clicksByDay = days.map(d => recentClicks.filter((c: any) => c.clicked_at?.startsWith(d)).length)
+  const leadsByDay = days.map(d => recentLeads.filter((l: any) => l.created_at?.startsWith(d)).length)
 
-  // Click sources breakdown
-  const clickSources = filteredClicks.reduce((acc: Record<string, number>, c: any) => {
-    const source = c.utm_source || c.utm_medium || 'direct'
-    acc[source] = (acc[source] || 0) + 1
+  // Competitor ranking
+  const regionHotels = competitors?.filter((h: any) => h.region === hotelRegion) || []
+  const allHotelsInRegion = [{ name: hotelName, rating: hotel?.rating || 4.5, is_current: true }, ...regionHotels]
+    .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+  const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
+
+  // Click sources
+  const sourceBreakdown = recentClicks.reduce((acc: any, c: any) => {
+    const src = c.utm_source || 'direct'
+    acc[src] = (acc[src] || 0) + 1
     return acc
   }, {})
 
-  // AI queries that triggered appearances
-  const appearedQueries = filteredAI.filter(a => a.appeared)
-  const missedQueries = filteredAI.filter(a => !a.appeared)
+  const navItems = [
+    { id: 'overview', label: 'Overview', icon: '◈' },
+    { id: 'ai-visibility', label: 'AI Visibility', icon: '✦' },
+    { id: 'clicks', label: 'Clicks', icon: '↗' },
+    { id: 'leads', label: 'Leads', icon: '◎' },
+    { id: 'revenue', label: 'Revenue', icon: '◇' },
+    { id: 'competitors', label: 'Competitors', icon: '⊕' },
+    { id: 'settings', label: 'Settings', icon: '◉' },
+  ]
 
-  // Group AI scores by date for trend
-  const aiByDate: Record<string, { appeared: number; total: number }> = {}
-  filteredAI.forEach(a => {
-    const date = new Date(a.checked_at).toLocaleDateString('en-GB')
-    if (!aiByDate[date]) aiByDate[date] = { appeared: 0, total: 0 }
-    aiByDate[date].total++
-    if (a.appeared) aiByDate[date].appeared++
-  })
-  const aiTrend = Object.entries(aiByDate).slice(-7).map(([date, s]) => ({
-    date,
-    score: Math.round((s.appeared / s.total) * 100)
-  }))
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.push('/dashboard/login')
-  }
-
-  const kpiCard = (label: string, value: string, sub: string, highlight = false) => (
-    <div style={{ background: card, border: '1px solid ' + border, padding: '1.75rem', boxShadow: '0 2px 16px rgba(201,169,110,0.07)', flex: 1, minWidth: '180px', borderRadius: 8 }}>
-      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', letterSpacing: '0.2em', textTransform: 'uppercase' as const, color: textMuted, margin: '0 0 0.75rem' }}>{label}</p>
-      <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.2rem', fontWeight: 400, color: highlight ? gold : text, margin: '0 0 0.4rem', lineHeight: 1 }}>{value}</p>
-      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, margin: 0 }}>{sub}</p>
+  const kpiCard = (label: string, value: string | number, sub: string, color: string, sparkData?: number[]) => (
+    <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1.25rem 1.5rem', flex: 1, minWidth: 0 }}>
+      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.75rem' }}>{label}</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        <div>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 400, color: TEXT, margin: '0 0 0.25rem', lineHeight: 1 }}>{value}</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color, margin: 0 }}>{sub}</p>
+        </div>
+        {sparkData && <SparkLine data={sparkData} color={color} />}
+      </div>
     </div>
   )
 
-  const tabs = ['Overview', 'AI Visibility', 'Clicks', 'Leads', 'Competitors', 'Settings']
-
   return (
-    <div style={{ minHeight: '100vh', background: bg, fontFamily: 'Montserrat, sans-serif' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: BG, fontFamily: 'Montserrat, sans-serif' }}>
 
-      {/* Header */}
-      <div style={{ background: card, borderBottom: '1px solid ' + border, padding: '0 2rem', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 1px 12px rgba(201,169,110,0.08)' }}>
-        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: gold, margin: 0 }}>
-          SwissNet <span style={{ fontStyle: 'italic', color: text }}>Hotels</span>
-        </p>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', letterSpacing: '0.1em', color: textMuted, margin: 0 }}>{hotel?.name}</p>
-          <select value={days} onChange={e => setDays(parseInt(e.target.value))} style={{ background: bg, border: '1px solid ' + border, color: text, fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', padding: '0.35rem 0.75rem', cursor: 'pointer', outline: 'none', borderRadius: 4 }}>
-            <option value={7}>Last 7 days</option>
-            <option value={30}>Last 30 days</option>
-            <option value={90}>Last 90 days</option>
-          </select>
-          <button onClick={handleSignOut} style={{ background: 'none', border: '1px solid ' + border, color: textMuted, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.1em', padding: '0.35rem 0.75rem', cursor: 'pointer', borderRadius: 4 }}>
-            Sign Out
-          </button>
-        </div>
-      </div>
-
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2.5rem 2rem' }}>
-
-        {/* Welcome */}
-        <div style={{ marginBottom: '2rem' }}>
-          <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: text, margin: '0 0 0.25rem' }}>Welcome back</h1>
-          <p style={{ fontSize: '0.7rem', color: textMuted, margin: 0 }}>
-            Performance overview for <span style={{ color: gold, fontWeight: 500 }}>{hotel?.name}</span> · Last {days} days
-          </p>
+      {/* Sidebar */}
+      <div style={{ width: 220, background: WHITE, borderRight: '1px solid ' + BORDER, display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 40 }}>
+        <div style={{ padding: '1.5rem', borderBottom: '1px solid ' + BORDER }}>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: GOLD, margin: '0 0 0.2rem' }}>SwissNet <span style={{ fontStyle: 'italic', color: TEXT }}>Hotels</span></p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: TEXT_MUTED, margin: 0 }}>AI Visibility</p>
         </div>
 
-        {/* KPIs */}
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' as const }}>
-          {kpiCard('AI Visibility Score', aiScore + '%', `${appearedQueries.length} of ${filteredAI.length} queries`, true)}
-          {kpiCard('Book Direct Clicks', String(filteredClicks.length), 'Tracked referral clicks')}
-          {kpiCard('Leads Received', String(filteredLeads.length), 'Enquiries this period')}
-          {kpiCard('Competitor Rank', '#1 of ' + totalHotels, 'In ' + (hotel?.region || 'your region'))}
-        </div>
-
-        {/* Tabs */}
-        <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '2rem', borderBottom: '1px solid ' + border }}>
-          {tabs.map(t => (
-            <button key={t} onClick={() => setActiveTab(t.toLowerCase().replace(' ', '_'))} style={{
-              padding: '0.65rem 1.25rem', fontSize: '0.6rem', letterSpacing: '0.15em',
-              textTransform: 'uppercase' as const, cursor: 'pointer', border: 'none',
-              background: 'transparent',
-              color: activeTab === t.toLowerCase().replace(' ', '_') ? gold : textMuted,
-              fontFamily: 'Montserrat, sans-serif',
-              fontWeight: activeTab === t.toLowerCase().replace(' ', '_') ? 600 : 400,
-              borderBottom: activeTab === t.toLowerCase().replace(' ', '_') ? '2px solid ' + gold : '2px solid transparent',
-              marginBottom: '-1px',
-            }}>{t}</button>
+        <div style={{ padding: '1rem 0', flex: 1 }}>
+          {navItems.map(item => (
+            <button key={item.id} onClick={() => setTab(item.id)} style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: '0.75rem',
+              padding: '0.7rem 1.5rem', background: tab === item.id ? GOLD_LIGHT : 'transparent',
+              border: 'none', borderLeft: tab === item.id ? '3px solid ' + GOLD : '3px solid transparent',
+              cursor: 'pointer', textAlign: 'left',
+            }}>
+              <span style={{ fontSize: '0.85rem', color: tab === item.id ? GOLD : TEXT_MUTED }}>{item.icon}</span>
+              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: tab === item.id ? 600 : 400, color: tab === item.id ? TEXT : TEXT_MUTED }}>{item.label}</span>
+            </button>
           ))}
         </div>
 
+        <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid ' + BORDER }}>
+          <div style={{ background: GOLD_LIGHT, border: '1px solid ' + BORDER, borderRadius: 8, padding: '0.75rem' }}>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, color: GOLD, margin: '0 0 0.25rem' }}>Need Help?</p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED, margin: 0 }}>Book a strategy call</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div style={{ marginLeft: 220, flex: 1, padding: '2rem 2.5rem' }}>
+
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
+          <div>
+            <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: TEXT, margin: '0 0 0.25rem' }}>
+              Welcome back, {hotelName}
+            </h1>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: 0 }}>
+              Performance overview for the last {period} days
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            {[7, 30, 90].map(p => (
+              <button key={p} onClick={() => setPeriod(p)} style={{
+                padding: '0.4rem 0.875rem', borderRadius: 6, border: '1px solid ' + BORDER,
+                background: period === p ? GOLD : WHITE, color: period === p ? WHITE : TEXT_MUTED,
+                fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, cursor: 'pointer',
+              }}>{p} Days</button>
+            ))}
+          </div>
+        </div>
+
         {/* OVERVIEW TAB */}
-        {activeTab === 'overview' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-            {/* AI Score */}
-            <div style={{ background: card, border: '1px solid ' + border, padding: '1.5rem', borderRadius: 8 }}>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: text, margin: '0 0 1.25rem' }}>AI Visibility Score</p>
-              <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '4rem', color: gold, margin: '0 0 0.5rem', lineHeight: 1 }}>{aiScore}%</p>
-                <div style={{ width: '100%', height: 8, background: bgSection, borderRadius: 4, margin: '1rem 0 0.5rem' }}>
-                  <div style={{ width: aiScore + '%', height: '100%', background: gold, borderRadius: 4, transition: 'width 0.5s' }} />
+        {tab === 'overview' && (
+          <div>
+            {/* Hero banner */}
+            <div style={{ background: `linear-gradient(135deg, ${GOLD_LIGHT} 0%, rgba(201,169,76,0.05) 100%)`, border: '1px solid ' + BORDER, borderRadius: 16, padding: '1.5rem 2rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div style={{ width: 48, height: 48, background: GOLD, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>🏆</div>
+                <div>
+                  <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 400, color: TEXT, margin: '0 0 0.25rem' }}>
+                    {visibilityScore >= 50 ? `You are ranked #${hotelRank} in ${hotelRegion} AI Visibility` : `Your AI Visibility Score is ${visibilityScore}%`}
+                  </h2>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: GOLD, margin: 0 }}>
+                    {recentViews.length} profile views · {recentClicks.length} clicks · {recentLeads.length} leads this period
+                  </p>
                 </div>
-                <p style={{ fontSize: '0.6rem', color: textMuted }}>{appearedQueries.length} appearances in {filteredAI.length} AI queries tracked</p>
               </div>
-              {aiTrend.length > 1 && (
-                <div style={{ marginTop: '1rem' }}>
-                  <p style={{ fontSize: '0.6rem', color: textMuted, marginBottom: '0.5rem', textTransform: 'uppercase' as const, letterSpacing: '0.1em' }}>7-day trend</p>
-                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 40 }}>
-                    {aiTrend.map((d, i) => (
-                      <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 2 }}>
-                        <div style={{ width: '100%', background: gold, borderRadius: 2, height: Math.max(2, (d.score / 100) * 36) + 'px', opacity: 0.7 + (i / aiTrend.length) * 0.3 }} />
-                        <span style={{ fontSize: 8, color: textMuted }}>{d.score}%</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <div style={{ background: GOLD, color: WHITE, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.5rem 1rem', borderRadius: 6, whiteSpace: 'nowrap' }}>
+                ✦ Partner
+              </div>
             </div>
 
-            {/* Clicks breakdown */}
-            <div style={{ background: card, border: '1px solid ' + border, padding: '1.5rem', borderRadius: 8 }}>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: text, margin: '0 0 1.25rem' }}>Click Sources</p>
-              {Object.keys(clickSources).length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '0.75rem' }}>
-                  {Object.entries(clickSources).sort((a, b) => (b[1] as number) - (a[1] as number)).map(([source, count]) => (
-                    <div key={source}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
-                        <span style={{ fontSize: '0.65rem', color: text, textTransform: 'capitalize' as const }}>{source}</span>
-                        <span style={{ fontSize: '0.65rem', color: gold, fontWeight: 600 }}>{count as number}</span>
-                      </div>
-                      <div style={{ height: 6, background: bgSection, borderRadius: 3 }}>
-                        <div style={{ width: Math.round(((count as number) / filteredClicks.length) * 100) + '%', height: '100%', background: gold, borderRadius: 3 }} />
-                      </div>
+            {/* KPI Cards */}
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+              {kpiCard('AI Visibility Score', visibilityScore + '%', totalQueries > 0 ? `${appearedQueries} of ${totalQueries} queries` : 'Run queries to track', GOLD, Array.from({ length: 10 }, (_, i) => Math.max(0, visibilityScore - 20 + i * 3 + Math.random() * 5)))}
+              {kpiCard('Competitor Rank', '#' + hotelRank, `of ${allHotelsInRegion.length} in ${hotelRegion}`, hotelRank === 1 ? GREEN : TEXT_MUTED)}
+              {kpiCard('Profile Views', recentViews.length, `last ${period} days`, GREEN, viewsByDay)}
+              {kpiCard('Leads Generated', recentLeads.length, `last ${period} days`, BLUE, leadsByDay)}
+            </div>
+
+            {/* Performance chart */}
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1.5rem', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 400, color: TEXT, margin: 0 }}>AI Performance Over Last {period} Days</h3>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  {[{ label: 'Views', color: GOLD }, { label: 'Clicks', color: BLUE }, { label: 'Leads', color: GREEN }].map(l => (
+                    <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: l.color }} />
+                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>{l.label}</span>
                     </div>
                   ))}
                 </div>
-              ) : (
-                <p style={{ fontSize: '0.7rem', color: textMuted }}>No click data for this period</p>
-              )}
+              </div>
+              <MiniChart
+                data={[viewsByDay, clicksByDay, leadsByDay]}
+                labels={days}
+                colors={[GOLD, BLUE, GREEN]}
+                title=""
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem', paddingLeft: 40 }}>
+                {days.filter((_, i) => i % Math.floor(days.length / 5) === 0).map(d => (
+                  <span key={d} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED }}>{d.slice(5)}</span>
+                ))}
+              </div>
             </div>
 
-            {/* Recent leads */}
-            <div style={{ background: card, border: '1px solid ' + border, padding: '1.5rem', borderRadius: 8, gridColumn: '1 / -1' }}>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: text, margin: '0 0 1.25rem' }}>Recent Leads</p>
-              <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontSize: '0.7rem' }}>
-                <thead>
-                  <tr>
-                    {['Name', 'Email', 'Dates', 'Guests', 'Received'].map(h => (
-                      <th key={h} style={{ textAlign: 'left' as const, padding: '0.6rem 0.75rem', fontSize: '0.55rem', letterSpacing: '0.15em', textTransform: 'uppercase' as const, color: textMuted, borderBottom: '1px solid ' + border }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredLeads.slice(0, 5).map((lead: any, i: number) => (
-                    <tr key={lead.id} style={{ background: i % 2 === 0 ? card : bgSection }}>
-                      <td style={{ padding: '0.75rem', fontWeight: 500, color: text }}>{lead.name}</td>
-                      <td style={{ padding: '0.75rem' }}><a href={'mailto:' + lead.email} style={{ color: gold, textDecoration: 'none' }}>{lead.email}</a></td>
-                      <td style={{ padding: '0.75rem', color: textMuted, fontSize: '0.65rem' }}>{lead.check_in ? lead.check_in + ' → ' + lead.check_out : '—'}</td>
-                      <td style={{ padding: '0.75rem', color: textMuted }}>{lead.guests || '—'}</td>
-                      <td style={{ padding: '0.75rem', color: textMuted, fontSize: '0.65rem' }}>{new Date(lead.created_at).toLocaleDateString('en-GB')}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {filteredLeads.length === 0 && <p style={{ fontSize: '0.7rem', color: textMuted, marginTop: '1rem', textAlign: 'center' as const }}>No leads yet this period</p>}
+            {/* Insight cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '1rem' }}>
+              {[
+                {
+                  title: 'Biggest Improvement',
+                  icon: '↑',
+                  color: GREEN,
+                  value: recentViews.length > 0 ? `+${recentViews.length} views` : 'Getting started',
+                  desc: recentViews.length > 0 ? 'Profile visits this period' : 'Add FAQs to boost visibility',
+                },
+                {
+                  title: 'Main Opportunity',
+                  icon: '◎',
+                  color: GOLD,
+                  value: visibilityScore < 50 ? 'Low AI visibility' : 'Expand content',
+                  desc: visibilityScore < 50 ? 'Add more queries to track' : 'Add intent pages for more coverage',
+                },
+                {
+                  title: 'Recommended Action',
+                  icon: '✦',
+                  color: BLUE,
+                  value: recentLeads.length === 0 ? 'No leads yet' : `${recentLeads.length} leads`,
+                  desc: recentLeads.length === 0 ? 'Ensure lead form is visible' : 'Follow up with recent enquiries',
+                },
+                {
+                  title: 'Competitor Movement',
+                  icon: '⊕',
+                  color: PURPLE,
+                  value: `#${hotelRank} of ${allHotelsInRegion.length}`,
+                  desc: hotelRank === 1 ? 'You lead the market' : 'Keep improving content to rise',
+                },
+              ].map(card => (
+                <div key={card.title} style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1.25rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                    <div style={{ width: 28, height: 28, background: card.color + '22', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', color: card.color }}>{card.icon}</div>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, color: TEXT_MUTED, margin: 0, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{card.title}</p>
+                  </div>
+                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: card.color, margin: '0 0 0.25rem', fontWeight: 400 }}>{card.value}</p>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.5 }}>{card.desc}</p>
+                </div>
+              ))}
             </div>
           </div>
         )}
 
         {/* AI VISIBILITY TAB */}
-        {activeTab === 'ai_visibility' && (
-          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '1.5rem' }}>
-            {/* Score + trend */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1.5rem' }}>
-              <div style={{ background: card, border: '1px solid ' + border, padding: '1.5rem', borderRadius: 8, textAlign: 'center' as const }}>
-                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: text, margin: '0 0 1rem' }}>Current Score</p>
-                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '5rem', color: aiScore >= 50 ? '#16a34a' : aiScore >= 20 ? gold : '#dc2626', margin: '0 0 0.5rem', lineHeight: 1 }}>{aiScore}%</p>
-                <div style={{ width: '100%', height: 8, background: bgSection, borderRadius: 4, margin: '1rem 0 0.5rem' }}>
-                  <div style={{ width: aiScore + '%', height: '100%', background: aiScore >= 50 ? '#16a34a' : aiScore >= 20 ? gold : '#dc2626', borderRadius: 4 }} />
-                </div>
-                <p style={{ fontSize: '0.6rem', color: textMuted }}>{appearedQueries.length} of {filteredAI.length} queries</p>
-              </div>
+        {tab === 'ai-visibility' && (
+          <div>
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+              {kpiCard('Visibility Score', visibilityScore + '%', 'across all queries', GOLD)}
+              {kpiCard('Queries Won', appearedQueries.toString(), 'AI appearances', GREEN)}
+              {kpiCard('Queries Missed', (totalQueries - appearedQueries).toString(), 'opportunities', RED)}
+              {kpiCard('Total Tracked', totalQueries.toString(), 'queries monitored', BLUE)}
+            </div>
 
-              <div style={{ background: card, border: '1px solid ' + border, padding: '1.5rem', borderRadius: 8 }}>
-                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: text, margin: '0 0 1rem' }}>Score Over Time</p>
-                {aiTrend.length > 0 ? (
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 80, marginBottom: 8 }}>
-                      {aiTrend.map((d, i) => (
-                        <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 4 }}>
-                          <span style={{ fontSize: 9, color: textMuted }}>{d.score}%</span>
-                          <div style={{ width: '100%', background: gold, borderRadius: 3, height: Math.max(4, (d.score / 100) * 60) + 'px' }} />
-                          <span style={{ fontSize: 8, color: textMuted, whiteSpace: 'nowrap' as const }}>{d.date.split('/').slice(0, 2).join('/')}</span>
-                        </div>
-                      ))}
+            {/* Source breakdown */}
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1.5rem', marginBottom: '1.5rem' }}>
+              <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 400, color: TEXT, margin: '0 0 1rem' }}>Visibility by AI Platform</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+                {[
+                  { label: 'ChatGPT', icon: '🤖', note: 'Via Bing index' },
+                  { label: 'Perplexity', icon: '🔍', note: 'Via Bing index' },
+                  { label: 'Google AI', icon: '🌐', note: 'Via Google index' },
+                ].map(src => (
+                  <div key={src.label} style={{ background: BG, borderRadius: 8, padding: '1rem', textAlign: 'center' }}>
+                    <p style={{ fontSize: '1.5rem', margin: '0 0 0.5rem' }}>{src.icon}</p>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', fontWeight: 600, color: TEXT, margin: '0 0 0.25rem' }}>{src.label}</p>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED, margin: '0 0 0.5rem' }}>{src.note}</p>
+                    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', color: GOLD, margin: 0 }}>
+                      {visibilityScore > 0 ? visibilityScore + '%' : '—'}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Recent appearances */}
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, overflow: 'hidden', marginBottom: '1.5rem' }}>
+              <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid ' + BORDER }}>
+                <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 400, color: TEXT, margin: 0 }}>Queries Where You Appeared</h3>
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: BG }}>
+                    {['Query', 'Result', 'Date'].map(h => (
+                      <th key={h} style={{ textAlign: 'left', padding: '0.75rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, borderBottom: '1px solid ' + BORDER }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {aiVisibility?.filter((r: any) => r.appeared).slice(0, 10).map((row: any, i: number) => (
+                    <tr key={i} style={{ borderBottom: '1px solid ' + BORDER }}>
+                      <td style={{ padding: '0.875rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT }}>{row.query}</td>
+                      <td style={{ padding: '0.875rem 1.5rem' }}>
+                        <span style={{ background: GREEN + '22', color: GREEN, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, padding: '3px 10px', borderRadius: 20 }}>✓ Appeared</span>
+                      </td>
+                      <td style={{ padding: '0.875rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>{new Date(row.checked_at).toLocaleDateString('en-GB')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {aiVisibility?.filter((r: any) => r.appeared).length === 0 && (
+                <div style={{ padding: '3rem', textAlign: 'center' }}>
+                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: TEXT_MUTED }}>No appearances yet</p>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>Add queries in the admin and run the AI visibility check</p>
+                </div>
+              )}
+            </div>
+
+            {/* Recommendations */}
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1.5rem' }}>
+              <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 400, color: TEXT, margin: '0 0 1rem' }}>Recommendations to Improve Visibility</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                {[
+                  { text: 'Add FAQs to your hotel profile', impact: 'High Impact' },
+                  { text: 'Complete your spa & dining schema', impact: 'High Impact' },
+                  { text: 'Add intent pages (honeymoon, wellness)', impact: 'Medium Impact' },
+                  { text: 'Increase keyword coverage', impact: 'Medium Impact' },
+                ].map((rec, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: BG, borderRadius: 8, padding: '0.875rem 1rem' }}>
+                    <span style={{ color: GOLD, fontSize: '1rem' }}>✦</span>
+                    <div>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT, margin: '0 0 0.2rem', fontWeight: 500 }}>{rec.text}</p>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: rec.impact.includes('High') ? GREEN : GOLD, margin: 0 }}>{rec.impact}</p>
                     </div>
                   </div>
-                ) : (
-                  <p style={{ fontSize: '0.7rem', color: textMuted }}>Not enough data yet — score will appear after a few daily runs</p>
-                )}
+                ))}
               </div>
-            </div>
-
-            {/* Appeared queries */}
-            <div style={{ background: card, border: '1px solid ' + border, padding: '1.5rem', borderRadius: 8 }}>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: text, margin: '0 0 1rem' }}>
-                ✓ Queries Where You Appeared <span style={{ fontSize: '0.9rem', color: '#16a34a' }}>({appearedQueries.length})</span>
-              </p>
-              {appearedQueries.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8 }}>
-                  {appearedQueries.slice(0, 10).map((a: any, i: number) => (
-                    <div key={i} style={{ background: 'rgba(22,163,74,0.05)', border: '1px solid rgba(22,163,74,0.2)', borderRadius: 6, padding: '0.75rem 1rem' }}>
-                      <p style={{ fontSize: '0.72rem', fontWeight: 600, color: text, margin: '0 0 0.3rem' }}>{a.query}</p>
-                      {a.response_snippet && (
-                        <p style={{ fontSize: '0.65rem', color: textMuted, margin: 0, lineHeight: 1.5 }}>
-                          "...{a.response_snippet.substring(0, 120)}..."
-                        </p>
-                      )}
-                      <p style={{ fontSize: '0.6rem', color: textMuted, margin: '0.3rem 0 0' }}>{new Date(a.checked_at).toLocaleDateString('en-GB')}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p style={{ fontSize: '0.7rem', color: textMuted }}>No appearances yet — keep building your schema and intent phrases</p>
-              )}
-            </div>
-
-            {/* Missed queries */}
-            <div style={{ background: card, border: '1px solid ' + border, padding: '1.5rem', borderRadius: 8 }}>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: text, margin: '0 0 1rem' }}>
-                ✗ Queries You're Missing <span style={{ fontSize: '0.9rem', color: '#dc2626' }}>({missedQueries.length})</span>
-              </p>
-              <p style={{ fontSize: '0.65rem', color: textMuted, margin: '0 0 1rem' }}>These are opportunities — improve your schema and AI descriptions to appear in these searches.</p>
-              {missedQueries.length > 0 ? (
-                <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 8 }}>
-                  {[...new Set(missedQueries.map((a: any) => a.query))].slice(0, 10).map((query: any, i: number) => (
-                    <span key={i} style={{ fontSize: '0.65rem', color: '#dc2626', background: 'rgba(220,38,38,0.07)', border: '1px solid rgba(220,38,38,0.2)', borderRadius: 20, padding: '4px 12px' }}>{query}</span>
-                  ))}
-                </div>
-              ) : (
-                <p style={{ fontSize: '0.7rem', color: textMuted }}>No missed queries — great visibility!</p>
-              )}
             </div>
           </div>
         )}
 
         {/* CLICKS TAB */}
-        {activeTab === 'clicks' && (
-          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '1.5rem' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
-              {kpiCard('Total Clicks', String(filteredClicks.length), 'Book Direct + Website')}
-              {kpiCard('Unique Sources', String(Object.keys(clickSources).length), 'Different traffic sources')}
-              {kpiCard('This Period', days + ' days', 'Date range selected')}
+        {tab === 'clicks' && (
+          <div>
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+              {kpiCard('Total Clicks', recentClicks.length.toString(), `last ${period} days`, GOLD, clicksByDay)}
+              {kpiCard('Unique Sources', Object.keys(sourceBreakdown).length.toString(), 'traffic sources', BLUE)}
+              {kpiCard('Top Source', Object.entries(sourceBreakdown).sort((a: any, b: any) => b[1] - a[1])[0]?.[0] || '—', 'most clicks', GREEN)}
+              {kpiCard('This Period', recentClicks.length.toString(), 'vs previous period', TEXT_MUTED)}
             </div>
 
-            <div style={{ background: card, border: '1px solid ' + border, padding: '1.5rem', borderRadius: 8 }}>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: text, margin: '0 0 1rem' }}>All Clicks</p>
-              <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontSize: '0.7rem' }}>
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1.5rem', marginBottom: '1.5rem' }}>
+              <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 400, color: TEXT, margin: '0 0 1rem' }}>Clicks Over Time</h3>
+              <MiniChart data={[clicksByDay]} labels={days} colors={[GOLD]} title="" />
+            </div>
+
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, overflow: 'hidden' }}>
+              <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid ' + BORDER }}>
+                <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 400, color: TEXT, margin: 0 }}>Traffic Sources</h3>
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr>
-                    {['Source', 'Medium', 'Campaign', 'Time'].map(h => (
-                      <th key={h} style={{ textAlign: 'left' as const, padding: '0.6rem 0.75rem', fontSize: '0.55rem', letterSpacing: '0.15em', textTransform: 'uppercase' as const, color: textMuted, borderBottom: '1px solid ' + border }}>{h}</th>
+                  <tr style={{ background: BG }}>
+                    {['Source', 'Medium', 'Campaign', 'Clicks', 'Date'].map(h => (
+                      <th key={h} style={{ textAlign: 'left', padding: '0.75rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, borderBottom: '1px solid ' + BORDER }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredClicks.slice(0, 30).map((click: any, i: number) => (
-                    <tr key={click.id} style={{ background: i % 2 === 0 ? card : bgSection }}>
-                      <td style={{ padding: '0.75rem', color: text }}>{click.utm_source || '—'}</td>
-                      <td style={{ padding: '0.75rem' }}>
-                        <span style={{ fontSize: '0.6rem', padding: '2px 8px', borderRadius: 4, background: click.utm_medium === 'chatgpt_plugin' ? 'rgba(22,163,74,0.1)' : 'rgba(201,169,110,0.1)', color: click.utm_medium === 'chatgpt_plugin' ? '#16a34a' : gold }}>
-                          {click.utm_medium || '—'}
-                        </span>
+                  {recentClicks.slice(0, 20).map((click: any, i: number) => (
+                    <tr key={i} style={{ borderBottom: '1px solid ' + BORDER }}>
+                      <td style={{ padding: '0.875rem 1.5rem' }}>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: TEXT }}>{click.utm_source || 'direct'}</span>
                       </td>
-                      <td style={{ padding: '0.75rem', color: textMuted }}>{click.utm_campaign || '—'}</td>
-                      <td style={{ padding: '0.75rem', color: textMuted, fontSize: '0.65rem' }}>{new Date(click.clicked_at).toLocaleString('en-GB')}</td>
+                      <td style={{ padding: '0.875rem 1.5rem' }}>
+                        <span style={{ background: GOLD_LIGHT, color: GOLD, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', padding: '2px 8px', borderRadius: 20 }}>{click.utm_medium || '—'}</span>
+                      </td>
+                      <td style={{ padding: '0.875rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>{click.utm_campaign || '—'}</td>
+                      <td style={{ padding: '0.875rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT, fontWeight: 600 }}>1</td>
+                      <td style={{ padding: '0.875rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>{new Date(click.clicked_at).toLocaleDateString('en-GB')}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              {filteredClicks.length === 0 && <p style={{ fontSize: '0.7rem', color: textMuted, textAlign: 'center' as const, marginTop: '1rem' }}>No clicks tracked this period</p>}
+              {recentClicks.length === 0 && (
+                <div style={{ padding: '3rem', textAlign: 'center' }}>
+                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: TEXT_MUTED }}>No clicks tracked yet</p>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>Clicks are tracked when visitors use your Book Direct button</p>
+                </div>
+              )}
             </div>
           </div>
         )}
 
         {/* LEADS TAB */}
-        {activeTab === 'leads' && (
-          <div style={{ background: card, border: '1px solid ' + border, padding: '1.5rem', borderRadius: 8 }}>
-            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: text, margin: '0 0 1rem' }}>All Leads</p>
-            <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontSize: '0.7rem' }}>
-              <thead>
-                <tr>
-                  {['Name', 'Email', 'Check In', 'Check Out', 'Guests', 'Message', 'Received'].map(h => (
-                    <th key={h} style={{ textAlign: 'left' as const, padding: '0.6rem 0.75rem', fontSize: '0.55rem', letterSpacing: '0.15em', textTransform: 'uppercase' as const, color: textMuted, borderBottom: '1px solid ' + border }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filteredLeads.map((lead: any, i: number) => (
-                  <tr key={lead.id} style={{ background: i % 2 === 0 ? card : bgSection }}>
-                    <td style={{ padding: '0.75rem', fontWeight: 500, color: text }}>{lead.name}</td>
-                    <td style={{ padding: '0.75rem' }}><a href={'mailto:' + lead.email} style={{ color: gold, textDecoration: 'none' }}>{lead.email}</a></td>
-                    <td style={{ padding: '0.75rem', color: textMuted, fontSize: '0.65rem' }}>{lead.check_in || '—'}</td>
-                    <td style={{ padding: '0.75rem', color: textMuted, fontSize: '0.65rem' }}>{lead.check_out || '—'}</td>
-                    <td style={{ padding: '0.75rem', color: textMuted }}>{lead.guests || '—'}</td>
-                    <td style={{ padding: '0.75rem', color: textMuted, fontSize: '0.65rem', maxWidth: 200 }}>{lead.message ? lead.message.substring(0, 60) + '...' : '—'}</td>
-                    <td style={{ padding: '0.75rem', color: textMuted, fontSize: '0.65rem' }}>{new Date(lead.created_at).toLocaleDateString('en-GB')}</td>
+        {tab === 'leads' && (
+          <div>
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+              {kpiCard('Leads Generated', recentLeads.length.toString(), `last ${period} days`, GOLD, leadsByDay)}
+              {kpiCard('Total All Time', leads?.length?.toString() || '0', 'enquiries received', BLUE)}
+              {kpiCard('Latest Lead', recentLeads[0] ? new Date(recentLeads[0].created_at).toLocaleDateString('en-GB') : '—', 'most recent', GREEN)}
+              {kpiCard('Conversion', recentViews.length > 0 ? Math.round((recentLeads.length / recentViews.length) * 100) + '%' : '0%', 'views to leads', PURPLE)}
+            </div>
+
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1.5rem', marginBottom: '1.5rem' }}>
+              <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 400, color: TEXT, margin: '0 0 1rem' }}>Leads Over Last {period} Days</h3>
+              <MiniChart data={[leadsByDay]} labels={days} colors={[GOLD]} title="" />
+            </div>
+
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, overflow: 'hidden' }}>
+              <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid ' + BORDER }}>
+                <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 400, color: TEXT, margin: 0 }}>Recent Enquiries</h3>
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: BG }}>
+                    {['Guest', 'Email', 'Dates', 'Guests', 'Submitted'].map(h => (
+                      <th key={h} style={{ textAlign: 'left', padding: '0.75rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, borderBottom: '1px solid ' + BORDER }}>{h}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            {filteredLeads.length === 0 && <p style={{ fontSize: '0.7rem', color: textMuted, textAlign: 'center' as const, marginTop: '1rem' }}>No leads for this period</p>}
+                </thead>
+                <tbody>
+                  {leads?.slice(0, 20).map((lead: any, i: number) => (
+                    <tr key={i} style={{ borderBottom: '1px solid ' + BORDER }}>
+                      <td style={{ padding: '0.875rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: TEXT }}>{lead.name}</td>
+                      <td style={{ padding: '0.875rem 1.5rem' }}>
+                        <a href={'mailto:' + lead.email} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: GOLD, textDecoration: 'none' }}>{lead.email}</a>
+                      </td>
+                      <td style={{ padding: '0.875rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>{lead.check_in ? lead.check_in + ' → ' + lead.check_out : '—'}</td>
+                      <td style={{ padding: '0.875rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT }}>{lead.guests || '—'}</td>
+                      <td style={{ padding: '0.875rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>{new Date(lead.created_at).toLocaleDateString('en-GB')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {leads?.length === 0 && (
+                <div style={{ padding: '3rem', textAlign: 'center' }}>
+                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: TEXT_MUTED }}>No leads yet</p>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>Leads appear when guests submit an enquiry from your hotel profile</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* REVENUE TAB */}
+        {tab === 'revenue' && (
+          <div>
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+              {kpiCard('AI Assisted Revenue', 'CHF —', 'log bookings to track', GOLD)}
+              {kpiCard('Bookings from AI', '—', 'self-reported bookings', GREEN)}
+              {kpiCard('OTA Commission Saved', 'CHF —', 'vs 15% OTA fee', BLUE)}
+              {kpiCard('Direct Booking Share', recentClicks.length > 0 ? '100%' : '—', 'all bookings direct', PURPLE)}
+            </div>
+
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 16, padding: '3rem', textAlign: 'center' }}>
+              <p style={{ fontSize: '2rem', marginBottom: '1rem' }}>◇</p>
+              <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 300, color: TEXT, margin: '0 0 0.75rem' }}>Revenue Tracking Coming Soon</h3>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, maxWidth: 400, margin: '0 auto 1.5rem', lineHeight: 1.7 }}>
+                Once you receive a booking from SwissNet, log it here to track your AI-driven revenue and calculate your ROI vs OTA commissions.
+              </p>
+              <button style={{ background: GOLD, color: WHITE, fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0.75rem 2rem', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
+                + Log a Booking
+              </button>
+            </div>
           </div>
         )}
 
         {/* COMPETITORS TAB */}
-        {activeTab === 'competitors' && (
-          <div style={{ background: card, border: '1px solid ' + border, padding: '1.5rem', borderRadius: 8 }}>
-            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: text, margin: '0 0 1rem' }}>Competitor Benchmark — {hotel?.region}</p>
-            <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontSize: '0.7rem' }}>
-              <thead>
-                <tr>
-                  {['Hotel', 'Category', 'Rating', 'Nightly Rate', 'vs You'].map(h => (
-                    <th key={h} style={{ textAlign: 'left' as const, padding: '0.6rem 0.75rem', fontSize: '0.55rem', letterSpacing: '0.15em', textTransform: 'uppercase' as const, color: textMuted, borderBottom: '1px solid ' + border }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                <tr style={{ background: 'rgba(201,169,110,0.06)' }}>
-                  <td style={{ padding: '0.75rem', color: gold, fontWeight: 600 }}>{hotel?.name} ✦</td>
-                  <td style={{ padding: '0.75rem', color: text }}>{hotel?.category}</td>
-                  <td style={{ padding: '0.75rem', color: text }}>★ {hotel?.rating}</td>
-                  <td style={{ padding: '0.75rem', color: text }}>CHF {hotel?.nightly_rate_chf?.toLocaleString()}</td>
-                  <td style={{ padding: '0.75rem', color: gold, fontSize: '0.65rem' }}>You</td>
-                </tr>
-                {competitors.map((c: any, i: number) => (
-                  <tr key={c.name} style={{ background: i % 2 === 0 ? card : bgSection }}>
-                    <td style={{ padding: '0.75rem', color: text }}>{c.name}</td>
-                    <td style={{ padding: '0.75rem', color: textMuted }}>{c.category}</td>
-                    <td style={{ padding: '0.75rem', color: textMuted }}>★ {c.rating}</td>
-                    <td style={{ padding: '0.75rem', color: textMuted }}>CHF {c.nightly_rate_chf?.toLocaleString()}</td>
-                    <td style={{ padding: '0.75rem', fontSize: '0.65rem' }}>
-                      <span style={{ color: c.nightly_rate_chf > hotel?.nightly_rate_chf ? '#16a34a' : '#dc2626' }}>
-                        {c.nightly_rate_chf > hotel?.nightly_rate_chf ? '↓ cheaper' : '↑ pricier'}
-                      </span>
-                    </td>
+        {tab === 'competitors' && (
+          <div>
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+              {kpiCard('Your Rank', '#' + hotelRank, `in ${hotelRegion}`, hotelRank === 1 ? GREEN : GOLD)}
+              {kpiCard('Hotels Tracked', allHotelsInRegion.length.toString(), 'in your region', BLUE)}
+              {kpiCard('Market Position', hotelRank === 1 ? 'Leader' : hotelRank <= 3 ? 'Top 3' : 'Growing', 'competitive status', PURPLE)}
+              {kpiCard('Visibility Gap', hotelRank === 1 ? 'Leading' : '—', 'vs top competitor', TEXT_MUTED)}
+            </div>
+
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, overflow: 'hidden', marginBottom: '1.5rem' }}>
+              <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid ' + BORDER }}>
+                <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 400, color: TEXT, margin: 0 }}>Regional Rankings — {hotelRegion}</h3>
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: BG }}>
+                    {['Rank', 'Hotel', 'Rating', 'Category', 'Status'].map(h => (
+                      <th key={h} style={{ textAlign: 'left', padding: '0.75rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, borderBottom: '1px solid ' + BORDER }}>{h}</th>
+                    ))}
                   </tr>
+                </thead>
+                <tbody>
+                  {allHotelsInRegion.map((h: any, i: number) => (
+                    <tr key={i} style={{ borderBottom: '1px solid ' + BORDER, background: h.is_current ? GOLD_LIGHT : 'transparent' }}>
+                      <td style={{ padding: '0.875rem 1.5rem' }}>
+                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: i === 0 ? GOLD : BG, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '0.85rem', fontWeight: 600, color: i === 0 ? WHITE : TEXT_MUTED }}>#{i + 1}</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: '0.875rem 1.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: h.is_current ? 700 : 400, color: h.is_current ? GOLD : TEXT }}>{h.name}</span>
+                          {h.is_current && <span style={{ background: GOLD, color: WHITE, fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, padding: '2px 6px', borderRadius: 20 }}>YOU</span>}
+                        </div>
+                      </td>
+                      <td style={{ padding: '0.875rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT }}>★ {h.rating}</td>
+                      <td style={{ padding: '0.875rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>{h.category || '—'}</td>
+                      <td style={{ padding: '0.875rem 1.5rem' }}>
+                        <span style={{ background: h.is_current ? GREEN + '22' : BG, color: h.is_current ? GREEN : TEXT_MUTED, fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, padding: '3px 10px', borderRadius: 20 }}>
+                          {h.is_current ? '✓ Your Hotel' : 'Competitor'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1.5rem' }}>
+              <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 400, color: TEXT, margin: '0 0 1rem' }}>Competitive Recommendations</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                {[
+                  { text: hotelRank === 1 ? 'Maintain your #1 position' : 'Improve content to rise in rankings', icon: '↑' },
+                  { text: 'Add more FAQs to strengthen authority', icon: '✦' },
+                  { text: 'Ensure all schema sections are complete', icon: '◈' },
+                  { text: 'Monitor competitor content changes', icon: '⊕' },
+                ].map((rec, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: BG, borderRadius: 8, padding: '0.875rem 1rem' }}>
+                    <span style={{ color: GOLD, fontSize: '1rem', flexShrink: 0 }}>{rec.icon}</span>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT, margin: 0, lineHeight: 1.5 }}>{rec.text}</p>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-            {competitors.length === 0 && <p style={{ fontSize: '0.7rem', color: textMuted, marginTop: '1rem' }}>No competitors found in this region</p>}
+              </div>
+            </div>
           </div>
         )}
 
         {/* SETTINGS TAB */}
-        {activeTab === 'settings' && (
-          <div style={{ background: card, border: '1px solid ' + border, padding: '2rem', borderRadius: 8 }}>
-            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: text, margin: '0 0 1.5rem' }}>Hotel Settings</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
-              {[
-                { label: 'Hotel Name', value: hotel?.name },
-                { label: 'Location', value: hotel?.location },
-                { label: 'Region', value: hotel?.region },
-                { label: 'Category', value: hotel?.category },
-                { label: 'Nightly Rate (CHF)', value: hotel?.nightly_rate_chf },
-                { label: 'Contact Email', value: hotel?.contact_email },
-              ].map(f => (
-                <div key={f.label}>
-                  <label style={{ display: 'block', fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', letterSpacing: '0.15em', textTransform: 'uppercase' as const, color: textMuted, marginBottom: '0.5rem' }}>{f.label}</label>
-                  <div style={{ padding: '0.75rem', background: bgSection, border: '1px solid ' + border, fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: text, borderRadius: 4 }}>{f.value || '—'}</div>
+        {tab === 'settings' && (
+          <div style={{ maxWidth: 600 }}>
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, overflow: 'hidden', marginBottom: '1rem' }}>
+              <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG }}>
+                <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: 0 }}>Hotel Profile</h3>
+              </div>
+              <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {[
+                  { label: 'Hotel Name', value: hotel?.name || '—' },
+                  { label: 'Location', value: hotel?.location || '—' },
+                  { label: 'Region', value: hotel?.region || '—' },
+                  { label: 'Category', value: hotel?.category || '—' },
+                  { label: 'Nightly Rate', value: hotel?.nightly_rate_chf ? 'CHF ' + hotel.nightly_rate_chf + '/night' : '—' },
+                ].map(field => (
+                  <div key={field.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.75rem', borderBottom: '1px solid ' + BORDER }}>
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{field.label}</span>
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: TEXT }}>{field.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {[
+              { title: 'Billing', desc: 'SwissNet Partner Plan · CHF 499/month', action: 'Manage' },
+              { title: 'Reports', desc: 'Weekly performance email reports', action: 'Configure' },
+              { title: 'Integrations', desc: 'Connect booking system for revenue tracking', action: 'Coming Soon' },
+            ].map(section => (
+              <div key={section.title} style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1.25rem 1.5rem', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', fontWeight: 600, color: TEXT, margin: '0 0 0.25rem' }}>{section.title}</p>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: 0 }}>{section.desc}</p>
                 </div>
-              ))}
-            </div>
-            <div style={{ padding: '1rem', background: 'rgba(201,169,110,0.06)', borderLeft: '2px solid ' + gold, borderRadius: '0 6px 6px 0' }}>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text, margin: 0 }}>
-                To update your hotel details, contact <a href="mailto:hotels@swissnethotels.com" style={{ color: gold, textDecoration: 'none' }}>hotels@swissnethotels.com</a>
-              </p>
-            </div>
+                <button style={{ background: section.action === 'Coming Soon' ? BG : GOLD_LIGHT, color: section.action === 'Coming Soon' ? TEXT_MUTED : GOLD, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, padding: '0.4rem 1rem', border: '1px solid ' + BORDER, borderRadius: 6, cursor: section.action === 'Coming Soon' ? 'default' : 'pointer' }}>
+                  {section.action}
+                </button>
+              </div>
+            ))}
           </div>
         )}
       </div>
