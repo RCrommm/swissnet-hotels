@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   description: 'Discover and book Switzerland\'s finest luxury hotels directly.',
   verification: {
     google: 'sIX8jPq9VMJjlEpiqXFd2gMtNUVheU-w6hmVCC661JI',
+    other: {
+      'msvalidate.01': '4C294F54AA8FE666AFBFD3C44D401904',
+    },
   },
 }
 
