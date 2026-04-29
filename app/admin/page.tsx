@@ -78,6 +78,12 @@ export default async function AdminPage({
     .order('checked_at', { ascending: false })
     .limit(500)
 
+  const { data: cronCosts } = await supabase
+  .from('cron_costs')
+  .select('*')
+  .order('run_at', { ascending: false })
+  .limit(30)
+
   const tab = params.tab || 'hotels'
   const pw = params.password || ''
 
@@ -418,6 +424,66 @@ export default async function AdminPage({
           </div>
         )}
       </div>
+      {/* Cost tracking */}
+<div style={{ marginTop: 32 }}>
+  <h2 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, color: '#78716c', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 16 }}>
+    API Cost Tracking
+  </h2>
+  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 16 }}>
+    {[
+      {
+        label: 'Total Spent',
+        value: '$' + ((cronCosts || []).reduce((sum: number, r: any) => sum + Number(r.estimated_cost_usd || 0), 0)).toFixed(3),
+        color: '#C9A84C',
+      },
+      {
+        label: 'This Month',
+        value: '$' + ((cronCosts || []).filter((r: any) => new Date(r.run_at) > new Date(new Date().getFullYear(), new Date().getMonth(), 1)).reduce((sum: number, r: any) => sum + Number(r.estimated_cost_usd || 0), 0)).toFixed(3),
+        color: '#3b82f6',
+      },
+      {
+        label: 'Last Run',
+        value: cronCosts?.[0] ? '$' + Number(cronCosts[0].estimated_cost_usd).toFixed(3) : '—',
+        color: '#16a34a',
+      },
+    ].map(k => (
+      <div key={k.label} style={{ background: '#fff', border: '1px solid #e7e5e4', borderRadius: 8, padding: '16px 20px' }}>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, fontWeight: 600, color: '#a8a29e', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 8px' }}>{k.label}</p>
+        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 28, fontWeight: 400, color: k.color, margin: 0 }}>{k.value}</p>
+      </div>
+    ))}
+  </div>
+  <div style={{ background: '#fff', border: '1px solid #e7e5e4', borderRadius: 8, overflow: 'hidden' }}>
+    <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontSize: 12 }}>
+      <thead>
+        <tr style={{ background: '#fafaf9', borderBottom: '1px solid #e7e5e4' }}>
+          {['Date', 'Triggered By', 'Hotels', 'Queries', 'Platforms', 'Cost'].map(h => (
+            <th key={h} style={{ textAlign: 'left', padding: '10px 16px', fontFamily: 'Montserrat, sans-serif', fontSize: 11, fontWeight: 600, color: '#a8a29e', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{h}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {(cronCosts || []).map((row: any, i: number) => (
+          <tr key={row.id} style={{ borderBottom: '1px solid #f5f5f4', background: i % 2 === 0 ? '#fff' : '#fafaf9' }}>
+            <td style={{ padding: '10px 16px', color: '#3D2B1F' }}>{new Date(row.run_at).toLocaleString('en-GB')}</td>
+            <td style={{ padding: '10px 16px' }}>
+              <span style={{ background: row.triggered_by === 'manual' ? 'rgba(59,130,246,0.1)' : 'rgba(22,163,74,0.1)', color: row.triggered_by === 'manual' ? '#3b82f6' : '#16a34a', padding: '2px 8px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>
+                {row.triggered_by}
+              </span>
+            </td>
+            <td style={{ padding: '10px 16px', color: '#3D2B1F' }}>{row.hotels_checked}</td>
+            <td style={{ padding: '10px 16px', color: '#3D2B1F' }}>{row.queries_run}</td>
+            <td style={{ padding: '10px 16px', color: '#3D2B1F' }}>{row.platforms_checked}</td>
+            <td style={{ padding: '10px 16px', fontWeight: 600, color: '#C9A84C' }}>${Number(row.estimated_cost_usd).toFixed(3)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+    {(cronCosts || []).length === 0 && (
+      <p style={{ textAlign: 'center', color: '#a8a29e', padding: '2rem', fontSize: 13 }}>No runs yet — cost will appear after first cron run.</p>
+    )}
+  </div>
+</div>
     </div>
   )
 }

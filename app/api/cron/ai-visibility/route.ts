@@ -135,13 +135,26 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.json({
-    success: true,
-    queries_run: results.length,
-    hotels_checked: hotels.length,
-    platforms_checked: platformsToRun.length,
-    total_appearances: totalAppearances,
-    insert_errors: errors.length ? errors : undefined,
-    sample_results: results.filter(r => r.appeared).slice(0, 5),
-  })
+  // Log cost — Haiku ~$0.001 per query
+const estimatedCost = results.length * 0.001
+
+await supabase.from('cron_costs').insert({
+  hotels_checked: hotels.length,
+  queries_run: results.length,
+  platforms_checked: platformsToRun.length,
+  estimated_cost_usd: estimatedCost,
+  triggered_by: hotelIdParam ? 'manual' : 'cron',
+  run_at: new Date().toISOString(),
+})
+
+return NextResponse.json({
+  success: true,
+  queries_run: results.length,
+  hotels_checked: hotels.length,
+  platforms_checked: platformsToRun.length,
+  total_appearances: totalAppearances,
+  estimated_cost_usd: estimatedCost,
+  insert_errors: errors.length ? errors : undefined,
+  sample_results: results.filter(r => r.appeared).slice(0, 5),
+})
 }
