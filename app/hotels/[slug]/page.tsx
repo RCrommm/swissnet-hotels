@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import LeadForm from '@/components/LeadForm'
 import Link from 'next/link'
 import ViewTracker from '@/components/ViewTracker'
+import HeroCarousel from '@/components/HeroCarousel'
 
 function HotelSchema({ hotel, keywords, roomTypes, faqs }: { hotel: any; keywords: any[]; roomTypes: any[]; faqs: any[] }) {
   const allKeywords = [
@@ -115,7 +116,7 @@ if (!hotel) {
 
       {/* Hero */}
       <div style={{ position: 'relative', height: '60vh', overflow: 'hidden' }}>
-        <img src={hotel.images[0] || 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1600'} alt={hotel.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <HeroCarousel images={hotel.images || []} name={hotel.name} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(61,43,31,0.7) 0%, transparent 50%)' }} />
         <div style={{ position: 'absolute', bottom: '2rem', left: 0, right: 0, maxWidth: '1200px', margin: '0 auto', padding: '0 2rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
