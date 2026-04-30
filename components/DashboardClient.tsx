@@ -338,7 +338,7 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
           <div>
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
               <KPICard label="Direct Clicks" value={recentClicks.length} sub={`last ${period} days`} color={GOLD} spark={clicksByDay} />
-              <KPICard label="Enquiries Received" value={recentLeads.length} sub={`last ${period} days`} color={GREEN} spark={leadsByDay} />
+              <KPICard label="Conversions" value={recentBookings.length} sub={`last ${period} days`} color={GREEN} spark={bookingsByDay} />
               <KPICard label="Conversion Rate" value={conversionRate + '%'} sub="clicks to enquiries" color={PURPLE} />
               <KPICard label="Profile Views" value={recentViews.length} sub={`last ${period} days`} color={BLUE} spark={viewsByDay} />
             </div>
