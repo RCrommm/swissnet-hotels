@@ -357,10 +357,10 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
                 </div>
               </div>
               <LineChart datasets={[
-                { data: clicksByDay, color: GOLD, label: 'Clicks' },
-                { data: leadsByDay, color: GREEN, label: 'Leads' },
-                { data: viewsByDay, color: BLUE, label: 'Views' },
-              ]} labels={days} height={160} />
+  { data: clicksByDay, color: GOLD, label: 'Clicks' },
+  { data: bookingsByDay, color: GREEN, label: 'Conversions' },
+  { data: viewsByDay, color: BLUE, label: 'Views' },
+]} labels={days} height={160} />
             </div>
 
             {/* Traffic sources + Leads table */}
