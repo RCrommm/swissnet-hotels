@@ -178,7 +178,7 @@ export default async function HomePage() {
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: '2.5rem', marginBottom: '2.5rem', paddingBottom: '2.5rem', borderBottom: '1px solid rgba(201,169,110,0.2)' }}>
         <div>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(42,18,8,0.4)', margin: '0 0 0.4rem' }}>One-time setup</p>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.5rem', fontWeight: 300, color: '#2A1208', margin: 0, lineHeight: 1 }}>CHF 1,000</p>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.5rem', fontWeight: 300, color: '#2A1208', margin: 0, lineHeight: 1 }}>CHF 800</p>
         </div>
         <div style={{ width: '1px', height: '48px', background: 'rgba(201,169,110,0.3)' }} />
         <div>
