@@ -46,7 +46,7 @@ export default async function HomePage() {
       <section style={{ background: bgLight, borderTop: '1px solid ' + border, borderBottom: '1px solid ' + border, padding: '2.5rem 0' }}>
         <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 2rem', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '2rem', textAlign: 'center' }}>
           {[
-            { n: '15+', label: 'Partner Hotels' },
+            { n: '10+', label: 'Partner Hotels' },
             { n: '10', label: 'Swiss Regions' },
             { n: '15%+', label: 'Saved vs OTAs' },
             { n: 'AI', label: 'Powered Discovery' },
@@ -185,7 +185,8 @@ export default async function HomePage() {
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(42,18,8,0.4)', margin: '0 0 0.4rem' }}>Monthly</p>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
             <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.5rem', fontWeight: 300, color: '#2A1208', margin: 0, lineHeight: 1 }}>CHF 699</p>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(42,18,8,0.4)', margin: 0 }}>/month</p>
+<p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(42,18,8,0.4)', margin: 0 }}>/month</p>
+<p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: '#C9A84C', margin: '0.5rem 0 0', fontWeight: 600 }}>+ 3% commission on SwissNet-driven sales</p>
           </div>
         </div>
       </div>
