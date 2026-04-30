@@ -42,6 +42,7 @@ export default function DashboardWrapper() {
         supabase.from('referral_clicks').select('*').eq('hotel_id', hotelId).order('clicked_at', { ascending: false }).then(r => r.data || []),
         supabase.from('leads').select('*').eq('hotel_id', hotelId).order('created_at', { ascending: false }).then(r => r.data || []),
         supabase.from('ai_visibility_scores').select('*').eq('hotel_id', hotelId).order('checked_at', { ascending: false }).then(r => r.data || []),
+        supabase.from('bookings').select('*').eq('hotel_id', hotelId).eq('source', 'swissnet').order('booked_at', { ascending: false }).then(r => r.data || []),
       ])
 
       const { data: competitors } = await supabase

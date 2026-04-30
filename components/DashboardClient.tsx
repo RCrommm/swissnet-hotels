@@ -97,6 +97,8 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
   const recentViews = views?.filter((v: any) => new Date(v.viewed_at) > periodStart) || []
   const recentClicks = clicks?.filter((c: any) => new Date(c.clicked_at) > periodStart) || []
   const recentLeads = leads?.filter((l: any) => new Date(l.created_at) > periodStart) || []
+  const recentBookings = bookings?.filter((b: any) => new Date(b.booked_at) > periodStart) || []
+  const bookingsByDay = days.map(d => recentBookings.filter((b: any) => b.booked_at?.startsWith(d)).length) 
 
   const days = Array.from({ length: Math.min(period, 30) }, (_, i) => {
     const d = new Date(now.getTime() - (period - 1 - i) * 24 * 60 * 60 * 1000)
@@ -219,9 +221,9 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
             {/* KPIs */}
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
               <KPICard label="Direct Clicks" value={recentClicks.length} sub={`last ${period} days`} color={GOLD} spark={clicksByDay} />
-              <KPICard label="Enquiries" value={recentLeads.length} sub={`last ${period} days`} color={GREEN} spark={leadsByDay} />
               <KPICard label="Profile Views" value={recentViews.length} sub={`last ${period} days`} color={BLUE} spark={viewsByDay} />
-              <KPICard label="Conversion" value={conversionRate + '%'} sub="clicks to leads" color={PURPLE} />
+              <KPICard label="Revenue Generated" value={recentBookings.length > 0 ? `CHF ${recentBookings.reduce((sum: number, b: any) => sum + (b.total_chf || 0), 0).toLocaleString()}` : '—'} sub="from SwissNet bookings" color={GREEN} />
+              <KPICard label="Conversions" value={recentBookings.length} sub={`last ${period} days`} color={PURPLE} />
             </div>
 
             {/* Trend chart */}
@@ -229,7 +231,7 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: 0 }}>Performance Trend</p>
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                  {[{ label: 'Clicks', color: GOLD }, { label: 'Leads', color: GREEN }].map(l => (
+                  {[{ label: 'Clicks', color: GOLD }, { label: 'Conversions', color: GREEN }].map(l => (
                     <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                       <div style={{ width: 8, height: 2, background: l.color, borderRadius: 1 }} />
                       <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED }}>{l.label}</span>
@@ -237,7 +239,7 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
                   ))}
                 </div>
               </div>
-              <LineChart datasets={[{ data: clicksByDay, color: GOLD, label: 'Clicks' }, { data: leadsByDay, color: GREEN, label: 'Leads' }]} labels={days} />
+              <LineChart datasets={[{ data: clicksByDay, color: GOLD, label: 'Clicks' }, { data: bookingsByDay, color: GREEN, label: 'Conversions' }]} labels={days} />
             </div>
 
             {/* Key insight */}
