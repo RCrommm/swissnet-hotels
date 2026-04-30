@@ -200,32 +200,33 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
           </div>
         </div>
 
-        {/* ── OVERVIEW ── */}
-        {tab === 'overview' && (
-          <div>
-            {/* Hero banner */}
-            <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 10, padding: '1.75rem 2rem', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.5rem' }}>AI Visibility Score</p>
-                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.5rem', fontWeight: 300, color: WHITE, margin: '0 0 0.25rem', lineHeight: 1 }}>{visibilityScore}%</p>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: 'rgba(255,255,255,0.5)', margin: 0 }}>
-                  {appearedQueries} appearances · {hotelRegion}
-                </p>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: 'rgba(255,255,255,0.4)', margin: '0 0 0.25rem' }}>Market Rank</p>
-  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.5rem', fontWeight: 300, color: WHITE, margin: 0, lineHeight: 1 }}>#{hotelRank}</p>
-  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: 'rgba(255,255,255,0.4)', margin: '0.25rem 0 0.75rem' }}>of {allHotelsInRegion.length} in {hotelRegion}</p>
-  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: 'rgba(255,255,255,0.4)', margin: '0 0 0.25rem' }}>Total Conversions</p>
-  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: WHITE, margin: 0, lineHeight: 1 }}>{bookings?.length || 0}</p>
-</div>
-            </div>
+       {/* ── OVERVIEW ── */}
+{tab === 'overview' && (
+  <div>
+    {/* Hero banner */}
+    <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 10, padding: '1.75rem 2.5rem', marginBottom: '2rem' }}>
+      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.6)', margin: '0 0 1.25rem' }}>Your Performance at a Glance</p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        {[
+          { label: 'AI Visibility Score', value: visibilityScore + '%', sub: `${appearedQueries} appearances` },
+          { label: 'Market Rank', value: '#' + hotelRank, sub: `of ${allHotelsInRegion.length} in ${hotelRegion}` },
+          { label: 'Total Conversions', value: bookings?.length || 0, sub: 'all time' },
+          { label: 'OTA Commission Saved', value: bookings?.filter((b: any) => b.total_chf)?.reduce((sum: number, b: any) => sum + (b.total_chf || 0), 0) > 0 ? `CHF ${Math.round(bookings.reduce((sum: number, b: any) => sum + (b.total_chf || 0), 0) * 0.15).toLocaleString()}` : '—', sub: 'vs 15% OTA fee' },
+        ].map((item, i) => (
+          <div key={i} style={{ padding: '1.25rem 0', paddingRight: '2rem', borderRight: i < 3 ? '1px solid rgba(255,255,255,0.06)' : 'none', paddingLeft: i > 0 ? '2rem' : 0 }}>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.6)', margin: '0 0 0.5rem' }}>{item.label}</p>
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.25rem', fontWeight: 300, color: WHITE, margin: '0 0 0.2rem', lineHeight: 1 }}>{item.value}</p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: 'rgba(255,255,255,0.35)', margin: 0 }}>{item.sub}</p>
+          </div>
+        ))}
+      </div>
+    </div>
 
-            {/* KPIs */}
+    {/* KPIs */}
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
               <KPICard label="Direct Clicks" value={recentClicks.length} sub={`last ${period} days`} color={GOLD} spark={clicksByDay} />
               <KPICard label="Profile Views" value={recentViews.length} sub={`last ${period} days`} color={BLUE} spark={viewsByDay} />
-              <KPICard label="Revenue Generated" value={recentBookings.length > 0 ? `CHF ${recentBookings.reduce((sum: number, b: any) => sum + (b.total_chf || 0), 0).toLocaleString()}` : '—'} sub="from SwissNet bookings" color={GREEN} />
+              <KPICard label="OTA Commission Saved" value={recentBookings.length > 0 ? `CHF ${Math.round(recentBookings.reduce((sum: number, b: any) => sum + (b.total_chf || 0), 0) * 0.15).toLocaleString()}` : '—'} sub="vs 15% OTA fee" color={GREEN} />
               <KPICard label="Conversions" value={recentBookings.length} sub={`last ${period} days`} color={PURPLE} />
             </div>
 
