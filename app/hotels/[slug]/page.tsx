@@ -418,20 +418,20 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
   </>
 )}
 
-            {/* LOCATION */}
             <section style={{ marginBottom: '4rem' }}>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>Location</p>
-              <div style={{ marginBottom: '1.25rem' }}>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, margin: '0 0 0.5rem' }}>📍 {hotel.location}, {hotel.region}, Switzerland</p>
-              </div>
-              <div style={{ borderRadius: 4, overflow: 'hidden', marginBottom: '1rem' }}>
-                <a href={`https://www.google.com/maps/search/${encodeURIComponent(hotel.name + ', ' + hotel.location + ', Switzerland')}`} target="_blank" rel="noopener noreferrer" style={{ display: 'block', background: white, border: `1px solid ${border}`, borderRadius: 4, padding: '1.25rem 1.5rem', textDecoration: 'none' }}>
-  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text, margin: '0 0 0.25rem', fontWeight: 600 }}>📍 {hotel.name}</p>
-  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: '0 0 0.75rem' }}>{hotel.location}, {hotel.region}, Switzerland</p>
-  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: gold, fontWeight: 600 }}>View on Google Maps →</span>
-</a>
-              </div>
-            </section>
+  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>Location</p>
+  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, margin: '0 0 1rem' }}>📍 {hotel.location}, Switzerland</p>
+  <iframe
+    src={`https://maps.google.com/maps?q=${encodeURIComponent(hotel.name + ', ' + hotel.location + ', Switzerland')}&output=embed`}
+    width="100%"
+    height="240"
+    style={{ border: 0, display: 'block', borderRadius: 4, marginBottom: '0.75rem' }}
+    loading="lazy"
+  />
+  <a href={`https://www.google.com/maps/search/${encodeURIComponent(hotel.name + ', ' + hotel.location + ', Switzerland')}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: gold, textDecoration: 'none', fontWeight: 600 }}>
+    View on Google Maps →
+  </a>
+</section>
             <div style={{ height: 1, background: border, marginBottom: '4rem' }} />
 
             {/* FAQS */}
