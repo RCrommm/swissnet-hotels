@@ -123,10 +123,10 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
   }
 
   const sourceBreakdown = recentViews.reduce((acc: any, v: any) => {
-    const src = v.utm_source || 'direct'
-    acc[src] = (acc[src] || 0) + 1
-    return acc
-  }, {})
+  const src = v.source || 'direct'
+  acc[src] = (acc[src] || 0) + 1
+  return acc
+}, {})
 
   const navItems = [
     { id: 'overview', label: 'Overview' },

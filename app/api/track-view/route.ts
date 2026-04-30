@@ -22,13 +22,13 @@ export async function POST(request: NextRequest) {
     }
 
     await supabase.from('hotel_views').insert({
-      hotel_id,
-      hotel_name,
-      referrer,
-      user_agent: userAgent,
-      utm_source,
-      viewed_at: new Date().toISOString(),
-    })
+  hotel_id,
+  hotel_name,
+  referrer,
+  user_agent: userAgent,
+  source: utm_source,
+  viewed_at: new Date().toISOString(),
+})
 
     return NextResponse.json({ success: true })
   } catch (err: any) {
