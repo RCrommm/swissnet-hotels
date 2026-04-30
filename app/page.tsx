@@ -145,96 +145,86 @@ export default async function HomePage() {
       </section>
 
       {/* Pricing */}
-      <section id="pricing" style={{ background: bgLight, borderTop: '1px solid ' + border, padding: '6rem 0' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 2rem' }}>
-          <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '1rem' }}>
-              <span style={{ width: '30px', height: '1px', background: gold, display: 'inline-block' }} />
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.3em', textTransform: 'uppercase', color: gold, margin: 0 }}>Simple Pricing</p>
-              <span style={{ width: '30px', height: '1px', background: gold, display: 'inline-block' }} />
-            </div>
-            <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 300, color: text, margin: '0 0 1rem' }}>Transparent Plans</h2>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: textMuted, fontWeight: 300, maxWidth: '500px', margin: '0 auto' }}>
-              No setup fees. No long-term contracts. Cancel anytime.
-            </p>
-          </div>
+{/* Pricing */}
+<section id="pricing" style={{ background: bgLight, borderTop: '1px solid ' + border, padding: '6rem 0' }}>
+  <div style={{ maxWidth: '800px', margin: '0 auto', padding: '0 2rem' }}>
+    <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '1rem' }}>
+        <span style={{ width: '30px', height: '1px', background: gold, display: 'inline-block' }} />
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.3em', textTransform: 'uppercase', color: gold, margin: 0 }}>Partnership</p>
+        <span style={{ width: '30px', height: '1px', background: gold, display: 'inline-block' }} />
+      </div>
+      <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 300, color: text, margin: '0 0 1rem' }}>One Programme. Full Visibility.</h2>
+      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: textMuted, fontWeight: 300, maxWidth: '480px', margin: '0 auto' }}>
+        SwissNet offers a single, comprehensive programme designed for luxury hotels serious about AI visibility and direct bookings.
+      </p>
+    </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', maxWidth: '860px', margin: '0 auto' }}>
+    <div style={{ background: '#FFFFFF', border: '1px solid ' + gold + '55', padding: '3rem', position: 'relative' }}>
+      {/* Top label */}
+      <div style={{ position: 'absolute', top: '-1px', left: '50%', transform: 'translateX(-50%)', background: gold, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0.3rem 1.25rem' }}>
+        AI Visibility Growth Programme
+      </div>
 
-            {/* Visibility Plan */}
-            <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid ' + border, padding: '2.5rem' }}>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: textMuted, margin: '0 0 1rem' }}>Visibility Plan</p>
-              <div style={{ marginBottom: '0.5rem' }}>
-                <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 300, color: text }}>CHF 499</span>
-                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted }}> / month</span>
-              </div>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: gold, margin: '0 0 1.5rem', letterSpacing: '0.05em' }}>+ 3% commission on SwissNet bookings</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted, lineHeight: 1.7, marginBottom: '2rem' }}>
-                Perfect for hotels wanting a strong AI presence and performance tracking.
-              </p>
-              <div style={{ borderTop: '1px solid ' + border, paddingTop: '1.5rem', marginBottom: '2rem' }}>
-                {[
-                  'Hotel listing on SwissNet',
-                  'AI search optimisation',
-                  'Schema & structured data setup',
-                  'Keyword control system',
-                  'Basic analytics dashboard',
-                  'Views, clicks & leads tracking',
-                  'Direct booking link integration',
-                  'Monthly visibility report',
-                  'Standard support',
-                ].map(f => (
-                  <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                    <span style={{ color: gold, fontSize: '0.7rem', flexShrink: 0, marginTop: '0.1rem' }}>✓</span>
-                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: textMuted, lineHeight: 1.5 }}>{f}</span>
-                  </div>
-                ))}
-              </div>
-              <a href="#contact" style={{ display: 'block', textAlign: 'center', border: '1px solid ' + border, color: text, fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.875rem', textDecoration: 'none' }}>
-                Get Started
-              </a>
-            </div>
+      {/* Headline */}
+      <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', fontWeight: 300, color: '#2A1208', margin: '1rem 0 0.75rem', lineHeight: 1.5 }}>
+        Increase your visibility in AI search and drive more direct bookings.
+      </p>
+      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: 'rgba(42,18,8,0.6)', lineHeight: 1.8, margin: '0 0 2.5rem', fontWeight: 300, maxWidth: 560 }}>
+        SwissNet helps your hotel get discovered across modern AI platforms and converts that visibility into high-value direct bookings — without relying on OTAs.
+      </p>
 
-            {/* Growth Plan */}
-            <div style={{ background: '#FFFFFF', border: '2px solid ' + gold, padding: '2.5rem', position: 'relative' }}>
-              <div style={{ position: 'absolute', top: '-1px', left: '50%', transform: 'translateX(-50%)', background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0.3rem 1rem' }}>
-                Most Popular
-              </div>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(42,18,8,0.5)', margin: '0 0 1rem' }}>Growth Plan</p>
-              <div style={{ marginBottom: '0.5rem' }}>
-                <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 300, color: '#2A1208' }}>CHF 999</span>
-                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(42,18,8,0.5)' }}> / month</span>
-              </div>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: gold, margin: '0 0 1.5rem', letterSpacing: '0.05em' }}>+ 3% commission on SwissNet bookings</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(42,18,8,0.6)', lineHeight: 1.7, marginBottom: '2rem' }}>
-                For hotels wanting active growth, priority placement, and maximum AI visibility.
-              </p>
-              <div style={{ borderTop: '1px solid rgba(201,169,110,0.3)', paddingTop: '1.5rem', marginBottom: '2rem' }}>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: 'rgba(42,18,8,0.4)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.75rem' }}>Everything in Visibility, plus:</p>
-                {[
-                  'Priority placement in AI recommendations',
-                  'Featured on homepage & hotels page',
-                  'Advanced analytics — revenue, OTA savings, competitor rank',
-                  'Daily rate scraping & content updates',
-                  'Search trend monitoring',
-                  'AI prompt & demand insights',
-                  'Competitor benchmarking',
-                  'Monthly strategy recommendations',
-                  'Priority support',
-                ].map(f => (
-                  <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                    <span style={{ color: gold, fontSize: '0.7rem', flexShrink: 0, marginTop: '0.1rem' }}>✦</span>
-                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: 'rgba(42,18,8,0.7)', lineHeight: 1.5 }}>{f}</span>
-                  </div>
-                ))}
-              </div>
-              <a href="#contact" style={{ display: 'block', textAlign: 'center', background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.875rem', textDecoration: 'none' }}>
-                Get Started
-              </a>
-            </div>
+      {/* Pricing */}
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: '2.5rem', marginBottom: '2.5rem', paddingBottom: '2.5rem', borderBottom: '1px solid rgba(201,169,110,0.2)' }}>
+        <div>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(42,18,8,0.4)', margin: '0 0 0.4rem' }}>One-time setup</p>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.5rem', fontWeight: 300, color: '#2A1208', margin: 0, lineHeight: 1 }}>CHF 1,000</p>
+        </div>
+        <div style={{ width: '1px', height: '48px', background: 'rgba(201,169,110,0.3)' }} />
+        <div>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(42,18,8,0.4)', margin: '0 0 0.4rem' }}>Monthly</p>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.5rem', fontWeight: 300, color: '#2A1208', margin: 0, lineHeight: 1 }}>CHF 699</p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(42,18,8,0.4)', margin: 0 }}>/month</p>
           </div>
         </div>
-      </section>
+      </div>
+
+      {/* Features */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem 2rem', marginBottom: '2.5rem' }}>
+        {[
+          'Premium hotel listing on SwissNet',
+          'Optimisation for ChatGPT, Google AI, Perplexity',
+          'Structured content and schema setup',
+          'Direct booking integration to your website',
+          'Visibility and performance dashboard',
+          'Views, clicks and enquiry tracking',
+          'Competitor benchmarking',
+          'Monthly performance report',
+          'Ongoing content and visibility improvements',
+          'Strategic recommendations',
+          'Standard support',
+        ].map(f => (
+          <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+            <span style={{ color: gold, fontSize: '0.7rem', flexShrink: 0, marginTop: '0.15rem' }}>✦</span>
+            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: 'rgba(42,18,8,0.7)', lineHeight: 1.5 }}>{f}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* CTA */}
+      <a href="#contact" style={{ display: 'block', textAlign: 'center', background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '1rem', textDecoration: 'none' }}>
+        Get Started
+      </a>
+
+      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: 'rgba(42,18,8,0.35)', textAlign: 'center', margin: '1rem 0 0', lineHeight: 1.6 }}>
+        No long-term contracts · Cancel anytime · Setup fee waived for founding partners
+      </p>
+    </div>
+  </div>
+</section>
+
+
 
       {/* Contact */}
       <section id="contact" style={{ background: bg, borderTop: '1px solid ' + border, padding: '6rem 0' }}>
