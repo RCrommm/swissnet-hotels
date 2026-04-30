@@ -187,7 +187,7 @@ export default async function HomePage() {
             <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.5rem', fontWeight: 300, color: '#2A1208', margin: 0, lineHeight: 1 }}>CHF 699</p>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(42,18,8,0.4)', margin: 0 }}>/month</p>
           </div>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: '#C9A84C', margin: '0.4rem 0 0', fontWeight: 600, letterSpacing: '0.05em' }}>+ 3% commission on SwissNet-driven sales</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: 'rgba(42,18,8,0.4)', margin: '0.3rem 0 0', fontWeight: 500, letterSpacing: '0.05em' }}>+ 3% commission on SwissNet-driven sales</p>
         </div>
       </div>
 
