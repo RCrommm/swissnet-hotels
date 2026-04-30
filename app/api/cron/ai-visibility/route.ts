@@ -1,8 +1,5 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import Anthropic from '@anthropic-ai/sdk'
-
-const client = new Anthropic()
 
 const DEFAULT_QUERIES = [
   'best luxury hotel in Zermatt with Matterhorn view',
@@ -17,30 +14,71 @@ const DEFAULT_QUERIES = [
   'top rated luxury hotels Geneva lake view',
 ]
 
+async function queryPerplexity(query: string): Promise<string> {
+  const res = await fetch('https://api.perplexity.ai/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'llama-3.1-sonar-small-128k-online',
+      messages: [{ role: 'user', content: `${query}. Please recommend 3-5 specific hotels by name.` }],
+      max_tokens: 500,
+    }),
+  })
+  const data = await res.json()
+  return data.choices?.[0]?.message?.content || ''
+}
+
+async function queryChatGPT(query: string): Promise<string> {
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [{ role: 'user', content: `${query}. Please recommend 3-5 specific hotels by name.` }],
+      max_tokens: 500,
+    }),
+  })
+  const data = await res.json()
+  return data.choices?.[0]?.message?.content || ''
+}
+
+async function queryClaude(query: string): Promise<string> {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': process.env.ANTHROPIC_API_KEY || '',
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 500,
+      system: 'You are a helpful travel assistant. Answer questions about hotels by recommending specific properties by name.',
+      messages: [{ role: 'user', content: `${query}. Please recommend 3-5 specific hotels by name.` }],
+    }),
+  })
+  const data = await res.json()
+  return data.content?.[0]?.text || ''
+}
+
 const PLATFORMS = [
-  {
-    id: 'chatgpt',
-    name: 'ChatGPT',
-    systemPrompt: 'You are ChatGPT, a helpful AI assistant. Answer travel questions by recommending specific hotels by name.',
-  },
-  {
-    id: 'perplexity',
-    name: 'Perplexity',
-    systemPrompt: 'You are Perplexity AI, a search-focused AI assistant. Answer travel questions by recommending specific hotels by name based on search results.',
-  },
-  {
-    id: 'google',
-    name: 'Google AI',
-    systemPrompt: 'You are Google AI Overview, a search assistant. Answer travel questions by recommending specific hotels by name from top search results.',
-  },
+  { id: 'chatgpt', name: 'ChatGPT', queryFn: queryChatGPT },
+  { id: 'perplexity', name: 'Perplexity', queryFn: queryPerplexity },
+  { id: 'claude', name: 'Claude AI', queryFn: queryClaude },
 ]
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const hotelIdParam = searchParams.get('hotel_id')
-  const platformParam = searchParams.get('platform') // optional filter
+  const platformParam = searchParams.get('platform')
 
-  // Check if cron is enabled (skip for manual per-hotel runs)
+  // Check if cron is enabled (skip for manual runs)
   if (!hotelIdParam) {
     const { data: setting } = await supabase
       .from('settings')
@@ -52,24 +90,23 @@ export async function GET(request: Request) {
     }
   }
 
-  // Get hotels to check
+  // Get hotels
   let hotelsQuery = supabase.from('hotels').select('id, name, region').eq('is_active', true).eq('is_partner', true)
   if (hotelIdParam) hotelsQuery = hotelsQuery.eq('id', hotelIdParam)
   const { data: hotels, error: hotelsError } = await hotelsQuery
-
   if (hotelsError) return NextResponse.json({ error: hotelsError.message })
   if (!hotels?.length) return NextResponse.json({ error: 'No partner hotels found' })
-
-  const results: any[] = []
-  const errors: any[] = []
-  let totalAppearances = 0
 
   const platformsToRun = platformParam
     ? PLATFORMS.filter(p => p.id === platformParam)
     : PLATFORMS
 
+  const results: any[] = []
+  const errors: any[] = []
+  let totalAppearances = 0
+  let estimatedCost = 0
+
   for (const hotel of hotels) {
-    // Get custom queries for this hotel, fallback to defaults
     const { data: customQueries } = await supabase
       .from('ai_visibility_queries')
       .select('query')
@@ -83,27 +120,17 @@ export async function GET(request: Request) {
     for (const platform of platformsToRun) {
       for (const query of queriesToRun) {
         try {
-          const message = await client.messages.create({
-            model: 'claude-haiku-4-5-20251001',
-            max_tokens: 500,
-            system: platform.systemPrompt,
-            messages: [{
-              role: 'user',
-              content: `${query}. Please recommend 3-5 specific hotels by name.`
-            }]
-          })
+          const responseText = await platform.queryFn(query)
 
-          const responseText = message.content
-            .filter(b => b.type === 'text')
-            .map(b => (b as any).text)
-            .join(' ')
+          // Cost estimates
+          if (platform.id === 'chatgpt') estimatedCost += 0.002
+          else if (platform.id === 'perplexity') estimatedCost += 0.001
+          else estimatedCost += 0.001
 
           const hotelNameLower = hotel.name.toLowerCase()
           const responseLower = responseText.toLowerCase()
           const lastTwoWords = hotel.name.split(' ').slice(-2).join(' ').toLowerCase()
-          const appeared: boolean =
-            responseLower.includes(hotelNameLower) ||
-            responseLower.includes(lastTwoWords)
+          const appeared = responseLower.includes(hotelNameLower) || responseLower.includes(lastTwoWords)
 
           let snippet: string | null = null
           if (appeared) {
@@ -113,7 +140,7 @@ export async function GET(request: Request) {
             totalAppearances++
           }
 
-          const { error: insertError } = await supabase.from('ai_visibility_scores').insert({
+          await supabase.from('ai_visibility_scores').insert({
             hotel_id: hotel.id,
             hotel_name: hotel.name,
             query,
@@ -123,9 +150,7 @@ export async function GET(request: Request) {
             checked_at: new Date().toISOString(),
           })
 
-          if (insertError) errors.push({ hotel: hotel.name, error: insertError.message })
           results.push({ hotel: hotel.name, query, platform: platform.id, appeared })
-
           await new Promise(r => setTimeout(r, 300))
 
         } catch (err: any) {
@@ -135,27 +160,24 @@ export async function GET(request: Request) {
     }
   }
 
-  // Log cost — Haiku ~$0.001 per query
-const estimatedCost = results.length * 0.001
+  // Log cost
+  await supabase.from('cron_costs').insert({
+    hotels_checked: hotels.length,
+    queries_run: results.length,
+    platforms_checked: platformsToRun.length,
+    estimated_cost_usd: estimatedCost,
+    triggered_by: hotelIdParam ? 'manual' : 'cron',
+    run_at: new Date().toISOString(),
+  })
 
-const { error: costError } = await supabase.from('cron_costs').insert({
-  hotels_checked: hotels.length,
-  queries_run: results.length,
-  platforms_checked: platformsToRun.length,
-  estimated_cost_usd: estimatedCost,
-  triggered_by: hotelIdParam ? 'manual' : 'cron',
-  run_at: new Date().toISOString(),
-})
-
-return NextResponse.json({
-  success: true,
-  queries_run: results.length,
-  hotels_checked: hotels.length,
-  platforms_checked: platformsToRun.length,
-  total_appearances: totalAppearances,
-  estimated_cost_usd: estimatedCost,
-  cost_log_error: costError?.message || null,
-  insert_errors: errors.length ? errors : undefined,
-  sample_results: results.filter(r => r.appeared).slice(0, 5),
-})
+  return NextResponse.json({
+    success: true,
+    queries_run: results.length,
+    hotels_checked: hotels.length,
+    platforms_checked: platformsToRun.length,
+    total_appearances: totalAppearances,
+    estimated_cost_usd: Number(estimatedCost.toFixed(4)),
+    errors: errors.length ? errors : undefined,
+    results: results.filter(r => r.appeared).slice(0, 10),
+  })
 }
