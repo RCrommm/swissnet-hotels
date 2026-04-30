@@ -364,34 +364,40 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
             )}
 
             {/* EXPERIENCES LINKS */}
-            {hotel.is_partner && (
-              <>
-                <section style={{ marginBottom: '4rem' }}>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>Experiences</p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-                    {[
-                      { label: 'Spa & Wellness', href: `/hotels/${hotelUrl}/spa` },
-                      { label: 'Dining & Restaurants', href: `/hotels/${hotelUrl}/dining` },
-                      { label: 'Rooms & Suites', href: `/hotels/${hotelUrl}/rooms` },
-                      { label: 'Activities & Experiences', href: `/hotels/${hotelUrl}/experiences` },
-                    ].map(exp => (
-                      <Link key={exp.label} href={exp.href} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 0', borderBottom: `1px solid ${border}`, textDecoration: 'none' }}>
-                        <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: text }}>{exp.label}</span>
-                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: gold }}>→</span>
-                      </Link>
-                    ))}
-                  </div>
-                </section>
-                <div style={{ height: 1, background: border, marginBottom: '4rem' }} />
-              </>
-            )}
+{hotel.is_partner && (
+  <>
+    <section style={{ marginBottom: '4rem' }}>
+      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>Experiences</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+        {[
+          { label: 'Spa & Wellness', desc: 'Treatments, pools and Alpine rituals', href: `/hotels/${hotelUrl}/spa` },
+          { label: 'Dining & Restaurants', desc: 'Fine dining, bars and private experiences', href: `/hotels/${hotelUrl}/dining` },
+          { label: 'Rooms & Suites', desc: 'All room types, sizes and rates', href: `/hotels/${hotelUrl}/rooms` },
+          { label: 'Activities & Experiences', desc: 'Curated experiences and Alpine adventures', href: `/hotels/${hotelUrl}/experiences` },
+        ].map(exp => (
+          <Link key={exp.label} href={exp.href} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', marginBottom: '0.5rem', background: white, border: `1px solid ${border}`, borderRadius: 4, textDecoration: 'none', boxShadow: '0 1px 8px rgba(0,0,0,0.04)' }}>
+            <div>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: text, margin: '0 0 0.2rem' }}>{exp.label}</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: textMuted, margin: 0 }}>{exp.desc}</p>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0, marginLeft: '1rem', background: 'rgba(201,169,76,0.1)', border: `1px solid ${gold}55`, borderRadius: 2, padding: '0.4rem 0.875rem' }}>
+              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, color: gold, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Explore</span>
+              <span style={{ color: gold, fontSize: '0.75rem' }}>→</span>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
+    <div style={{ height: 1, background: border, marginBottom: '4rem' }} />
+  </>
+)}
 
             {/* NEARBY & RELATED — AI internal linking */}
 {hotel.is_partner && (
   <>
     <section style={{ marginBottom: '4rem' }}>
       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>Explore Further</p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         {[
           { label: `Best luxury hotels in ${hotel.region}`, href: `/destinations/${hotel.region?.toLowerCase().replace(/\s+/g, '-')}` },
           { label: `Best luxury hotels in Switzerland`, href: `/best/luxury-hotels-switzerland` },
@@ -401,9 +407,9 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
           { label: `${hotel.name} for Wellness`, href: `/hotels/${hotelUrl}/wellness` },
           { label: `${hotel.name} for Business`, href: `/hotels/${hotelUrl}/business` },
         ].filter(Boolean).map((link: any) => (
-          <Link key={link.label} href={link.href} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 0', borderBottom: `1px solid ${border}`, textDecoration: 'none' }}>
-            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted }}>{link.label}</span>
-            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: gold }}>→</span>
+          <Link key={link.label} href={link.href} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.875rem 1.25rem', background: white, border: `1px solid ${border}`, borderRadius: 4, textDecoration: 'none' }}>
+            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text }}>{link.label}</span>
+            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: gold, flexShrink: 0, marginLeft: '1rem' }}>→</span>
           </Link>
         ))}
       </div>
@@ -419,13 +425,11 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
                 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, margin: '0 0 0.5rem' }}>📍 {hotel.location}, {hotel.region}, Switzerland</p>
               </div>
               <div style={{ borderRadius: 4, overflow: 'hidden', marginBottom: '1rem' }}>
-                <iframe
-                  src={`https://maps.google.com/maps?q=${encodeURIComponent(hotel.name + ', ' + hotel.location + ', Switzerland')}&output=embed`}
-                  width="100%"
-                  height="280"
-                  style={{ border: 0, display: 'block' }}
-                  loading="lazy"
-                />
+                <a href={`https://www.google.com/maps/search/${encodeURIComponent(hotel.name + ', ' + hotel.location + ', Switzerland')}`} target="_blank" rel="noopener noreferrer" style={{ display: 'block', background: white, border: `1px solid ${border}`, borderRadius: 4, padding: '1.25rem 1.5rem', textDecoration: 'none' }}>
+  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text, margin: '0 0 0.25rem', fontWeight: 600 }}>📍 {hotel.name}</p>
+  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: '0 0 0.75rem' }}>{hotel.location}, {hotel.region}, Switzerland</p>
+  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: gold, fontWeight: 600 }}>View on Google Maps →</span>
+</a>
               </div>
             </section>
             <div style={{ height: 1, background: border, marginBottom: '4rem' }} />
