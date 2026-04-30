@@ -108,9 +108,11 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
   const viewsByDay = days.map(d => recentViews.filter((v: any) => v.viewed_at?.startsWith(d)).length)
 
   const regionHotels = competitors?.filter((h: any) => h.region === hotelRegion) || []
-  const allHotelsInRegion = [{ name: hotelName, rating: hotel?.rating || 4.5, category: hotel?.category, is_current: true }, ...regionHotels]
-    .sort((a, b) => (b.rating || 0) - (a.rating || 0))
-  const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
+const allHotelsInRegion = [
+  { name: hotelName, rating: hotel?.rating || 4.5, is_current: true, visibility: visibilityScore },
+  ...regionHotels.map((h: any) => ({ ...h, is_current: false, visibility: null }))
+].sort((a, b) => (b.rating || 0) - (a.rating || 0))
+const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
 
   const conversionRate = recentClicks.length > 0 ? Math.round((recentLeads.length / recentClicks.length) * 100) : 0
 
