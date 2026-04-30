@@ -97,13 +97,14 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
   const recentViews = views?.filter((v: any) => new Date(v.viewed_at) > periodStart) || []
   const recentClicks = clicks?.filter((c: any) => new Date(c.clicked_at) > periodStart) || []
   const recentLeads = leads?.filter((l: any) => new Date(l.created_at) > periodStart) || []
-  const recentBookings = bookings?.filter((b: any) => new Date(b.booked_at) > periodStart) || []
-  const bookingsByDay = days.map(d => recentBookings.filter((b: any) => b.booked_at?.startsWith(d)).length) 
+
 
   const days = Array.from({ length: Math.min(period, 30) }, (_, i) => {
     const d = new Date(now.getTime() - (period - 1 - i) * 24 * 60 * 60 * 1000)
     return d.toISOString().split('T')[0]
   })
+  const recentBookings = bookings?.filter((b: any) => new Date(b.booked_at) > periodStart) || []
+    const bookingsByDay = days.map(d => recentBookings.filter((b: any) => b.booked_at?.startsWith(d)).length) 
 
   const clicksByDay = days.map(d => recentClicks.filter((c: any) => c.clicked_at?.startsWith(d)).length)
   const leadsByDay = days.map(d => recentLeads.filter((l: any) => l.created_at?.startsWith(d)).length)
@@ -212,10 +213,12 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
                 </p>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: 'rgba(255,255,255,0.4)', margin: '0 0 0.25rem' }}>Market Rank</p>
-                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.5rem', fontWeight: 300, color: WHITE, margin: 0, lineHeight: 1 }}>#{hotelRank}</p>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: 'rgba(255,255,255,0.4)', margin: '0.25rem 0 0' }}>of {allHotelsInRegion.length} in {hotelRegion}</p>
-              </div>
+  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: 'rgba(255,255,255,0.4)', margin: '0 0 0.25rem' }}>Market Rank</p>
+  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.5rem', fontWeight: 300, color: WHITE, margin: 0, lineHeight: 1 }}>#{hotelRank}</p>
+  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: 'rgba(255,255,255,0.4)', margin: '0.25rem 0 0.75rem' }}>of {allHotelsInRegion.length} in {hotelRegion}</p>
+  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: 'rgba(255,255,255,0.4)', margin: '0 0 0.25rem' }}>Total Conversions</p>
+  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: WHITE, margin: 0, lineHeight: 1 }}>{bookings?.length || 0}</p>
+</div>
             </div>
 
             {/* KPIs */}
