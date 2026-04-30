@@ -321,6 +321,35 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
               </div>
             )}
 
+            {/* SECTION NAVIGATION */}
+{hotel.is_partner && (
+  <div style={{ marginBottom: '3.5rem', paddingBottom: '3.5rem', borderBottom: `1px solid ${border}` }}>
+    <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: text, margin: '0 0 1.25rem' }}>Explore {hotel.name}</h2>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
+      {[
+        { label: 'Rooms & Suites', desc: 'View all room types, sizes and rates', icon: '🛏', href: `/hotels/${hotelUrl}/rooms`, count: roomTypes?.length },
+        { label: 'Dining', desc: 'Restaurants, bars and private dining', icon: '🍽', href: `/hotels/${hotelUrl}/dining`, count: restaurants?.length },
+        { label: 'Spa & Wellness', desc: 'Treatments, pools and wellness rituals', icon: '✦', href: `/hotels/${hotelUrl}/spa`, count: spaData?.length },
+        { label: 'Experiences', desc: 'Curated activities and Alpine adventures', icon: '◈', href: `/hotels/${hotelUrl}/experiences` },
+      ].map(section => (
+        <Link key={section.label} href={section.href} style={{ textDecoration: 'none' }}>
+          <div style={{ background: white, border: `1px solid ${border}`, borderRadius: 8, padding: '1.25rem 1.5rem', display: 'flex', gap: '1rem', alignItems: 'flex-start', transition: 'border-color 0.2s' }}>
+            <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>{section.icon}</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', fontWeight: 600, color: text, margin: 0 }}>{section.label}</p>
+                {section.count ? <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: gold, background: 'rgba(201,169,76,0.1)', padding: '2px 8px', borderRadius: 20 }}>{section.count} available</span> : null}
+              </div>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: textMuted, margin: '0 0 0.5rem', lineHeight: 1.4 }}>{section.desc}</p>
+              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: gold, fontWeight: 600 }}>Explore →</span>
+            </div>
+          </div>
+        </Link>
+      ))}
+    </div>
+  </div>
+)}
+
             {/* ABOUT */}
             <div style={{ marginBottom: '3.5rem', paddingBottom: '3.5rem', borderBottom: `1px solid ${border}` }}>
               <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: text, margin: '0 0 1.25rem' }}>About {hotel.name}</h2>

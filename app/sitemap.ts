@@ -54,6 +54,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     }))
   )
+  const subPages = ['rooms', 'dining', 'spa', 'experiences']
+const subPageUrls: MetadataRoute.Sitemap = partnerHotels.flatMap((hotel: any) =>
+  subPages.map(page => ({
+    url: `${baseUrl}/hotels/${hotel.slug || hotel.id}/${page}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.8,
+  }))
+)
 
-  return [...staticPages, ...destinationPages, ...promptPages, ...hotelPages, ...intentPages]
-}
+return [...staticPages, ...destinationPages, ...promptPages, ...hotelPages, ...intentPages, ...subPageUrls]}
