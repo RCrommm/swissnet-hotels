@@ -386,29 +386,31 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
               </>
             )}
 
-            {/* INTENT LINKS */}
-            {hotel.is_partner && (
-              <>
-                <section style={{ marginBottom: '4rem' }}>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>Guides</p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-                    {[
-                      { label: `${hotel.name} for Honeymoon`, href: `/hotels/${hotelUrl}/honeymoon` },
-                      { label: `${hotel.name} for Wellness`, href: `/hotels/${hotelUrl}/wellness` },
-                      { label: `${hotel.name} for Skiing`, href: `/hotels/${hotelUrl}/skiing` },
-                      { label: `${hotel.name} for Families`, href: `/hotels/${hotelUrl}/families` },
-                      { label: `${hotel.name} for Business`, href: `/hotels/${hotelUrl}/business` },
-                    ].map(link => (
-                      <Link key={link.label} href={link.href} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 0', borderBottom: `1px solid ${border}`, textDecoration: 'none' }}>
-                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted }}>{link.label}</span>
-                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: gold }}>→</span>
-                      </Link>
-                    ))}
-                  </div>
-                </section>
-                <div style={{ height: 1, background: border, marginBottom: '4rem' }} />
-              </>
-            )}
+            {/* NEARBY & RELATED — AI internal linking */}
+{hotel.is_partner && (
+  <>
+    <section style={{ marginBottom: '4rem' }}>
+      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>Explore Further</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+        {[
+          { label: `Best luxury hotels in ${hotel.region}`, href: `/destinations/${hotel.region?.toLowerCase().replace(/\s+/g, '-')}` },
+          { label: `Best luxury hotels in Switzerland`, href: `/best/luxury-hotels-switzerland` },
+          hotel.category === 'Ski Resort' && { label: `Best ski hotels in Switzerland`, href: `/best/ski-hotels-switzerland` },
+          hotel.category === 'Wellness Retreat' && { label: `Best wellness hotels in Switzerland`, href: `/best/wellness-hotels-switzerland` },
+          { label: `${hotel.name} for Honeymoon`, href: `/hotels/${hotelUrl}/honeymoon` },
+          { label: `${hotel.name} for Wellness`, href: `/hotels/${hotelUrl}/wellness` },
+          { label: `${hotel.name} for Business`, href: `/hotels/${hotelUrl}/business` },
+        ].filter(Boolean).map((link: any) => (
+          <Link key={link.label} href={link.href} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 0', borderBottom: `1px solid ${border}`, textDecoration: 'none' }}>
+            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted }}>{link.label}</span>
+            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: gold }}>→</span>
+          </Link>
+        ))}
+      </div>
+    </section>
+    <div style={{ height: 1, background: border, marginBottom: '4rem' }} />
+  </>
+)}
 
             {/* LOCATION */}
             <section style={{ marginBottom: '4rem' }}>
@@ -515,11 +517,7 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
               </div>
             )}
 
-            {/* ENQUIRY */}
-            <div style={{ background: white, borderRadius: 4, padding: '1.5rem', boxShadow: '0 2px 20px rgba(0,0,0,0.06)' }}>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: textMuted, margin: '0 0 1rem' }}>Send an Enquiry</p>
-              <LeadForm hotel={hotel} />
-            </div>
+            
           </div>
         </div>
       </div>
