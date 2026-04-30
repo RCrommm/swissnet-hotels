@@ -28,7 +28,6 @@ function SchemaMarkup({ hotel, keywords, roomTypes, faqs, restaurants, spaData }
     description: hotel.description,
     url: `https://swissnethotels.com/hotels/${hotel.slug || hotel.id}`,
     image: hotel.images?.[0],
-    telephone: hotel.phone || undefined,
     email: hotel.contact_email || undefined,
     address: {
       '@type': 'PostalAddress',
@@ -36,11 +35,6 @@ function SchemaMarkup({ hotel, keywords, roomTypes, faqs, restaurants, spaData }
       addressCountry: 'CH',
       addressRegion: hotel.region,
     },
-    geo: hotel.latitude ? {
-      '@type': 'GeoCoordinates',
-      latitude: hotel.latitude,
-      longitude: hotel.longitude,
-    } : undefined,
     starRating: { '@type': 'Rating', ratingValue: hotel.star_classification || 5 },
     aggregateRating: hotel.rating ? {
       '@type': 'AggregateRating',
@@ -52,7 +46,9 @@ function SchemaMarkup({ hotel, keywords, roomTypes, faqs, restaurants, spaData }
     priceRange: `CHF ${hotel.nightly_rate_chf}+`,
     amenityFeature: (hotel.amenities || []).map((a: string) => ({ '@type': 'LocationFeatureSpecification', name: a, value: true })),
     keywords: [...(hotel.amenities || []), ...(hotel.best_for || []), hotel.region, hotel.category, hotel.name, 'luxury hotel Switzerland', ...keywords.map((k: any) => k.keyword)].filter(Boolean).join(', '),
-    containsPlace: (roomTypes || []).filter((rt: any) => rt.is_available).map((rt: any) => ({
+    sameAs: [hotel.tripadvisor_url, hotel.booking_url, hotel.google_maps_url, hotel.wikipedia_url, hotel.direct_booking_url].filter(Boolean),
+    dateModified: hotel.updated_at ? new Date(hotel.updated_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+    containsPlace: (roomTypes || []).map((rt: any) => ({
       '@type': 'HotelRoom',
       name: rt.name,
       description: rt.description,
@@ -61,17 +57,6 @@ function SchemaMarkup({ hotel, keywords, roomTypes, faqs, restaurants, spaData }
       floorSize: rt.size_sqm ? { '@type': 'QuantitativeValue', value: rt.size_sqm, unitCode: 'MTK' } : undefined,
       offers: rt.base_rate_chf ? { '@type': 'Offer', price: rt.base_rate_chf, priceCurrency: 'CHF', url: hotel.direct_booking_url } : undefined,
     })),
-    hasMap: `https://www.google.com/maps/search/${encodeURIComponent(hotel.name + ' ' + hotel.location)}`,
-    dateModified: hotel.updated_at ? new Date(hotel.updated_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-datePublished: hotel.created_at ? new Date(hotel.created_at).toISOString().split('T')[0] : undefined,
-    sameAs: [
-  hotel.tripadvisor_url,
-  hotel.booking_url,
-  hotel.google_maps_url,
-  hotel.wikipedia_url,
-  hotel.direct_booking_url,
-  `https://www.google.com/search?q=${encodeURIComponent(hotel.name + ' ' + hotel.location)}`,
-].filter(Boolean),
   }
 
   const faqSchema = faqs?.length > 0 ? {
@@ -138,12 +123,12 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
   const bestForExtended = content?.best_for_extended || []
   const alternatives = content?.nearby_alternatives || []
 
+  // Colors — clean minimal luxury
   const gold = '#C9A84C'
-  const goldLight = 'rgba(201,169,76,0.1)'
-  const border = 'rgba(201,169,76,0.2)'
-  const text = '#1a0e06'
-  const textMuted = 'rgba(26,14,6,0.5)'
-  const bg = '#F8F5EF'
+  const border = 'rgba(0,0,0,0.08)'
+  const text = '#1a1a1a'
+  const textMuted = 'rgba(26,26,26,0.5)'
+  const bg = '#FAFAF8'
   const white = '#FFFFFF'
   const green = '#16a34a'
 
@@ -151,543 +136,389 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
     ? `/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIComponent(hotel.name)}&destination=${encodeURIComponent(hotel.direct_booking_url)}&medium=website&campaign=hotel_profile`
     : null
 
-  const HIGHLIGHTS = [
-    hotel.amenities?.includes('Spa') && { icon: '✦', label: 'World-Class Spa', desc: 'Signature treatments and wellness rituals' },
-    hotel.amenities?.includes('Fine Dining') && { icon: '◈', label: 'Fine Dining', desc: 'Exceptional cuisine and curated wine lists' },
-    hotel.amenities?.includes('Ski Storage') && { icon: '▲', label: 'Ski Access', desc: 'Direct access to world-class slopes' },
-    hotel.amenities?.includes('Pool') && { icon: '◇', label: 'Pool & Aqua', desc: 'Indoor and outdoor swimming facilities' },
-    hotel.amenities?.includes('Fitness') && { icon: '◉', label: 'Fitness', desc: 'State-of-the-art fitness facilities' },
-    hotel.amenities?.includes('Concierge') && { icon: '⊕', label: 'Concierge', desc: '24/7 dedicated concierge service' },
-  ].filter(Boolean).slice(0, 4)
-
   return (
     <div style={{ background: bg, minHeight: '100vh' }}>
       <SchemaMarkup hotel={hotel} keywords={keywords || []} roomTypes={roomTypes || []} faqs={faqs} restaurants={restaurants || []} spaData={spaData || []} />
       <ViewTracker hotelId={hotel.id} hotelName={hotel.name} />
 
-      {/* HERO */}
+      {/* HERO — full screen */}
       <div style={{ position: 'relative', height: '100vh', overflow: 'hidden' }}>
         <HeroCarousel images={hotel.images || []} name={hotel.name} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(26,14,6,0.85) 0%, rgba(26,14,6,0.2) 50%, transparent 100%)' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.15) 60%, transparent 100%)' }} />
 
         {/* Breadcrumb */}
-        <div style={{ position: 'absolute', top: '5rem', left: 0, right: 0, maxWidth: '1200px', margin: '0 auto', padding: '0 2rem' }}>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.6)' }}>
-            <Link href="/" style={{ color: 'rgba(255,255,255,0.6)', textDecoration: 'none' }}>Home</Link>
+        <div style={{ position: 'absolute', top: '5rem', left: 0, right: 0, maxWidth: '1200px', margin: '0 auto', padding: '0 2.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.5)' }}>
+            <Link href="/" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}>Home</Link>
             <span>›</span>
-            <Link href="/hotels" style={{ color: 'rgba(255,255,255,0.6)', textDecoration: 'none' }}>Hotels</Link>
+            <Link href="/hotels" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}>Hotels</Link>
             <span>›</span>
-            <Link href={`/destinations/${hotel.region?.toLowerCase().replace(/\s+/g, '-')}`} style={{ color: 'rgba(255,255,255,0.6)', textDecoration: 'none' }}>{hotel.region}</Link>
+            <Link href={`/destinations/${hotel.region?.toLowerCase().replace(/\s+/g, '-')}`} style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}>{hotel.region}</Link>
             <span>›</span>
-            <span style={{ color: gold }}>{hotel.name}</span>
+            <span style={{ color: 'rgba(255,255,255,0.8)' }}>{hotel.name}</span>
           </div>
         </div>
 
-        {/* Hotel info overlay */}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, maxWidth: '1200px', margin: '0 auto', padding: '0 2rem 3rem' }}>
+        {/* Hotel info */}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, maxWidth: '1200px', margin: '0 auto', padding: '0 2.5rem 3.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-            <div>
-              {/* Tags */}
-              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: gold }}>{hotel.category}</span>
-                <span style={{ color: 'rgba(255,255,255,0.3)' }}>·</span>
-                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)' }}>{hotel.region}, Switzerland</span>
-                {hotel.is_partner && (
-                  <>
-                    <span style={{ color: 'rgba(255,255,255,0.3)' }}>·</span>
-                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', background: gold, color: '#1a0e06', padding: '3px 10px', borderRadius: 20 }}>✦ SwissNet Partner</span>
-                  </>
-                )}
-              </div>
-
-              {/* Hotel name */}
-              <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(2.5rem, 5vw, 4.5rem)', fontWeight: 300, color: white, margin: '0 0 1rem', lineHeight: 1.05, letterSpacing: '-0.02em' }}>{hotel.name}</h1>
-
-              {/* Rating + location */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <div style={{ maxWidth: 700 }}>
+              {hotel.is_partner && (
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(201,169,76,0.2)', border: '1px solid rgba(201,169,76,0.4)', padding: '4px 12px', borderRadius: 20, marginBottom: '1rem' }}>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: gold }}>✦ SwissNet Partner</span>
+                </div>
+              )}
+              <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(2.5rem, 5vw, 4.5rem)', fontWeight: 300, color: white, margin: '0 0 0.75rem', lineHeight: 1.05, letterSpacing: '-0.02em' }}>{hotel.name}</h1>
+              {verdict && (
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: 'rgba(255,255,255,0.75)', margin: '0 0 1.25rem', lineHeight: 1.6, fontWeight: 300, maxWidth: 560 }}>{verdict}</p>
+              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                <div style={{ display: 'flex', gap: '0.2rem' }}>
                   {Array.from({ length: hotel.star_classification || 5 }).map((_, i) => (
-                    <span key={i} style={{ color: gold, fontSize: '0.75rem' }}>★</span>
+                    <span key={i} style={{ color: gold, fontSize: '0.7rem' }}>★</span>
                   ))}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <span style={{ color: gold, fontSize: '0.7rem' }}>★</span>
-                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>{hotel.rating}</span>
-                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)' }}>/ 5.0</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.7rem' }}>📍</span>
-                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.7)' }}>{hotel.location}</span>
-                </div>
-                <div style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.6)' }}>
-                  From <span style={{ color: white, fontWeight: 600 }}>CHF {hotel.nightly_rate_chf?.toLocaleString()}</span>/night
-                </div>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.6)' }}>📍 {hotel.location}, Switzerland</span>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.6)' }}>★ {hotel.rating} / 5</span>
               </div>
             </div>
-
-            {/* Hero CTA */}
             {hotel.is_partner && trackingUrl && (
-              <div style={{ flexShrink: 0, marginLeft: '2rem' }}>
-                <a href={trackingUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', background: gold, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '1rem 2rem', textDecoration: 'none', borderRadius: 2, whiteSpace: 'nowrap' }}>
-                  Book Direct →
+              <div style={{ flexShrink: 0, textAlign: 'right' }}>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: 'rgba(255,255,255,0.5)', margin: '0 0 0.4rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>From</p>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.5rem', color: white, margin: '0 0 0.75rem', lineHeight: 1 }}>CHF {hotel.nightly_rate_chf?.toLocaleString()}<span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)' }}>/night</span></p>
+                <a href={trackingUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: gold, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.875rem 2rem', textDecoration: 'none' }}>
+                  Check Availability →
                 </a>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginTop: '0.5rem' }}>No fees · Best rate guaranteed</p>
               </div>
             )}
           </div>
         </div>
-
-        {/* Scroll indicator */}
-        <div style={{ position: 'absolute', bottom: '1.5rem', right: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem' }}>
-          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)' }}>Scroll</span>
-          <div style={{ width: '1px', height: '40px', background: `linear-gradient(to bottom, ${gold}, transparent)` }} />
-        </div>
       </div>
-
-      {/* STICKY BOOK DIRECT BAR */}
-      {hotel.is_partner && trackingUrl && (
-        <div style={{ position: 'sticky', top: 0, zIndex: 30, background: 'rgba(26,14,6,0.97)', backdropFilter: 'blur(10px)', borderBottom: `1px solid ${border}`, padding: '0.875rem 2rem' }}>
-          <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: white, margin: 0, fontWeight: 300 }}>{hotel.name}</p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                {Array.from({ length: hotel.star_classification || 5 }).map((_, i) => (
-                  <span key={i} style={{ color: gold, fontSize: '0.6rem' }}>★</span>
-                ))}
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-              <div style={{ textAlign: 'right' }}>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: 'rgba(255,255,255,0.4)', margin: '0 0 0.1rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>From</p>
-                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: white, margin: 0 }}>CHF {hotel.nightly_rate_chf?.toLocaleString()}<span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)' }}>/night</span></p>
-              </div>
-              <a href={trackingUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', background: gold, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.75rem 1.75rem', textDecoration: 'none', borderRadius: 2, whiteSpace: 'nowrap' }}>
-                Book Direct →
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* MAIN CONTENT */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '4rem 2rem' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: '4rem', alignItems: 'start' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '5rem 2.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '5rem', alignItems: 'start' }}>
 
-          {/* LEFT COLUMN */}
+          {/* LEFT */}
           <div>
 
+            {/* OVERVIEW */}
+            <section style={{ marginBottom: '4rem' }}>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1rem' }}>Overview</p>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 300, color: text, lineHeight: 1.6, margin: '0 0 1.5rem', maxWidth: 600 }}>{hotel.description}</p>
 
-            {/* SECTION NAVIGATION */}
-{hotel.is_partner && (
-  <div style={{ marginBottom: '3.5rem', paddingBottom: '3.5rem', borderBottom: `1px solid ${border}` }}>
-    <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: text, margin: '0 0 1.25rem' }}>Explore {hotel.name}</h2>
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
-  {[
-    { label: 'Rooms & Suites', desc: 'View all room types', icon: '🛏', href: `/hotels/${hotelUrl}/rooms` },
-    { label: 'Dining', desc: 'Restaurants & bars', icon: '🍽', href: `/hotels/${hotelUrl}/dining` },
-    { label: 'Spa & Wellness', desc: 'Treatments & pools', icon: '✦', href: `/hotels/${hotelUrl}/spa` },
-    { label: 'Experiences', desc: 'Activities & adventures', icon: '◈', href: `/hotels/${hotelUrl}/experiences` },
-  ].map(section => (
-    <Link key={section.label} href={section.href} style={{ textDecoration: 'none' }}>
-      <div style={{ background: white, border: `1px solid ${border}`, borderRadius: 8, padding: '1.5rem 1.25rem', textAlign: 'center' }}>
-        <p style={{ fontSize: '1.5rem', margin: '0 0 0.5rem' }}>{section.icon}</p>
-        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', fontWeight: 400, color: text, margin: '0 0 0.25rem' }}>{section.label}</p>
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: textMuted, margin: '0 0 0.5rem' }}>{section.desc}</p>
-        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: gold, fontWeight: 600 }}>Explore →</span>
-      </div>
-    </Link>
-  ))}
-</div>
-
-            {/* VERDICT */}
-            {verdict && (
-              <div style={{ marginBottom: '3.5rem', paddingBottom: '3.5rem', borderBottom: `1px solid ${border}` }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-                  <span style={{ width: '30px', height: '1px', background: gold, display: 'inline-block' }} />
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.3em', textTransform: 'uppercase', color: gold, margin: 0 }}>SwissNet Verdict</p>
-                  <span style={{ width: '30px', height: '1px', background: gold, display: 'inline-block' }} />
+              {/* Why stay here */}
+              {hotel.amenities?.length > 0 && (
+                <div style={{ marginTop: '1.5rem' }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, color: text, margin: '0 0 0.75rem', letterSpacing: '0.05em' }}>Why stay here</p>
+                  <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {hotel.amenities.slice(0, 5).map((a: string) => (
+                      <li key={a} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <span style={{ width: 4, height: 4, borderRadius: '50%', background: gold, flexShrink: 0, display: 'inline-block' }} />
+                        {a}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <blockquote style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 300, color: text, lineHeight: 1.6, margin: 0, fontStyle: 'italic', borderLeft: `3px solid ${gold}`, paddingLeft: '1.5rem' }}>
-                  "{verdict}"
-                </blockquote>
-              </div>
-            )}
+              )}
 
-            {/* HIGHLIGHTS */}
-            {HIGHLIGHTS.length > 0 && (
-              <div style={{ marginBottom: '3.5rem', paddingBottom: '3.5rem', borderBottom: `1px solid ${border}` }}>
-                <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: text, margin: '0 0 1.5rem' }}>Why Stay Here</h2>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  {HIGHLIGHTS.map((h: any, i: number) => (
-                    <div key={i} style={{ background: white, border: `1px solid ${border}`, padding: '1.25rem 1.5rem', borderRadius: 8, display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                      <span style={{ color: gold, fontSize: '1rem', flexShrink: 0, marginTop: '0.1rem' }}>{h.icon}</span>
-                      <div>
-                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', fontWeight: 600, color: text, margin: '0 0 0.25rem' }}>{h.label}</p>
-                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: 0, lineHeight: 1.5 }}>{h.desc}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+              {/* Best for */}
+              {bestForExtended.length > 0 && (
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: textMuted, margin: '1.25rem 0 0' }}>
+                  <span style={{ color: text, fontWeight: 600 }}>Best for: </span>
+                  {bestForExtended.slice(0, 4).join(' · ')}
+                </p>
+              )}
+            </section>
+
+            {/* DIVIDER */}
+            <div style={{ height: 1, background: border, marginBottom: '4rem' }} />
 
             {/* EXCLUSIVE OFFER */}
             {hotel.exclusive_offer && (
-              <div style={{ marginBottom: '3.5rem', paddingBottom: '3.5rem', borderBottom: `1px solid ${border}` }}>
-                <div style={{ background: `linear-gradient(135deg, ${goldLight} 0%, rgba(201,169,76,0.05) 100%)`, border: `1px solid ${gold}55`, padding: '1.5rem 2rem', borderRadius: 8 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                    <span style={{ color: gold }}>✦</span>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: gold, margin: 0 }}>Exclusive SwissNet Offer</p>
-                  </div>
-                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 300, color: text, margin: 0, lineHeight: 1.5 }}>{hotel.exclusive_offer}</p>
-                </div>
-              </div>
-            )}
-
-  </div>
-)}
-
-            {/* ABOUT */}
-            <div style={{ marginBottom: '3.5rem', paddingBottom: '3.5rem', borderBottom: `1px solid ${border}` }}>
-              <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: text, margin: '0 0 1.25rem' }}>About {hotel.name}</h2>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: textMuted, lineHeight: 1.9, fontWeight: 300, margin: 0 }}>{hotel.description}</p>
-            </div>
-
-            {/* PERFECT FOR */}
-            {bestForExtended.length > 0 && (
-              <div style={{ marginBottom: '3.5rem', paddingBottom: '3.5rem', borderBottom: `1px solid ${border}` }}>
-                <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: text, margin: '0 0 1.25rem' }}>Perfect For</h2>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  {bestForExtended.map((b: string) => (
-                    <span key={b} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: text, border: `1px solid ${border}`, padding: '0.4rem 1rem', background: white, borderRadius: 2, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <span style={{ color: gold }}>✦</span> {b}
-                    </span>
-                  ))}
-                </div>
-              </div>
+              <>
+                <section style={{ marginBottom: '4rem' }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1rem' }}>Exclusive Offer</p>
+                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 300, color: text, lineHeight: 1.6, margin: 0 }}>{hotel.exclusive_offer}</p>
+                </section>
+                <div style={{ height: 1, background: border, marginBottom: '4rem' }} />
+              </>
             )}
 
             {/* SPECIAL OFFERS */}
             {showSchema && offers && offers.length > 0 && (
-              <div style={{ marginBottom: '3.5rem', paddingBottom: '3.5rem', borderBottom: `1px solid ${border}` }}>
-                <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: text, margin: '0 0 1.25rem' }}>Special Offers</h2>
-                <div style={{ display: 'grid', gap: '1rem' }}>
-                  {offers.map((offer: any) => (
-                    <div key={offer.id} style={{ background: white, border: `1px solid ${border}`, padding: '1.25rem 1.5rem', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.4rem' }}>
-                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', fontWeight: 600, color: text, margin: 0 }}>{offer.name}</p>
-                          {offer.discount_percent && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, background: gold, color: '#1a0e06', padding: '2px 8px', borderRadius: 20 }}>-{offer.discount_percent}%</span>}
+              <>
+                <section style={{ marginBottom: '4rem' }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>Current Offers</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    {offers.map((offer: any) => (
+                      <div key={offer.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: '1.5rem', borderBottom: `1px solid ${border}` }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.4rem' }}>
+                            <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', fontWeight: 400, color: text, margin: 0 }}>{offer.name}</h3>
+                            {offer.discount_percent && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, color: gold }}>−{offer.discount_percent}%</span>}
+                          </div>
+                          {offer.description && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted, margin: 0, lineHeight: 1.7 }}>{offer.description}</p>}
                         </div>
-                        {offer.description && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted, margin: 0, lineHeight: 1.6 }}>{offer.description}</p>}
+                        {offer.price_from && (
+                          <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '2rem' }}>
+                            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', color: gold, margin: 0 }}>CHF {Number(offer.price_from).toLocaleString()}</p>
+                          </div>
+                        )}
                       </div>
-                      {offer.price_from && (
-                        <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1.5rem' }}>
-                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: textMuted, margin: '0 0 0.2rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>From</p>
-                          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 400, color: gold, margin: 0 }}>CHF {Number(offer.price_from).toLocaleString()}</p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
+                    ))}
+                  </div>
+                </section>
+                <div style={{ height: 1, background: border, marginBottom: '4rem' }} />
+              </>
             )}
 
             {/* ROOMS */}
             {showSchema && roomTypes && roomTypes.length > 0 && (
-              <div style={{ marginBottom: '3.5rem', paddingBottom: '3.5rem', borderBottom: `1px solid ${border}` }}>
-                <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: text, margin: '0 0 1.25rem' }}>Rooms &amp; Suites</h2>
-                <div style={{ display: 'grid', gap: '1.25rem' }}>
-                  {roomTypes.map((rt: any) => (
-                    <div key={rt.id} style={{ background: white, border: `1px solid ${border}`, borderRadius: 8, overflow: 'hidden' }}>
-                      <div style={{ padding: '1.5rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                          <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.4rem' }}>
-                              <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 400, color: text, margin: 0 }}>{rt.name}</h3>
-                              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: gold, border: `1px solid ${border}`, padding: '2px 8px', borderRadius: 2 }}>{rt.type_category || 'Room'}</span>
-                            </div>
-                            <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap' }}>
-                              {rt.size_sqm && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>⬜ {rt.size_sqm} m²</span>}
-                              {rt.bed_type && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>🛏 {rt.bed_type}</span>}
-                              {rt.view && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>🏔 {rt.view}</span>}
-                              {rt.max_occupancy && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>👤 Up to {rt.max_occupancy} guests</span>}
-                            </div>
-                          </div>
-                          {rt.base_rate_chf && (
-                            <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1rem' }}>
-                              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: textMuted, margin: '0 0 0.2rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>From</p>
-                              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 400, color: gold, margin: 0, lineHeight: 1 }}>CHF {rt.base_rate_chf.toLocaleString()}</p>
-                              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: textMuted, margin: '0.2rem 0 0' }}>per night</p>
-                            </div>
-                          )}
+              <>
+                <section style={{ marginBottom: '4rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.5rem' }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: 0 }}>Rooms & Suites</p>
+                    <Link href={`/hotels/${hotelUrl}/rooms`} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: textMuted, textDecoration: 'none' }}>View all →</Link>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+                    {roomTypes.slice(0, 4).map((rt: any, i: number) => (
+                      <div key={rt.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 0', borderBottom: `1px solid ${border}` }}>
+                        <div>
+                          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: text, margin: '0 0 0.25rem' }}>{rt.name}</p>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: textMuted, margin: 0 }}>
+                            {[rt.size_sqm && `${rt.size_sqm} m²`, rt.bed_type, rt.view].filter(Boolean).join(' · ')}
+                          </p>
                         </div>
-                        {rt.description && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, lineHeight: 1.8, margin: '0.75rem 0 0', fontWeight: 300 }}>{rt.description}</p>}
-                        {rt.amenities?.length > 0 && (
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.875rem' }}>
-                            {rt.amenities.slice(0, 6).map((a: string) => (
-                              <span key={a} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, background: bg, border: `1px solid ${border}`, padding: '3px 10px', borderRadius: 2 }}>{a}</span>
-                            ))}
-                            {rt.amenities.length > 6 && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: gold }}>+{rt.amenities.length - 6} more</span>}
-                          </div>
+                        {rt.base_rate_chf && (
+                          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: text, margin: 0, flexShrink: 0, marginLeft: '1rem' }}>
+                            CHF {rt.base_rate_chf.toLocaleString()}<span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: textMuted }}>/night</span>
+                          </p>
                         )}
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+                    ))}
+                  </div>
+                </section>
+                <div style={{ height: 1, background: border, marginBottom: '4rem' }} />
+              </>
             )}
 
             {/* SPA */}
             {showSchema && spaData && spaData.length > 0 && (
-              <div style={{ marginBottom: '3.5rem', paddingBottom: '3.5rem', borderBottom: `1px solid ${border}` }}>
-                <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: text, margin: '0 0 1.25rem' }}>Spa &amp; Wellness</h2>
-                {spaData.map((spa: any) => (
-                  <div key={spa.id} style={{ background: white, border: `1px solid ${border}`, padding: '1.5rem', borderRadius: 8, marginBottom: '1rem' }}>
-                    <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 400, color: text, margin: '0 0 0.75rem' }}>{spa.name}</h3>
-                    {spa.description && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, lineHeight: 1.8, margin: '0 0 1rem', fontWeight: 300 }}>{spa.description}</p>}
-                    <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap', marginBottom: spa.facilities?.length ? '0.875rem' : 0 }}>
-                      {spa.size_sqm && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>⬜ {spa.size_sqm} m²</span>}
-                      {spa.pool && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>🏊 Pool</span>}
-                      {spa.sauna && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>🧖 Sauna</span>}
-                      {spa.hammam && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>♨️ Hammam</span>}
-                      {spa.opening_hours && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>🕐 {spa.opening_hours}</span>}
-                      {spa.price_from && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: gold, fontWeight: 600 }}>From CHF {spa.price_from}</span>}
-                    </div>
-                    {spa.facilities?.length > 0 && (
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                        {spa.facilities.map((f: string) => <span key={f} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, background: bg, border: `1px solid ${border}`, padding: '3px 10px', borderRadius: 2 }}>{f}</span>)}
-                      </div>
-                    )}
+              <>
+                <section style={{ marginBottom: '4rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.5rem' }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: 0 }}>Spa & Wellness</p>
+                    <Link href={`/hotels/${hotelUrl}/spa`} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: textMuted, textDecoration: 'none' }}>View details →</Link>
                   </div>
-                ))}
-              </div>
+                  {spaData.map((spa: any) => (
+                    <div key={spa.id}>
+                      <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 400, color: text, margin: '0 0 0.5rem' }}>{spa.name}</p>
+                      {spa.description && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, lineHeight: 1.8, margin: '0 0 0.75rem' }}>{spa.description}</p>}
+                      <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                        {[
+                          spa.size_sqm && `${spa.size_sqm} m² spa facility`,
+                          spa.pool && 'Swimming pool',
+                          spa.sauna && 'Sauna',
+                          spa.hammam && 'Hammam',
+                          spa.price_from && `Treatments from CHF ${spa.price_from}`,
+                        ].filter(Boolean).map((item: any) => (
+                          <li key={item} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted, display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                            <span style={{ width: 4, height: 4, borderRadius: '50%', background: gold, flexShrink: 0, display: 'inline-block' }} />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </section>
+                <div style={{ height: 1, background: border, marginBottom: '4rem' }} />
+              </>
             )}
 
             {/* DINING */}
             {showSchema && restaurants && restaurants.length > 0 && (
-              <div style={{ marginBottom: '3.5rem', paddingBottom: '3.5rem', borderBottom: `1px solid ${border}` }}>
-                <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: text, margin: '0 0 1.25rem' }}>Dining</h2>
-                {restaurants.map((r: any) => (
-                  <div key={r.id} style={{ background: white, border: `1px solid ${border}`, padding: '1.5rem', borderRadius: 8, marginBottom: '1rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 400, color: text, margin: 0 }}>{r.name}</h3>
-                        {r.michelin_stars > 0 && <span style={{ color: gold, fontSize: '0.8rem' }}>{'★'.repeat(r.michelin_stars)}</span>}
-                        {r.cuisine_type && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: gold, border: `1px solid ${border}`, padding: '2px 8px', borderRadius: 2 }}>{r.cuisine_type}</span>}
-                      </div>
-                      {r.price_range && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>{r.price_range}</span>}
-                    </div>
-                    {r.description && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, lineHeight: 1.8, margin: '0 0 0.75rem', fontWeight: 300 }}>{r.description}</p>}
-                    <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap' }}>
-                      {r.opening_hours && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>🕐 {r.opening_hours}</span>}
-                      {r.dress_code && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>👔 {r.dress_code}</span>}
-                      {r.meal_types?.length > 0 && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>{r.meal_types.join(' · ')}</span>}
-                    </div>
+              <>
+                <section style={{ marginBottom: '4rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.5rem' }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: 0 }}>Dining</p>
+                    <Link href={`/hotels/${hotelUrl}/dining`} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: textMuted, textDecoration: 'none' }}>View all →</Link>
                   </div>
-                ))}
-              </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    {restaurants.map((r: any) => (
+                      <div key={r.id} style={{ paddingBottom: '1.5rem', borderBottom: `1px solid ${border}` }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', fontWeight: 400, color: text, margin: 0 }}>{r.name}</h3>
+                            {r.michelin_stars > 0 && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: gold }}>{'★'.repeat(r.michelin_stars)} Michelin</span>}
+                          </div>
+                          {r.cuisine_type && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted }}>{r.cuisine_type}</span>}
+                        </div>
+                        {r.description && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted, lineHeight: 1.7, margin: 0 }}>{r.description}</p>}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+                <div style={{ height: 1, background: border, marginBottom: '4rem' }} />
+              </>
             )}
 
-            {/* AMENITIES */}
-            {hotel.amenities?.length > 0 && (
-              <div style={{ marginBottom: '3.5rem', paddingBottom: '3.5rem', borderBottom: `1px solid ${border}` }}>
-                <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: text, margin: '0 0 1.25rem' }}>Amenities</h2>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
-                  {hotel.amenities.map((a: string) => (
-                    <div key={a} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: text, padding: '0.4rem 0' }}>
-                      <span style={{ color: gold, fontSize: '0.6rem' }}>✓</span> {a}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* FAQS */}
-            {faqs.length > 0 && (
-              <div style={{ marginBottom: '3.5rem', paddingBottom: '3.5rem', borderBottom: `1px solid ${border}` }}>
-                <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: text, margin: '0 0 1.25rem' }}>Frequently Asked Questions</h2>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {faqs.map((faq: any, i: number) => (
-                    <div key={i} style={{ background: white, border: `1px solid ${border}`, padding: '1.25rem 1.5rem', borderRadius: 8 }}>
-                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', fontWeight: 600, color: text, margin: '0 0 0.5rem', display: 'flex', gap: '0.5rem' }}>
-                        <span style={{ color: gold }}>Q.</span>{faq.question}
-                      </p>
-                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, lineHeight: 1.8, margin: 0, fontWeight: 300, display: 'flex', gap: '0.5rem' }}>
-                        <span style={{ color: gold }}>A.</span>{faq.answer}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            {/* EXPERIENCES LINKS */}
+            {hotel.is_partner && (
+              <>
+                <section style={{ marginBottom: '4rem' }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>Experiences</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+                    {[
+                      { label: 'Spa & Wellness', href: `/hotels/${hotelUrl}/spa` },
+                      { label: 'Dining & Restaurants', href: `/hotels/${hotelUrl}/dining` },
+                      { label: 'Rooms & Suites', href: `/hotels/${hotelUrl}/rooms` },
+                      { label: 'Activities & Experiences', href: `/hotels/${hotelUrl}/experiences` },
+                    ].map(exp => (
+                      <Link key={exp.label} href={exp.href} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 0', borderBottom: `1px solid ${border}`, textDecoration: 'none' }}>
+                        <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: text }}>{exp.label}</span>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: gold }}>→</span>
+                      </Link>
+                    ))}
+                  </div>
+                </section>
+                <div style={{ height: 1, background: border, marginBottom: '4rem' }} />
+              </>
             )}
 
             {/* INTENT LINKS */}
             {hotel.is_partner && (
-              <div style={{ marginBottom: '3.5rem', paddingBottom: '3.5rem', borderBottom: `1px solid ${border}` }}>
-                <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: text, margin: '0 0 1.25rem' }}>Explore {hotel.name}</h2>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
-                  {[
-                    { label: 'For Honeymoon', href: `/hotels/${hotelUrl}/honeymoon`, icon: '♡' },
-                    { label: 'For Wellness', href: `/hotels/${hotelUrl}/wellness`, icon: '✦' },
-                    { label: 'For Skiing', href: `/hotels/${hotelUrl}/skiing`, icon: '▲' },
-                    { label: 'For Families', href: `/hotels/${hotelUrl}/families`, icon: '◎' },
-                    { label: 'For Business', href: `/hotels/${hotelUrl}/business`, icon: '◈' },
-                  ].map(link => (
-                    <Link key={link.label} href={link.href} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: text, border: `1px solid ${border}`, padding: '0.6rem 1rem', background: white, textDecoration: 'none', borderRadius: 4, transition: 'border-color 0.2s' }}>
-                      <span style={{ color: gold }}>{link.icon}</span> {link.label}
-                    </Link>
-                  ))}
-                </div>
+              <>
+                <section style={{ marginBottom: '4rem' }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>Guides</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+                    {[
+                      { label: `${hotel.name} for Honeymoon`, href: `/hotels/${hotelUrl}/honeymoon` },
+                      { label: `${hotel.name} for Wellness`, href: `/hotels/${hotelUrl}/wellness` },
+                      { label: `${hotel.name} for Skiing`, href: `/hotels/${hotelUrl}/skiing` },
+                      { label: `${hotel.name} for Families`, href: `/hotels/${hotelUrl}/families` },
+                      { label: `${hotel.name} for Business`, href: `/hotels/${hotelUrl}/business` },
+                    ].map(link => (
+                      <Link key={link.label} href={link.href} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 0', borderBottom: `1px solid ${border}`, textDecoration: 'none' }}>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted }}>{link.label}</span>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: gold }}>→</span>
+                      </Link>
+                    ))}
+                  </div>
+                </section>
+                <div style={{ height: 1, background: border, marginBottom: '4rem' }} />
+              </>
+            )}
+
+            {/* LOCATION */}
+            <section style={{ marginBottom: '4rem' }}>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>Location</p>
+              <div style={{ marginBottom: '1.25rem' }}>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, margin: '0 0 0.5rem' }}>📍 {hotel.location}, {hotel.region}, Switzerland</p>
               </div>
+              <div style={{ borderRadius: 4, overflow: 'hidden', marginBottom: '1rem' }}>
+                <iframe
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent(hotel.name + ', ' + hotel.location + ', Switzerland')}&output=embed`}
+                  width="100%"
+                  height="280"
+                  style={{ border: 0, display: 'block' }}
+                  loading="lazy"
+                />
+              </div>
+            </section>
+            <div style={{ height: 1, background: border, marginBottom: '4rem' }} />
+
+            {/* FAQS */}
+            {faqs.length > 0 && (
+              <>
+                <section style={{ marginBottom: '4rem' }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>Frequently Asked Questions</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+                    {faqs.map((faq: any, i: number) => (
+                      <div key={i} style={{ padding: '1.25rem 0', borderBottom: `1px solid ${border}` }}>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', fontWeight: 600, color: text, margin: '0 0 0.4rem' }}>{faq.question}</p>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted, lineHeight: 1.7, margin: 0 }}>{faq.answer}</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+                <div style={{ height: 1, background: border, marginBottom: '4rem' }} />
+              </>
             )}
 
             {/* NEARBY ALTERNATIVES */}
             {alternatives.length > 0 && (
-              <div style={{ marginBottom: '3.5rem', paddingBottom: '3.5rem', borderBottom: `1px solid ${border}` }}>
-                <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: text, margin: '0 0 1.25rem' }}>You Might Also Consider</h2>
-                <div style={{ display: 'grid', gap: '0.75rem' }}>
+              <section style={{ marginBottom: '4rem' }}>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>You Might Also Consider</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
                   {alternatives.map((alt: any, i: number) => (
-                    <div key={i} style={{ background: white, border: `1px solid ${border}`, padding: '1rem 1.25rem', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 0', borderBottom: `1px solid ${border}` }}>
                       <div>
-                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', fontWeight: 600, color: text, margin: '0 0 0.25rem' }}>{alt.name}</p>
-                        {alt.reason && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: textMuted, margin: 0 }}>{alt.reason}</p>}
+                        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: text, margin: '0 0 0.2rem' }}>{alt.name}</p>
+                        {alt.reason && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: 0 }}>{alt.reason}</p>}
                       </div>
-                      {alt.url && (
-                        <a href={alt.url} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: gold, textDecoration: 'none', whiteSpace: 'nowrap', marginLeft: '1rem', fontWeight: 600 }}>View →</a>
-                      )}
+                      {alt.url && <a href={alt.url} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: gold, textDecoration: 'none' }}>View →</a>}
                     </div>
                   ))}
                 </div>
-              </div>
+              </section>
             )}
 
-            {/* LOCATION */}
-            <div style={{ marginBottom: '3.5rem' }}>
-              <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: text, margin: '0 0 1.25rem' }}>Location</h2>
-              <div style={{ background: white, border: `1px solid ${border}`, borderRadius: 8, overflow: 'hidden' }}>
-                <iframe
-                  src={`https://maps.google.com/maps?q=${encodeURIComponent(hotel.name + ', ' + hotel.location + ', Switzerland')}&output=embed`}
-                  width="100%"
-                  height="300"
-                  style={{ border: 0, display: 'block' }}
-                  loading="lazy"
-                />
-                <div style={{ padding: '1rem 1.5rem', borderTop: `1px solid ${border}` }}>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, margin: 0 }}>
-                    📍 {hotel.location}, {hotel.region}, Switzerland
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <Link href="/hotels" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted, textDecoration: 'none' }}>← Back to all hotels</Link>
+            <Link href="/hotels" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, textDecoration: 'none' }}>← All hotels</Link>
           </div>
 
           {/* RIGHT SIDEBAR */}
-          <div style={{ position: 'sticky', top: '5rem' }}>
+          <div style={{ position: 'sticky', top: '2rem' }}>
 
-            {/* Booking card */}
-            <div style={{ background: white, border: `1px solid ${border}`, borderRadius: 8, overflow: 'hidden', marginBottom: '1.5rem', boxShadow: '0 8px 40px rgba(201,169,76,0.1)' }}>
+            {/* PRICING CARD */}
+            <div style={{ background: white, borderRadius: 4, padding: '2rem', marginBottom: '1.5rem', boxShadow: '0 2px 20px rgba(0,0,0,0.06)' }}>
               {hotel.is_partner && (
-                <div style={{ background: gold, padding: '0.75rem 1.5rem', textAlign: 'center' }}>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#1a0e06', margin: 0 }}>✦ SwissNet Partner Hotel</p>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: gold, margin: '0 0 1.25rem', paddingBottom: '1rem', borderBottom: `1px solid ${border}` }}>✦ SwissNet Partner Hotel</p>
+              )}
+
+              <div style={{ marginBottom: '1.5rem' }}>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: textMuted, margin: '0 0 0.4rem' }}>Pricing</p>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.75rem', fontWeight: 300, color: text, margin: '0 0 0.25rem', lineHeight: 1 }}>
+                  CHF {hotel.nightly_rate_chf?.toLocaleString()}
+                </p>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: textMuted, margin: 0 }}>per night · best available direct rate</p>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, margin: '0.4rem 0 0' }}>Price varies by dates and room type</p>
+              </div>
+
+              {hotel.is_partner && trackingUrl ? (
+                <>
+                  <a href={trackingUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', background: text, color: white, fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '1rem', textAlign: 'center', textDecoration: 'none', marginBottom: '0.75rem' }}>
+                    Check Availability →
+                  </a>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: textMuted, textAlign: 'center', margin: '0 0 1.5rem', lineHeight: 1.5 }}>
+                    Direct booking · No fees · Best rate guaranteed
+                  </p>
+                  <div style={{ paddingTop: '1.25rem', borderTop: `1px solid ${border}` }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, color: textMuted, margin: '0 0 0.5rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Booking options</p>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: '0 0 0.25rem' }}>✓ Direct — from CHF {hotel.nightly_rate_chf?.toLocaleString()}</p>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: '0 0 0.5rem' }}>○ OTAs — typically CHF {Math.round(hotel.nightly_rate_chf * 1.1).toLocaleString()}–{Math.round(hotel.nightly_rate_chf * 1.15).toLocaleString()}</p>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: textMuted, margin: 0, fontStyle: 'italic' }}>OTA range is an estimate based on typical commission rates</p>
+                  </div>
+                </>
+              ) : (
+                <div style={{ paddingTop: '1rem', borderTop: `1px solid ${border}` }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: 0 }}>Direct booking available for SwissNet partner hotels.</p>
                 </div>
               )}
-              <div style={{ padding: '1.5rem' }}>
-                <div style={{ textAlign: 'center', marginBottom: '1.5rem', paddingBottom: '1.5rem', borderBottom: `1px solid ${border}` }}>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: textMuted, margin: '0 0 0.5rem' }}>Nightly Rate From</p>
-                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 300, color: text, margin: '0 0 0.25rem', lineHeight: 1 }}>CHF {hotel.nightly_rate_chf?.toLocaleString()}</p>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, margin: 0 }}>per night · best rate guaranteed</p>
-   {/* OTA Price Comparison */}
-{hotel.is_partner && (
-  <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: `1px solid ${border}` }}>
-    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', color: textMuted, margin: '0 0 0.75rem' }}>Price Comparison</p>
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-      {[
-        { name: 'Booking.com', color: '#003580', markup: 0.08 },
-        { name: 'Expedia', color: '#FFC72C', textColor: '#000', markup: 0.05 },
-        { name: 'Hotels.com', color: '#D8002E', markup: 0.10 },
-      ].map(ota => {
-        const otaPrice = Math.round((hotel.nightly_rate_chf * (1 + ota.markup)) / 5) * 5
-        return (
-          <div key={ota.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.4rem 0.5rem', background: bg, borderRadius: 4 }}>
-            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: ota.color }}>{ota.name}</span>
-            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>CHF {otaPrice.toLocaleString()}</span>
-          </div>
-        )
-      })}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0.75rem', background: 'rgba(201,169,76,0.1)', border: `1px solid ${gold}55`, borderRadius: 4, marginTop: '0.25rem' }}>
-        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: gold }}>✦ Direct</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 700, color: gold }}>CHF {hotel.nightly_rate_chf?.toLocaleString()}</span>
-          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, background: green, color: white, padding: '2px 6px', borderRadius: 20 }}>BEST</span>
-        </div>
-      </div>
-      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', color: textMuted, margin: '0.25rem 0 0', textAlign: 'center' }}>*Prices are estimates based on typical OTA commission rates</p>
-    </div>
-  </div>
-)}
-                </div>
-
-                {hotel.is_partner && trackingUrl ? (
-                  <>
-                    <a href={trackingUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', background: gold, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '1rem', textAlign: 'center', textDecoration: 'none', borderRadius: 2, marginBottom: '0.75rem' }}>
-                      Book Direct →
-                    </a>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: textMuted, textAlign: 'center', margin: '0 0 1.5rem' }}>No booking fees · Direct with the hotel</p>
-                  </>
-                ) : (
-                  <div style={{ background: bg, border: `1px solid ${border}`, borderRadius: 4, padding: '0.875rem', textAlign: 'center', marginBottom: '1.5rem' }}>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, margin: '0 0 0.25rem' }}>Direct booking available</p>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: gold, margin: 0 }}>for SwissNet Partner hotels</p>
-                  </div>
-                )}
-
-                {/* Trust signals */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '1.5rem' }}>
-                  {[
-                    { icon: '✓', text: 'No fees' },
-                    { icon: '✓', text: 'Best rate' },
-                    { icon: '✓', text: 'Direct booking' },
-                    { icon: '✓', text: 'Instant confirm' },
-                  ].map(t => (
-                    <div key={t.text} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <span style={{ color: gold, fontSize: '0.65rem' }}>{t.icon}</span>
-                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted }}>{t.text}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {hotel.is_partner && hotel.contact_email && (
-                  <div style={{ borderTop: `1px solid ${border}`, paddingTop: '1rem', textAlign: 'center' }}>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, margin: '0 0 0.25rem' }}>Questions? Contact directly:</p>
-                    <a href={`mailto:${hotel.contact_email}`} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: gold, textDecoration: 'none' }}>{hotel.contact_email}</a>
-                  </div>
-                )}
-              </div>
             </div>
 
-            {/* Enquiry form */}
-            <div style={{ background: white, border: `1px solid ${border}`, borderRadius: 8, overflow: 'hidden' }}>
-              <div style={{ background: bg, padding: '1rem 1.5rem', borderBottom: `1px solid ${border}` }}>
-                <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 400, color: text, margin: 0 }}>Send an Enquiry</h3>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, margin: '0.25rem 0 0' }}>We'll connect you directly with {hotel.name}</p>
+            {/* CONTACT */}
+            {hotel.is_partner && hotel.contact_email && (
+              <div style={{ background: white, borderRadius: 4, padding: '1.5rem', marginBottom: '1.5rem', boxShadow: '0 2px 20px rgba(0,0,0,0.06)' }}>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: textMuted, margin: '0 0 0.75rem' }}>Contact</p>
+                <a href={`mailto:${hotel.contact_email}`} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: gold, textDecoration: 'none', display: 'block', marginBottom: '0.5rem' }}>{hotel.contact_email}</a>
               </div>
-              <div style={{ padding: '1.5rem' }}>
-                <LeadForm hotel={hotel} />
-              </div>
-            </div>
+            )}
 
-            {/* Star rating display */}
-            <div style={{ background: white, border: `1px solid ${border}`, borderRadius: 8, padding: '1.25rem 1.5rem', marginTop: '1.5rem', textAlign: 'center' }}>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '0.3rem', marginBottom: '0.5rem' }}>
-                {Array.from({ length: hotel.star_classification || 5 }).map((_, i) => (
-                  <span key={i} style={{ color: gold, fontSize: '1rem' }}>★</span>
-                ))}
-              </div>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 300, color: text, margin: '0 0 0.25rem' }}>{hotel.rating} / 5.0</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, margin: 0 }}>Guest Rating</p>
+            {/* ENQUIRY */}
+            <div style={{ background: white, borderRadius: 4, padding: '1.5rem', boxShadow: '0 2px 20px rgba(0,0,0,0.06)' }}>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: textMuted, margin: '0 0 1rem' }}>Send an Enquiry</p>
+              <LeadForm hotel={hotel} />
             </div>
           </div>
         </div>
