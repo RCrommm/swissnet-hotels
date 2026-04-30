@@ -226,7 +226,7 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
               <KPICard label="Direct Clicks" value={recentClicks.length} sub={`last ${period} days`} color={GOLD} spark={clicksByDay} />
               <KPICard label="Profile Views" value={recentViews.length} sub={`last ${period} days`} color={BLUE} spark={viewsByDay} />
-              <KPICard label="OTA Commission Saved" value={recentBookings.length > 0 ? `CHF ${Math.round(recentBookings.reduce((sum: number, b: any) => sum + (b.total_chf || 0), 0) * 0.15).toLocaleString()}` : '—'} sub="vs 15% OTA fee" color={GREEN} />
+              <KPICard label="SwissNet Cost" value={recentBookings.length > 0 ? `CHF ${Math.round(recentBookings.reduce((sum: number, b: any) => sum + (b.total_chf || 0), 0) * 0.03).toLocaleString()}` : '—'} sub="3% of revenue" color={GREEN} />
               <KPICard label="Conversions" value={recentBookings.length} sub={`last ${period} days`} color={PURPLE} />
             </div>
 
