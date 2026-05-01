@@ -13,8 +13,8 @@ export async function POST(request: NextRequest) {
 
   try {
     await resend.emails.send({
-      from: 'SwissNet Hotels <onboarding@resend.dev>',
-      to: 'rcalting@gmail.com',
+      from: 'SwissNet Hotels <contact@swissnethotels.com>',
+to: 'contact@swissnethotels.com',
       subject: `SwissNet: ${enquiry_type === 'demo' ? 'Demo Request' : enquiry_type === 'join' ? 'New Hotel Wants to Join' : 'New Enquiry'} from ${name}`,
       html: `
         <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 2rem; background: #f8f5ef;">
