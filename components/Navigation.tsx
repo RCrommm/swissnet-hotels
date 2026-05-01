@@ -15,6 +15,11 @@ const destinationLinks = [
   { label: 'Crans-Montana', href: '/destinations/crans-montana' },
   { label: 'Flims', href: '/destinations/flims' },
   { label: 'Bern', href: '/destinations/bern' },
+  { label: 'Basel', href: '/destinations/basel' },
+  { label: 'Lugano', href: '/destinations/lugano' },
+  { label: 'Ascona', href: '/destinations/ascona' },
+  { label: 'Andermatt', href: '/destinations/andermatt' },
+  { label: 'Montreux', href: '/destinations/montreux' },
 ]
 
 export default function Navigation() {
