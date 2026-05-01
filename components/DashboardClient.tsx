@@ -167,7 +167,7 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
         <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid ' + BORDER }}>
           <div style={{ background: GOLD_LIGHT, borderRadius: 6, padding: '0.75rem' }}>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: GOLD, margin: '0 0 0.2rem' }}>Need Help?</p>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Contact SwissNet support</p>
+            <a href="mailto:contact@swissnethotels.com" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: GOLD, margin: 0, textDecoration: 'none' }}>contact@swissnethotels.com</a>
           </div>
         </div>
       </div>
