@@ -18,13 +18,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }))
 
-  const promptSlugs = [
-    'luxury-hotels-zermatt', 'ski-hotels-zermatt', 'luxury-hotels-geneva',
-    'luxury-hotels-zurich', 'luxury-hotels-interlaken', 'luxury-hotels-bern',
-    'ski-hotels-switzerland', 'wellness-hotels-switzerland', 'romantic-hotels-switzerland',
-    'luxury-hotels-switzerland', 'business-hotels-switzerland',
-    'wellness-hotels-flims', 'ski-hotels-crans-montana', 'ski-hotels-davos'
-  ]
+ const promptSlugs = [
+  'luxury-hotels-zermatt', 'ski-hotels-zermatt', 'luxury-hotels-geneva',
+  'luxury-hotels-zurich', 'luxury-hotels-interlaken', 'luxury-hotels-bern',
+  'ski-hotels-switzerland', 'wellness-hotels-switzerland', 'romantic-hotels-switzerland',
+  'luxury-hotels-switzerland', 'business-hotels-switzerland',
+  'wellness-hotels-flims', 'ski-hotels-crans-montana', 'ski-hotels-davos',
+  'luxury-hotels-davos', 'luxury-hotels-gstaad', 'luxury-hotels-lugano', 'luxury-hotels-basel', 'luxury-hotels-lucerne', 'luxury-hotels-verbier', 'ski-hotels-verbier', 'honeymoon-hotels-switzerland', 'family-hotels-switzerland', 'spa-hotels-switzerland'
+]
   const promptPages: MetadataRoute.Sitemap = promptSlugs.map(slug => ({
     url: `${baseUrl}/best/${slug}`,
     lastModified: new Date(),
