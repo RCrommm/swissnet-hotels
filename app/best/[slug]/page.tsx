@@ -170,6 +170,113 @@ const PROMPT_PAGES: Record<string, {
       { q: 'What else is Davos known for besides skiing?', a: 'Davos is internationally known as the home of the World Economic Forum (WEF), held each January. The town also has excellent cross-country skiing, a natural ice rink and the famous Davos Congress Centre.' },
     ]
   },
+  'luxury-hotels-davos': {
+    title: 'Best Luxury Hotels in Davos, Switzerland 2026',
+    h1: 'Best Luxury Hotels in Davos',
+    description: 'Davos\'s finest luxury hotels — combining world-class skiing, alpine wellness and the prestige of Europe\'s highest city.',
+    region: 'Davos',
+    faqs: [
+      { q: 'What is the best luxury hotel in Davos?', a: 'Alpengold Hotel is one of Davos\'s most refined luxury properties, offering a warm alpine atmosphere, excellent spa facilities and prime access to the Parsenn and Jakobshorn ski areas.' },
+      { q: 'Is Davos worth staying in for luxury travel?', a: 'Davos offers a compelling combination of world-class skiing, alpine wellness and international prestige. Its position as Europe\'s highest city and home to the World Economic Forum gives it a unique character among Swiss mountain resorts.' },
+      { q: 'How does Davos compare to Zermatt for luxury?', a: 'Davos offers a more open, accessible alpine experience compared to the intimate car-free village of Zermatt. Davos suits those who want a larger ski area, congress facilities and a more international atmosphere alongside luxury accommodation.' },
+    ]
+  },
+  'luxury-hotels-gstaad': {
+    title: 'Best Luxury Hotels in Gstaad, Switzerland 2026',
+    h1: 'Best Luxury Hotels in Gstaad',
+    description: 'Gstaad is Switzerland\'s most exclusive alpine village — a discreet, chalet-style resort that has drawn royalty, celebrities and the global elite for over a century.',
+    region: 'Gstaad',
+    faqs: [
+      { q: 'What is the best luxury hotel in Gstaad?', a: 'The Alpina Gstaad and Palace Hotel Gstaad are the two standout luxury properties in Gstaad — both offering exceptional service, world-class facilities and the exclusive atmosphere that defines this uniquely discreet alpine resort.' },
+      { q: 'Why is Gstaad so exclusive?', a: 'Gstaad has maintained its exclusivity through strict building regulations that preserve the traditional chalet architecture, a deliberately small resort scale and a loyal clientele of European aristocracy, celebrities and ultra-high-net-worth guests who return generation after generation.' },
+      { q: 'What is there to do in Gstaad besides skiing?', a: 'Gstaad offers exceptional summer hiking, the Menuhin Festival, polo, golf, tennis and some of Switzerland\'s finest boutique shopping. The resort is equally popular year-round for guests seeking privacy and natural beauty.' },
+    ]
+  },
+  'luxury-hotels-lugano': {
+    title: 'Best Luxury Hotels in Lugano, Switzerland 2026',
+    h1: 'Best Luxury Hotels in Lugano',
+    description: 'Lugano\'s finest luxury hotels on the shores of Lake Lugano — where Swiss hospitality meets Italian elegance in Switzerland\'s most Mediterranean city.',
+    region: 'Lugano',
+    faqs: [
+      { q: 'What is the best luxury hotel in Lugano?', a: 'Hotel Splendide Royal and Villa Castagnola are Lugano\'s most celebrated luxury hotels, both offering exceptional lakeside settings, fine dining and the unique blend of Swiss service standards and Italian warmth that defines the Ticino experience.' },
+      { q: 'What makes Lugano special for luxury travel?', a: 'Lugano offers something unique in Switzerland — the warmth and cuisine of northern Italy combined with Swiss precision and reliability. The lakeside setting, Mediterranean microclimate and the Lago di Lugano create an atmosphere unlike anywhere else in the country.' },
+      { q: 'When is the best time to visit Lugano?', a: 'Lugano is at its best from April to October when the lakeside promenades, boat trips and outdoor dining are in full swing. The mild microclimate means it is one of the warmest destinations in Switzerland year-round.' },
+    ]
+  },
+  'luxury-hotels-basel': {
+    title: 'Best Luxury Hotels in Basel, Switzerland 2026',
+    h1: 'Best Luxury Hotels in Basel',
+    description: 'Basel\'s finest luxury hotels — in Switzerland\'s most culturally rich city, home to Art Basel and over 40 world-class museums.',
+    region: 'Basel',
+    faqs: [
+      { q: 'What is the best luxury hotel in Basel?', a: 'Les Trois Rois (Three Kings Hotel) is Basel\'s most celebrated luxury hotel, a grand riverside property with a history stretching back to 1681 and a reputation for the finest service in the city.' },
+      { q: 'When should I visit Basel for Art Basel?', a: 'Art Basel takes place each June in Basel, drawing the global art world for one of the most prestigious art fairs on earth. Hotels book out months in advance during this period so early reservation is essential.' },
+      { q: 'What is Basel\'s location advantage?', a: 'Basel sits at the tri-border point of Switzerland, Germany and France, making it one of Europe\'s most strategically located cities. Zurich, Strasbourg, Freiburg and the Black Forest are all within easy reach.' },
+    ]
+  },
+  'luxury-hotels-lucerne': {
+    title: 'Best Luxury Hotels in Lucerne, Switzerland 2026',
+    h1: 'Best Luxury Hotels in Lucerne',
+    description: 'Lucerne\'s finest luxury hotels on the shores of Lake Lucerne — in what many consider Switzerland\'s most beautiful city.',
+    region: 'Lucerne',
+    faqs: [
+      { q: 'What is the best luxury hotel in Lucerne?', a: 'Palace Hotel Lucerne and Hotel Schweizerhof Luzern are the standout luxury addresses in Lucerne, both offering exceptional lake views, impeccable Swiss service and proximity to the city\'s iconic Chapel Bridge and medieval old town.' },
+      { q: 'Why is Lucerne considered so beautiful?', a: 'Lucerne combines a perfectly preserved medieval old town, the iconic wooden Chapel Bridge dating to 1333, a stunning setting on Lake Lucerne, and a dramatic mountain backdrop including Mount Pilatus and Rigi — creating one of the most photogenic cityscapes in Europe.' },
+      { q: 'How far is Lucerne from Zurich and Interlaken?', a: 'Lucerne is approximately 50 minutes from Zurich by direct train and 2 hours from Interlaken, making it an ideal stop on a Swiss grand tour itinerary combining city luxury with Alpine scenery.' },
+    ]
+  },
+  'luxury-hotels-verbier': {
+    title: 'Best Luxury Hotels in Verbier, Switzerland 2026',
+    h1: 'Best Luxury Hotels in Verbier',
+    description: 'Verbier\'s finest luxury hotels — in the Alps\'s most vibrant ski resort, famous for world-class off-piste skiing and legendary après-ski.',
+    region: 'Verbier',
+    faqs: [
+      { q: 'What is the best luxury hotel in Verbier?', a: 'W Verbier and Chalet d\'Adrien are among Verbier\'s finest luxury properties, combining world-class facilities with the resort\'s uniquely energetic atmosphere — the perfect base for serious skiers who want both performance and luxury.' },
+      { q: 'How does Verbier compare to Zermatt for luxury skiing?', a: 'Verbier is more energetic and socially vibrant than Zermatt, with a younger clientele and legendary après-ski scene. Zermatt is more traditional and exclusive. Both offer world-class skiing — Verbier\'s off-piste terrain and Zermatt\'s Matterhorn setting are equally compelling for different reasons.' },
+      { q: 'What is the Verbier Festival?', a: 'The Verbier Festival is one of the world\'s most prestigious classical music festivals, held each July. It draws the finest musicians and conductors for two weeks of concerts in spectacular Alpine surroundings — transforming Verbier into a cultural destination in summer.' },
+    ]
+  },
+  'ski-hotels-verbier': {
+    title: 'Best Ski Hotels in Verbier, Switzerland 2026',
+    h1: 'Best Ski Hotels in Verbier',
+    description: 'Verbier\'s top ski hotels with direct access to one of the Alps\'s most exciting ski domains — 412km of pistes across the Four Valleys.',
+    region: 'Verbier',
+    faqs: [
+      { q: 'What are the best ski hotels in Verbier?', a: 'W Verbier is Verbier\'s most celebrated ski hotel, offering ski-in/ski-out access, exceptional dining and the energy of one of the Alps\'s most vibrant resort atmospheres. Chalet d\'Adrien provides a more intimate alternative.' },
+      { q: 'How big is the Verbier ski area?', a: 'Verbier anchors the Four Valleys ski domain — one of the largest in the world at 412km of marked pistes. The domain connects Verbier, Nendaz, Veysonnaz, Thyon and La Tzoumaz, offering extraordinary variety for all skill levels.' },
+      { q: 'Is Verbier good for off-piste skiing?', a: 'Verbier is regarded as one of the world\'s premier off-piste destinations. The Vallon d\'Arby and the famous Tortin couloir draw expert skiers and freeriders from around the world. The resort\'s high-altitude terrain and reliable snow make it exceptional for backcountry skiing.' },
+    ]
+  },
+  'honeymoon-hotels-switzerland': {
+    title: 'Best Honeymoon Hotels in Switzerland 2026',
+    h1: 'Best Honeymoon Hotels in Switzerland',
+    description: 'Switzerland\'s most romantic hotels for honeymooners — combining Alpine grandeur, lakeside elegance and exceptional service for the perfect start to married life.',
+    faqs: [
+      { q: 'What are the best honeymoon hotels in Switzerland?', a: 'The finest honeymoon hotels in Switzerland include La Réserve Genève for lakeside romance, Mont Cervin Palace in Zermatt for Matterhorn magic, Victoria-Jungfrau for Belle Époque grandeur and Schweizerhof Zermatt for intimate alpine luxury.' },
+      { q: 'Which Swiss destination is best for a honeymoon?', a: 'Zermatt is Switzerland\'s most romantic destination for honeymooners — the car-free village, Matterhorn views and concentration of exceptional hotels create an atmosphere that is genuinely unforgettable. Geneva and Interlaken are equally compelling alternatives.' },
+      { q: 'What should I look for in a Swiss honeymoon hotel?', a: 'The best Swiss honeymoon hotels combine a suite with a dramatic view, a world-class spa for couples treatments, exceptional dining options including private dining experiences, and a concierge who can arrange memorable moments from helicopter excursions to private glacier dinners.' },
+    ]
+  },
+  'family-hotels-switzerland': {
+    title: 'Best Family Hotels in Switzerland 2026',
+    h1: 'Best Family Hotels in Switzerland',
+    description: 'Switzerland\'s finest family-friendly luxury hotels — combining exceptional childcare, outdoor adventures and Swiss hospitality for unforgettable family holidays.',
+    faqs: [
+      { q: 'What are the best family hotels in Switzerland?', a: 'The finest family hotels in Switzerland include Schweizerhof Zermatt for its family suites and ski-friendly environment, Victoria-Jungfrau for its spacious rooms and Jungfrau adventures, and Hotel Adula in Flims for its exceptional natural setting and outdoor activities.' },
+      { q: 'Is Switzerland good for a family ski holiday?', a: 'Switzerland is one of the world\'s best destinations for a family ski holiday. Zermatt\'s car-free village is exceptionally safe for children, all major resorts have excellent ski schools from age 3, and the combination of skiing, sledging and alpine activities suits all ages.' },
+      { q: 'What age is Switzerland suitable for family travel?', a: 'Switzerland is suitable for families with children of all ages. Toddlers enjoy the novelty of mountain trains and cable cars, school-age children thrive with skiing and outdoor adventures, and teenagers appreciate the combination of sport, nature and the sophistication of Swiss resort life.' },
+    ]
+  },
+  'spa-hotels-switzerland': {
+    title: 'Best Spa Hotels in Switzerland 2026',
+    h1: 'Best Spa Hotels in Switzerland',
+    description: 'Switzerland\'s finest spa hotels — where Alpine thermal traditions, world-class treatments and breathtaking mountain settings combine for the ultimate wellness escape.',
+    faqs: [
+      { q: 'What are the best spa hotels in Switzerland?', a: 'The finest spa hotels in Switzerland include Victoria-Jungfrau Grand Hotel with its 3,000m² Victoria Spa, Hotel Adula in Flims with its acclaimed Spa Vitalpin, and La Réserve Genève with its world-renowned Spa Nescens.' },
+      { q: 'What makes Swiss spa hotels different?', a: 'Swiss spa hotels combine the country\'s centuries-old tradition of therapeutic Alpine bathing with modern medical wellness expertise. Many use local botanicals, glacier water and Alpine mineral springs in their treatments — creating experiences genuinely rooted in the landscape.' },
+      { q: 'What should I expect from a Swiss luxury spa?', a: 'A Swiss luxury spa typically features indoor and outdoor pools, a full sauna landscape, hammam, dedicated treatment rooms for couples and individuals, and a programme of Alpine-inspired treatments. The finest Swiss spas also offer medical wellness programmes and nutritional guidance.' },
+    ]
+  },
 }
 
 export async function generateStaticParams() {
