@@ -10,7 +10,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/pricing`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
   ]
 
-  const destinations = ['zermatt', 'geneva', 'st-moritz', 'interlaken', 'zurich', 'gstaad', 'lucerne', 'verbier', 'davos', 'crans-montana', 'flims', 'bern', 'basel', 'lugano'] 
+  const destinations = ['zermatt', 'geneva', 'st-moritz', 'interlaken', 'zurich', 'gstaad', 'lucerne', 'verbier', 'davos', 'crans-montana', 'flims', 'bern', 'basel', 'lugano', 'ascona', 'andermatt', 'montreux'] 
    const destinationPages: MetadataRoute.Sitemap = destinations.map(slug => ({
     url: `${baseUrl}/destinations/${slug}`,
     lastModified: new Date(),
@@ -24,7 +24,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   'ski-hotels-switzerland', 'wellness-hotels-switzerland', 'romantic-hotels-switzerland',
   'luxury-hotels-switzerland', 'business-hotels-switzerland',
   'wellness-hotels-flims', 'ski-hotels-crans-montana', 'ski-hotels-davos',
-  'luxury-hotels-davos', 'luxury-hotels-gstaad', 'luxury-hotels-lugano', 'luxury-hotels-basel', 'luxury-hotels-lucerne', 'luxury-hotels-verbier', 'ski-hotels-verbier', 'honeymoon-hotels-switzerland', 'family-hotels-switzerland', 'spa-hotels-switzerland'
+  'luxury-hotels-davos', 'luxury-hotels-gstaad', 'luxury-hotels-lugano', 'luxury-hotels-basel', 'luxury-hotels-lucerne', 'luxury-hotels-verbier', 'ski-hotels-verbier', 'honeymoon-hotels-switzerland', 'family-hotels-switzerland', 'spa-hotels-switzerland', 'luxury-hotels-ascona', 'luxury-hotels-andermatt', 'luxury-hotels-montreux'
 ]
   const promptPages: MetadataRoute.Sitemap = promptSlugs.map(slug => ({
     url: `${baseUrl}/best/${slug}`,

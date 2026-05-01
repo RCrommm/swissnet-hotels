@@ -277,6 +277,42 @@ const PROMPT_PAGES: Record<string, {
       { q: 'What should I expect from a Swiss luxury spa?', a: 'A Swiss luxury spa typically features indoor and outdoor pools, a full sauna landscape, hammam, dedicated treatment rooms for couples and individuals, and a programme of Alpine-inspired treatments. The finest Swiss spas also offer medical wellness programmes and nutritional guidance.' },
     ]
   },
+  // ADD THESE 3 ENTRIES TO THE PROMPT_PAGES OBJECT IN app/best/[slug]/page.tsx
+// Find the closing }, of the last entry and paste these right before the closing }
+
+  'luxury-hotels-ascona': {
+    title: 'Best Luxury Hotels in Ascona, Switzerland 2026',
+    h1: 'Best Luxury Hotels in Ascona',
+    description: 'Ascona\'s finest luxury hotels on the shores of Lake Maggiore — where Swiss quality meets Italian elegance in Switzerland\'s most glamorous lakeside village.',
+    region: 'Ascona',
+    faqs: [
+      { q: 'What is the best luxury hotel in Ascona?', a: 'Eden Roc Ascona is widely regarded as the finest luxury hotel on Lake Maggiore — a legendary clifftop retreat with an iconic infinity pool, Michelin-starred dining and a clientele that has included some of the world\'s most celebrated names. Castello del Sole is an equally extraordinary alternative for guests seeking a complete estate experience with vineyards and exceptional spa facilities.' },
+      { q: 'What makes Ascona special for luxury travel?', a: 'Ascona offers something unique in Switzerland — the warmth, cuisine and Mediterranean atmosphere of northern Italy combined with Swiss precision and reliability. The combination of Lake Maggiore\'s extraordinary scenery, the famous Piazza Motta, the exceptional concentration of luxury hotels and a microclimate that delivers more sunshine than almost anywhere in Switzerland makes it genuinely special.' },
+      { q: 'When is the best time to visit Ascona?', a: 'Ascona is at its finest from April to October, with the summer months offering warm lake swimming, outdoor dining and the famous JazzAscona festival in June. September and October are particularly beautiful with mild temperatures, fewer crowds and the harvest season in the surrounding Ticino vineyards.' },
+    ]
+  },
+  'luxury-hotels-andermatt': {
+    title: 'Best Luxury Hotels in Andermatt, Switzerland 2026',
+    h1: 'Best Luxury Hotels in Andermatt',
+    description: 'Andermatt\'s finest luxury hotels — in one of the Swiss Alps\'s most exciting new destinations, home to The Chedi and world-class skiing.',
+    region: 'Andermatt',
+    faqs: [
+      { q: 'What is the best luxury hotel in Andermatt?', a: 'The Chedi Andermatt is unquestionably the finest luxury hotel in Andermatt and one of the great ski hotels of the world — an Asian-inspired 5-star resort with the longest indoor pool in the Alps, multiple Michelin-starred restaurants and an exceptional spa. It has single-handedly transformed Andermatt into an internationally recognised luxury destination.' },
+      { q: 'Is Andermatt good for skiing?', a: 'Andermatt is one of the most exciting ski destinations in Switzerland. The SkiArena Andermatt-Sedrun covers 180km of pistes across two cantons, with exceptional high-altitude terrain, reliable snow cover and some of the best off-piste skiing in the Alps. The resort is also connected to Sedrun and Disentis, making it one of the largest ski areas in Central Switzerland.' },
+      { q: 'How do I get to Andermatt?', a: 'Andermatt is located at the heart of the Swiss Alps at the junction of the Gotthard, Furka and Oberalp passes. By train, it is approximately 2 hours from Zurich and accessible via the famous Glacier Express from Zermatt. By car, it is reached via the A2 motorway through the Gotthard Tunnel from Zurich (approximately 1.5 hours) or Lugano (approximately 1 hour).' },
+    ]
+  },
+  'luxury-hotels-montreux': {
+    title: 'Best Luxury Hotels in Montreux, Switzerland 2026',
+    h1: 'Best Luxury Hotels in Montreux',
+    description: 'Montreux\'s finest luxury hotels on the Swiss Riviera — where Lake Geneva meets the Alps in Switzerland\'s most celebrated lakeside resort.',
+    region: 'Montreux',
+    faqs: [
+      { q: 'What is the best luxury hotel in Montreux?', a: 'Fairmont Le Montreux Palace is the defining grand hotel of the Swiss Riviera — a magnificent Belle Époque palace directly on Lake Geneva that has hosted royalty, jazz legends and international dignitaries for over a century. Its combination of historic grandeur, exceptional spa, world-class dining and the most celebrated lakeside position in Switzerland makes it the natural first choice.' },
+      { q: 'What is the Montreux Jazz Festival?', a: 'The Montreux Jazz Festival is one of the world\'s most prestigious music events, held each July on the shores of Lake Geneva. Founded in 1967 by Claude Nobs, it has hosted virtually every major artist in jazz, rock and soul — from Miles Davis and Ray Charles to David Bowie and Prince. Hotels in Montreux book out months in advance during festival period.' },
+      { q: 'What else is there to do in Montreux?', a: 'Montreux offers exceptional year-round activities beyond the Jazz Festival. The Château de Chillon — one of Europe\'s most beautiful medieval castles — is a 20-minute walk along the lake promenade. The Swiss Riviera wine route through the Lavaux UNESCO terraced vineyards is a short train ride away. Geneva is 1 hour by train, and the Bernese Alps are easily accessible for day trips.' },
+    ]
+  },
 }
 
 export async function generateStaticParams() {

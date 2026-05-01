@@ -138,6 +138,36 @@ const DESTINATIONS: Record<string, {
     bestFor: ['Couples', 'Luxury travelers', 'City breaks', 'Art lovers', 'Food enthusiasts'],
     image: 'https://images.unsplash.com/photo-1515488764276-beab7607c1e6?w=1600',
   },
+  // ADD THESE 3 ENTRIES TO THE DESTINATIONS OBJECT IN app/destinations/[slug]/page.tsx
+// Find the closing }, of the 'lugano' entry and paste these right after it
+
+  'ascona': {
+    name: 'Ascona',
+    region: 'Ticino, Switzerland',
+    tagline: 'The pearl of Lake Maggiore',
+    description: 'Ascona is Switzerland\'s most glamorous lakeside resort — a sun-drenched Mediterranean village on the shores of Lake Maggiore in the Italian-speaking canton of Ticino. With its famous Piazza, bougainvillea-draped alleys and a concentration of exceptional luxury hotels including the legendary Eden Roc, it offers a uniquely Italian atmosphere with Swiss quality that is unlike anywhere else in the country.',
+    highlights: ['Lake Maggiore views', 'Eden Roc', 'Mediterranean atmosphere', 'Piazza Motta', 'Fine dining'],
+    bestFor: ['Luxury Travellers', 'Couples', 'Honeymooners', 'Wellness Seekers', 'Art Lovers'],
+    image: 'https://images.unsplash.com/photo-1515488764276-beab7607c1e6?w=1600',
+  },
+  'andermatt': {
+    name: 'Andermatt',
+    region: 'Uri, Swiss Alps',
+    tagline: 'The Swiss Alps\' most exciting new luxury destination',
+    description: 'Andermatt is the most exciting transformation in Swiss alpine tourism — a historic mountain village at the crossroads of the Alps that has become one of Switzerland\'s premier luxury ski destinations. Home to The Chedi Andermatt, one of the world\'s great ski hotels, and the vast SkiArena Andermatt-Sedrun, it combines genuine alpine character with world-class facilities in an extraordinary high-altitude setting.',
+    highlights: ['The Chedi Andermatt', 'SkiArena access', 'Year-round destination', 'Crossroads of the Alps', 'New luxury development'],
+    bestFor: ['Ski Lovers', 'Luxury Travellers', 'Wellness Seekers', 'Couples', 'Adventurers'],
+    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600',
+  },
+  'montreux': {
+    name: 'Montreux',
+    region: 'Vaud, Swiss Riviera',
+    tagline: 'The jewel of the Swiss Riviera',
+    description: 'Montreux is Switzerland\'s most celebrated lakeside resort — a grand Victorian town on the shores of Lake Geneva, sheltered by the Alps and blessed with a microclimate so mild that palm trees line its famous promenade. Home to the legendary Montreux Jazz Festival, the fairy-tale Chillon Castle and the palatial Fairmont Le Montreux Palace, it combines natural beauty with cultural richness and Swiss grand hotel tradition.',
+    highlights: ['Lake Geneva views', 'Montreux Jazz Festival', 'Chillon Castle', 'Fairmont Palace', 'Swiss Riviera climate'],
+    bestFor: ['Music Lovers', 'Couples', 'Luxury Travellers', 'Culture Enthusiasts', 'Honeymooners'],
+    image: 'https://images.unsplash.com/photo-1515488764276-beab7607c1e6?w=1600',
+  },
 }
 
 export async function generateStaticParams() {
