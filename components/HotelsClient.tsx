@@ -19,7 +19,7 @@ interface Hotel {
   amenities: string[]
   best_for: string[]
   description: string
-  direct_booking_url: string
+  direct_booking_url: string | null
   exclusive_offer: string
   contact_email: string
   is_featured: boolean
@@ -111,9 +111,9 @@ export default function HotelsClient({ hotels, initialRegion, initialCategory, i
             {hotels.map(hotel => {
               const isHovered = hovered === hotel.id
               const starCount = hotel.star_classification || 5
-              const websiteUrl = '/api/track?hotel_id=' + hotel.id + '&hotel_name=' + encodeURIComponent(hotel.name) + '&destination=' + encodeURIComponent(hotel.direct_booking_url.replace('/book', '').replace('/reservations', '')) + '&medium=website&campaign=hotels_page_website'
-              const bookUrl = '/api/track?hotel_id=' + hotel.id + '&hotel_name=' + encodeURIComponent(hotel.name) + '&destination=' + encodeURIComponent(hotel.direct_booking_url) + '&medium=website&campaign=hotels_page_book'
-              return (
+              const websiteUrl = '/api/track?hotel_id=' + hotel.id + '&hotel_name=' + encodeURIComponent(hotel.name) + '&destination=' + encodeURIComponent((hotel.direct_booking_url || '').replace('/book', '').replace('/reservations', '')) + '&medium=website&campaign=hotels_page_website'
+              const bookUrl = '/api/track?hotel_id=' + hotel.id + '&hotel_name=' + encodeURIComponent(hotel.name) + '&destination=' + encodeURIComponent(hotel.direct_booking_url || '') + '&medium=website&campaign=hotels_page_book'             
+               return (
                 <div
                   key={hotel.id}
                   onMouseEnter={() => setHovered(hotel.id)}
