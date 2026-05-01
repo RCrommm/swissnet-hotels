@@ -34,7 +34,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const { data: hotels } = await supabase
     .from('hotels')
-    .select('id, slug, updated_at, is_partner')
+    .select('id, slug, updated_at, is_partner, region')
     .eq('is_active', true)
 
   const hotelPages: MetadataRoute.Sitemap = (hotels || []).map((hotel: any) => ({
