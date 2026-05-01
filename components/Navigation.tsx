@@ -2,18 +2,6 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
-const hotelLinks = [
-  { label: 'All Hotels', href: '/hotels' },
-  { label: 'Zermatt', href: '/hotels?region=Zermatt' },
-  { label: 'St. Moritz', href: '/hotels?region=St.+Moritz' },
-  { label: 'Verbier', href: '/hotels?region=Verbier' },
-  { label: 'Lucerne', href: '/hotels?region=Lucerne' },
-  { label: 'Interlaken', href: '/hotels?region=Interlaken' },
-  { label: 'Ski Resorts', href: '/hotels?category=Ski+Resort' },
-  { label: 'Wellness Retreats', href: '/hotels?category=Wellness+Retreat' },
-  { label: 'City Luxury', href: '/hotels?category=City+Luxury' },
-]
-
 const destinationLinks = [
   { label: 'Zermatt', href: '/destinations/zermatt' },
   { label: 'Geneva', href: '/destinations/geneva' },
@@ -23,11 +11,14 @@ const destinationLinks = [
   { label: 'Gstaad', href: '/destinations/gstaad' },
   { label: 'Lucerne', href: '/destinations/lucerne' },
   { label: 'Verbier', href: '/destinations/verbier' },
+  { label: 'Davos', href: '/destinations/davos' },
+  { label: 'Crans-Montana', href: '/destinations/crans-montana' },
+  { label: 'Flims', href: '/destinations/flims' },
+  { label: 'Bern', href: '/destinations/bern' },
 ]
 
 export default function Navigation() {
   const [menuOpen, setMenuOpen] = useState(false)
-  const [hotelsOpen, setHotelsOpen] = useState(false)
   const [destinationsOpen, setDestinationsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
@@ -69,42 +60,24 @@ export default function Navigation() {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }} className="hidden md:flex">
 
-          {/* Home */}
           <Link href="/" style={linkStyle}
             onMouseEnter={e => (e.currentTarget.style.color = gold)}
             onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}>
             Home
           </Link>
 
-          {/* Hotels dropdown */}
-          <div style={{ position: 'relative' }}
-            onMouseEnter={() => setHotelsOpen(true)}
-            onMouseLeave={() => setHotelsOpen(false)}>
-            <button style={{ ...linkStyle, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem', padding: 0 }}
-              onMouseEnter={e => (e.currentTarget.style.color = gold)}
-              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}>
-              Hotels
-              <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            {hotelsOpen && (
-              <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', background: 'rgba(73,40,22,0.98)', border: '1px solid rgba(201,169,110,0.2)', padding: '0.75rem 0', minWidth: '200px', marginTop: '0.5rem', backdropFilter: 'blur(10px)' }}>
-                {hotelLinks.map(item => (
-                  <Link key={item.label} href={item.href} style={dropdownItemStyle}
-                    onMouseEnter={e => { e.currentTarget.style.color = gold; e.currentTarget.style.background = 'rgba(201,169,110,0.1)' }}
-                    onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; e.currentTarget.style.background = 'transparent' }}>
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+          <Link href="/hotels" style={linkStyle}
+            onMouseEnter={e => (e.currentTarget.style.color = gold)}
+            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}>
+            Hotels
+          </Link>
 
           {/* Destinations dropdown */}
-          <div style={{ position: 'relative' }}
+          <div
+            style={{ position: 'relative' }}
             onMouseEnter={() => setDestinationsOpen(true)}
-            onMouseLeave={() => setDestinationsOpen(false)}>
+            onMouseLeave={() => setDestinationsOpen(false)}
+          >
             <button style={{ ...linkStyle, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem', padding: 0 }}
               onMouseEnter={e => (e.currentTarget.style.color = gold)}
               onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}>
@@ -114,7 +87,14 @@ export default function Navigation() {
               </svg>
             </button>
             {destinationsOpen && (
-              <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', background: 'rgba(73,40,22,0.98)', border: '1px solid rgba(201,169,110,0.2)', padding: '0.75rem 0', minWidth: '200px', marginTop: '0.5rem', backdropFilter: 'blur(10px)' }}>
+              <div style={{
+                position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)',
+                background: 'rgba(73,40,22,0.98)', border: '1px solid rgba(201,169,110,0.2)',
+                padding: '0.75rem 0', minWidth: '200px', marginTop: '0',
+                backdropFilter: 'blur(10px)', paddingTop: '0.5rem',
+              }}>
+                {/* invisible bridge to prevent gap */}
+                <div style={{ position: 'absolute', top: '-10px', left: 0, right: 0, height: '10px' }} />
                 {destinationLinks.map(item => (
                   <Link key={item.label} href={item.href} style={dropdownItemStyle}
                     onMouseEnter={e => { e.currentTarget.style.color = gold; e.currentTarget.style.background = 'rgba(201,169,110,0.1)' }}
@@ -126,7 +106,6 @@ export default function Navigation() {
             )}
           </div>
 
-          {/* Pricing */}
           <a href="/#pricing" style={linkStyle}
             onMouseEnter={e => (e.currentTarget.style.color = gold)}
             onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}>
@@ -160,8 +139,14 @@ export default function Navigation() {
             { label: 'Geneva', href: '/destinations/geneva' },
             { label: 'St. Moritz', href: '/destinations/st-moritz' },
             { label: 'Interlaken', href: '/destinations/interlaken' },
-            { label: 'Ski Resorts', href: '/hotels?category=Ski+Resort' },
-            { label: 'Wellness', href: '/hotels?category=Wellness+Retreat' },
+            { label: 'Zurich', href: '/destinations/zurich' },
+            { label: 'Gstaad', href: '/destinations/gstaad' },
+            { label: 'Lucerne', href: '/destinations/lucerne' },
+            { label: 'Verbier', href: '/destinations/verbier' },
+            { label: 'Davos', href: '/destinations/davos' },
+            { label: 'Crans-Montana', href: '/destinations/crans-montana' },
+            { label: 'Flims', href: '/destinations/flims' },
+            { label: 'Bern', href: '/destinations/bern' },
             { label: 'Pricing', href: '/#pricing' },
             { label: 'Hotel Login', href: '/dashboard/login' },
           ].map(item => (
