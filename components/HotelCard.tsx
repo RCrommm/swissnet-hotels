@@ -10,7 +10,7 @@ export default function HotelCard({ hotel }: { hotel: Hotel }) {
   const textMuted = 'rgba(61,43,31,0.5)'
   const border = 'rgba(201,169,110,0.25)'
 
-  const hotelHomepage = hotel.direct_booking_url
+  const hotelHomepage = (hotel.direct_booking_url || '')
     .replace('/book', '')
     .replace('/reservations', '')
     .replace('/en/book', '')
@@ -18,8 +18,7 @@ export default function HotelCard({ hotel }: { hotel: Hotel }) {
 
   const homepageTrackingUrl = `/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIComponent(hotel.name)}&destination=${encodeURIComponent(hotelHomepage)}&medium=website&campaign=hotel_homepage`
 
-  const bookTrackingUrl = `/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIComponent(hotel.name)}&destination=${encodeURIComponent(hotel.direct_booking_url)}&medium=website&campaign=hotel_card`
-
+const bookTrackingUrl = `/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIComponent(hotel.name)}&destination=${encodeURIComponent(hotel.direct_booking_url || '')}&medium=website&campaign=hotel_card`
   return (
     <div
       onMouseEnter={() => setHovered(true)}
