@@ -64,4 +64,19 @@ const subPageUrls: MetadataRoute.Sitemap = partnerHotels.flatMap((hotel: any) =>
   }))
 )
 
-return [...staticPages, ...destinationPages, ...promptPages, ...hotelPages, ...intentPages, ...subPageUrls]}
+const partnerSlugs = partnerHotels.map((h: any) => h.slug)
+const allSlugs = (hotels || []).map((h: any) => h.slug)
+
+const comparePages: MetadataRoute.Sitemap = partnerHotels.flatMap((hotelA: any) =>
+  (hotels || [])
+    .filter((hotelB: any) => hotelB.id !== hotelA.id && hotelB.region === hotelA.region)
+    .slice(0, 3)
+    .map((hotelB: any) => ({
+      url: `${baseUrl}/compare/${hotelA.slug}-vs-${hotelB.slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    }))
+)
+
+return [...staticPages, ...destinationPages, ...promptPages, ...hotelPages, ...intentPages, ...subPageUrls, ...comparePages]}
