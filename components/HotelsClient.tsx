@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-const REGIONS = ['All Destinations', 'Zermatt', 'St. Moritz', 'Verbier', 'Davos', 'Interlaken', 'Lucerne', 'Geneva', 'Zurich', 'Gstaad', 'Lugano']
+const REGIONS = ['All Destinations', 'Zermatt', 'St. Moritz', 'Verbier', 'Davos', 'Interlaken', 'Lucerne', 'Geneva', 'Zurich', 'Gstaad', 'Lugano', 'Bern', 'Basel', 'Flims', 'Crans-Montana', 'Verbier', 'Lausanne', 'Ascona', 'Andermatt', 'Montreux', 'Grindelwald', 'Engelberg', 'Saas-Fee']
 const CATEGORIES = ['All Types', 'Ski Resort', 'Wellness Retreat', 'City Luxury', 'Mountain Lodge', 'Lake Resort']
 
 interface Hotel {
