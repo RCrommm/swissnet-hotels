@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import SchemaEditor from './SchemaEditor'
 
 const REGIONS = ['Zermatt', 'St. Moritz', 'Verbier', 'Davos', 'Interlaken', 'Lucerne', 'Geneva', 'Zurich', 'Gstaad', 'Lugano']
 const CATEGORIES = ['Ski Resort', 'Wellness Retreat', 'City Luxury', 'Mountain Lodge', 'Lake Resort']
@@ -21,6 +22,7 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
   const [fetchResults, setFetchResults] = useState<Record<string, 'success' | 'error'>>({})
   const [enrichingId, setEnrichingId] = useState<string | null>(null)
   const [enrichResults, setEnrichResults] = useState<Record<string, 'success' | 'error'>>({})
+  const [schemaHotel, setSchemaHotel] = useState<{id: string, name: string} | null>(null)
 
   const gold = '#C9A84C'
   const border = 'rgba(201,169,110,0.2)'
@@ -258,13 +260,19 @@ wikipedia_url: editForm.wikipedia_url || null,
                   </button>
                 )}
                 <button onClick={() => fetchImageForHotel(hotel)} disabled={fetchingImage === hotel.id || fetchingAll}
-                  style={{ background: fetchResults[hotel.id] === 'success' ? 'rgba(22,163,74,0.1)' : fetchResults[hotel.id] === 'error' ? 'rgba(220,38,38,0.1)' : bgSection, color: fetchResults[hotel.id] === 'success' ? '#16a34a' : fetchResults[hotel.id] === 'error' ? '#dc2626' : textMuted, fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, padding: '0.2rem 0.6rem', border: '1px solid ' + border, borderRadius: 4, cursor: 'pointer' }}>
-                  {fetchingImage === hotel.id ? '...' : fetchResults[hotel.id] === 'success' ? '✓ Got image' : fetchResults[hotel.id] === 'error' ? '✗ Failed' : '🖼 Fetch'}
-                </button>
-                <button onClick={() => editingId === hotel.id ? setEditingId(null) : startEdit(hotel)}
-                  style={{ background: editingId === hotel.id ? 'transparent' : gold, color: editingId === hotel.id ? textMuted : '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.4rem 1rem', border: editingId === hotel.id ? '1px solid ' + border : 'none', cursor: 'pointer', borderRadius: 4 }}>
-                  {editingId === hotel.id ? 'Cancel' : 'Edit'}
-                </button>
+  style={{ background: fetchResults[hotel.id] === 'success' ? 'rgba(22,163,74,0.1)' : fetchResults[hotel.id] === 'error' ? 'rgba(220,38,38,0.1)' : bgSection, color: fetchResults[hotel.id] === 'success' ? '#16a34a' : fetchResults[hotel.id] === 'error' ? '#dc2626' : textMuted, fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, padding: '0.2rem 0.6rem', border: '1px solid ' + border, borderRadius: 4, cursor: 'pointer' }}>
+  {fetchingImage === hotel.id ? '...' : fetchResults[hotel.id] === 'success' ? '✓ Got image' : fetchResults[hotel.id] === 'error' ? '✗ Failed' : '🖼 Fetch'}
+</button>
+{hotel.is_partner && (
+  <button onClick={() => setSchemaHotel({id: hotel.id, name: hotel.name})}
+    style={{ background: 'rgba(201,169,110,0.15)', color: gold, fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, padding: '0.2rem 0.6rem', border: '1px solid ' + gold + '44', borderRadius: 4, cursor: 'pointer' }}>
+    ✦ Schema
+  </button>
+)}
+<button onClick={() => editingId === hotel.id ? setEditingId(null) : startEdit(hotel)}
+  style={{ background: editingId === hotel.id ? 'transparent' : gold, color: editingId === hotel.id ? textMuted : '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.4rem 1rem', border: editingId === hotel.id ? '1px solid ' + border : 'none', cursor: 'pointer', borderRadius: 4 }}>
+  {editingId === hotel.id ? 'Cancel' : 'Edit'}
+</button>
               </div>
             </div>
 
