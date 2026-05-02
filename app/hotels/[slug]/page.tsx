@@ -109,6 +109,7 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
     { data: restaurants },
     { data: offers },
     { data: content },
+    { data: hotelSections },
   ] = await Promise.all([
     supabase.from('hotel_keywords').select('keyword').eq('hotel_id', hotel.id),
     showSchema ? supabase.from('room_types').select('*').eq('hotel_id', hotel.id).eq('is_available', true).order('sort_order', { ascending: true }) : { data: [] },
@@ -116,12 +117,21 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
     showSchema ? supabase.from('hotel_restaurants').select('*').eq('hotel_id', hotel.id).eq('is_available', true).order('sort_order', { ascending: true }) : { data: [] },
     showSchema ? supabase.from('hotel_offers').select('*').eq('hotel_id', hotel.id).eq('is_available', true).order('sort_order', { ascending: true }) : { data: [] },
     supabase.from('hotel_content').select('*').eq('hotel_id', hotel.id).single(),
+    showSchema ? supabase.from('hotel_sections').select('*').eq('hotel_id', hotel.id) : { data: [] },
   ])
 
   const faqs = content?.faqs || []
   const verdict = content?.verdict || null
   const bestForExtended = content?.best_for_extended || []
   const alternatives = content?.nearby_alternatives || []
+
+  const getSection = (type: string) =>
+    hotelSections?.find((section: any) => section.section_type === type)
+
+  const diningSection = getSection('dining')
+  const spaSection = getSection('spa')
+  const roomsSection = getSection('rooms')
+  const experiencesSection = getSection('experiences')
 
   // Colors — clean minimal luxury
   const gold = '#C9A84C'
@@ -277,10 +287,13 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
             {showSchema && roomTypes && roomTypes.length > 0 && (
               <>
                 <section style={{ marginBottom: '4rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1rem' }}>
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: 0 }}>Rooms & Suites</p>
                     <Link href={`/hotels/${hotelUrl}/rooms`} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: textMuted, textDecoration: 'none' }}>View all →</Link>
                   </div>
+                  {roomsSection?.intro_text && (
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, lineHeight: 1.8, margin: '0 0 1.5rem' }}>{roomsSection.intro_text}</p>
+                  )}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
                     {roomTypes.slice(0, 4).map((rt: any, i: number) => (
                       <div key={rt.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 0', borderBottom: `1px solid ${border}` }}>
@@ -307,10 +320,13 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
             {showSchema && spaData && spaData.length > 0 && (
               <>
                 <section style={{ marginBottom: '4rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1rem' }}>
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: 0 }}>Spa & Wellness</p>
                     <Link href={`/hotels/${hotelUrl}/spa`} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: textMuted, textDecoration: 'none' }}>View details →</Link>
                   </div>
+                  {spaSection?.intro_text && (
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, lineHeight: 1.8, margin: '0 0 1.5rem' }}>{spaSection.intro_text}</p>
+                  )}
                   {spaData.map((spa: any) => (
                     <div key={spa.id}>
                       <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 400, color: text, margin: '0 0 0.5rem' }}>{spa.name}</p>
@@ -340,10 +356,13 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
             {showSchema && restaurants && restaurants.length > 0 && (
               <>
                 <section style={{ marginBottom: '4rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1rem' }}>
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: 0 }}>Dining</p>
                     <Link href={`/hotels/${hotelUrl}/dining`} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: textMuted, textDecoration: 'none' }}>View all →</Link>
                   </div>
+                  {diningSection?.intro_text && (
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, lineHeight: 1.8, margin: '0 0 1.5rem' }}>{diningSection.intro_text}</p>
+                  )}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                     {restaurants.map((r: any) => (
                       <div key={r.id} style={{ paddingBottom: '1.5rem', borderBottom: `1px solid ${border}` }}>
@@ -370,10 +389,26 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>Experiences</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
         {[
-          { label: 'Spa & Wellness', desc: 'Treatments, pools and Alpine rituals', href: `/hotels/${hotelUrl}/spa` },
-          { label: 'Dining & Restaurants', desc: 'Fine dining, bars and private experiences', href: `/hotels/${hotelUrl}/dining` },
-          { label: 'Rooms & Suites', desc: 'All room types, sizes and rates', href: `/hotels/${hotelUrl}/rooms` },
-          { label: 'Activities & Experiences', desc: 'Curated experiences and Alpine adventures', href: `/hotels/${hotelUrl}/experiences` },
+          {
+            label: spaSection?.title || 'Spa & Wellness',
+            desc: spaSection?.short_description || 'Treatments, pools and Alpine rituals',
+            href: `/hotels/${hotelUrl}/spa`
+          },
+          {
+            label: diningSection?.title || 'Dining & Restaurants',
+            desc: diningSection?.short_description || 'Fine dining, bars and private experiences',
+            href: `/hotels/${hotelUrl}/dining`
+          },
+          {
+            label: roomsSection?.title || 'Rooms & Suites',
+            desc: roomsSection?.short_description || 'All room types, sizes and rates',
+            href: `/hotels/${hotelUrl}/rooms`
+          },
+          {
+            label: experiencesSection?.title || 'Activities & Experiences',
+            desc: experiencesSection?.short_description || 'Curated experiences and Alpine adventures',
+            href: `/hotels/${hotelUrl}/experiences`
+          },
         ].map(exp => (
           <Link key={exp.label} href={exp.href} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', marginBottom: '0.5rem', background: white, border: `1px solid ${border}`, borderRadius: 4, textDecoration: 'none', boxShadow: '0 1px 8px rgba(0,0,0,0.04)' }}>
             <div>
