@@ -116,8 +116,8 @@ export default function OffersSchema({ hotelId, hotelName }: { hotelId: string; 
 
       {!editing && (
         <div style={S.header}>
-          <h2 style={S.title}>Special Offers — {hotelName}</h2>
-          <button style={S.btnGold} onClick={() => { setForm(empty); setEditing('new'); }}>+ Add Offer</button>
+          <h2 style={S.title}>Experiences — {hotelName}</h2>
+          <button style={S.btnGold} onClick={() => { setForm(empty); setEditing('new'); }}>+ Add Experience</button>
         </div>
       )}
 
@@ -210,7 +210,7 @@ export default function OffersSchema({ hotelId, hotelName }: { hotelId: string; 
       {!editing && (
         <>
           {loading && <div style={S.empty}>Loading...</div>}
-          {!loading && items.length === 0 && <div style={S.empty}>No offers yet.<br /><span style={{ color: COLORS.gold, cursor: 'pointer' }} onClick={() => { setForm(empty); setEditing('new'); }}>+ Add special offer →</span></div>}
+          {!loading && items.length === 0 && <div style={S.empty}>No offers yet.<br /><span style={{ color: COLORS.gold, cursor: 'pointer' }} onClick={() => { setForm(empty); setEditing('new'); }}>+ Add experience →</span></div>}
           {items.map(item => (
             <div key={item.id} style={S.card}>
               <div style={{ width: 10, height: 10, borderRadius: '50%', flexShrink: 0, background: item.is_available ? COLORS.success : COLORS.danger }} />
