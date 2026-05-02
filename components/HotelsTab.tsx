@@ -312,10 +312,7 @@ wikipedia_url: editForm.wikipedia_url || null,
                   <label style={labelStyle}>Description</label>
                   <textarea value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })} rows={3} style={{ ...inputStyle, resize: 'none' }} />
                 </div>
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={labelStyle}>Exclusive Offer</label>
-                  <input type="text" value={editForm.exclusive_offer} onChange={e => setEditForm({ ...editForm, exclusive_offer: e.target.value })} style={inputStyle} placeholder="3-night stay includes spa credit" />
-                </div>
+                
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
                   <div><label style={labelStyle}>Amenities (comma separated)</label><input type="text" value={editForm.amenities} onChange={e => setEditForm({ ...editForm, amenities: e.target.value })} style={inputStyle} placeholder="Spa, Pool, Fine Dining" /></div>
                   <div><label style={labelStyle}>Best For (comma separated)</label><input type="text" value={editForm.best_for} onChange={e => setEditForm({ ...editForm, best_for: e.target.value })} style={inputStyle} placeholder="Couples, Wellness, Ski" /></div>
