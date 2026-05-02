@@ -3,7 +3,7 @@ import { useState } from 'react'
 import RoomTypesTab from '@/components/RoomTypesTab'
 import SpaSchema from '@/components/schema/SpaSchema'
 import RestaurantsSchema from '@/components/schema/RestaurantsSchema'
-import OffersSchema from '@/components/schema/OffersSchema'
+import ExperiencesSchema from '@/components/schema/OffersSchema'
 import ContentSchema from '@/components/schema/ContentSchema'
 
 const COLORS = {
@@ -53,7 +53,7 @@ export default function SchemaTab({ hotels }: { hotels: any[] }) {
         {section === 'Rooms' && <RoomTypesTab hotelId={hotelId} hotelName={hotel?.name || ''} />}
         {section === 'Spa & Wellness' && <SpaSchema hotelId={hotelId} hotelName={hotel?.name || ''} />}
         {section === 'Restaurants' && <RestaurantsSchema hotelId={hotelId} hotelName={hotel?.name || ''} />}
-        {section === 'Special Offers' && <OffersSchema hotelId={hotelId} hotelName={hotel?.name || ''} />}
+{section === 'Experiences' && <ExperiencesSchema hotelId={hotelId} hotelName={hotel?.name || ''} />}
         {section === 'Content' && <ContentSchema hotelId={hotelId} hotelName={hotel?.name || ''} />}
       </div>
     </div>
