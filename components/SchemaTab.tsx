@@ -12,7 +12,7 @@ const COLORS = {
   border: 'rgba(201,168,76,0.25)',
 }
 
-const SECTIONS = ['Rooms', 'Spa & Wellness', 'Restaurants', 'Special Offers', 'Content']
+const SECTIONS = ['Rooms', 'Spa & Wellness', 'Restaurants', 'Experiences', 'Content']
 
 export default function SchemaTab({ hotels }: { hotels: any[] }) {
   const [hotelId, setHotelId] = useState(hotels[0]?.id || '')
