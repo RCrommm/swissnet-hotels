@@ -159,9 +159,20 @@ export default function SpaSchema({ hotelId, hotelName }: { hotelId: string; hot
             </div>
           </div>
 
-          <div style={{ ...S.fieldGroup, marginBottom: 16 }}>
+         <div style={{ ...S.fieldGroup, marginBottom: 16 }}>
             <label style={S.label}>Booking URL</label>
             <input {...inp('booking_url')} placeholder="https://..." />
+          </div>
+
+          <div style={{ ...S.fieldGroup, marginBottom: 16 }}>
+            <label style={S.label}>Images (paste URLs one by one)</label>
+            {((form as any).images || []).map((url: string, i: number) => (
+              <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
+                <input value={url} onChange={e => { const imgs = [...((form as any).images || [])]; imgs[i] = e.target.value; setForm(f => ({ ...f, images: imgs } as any)) }} style={{ ...S.input, flex: 1 }} placeholder="https://..." />
+                <button onClick={() => { const imgs = ((form as any).images || []).filter((_: any, idx: number) => idx !== i); setForm(f => ({ ...f, images: imgs } as any)) }} style={{ ...S.btnDanger, padding: '6px 10px' }}>✕</button>
+              </div>
+            ))}
+            <button onClick={() => setForm(f => ({ ...f, images: [...((f as any).images || []), ''] } as any))} style={{ ...S.btnOutline, marginTop: 4, alignSelf: 'flex-start' }}>+ Add Image</button>
           </div>
 
           <div style={S.sectionTitle}>Key Features</div>
