@@ -38,7 +38,7 @@ export default function OffersSchema({ hotelId, hotelName }: { hotelId: string; 
 
   const fetch = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase.from('hotel_offers').select('*').eq('hotel_id', hotelId).order('sort_order');
+    const { data } = await supabase.from('hotel_experiences').select('*').eq('hotel_id', hotelId).order('sort_order');
     setItems(data || []);
     setLoading(false);
   }, [hotelId]);
@@ -63,15 +63,15 @@ export default function OffersSchema({ hotelId, hotelName }: { hotelId: string; 
       is_available: form.is_available, sort_order: parseInt(form.sort_order as unknown as string) || 0,
     };
     let error: any;
-    if (editing === 'new') ({ error } = await supabase.from('hotel_offers').insert(payload));
-    else ({ error } = await supabase.from('hotel_offers').update(payload).eq('id', (editing as Offer).id));
+    if (editing === 'new') ({ error } = await supabase.from('hotel_experiences').insert(payload));
+    else ({ error } = await supabase.from('hotel_experiences').update(payload).eq('id', (editing as Offer).id));
     setSaving(false);
     if (error) showMsg('error', error.message);
     else { showMsg('success', 'Saved!'); setEditing(null); setForm(empty); fetch(); }
   };
 
   const handleDelete = async (id: string) => {
-    await supabase.from('hotel_offers').delete().eq('id', id);
+    await supabase.from('hotel_experiences').delete().eq('id', id);
     showMsg('success', 'Deleted.'); fetch(); setDeleteConfirm(null);
   };
 
