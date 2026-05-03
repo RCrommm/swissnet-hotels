@@ -244,7 +244,7 @@ export default function RestaurantsSchema({ hotelId, hotelName }: { hotelId: str
                 {deleteConfirm === item.id ? (
                   <><span style={{ color: COLORS.textMuted, fontSize: 12, alignSelf: 'center' }}>Confirm?</span><button style={S.btnDanger} onClick={() => handleDelete(item.id)}>Delete</button><button style={S.btnOutline} onClick={() => setDeleteConfirm(null)}>Cancel</button></>
                 ) : (
-                  <><button style={S.btnOutline} onClick={() => { setForm({ ...empty, ...item, price_from: item.price_from || '', seats: item.seats || '' }); setEditing(item); }}>Edit</button><button style={S.btnDanger} onClick={() => setDeleteConfirm(item.id)}>Delete</button></>
+                  <><button style={S.btnOutline} onClick={() => { setForm({ ...empty, ...item, price_from: item.price_from || '', seats: item.seats || '', images: (item as any).images || [] }); setEditing(item); }}>Edit</button><button style={S.btnDanger} onClick={() => setDeleteConfirm(item.id)}>Delete</button></>
                 )}
               </div>
             </div>
