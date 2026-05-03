@@ -40,8 +40,7 @@ export default function SpaSchema({ hotelId, hotelName }: { hotelId: string; hot
 
   const fetch = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase.from('hotel_spa').select('*').eq('hotel_id', hotelId).order('created_at');
-    setItems(data || []);
+const { data } = await supabase.from('hotel_spa').select('*').eq('hotel_id', hotelId);    setItems(data || []);
     setLoading(false);
   }, [hotelId]);
 
