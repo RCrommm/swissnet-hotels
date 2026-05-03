@@ -25,6 +25,7 @@ const destinationLinks = [
 export default function Navigation() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [destinationsOpen, setDestinationsOpen] = useState(false)
+  const [guidesOpen, setGuidesOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
@@ -110,7 +111,25 @@ export default function Navigation() {
               </div>
             )}
           </div>
-
+            <div style={{ position: 'relative' }} onMouseEnter={() => setGuidesOpen(true)} onMouseLeave={() => setGuidesOpen(false)}>
+  <button style={{ ...linkStyle, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem', padding: 0 }} onMouseEnter={e => (e.currentTarget.style.color = gold)} onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}>
+    Guides
+    <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+  </button>
+  {guidesOpen && (
+    <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', background: 'rgba(73,40,22,0.98)', border: '1px solid rgba(201,169,110,0.2)', padding: '0.5rem 0', minWidth: '240px', backdropFilter: 'blur(10px)', maxHeight: '80vh', overflowY: 'auto' }}>
+      <div style={{ position: 'absolute', top: '-10px', left: 0, right: 0, height: '10px' }} />
+      <div style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' as const, color: gold, padding: '0.5rem 1.25rem' }}>By Destination</div>
+      {[{label:'Best Hotels Switzerland',href:'/best/luxury-hotels-switzerland'},{label:'Best Hotels Zermatt',href:'/best/luxury-hotels-zermatt'},{label:'Best Hotels Geneva',href:'/best/luxury-hotels-geneva'},{label:'Best Hotels Zurich',href:'/best/luxury-hotels-zurich'},{label:'Best Hotels Gstaad',href:'/best/luxury-hotels-gstaad'},{label:'Best Hotels Verbier',href:'/best/luxury-hotels-verbier'},{label:'Best Hotels Interlaken',href:'/best/luxury-hotels-interlaken'},{label:'Best Hotels Montreux',href:'/best/luxury-hotels-montreux'},{label:'Best Hotels Ascona',href:'/best/luxury-hotels-ascona'},{label:'Best Hotels Andermatt',href:'/best/luxury-hotels-andermatt'}].map(item => (
+        <Link key={item.href} href={item.href} style={dropdownItemStyle} onMouseEnter={e => { e.currentTarget.style.color = gold; e.currentTarget.style.background = 'rgba(201,169,110,0.1)' }} onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; e.currentTarget.style.background = 'transparent' }}>{item.label}</Link>
+      ))}
+      <div style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' as const, color: gold, padding: '0.75rem 1.25rem 0.4rem', borderTop: '1px solid rgba(201,169,110,0.15)', marginTop: '0.5rem' }}>By Category</div>
+      {[{label:'Best Ski Hotels',href:'/best/ski-hotels-switzerland'},{label:'Best Wellness Hotels',href:'/best/wellness-hotels-switzerland'},{label:'Best Spa Hotels',href:'/best/spa-hotels-switzerland'},{label:'Best Romantic Hotels',href:'/best/romantic-hotels-switzerland'},{label:'Best Honeymoon Hotels',href:'/best/honeymoon-hotels-switzerland'},{label:'Best Family Hotels',href:'/best/family-hotels-switzerland'}].map(item => (
+        <Link key={item.href} href={item.href} style={dropdownItemStyle} onMouseEnter={e => { e.currentTarget.style.color = gold; e.currentTarget.style.background = 'rgba(201,169,110,0.1)' }} onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; e.currentTarget.style.background = 'transparent' }}>{item.label}</Link>
+      ))}
+    </div>
+  )}
+</div>
           <a href="/#pricing" style={linkStyle}
             onMouseEnter={e => (e.currentTarget.style.color = gold)}
             onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}>
