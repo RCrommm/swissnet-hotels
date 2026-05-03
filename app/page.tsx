@@ -47,7 +47,7 @@ export default async function HomePage() {
         <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 2rem', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '2rem', textAlign: 'center' }}>
           {[
             { n: '10+', label: 'Partner Hotels' },
-            { n: '10', label: 'Swiss Regions' },
+            { n: '17', label: 'Swiss Regions' },
             { n: '15%+', label: 'Saved vs OTAs' },
             { n: 'AI', label: 'Powered Discovery' },
           ].map(s => (
