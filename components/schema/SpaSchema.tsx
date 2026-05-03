@@ -22,6 +22,7 @@ const empty = {
   treatments: [] as string[], opening_hours: '', price_from: '',
   price_currency: 'CHF', pool: false, sauna: false, hammam: false,
   size_sqm: '', booking_url: '', is_available: true,
+  images: [] as string[],
 };
 
 type Spa = typeof empty & { id: string; hotel_id: string };
@@ -60,6 +61,7 @@ export default function SpaSchema({ hotelId, hotelName }: { hotelId: string; hot
       price_from: form.price_from ? parseFloat(form.price_from as string) : null,
       price_currency: form.price_currency, pool: form.pool, sauna: form.sauna,
       hammam: form.hammam, size_sqm: form.size_sqm ? parseFloat(form.size_sqm as string) : null,
+      images: (form as any).images || [],
       booking_url: form.booking_url || null, is_available: form.is_available,
     };
     let error: any;
