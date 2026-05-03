@@ -22,6 +22,7 @@ const empty = {
   meal_types: [] as string[], opening_hours: '', price_range: '',
   price_from: '', price_currency: 'CHF', menu_url: '', booking_url: '',
   dress_code: '', michelin_stars: 0, seats: '', is_available: true, sort_order: 0,
+  images: [] as string[],
 };
 
 type Restaurant = typeof empty & { id: string; hotel_id: string };
@@ -59,6 +60,7 @@ export default function RestaurantsSchema({ hotelId, hotelName }: { hotelId: str
       booking_url: form.booking_url || null, dress_code: form.dress_code || null,
       michelin_stars: parseInt(form.michelin_stars as unknown as string) || 0,
       seats: form.seats ? parseInt(form.seats as string) : null,
+      images: (form as any).images || [],
       is_available: form.is_available, sort_order: parseInt(form.sort_order as unknown as string) || 0,
     };
     let error: any;
