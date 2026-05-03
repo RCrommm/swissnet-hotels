@@ -67,7 +67,7 @@ export default function RestaurantsSchema({ hotelId, hotelName }: { hotelId: str
     if (editing === 'new') ({ error } = await supabase.from('hotel_restaurants').insert(payload));
     else ({ error } = await supabase.from('hotel_restaurants').update(payload).eq('id', (editing as Restaurant).id));
     setSaving(false);
-    if (error) showMsg('error', error.message);
+    if (error) { showMsg('error', JSON.stringify(error)); console.error('Save error:', error); }
     else { showMsg('success', 'Saved!'); setEditing(null); setForm(empty); fetch(); }
   };
 
