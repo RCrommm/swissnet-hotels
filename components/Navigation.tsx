@@ -127,8 +127,7 @@ export default function Navigation() {
 {[
   {label:'La Réserve vs Four Seasons Geneva', href:'/compare/la-reserve-geneve-vs-four-seasons-hotel-des-bergues-geneva'},
   {label:'Mont Cervin vs The Omnia Zermatt', href:'/compare/mont-cervin-palace-vs-the-omnia-zermatt'},
-  {label:'Baur au Lac vs Park Hyatt Zurich', href:'/compare/baur-au-lac-zurich-vs-park-hyatt-zurich'},
-  {label:'Badrutt\'s Palace vs Kulm St. Moritz', href:'/compare/badrutts-palace-hotel-vs-kulm-hotel-st-moritz'},
+{label:'La Réserve Eden au Lac vs Baur au Lac', href:'/compare/la-reserve-zurich-vs-baur-au-lac-zurich'},  {label:'Badrutt\'s Palace vs Kulm St. Moritz', href:'/compare/badrutts-palace-hotel-vs-kulm-hotel-st-moritz'},
   {label:'Alpina Gstaad vs Palace Gstaad', href:'/compare/the-alpina-gstaad-vs-palace-hotel-gstaad'},
 ].map(item => (
   <Link key={item.href} href={item.href} style={dropdownItemStyle} onMouseEnter={e => { e.currentTarget.style.color = gold; e.currentTarget.style.background = 'rgba(201,169,110,0.1)' }} onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; e.currentTarget.style.background = 'transparent' }}>{item.label}</Link>
