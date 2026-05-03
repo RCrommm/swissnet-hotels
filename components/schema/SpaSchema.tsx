@@ -236,7 +236,7 @@ const { data } = await supabase.from('hotel_spa').select('*').eq('hotel_id', hot
                 {deleteConfirm === item.id ? (
                   <><span style={{ color: COLORS.textMuted, fontSize: 12, alignSelf: 'center' }}>Confirm?</span><button style={S.btnDanger} onClick={() => handleDelete(item.id)}>Delete</button><button style={S.btnOutline} onClick={() => setDeleteConfirm(null)}>Cancel</button></>
                 ) : (
-                  <><button style={S.btnOutline} onClick={() => { setForm({ ...empty, ...item, price_from: item.price_from || '', size_sqm: item.size_sqm || '', images: (item as any).images || [] }); setEditing(item); }}>Edit</button><button style={S.btnDanger} onClick={() => setDeleteConfirm(item.id)}>Delete</button></>
+                  <><button style={S.btnOutline} onClick={() => { setForm({ ...empty, ...item, price_from: item.price_from || '', size_sqm: item.size_sqm || '', images: (item as any).images || [], facilities: item.facilities || [], treatments: item.treatments || [] }); setEditing(item); }}>Edit</button><button style={S.btnDanger} onClick={() => setDeleteConfirm(item.id)}>Delete</button></>
                 )}
               </div>
             </div>
