@@ -70,6 +70,9 @@ async function queryClaude(query: string): Promise<string> {
 
 const PLATFORMS = [
   { id: 'claude', name: 'Claude AI', queryFn: queryClaude },
+  { id: 'chatgpt', name: 'ChatGPT', queryFn: queryChatGPT },
+  { id: 'perplexity', name: 'Perplexity', queryFn: queryPerplexity },
+
 ]
 
 export async function GET(request: Request) {
