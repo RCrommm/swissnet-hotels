@@ -159,9 +159,9 @@ export async function GET(request: Request) {
         }, { onConflict: 'hotel_id,query,platform' })
 
         if (appeared) appeared_results.push({ hotel: hotel.name, query, platform: platform.id, appeared })
-        await new Promise(r => setTimeout(r, 500))
+        await new Promise(r => setTimeout(r, 100))
       }
-      await new Promise(r => setTimeout(r, 1000))
+      await new Promise(r => setTimeout(r, 200))
     }
   }
 
