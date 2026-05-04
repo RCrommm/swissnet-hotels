@@ -126,9 +126,15 @@ const queriesToRun = customQueries.map(q => q.query)
           else estimatedCost += 0.001
 
           const hotelNameLower = hotel.name.toLowerCase()
-          const responseLower = responseText.toLowerCase()
-          const lastTwoWords = hotel.name.split(' ').slice(-2).join(' ').toLowerCase()
-          const appeared = responseLower.includes(hotelNameLower) || responseLower.includes(lastTwoWords)
+const responseLower = responseText.toLowerCase()
+const words = hotelNameLower.split(' ').filter((w: string) => !['hotel', 'the', 'le', 'la', 'les', 'grand', 'de', 'du', 'au', 'aux', 'by', 'at', 'and', '&'].includes(w))
+const lastTwoWords = hotel.name.split(' ').slice(-2).join(' ').toLowerCase()
+const firstTwoWords = hotel.name.split(' ').slice(0, 2).join(' ').toLowerCase()
+const keyWords = words.slice(0, 3).join(' ')
+const appeared = responseLower.includes(hotelNameLower) ||
+  responseLower.includes(lastTwoWords) ||
+  responseLower.includes(firstTwoWords) ||
+  (words.length >= 2 && responseLower.includes(keyWords))
 
           let snippet: string | null = null
           if (appeared) {

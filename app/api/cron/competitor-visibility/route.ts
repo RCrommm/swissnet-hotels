@@ -139,8 +139,14 @@ export async function GET(request: Request) {
           // Check each hotel
           for (const hotel of allHotels) {
             const hotelNameLower = hotel.name.toLowerCase()
-            const lastTwoWords = hotel.name.split(' ').slice(-2).join(' ').toLowerCase()
-            const appeared = responseLower.includes(hotelNameLower) || responseLower.includes(lastTwoWords)
+const words = hotelNameLower.split(' ').filter((w: string) => !['hotel', 'the', 'le', 'la', 'les', 'grand', 'de', 'du', 'au', 'aux', 'by', 'at', 'and', '&'].includes(w))
+const lastTwoWords = hotel.name.split(' ').slice(-2).join(' ').toLowerCase()
+const firstTwoWords = hotel.name.split(' ').slice(0, 2).join(' ').toLowerCase()
+const keyWords = words.slice(0, 3).join(' ')
+const appeared = responseLower.includes(hotelNameLower) || 
+  responseLower.includes(lastTwoWords) ||
+  responseLower.includes(firstTwoWords) ||
+  (words.length >= 2 && responseLower.includes(keyWords))
             if (appeared) {
               results.push({ hotel: hotel.name, platform: platform.id, query: q, region })
             }
