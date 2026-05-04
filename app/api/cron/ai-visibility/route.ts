@@ -112,9 +112,8 @@ export async function GET(request: Request) {
       .eq('hotel_id', hotel.id)
       .eq('is_active', true)
 
-    const queriesToRun = customQueries?.length
-      ? customQueries.map(q => q.query)
-      : DEFAULT_QUERIES
+    if (!customQueries?.length) continue
+const queriesToRun = customQueries.map(q => q.query)
 
     for (const platform of platformsToRun) {
       for (const query of queriesToRun) {
