@@ -15,8 +15,8 @@ export default async function HotelsPage({ searchParams }: Props) {
     .from('hotels')
     .select('*')
     .eq('is_active', true)
-    .order('is_featured', { ascending: false })
-    .order('rating', { ascending: false })
+    .order('is_partner', { ascending: false })
+    .order('nightly_rate_chf', { ascending: false })
 
   if (params.region) query = query.eq('region', params.region)
   if (params.category) query = query.eq('category', params.category)
