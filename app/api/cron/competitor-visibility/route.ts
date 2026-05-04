@@ -58,6 +58,80 @@ const QUERIES_PER_REGION: Record<string, string[]> = {
     'most luxurious hotel Flims',
     'best spa hotel Flims Switzerland',
   ],
+  'St. Moritz': [
+    'best luxury hotel St Moritz Switzerland',
+    'top ski hotel St Moritz Engadin',
+    'best 5 star hotel St Moritz',
+    'most exclusive hotel St Moritz',
+    'best hotel St Moritz winter',
+  ],
+  'Gstaad': [
+    'best luxury hotel Gstaad Switzerland',
+    'top ski hotel Gstaad Alps',
+    'most exclusive hotel Gstaad',
+    'best 5 star hotel Gstaad',
+    'best chalet hotel Gstaad',
+  ],
+  'Verbier': [
+    'best luxury ski hotel Verbier Switzerland',
+    'top hotel Verbier Alps',
+    'best 5 star hotel Verbier',
+    'most exclusive hotel Verbier',
+    'best chalet hotel Verbier',
+  ],
+  'Andermatt': [
+    'best luxury hotel Andermatt Switzerland',
+    'top ski hotel Andermatt Alps',
+    'best 5 star hotel Andermatt',
+    'most exclusive hotel Andermatt',
+  ],
+  'Lucerne': [
+    'best luxury hotel Lucerne Switzerland',
+    'top hotel Lucerne lake view',
+    'best 5 star hotel Lucerne',
+    'most romantic hotel Lucerne',
+    'best hotel Lucerne city',
+  ],
+  'Lugano': [
+    'best luxury hotel Lugano Switzerland',
+    'top hotel Lugano lake view',
+    'best 5 star hotel Lugano',
+    'most romantic hotel Lugano',
+  ],
+  'Ascona': [
+    'best luxury hotel Ascona Switzerland',
+    'top hotel Ascona Lake Maggiore',
+    'best 5 star hotel Ascona Ticino',
+    'most romantic hotel Ascona',
+  ],
+  'Montreux': [
+    'best luxury hotel Montreux Switzerland',
+    'top hotel Montreux Lake Geneva',
+    'best 5 star hotel Montreux',
+    'most romantic hotel Montreux Swiss Riviera',
+  ],
+  'Grindelwald': [
+    'best luxury hotel Grindelwald Switzerland',
+    'top ski hotel Grindelwald Jungfrau',
+    'best 5 star hotel Grindelwald',
+    'best hotel Grindelwald Eiger view',
+  ],
+  'Engelberg': [
+    'best luxury hotel Engelberg Switzerland',
+    'top ski hotel Engelberg Alps',
+    'best 5 star hotel Engelberg',
+  ],
+  'Basel': [
+    'best luxury hotel Basel Switzerland',
+    'top 5 star hotel Basel',
+    'best hotel Basel Art Basel',
+  ],
+  'Lausanne': [
+    'best luxury hotel Lausanne Switzerland',
+    'top hotel Lausanne Lake Geneva',
+    'best 5 star hotel Lausanne',
+    'most romantic hotel Lausanne',
+  ],
 }
 
 async function queryPerplexity(query: string): Promise<string> {
