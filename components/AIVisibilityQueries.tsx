@@ -130,15 +130,9 @@ export default function AIVisibilityQueries({ hotels }: { hotels: any[] }) {
       for (const platform of ['claude', 'chatgpt', 'perplexity']) {
   await fetch('/api/cron/ai-visibility?hotel_id=' + selectedHotelId + '&platform=' + platform)
 }
-      let totalAppearances = 0
-      let totalQueries = 0
-      for (const platform of ['claude', 'chatgpt', 'perplexity']) {
-        const res = await fetch('/api/cron/ai-visibility?hotel_id=' + selectedHotelId + '&platform=' + platform)
-        const data = await res.json()
-        totalAppearances += data.total_appearances || 0
-        totalQueries += data.queries_run || 0
-      }
-      setRunResult(`✓ Done — ${totalAppearances} appearances in ${totalQueries} queries`)
+      const res = await fetch('/api/cron/ai-visibility?hotel_id=' + selectedHotelId)
+      const data = await res.json()
+      setRunResult(`✓ Done — ${data.total_appearances || 0} appearances in ${data.queries_run || 0} queries`)
       fetchQueries()
     } catch {
       setRunResult('✗ Error running queries')
