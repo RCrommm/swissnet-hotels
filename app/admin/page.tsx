@@ -7,6 +7,7 @@ import HotelsTab from '@/components/HotelsTab'
 import SchemaTab from '@/components/SchemaTab'
 import AIVisibilityToggle from '@/components/AIVisibilityToggle'
 import AIVisibilityQueries from '@/components/AIVisibilityQueries'
+import RegionQueriesTab from '@/components/RegionQueriesTab'
 
 async function isAuthenticated(password?: string) {
   const cookieStore = await cookies()
@@ -144,8 +145,7 @@ export default async function AdminPage({
         </div>
 
         <div className="flex gap-1 mb-6 border-b border-stone-200 flex-wrap">
-          {['hotels', 'schema', 'ai visibility', 'analytics', 'leads', 'keywords', 'clicks'].map(t => (
-            <a key={t} href={'/admin?password=' + pw + '&tab=' + t}
+{['hotels', 'schema', 'ai visibility', 'analytics', 'leads', 'keywords', 'clicks', 'region queries'].map(t => (            <a key={t} href={'/admin?password=' + pw + '&tab=' + t}
               className={'px-5 py-3 text-sm uppercase tracking-wide capitalize transition-colors ' +
                 (tab === t ? 'border-b-2 border-amber-700 text-amber-700 font-semibold' : 'text-stone-500 hover:text-stone-700')}>
               {t}
@@ -388,7 +388,7 @@ export default async function AdminPage({
         )}
 
         {tab === 'keywords' && <KeywordsTab hotels={hotelsList} keywords={keywordsList} password={pw} />}
-
+        {tab === 'region queries' && <RegionQueriesTab />}
         {tab === 'clicks' && (
           <div>
             <div className="flex justify-between items-center mb-4">

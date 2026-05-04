@@ -1,137 +1,15 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
-const QUERIES_PER_REGION: Record<string, string[]> = {
-  'Geneva': [
-    'best luxury hotel Geneva Switzerland',
-    'top 5 star hotel Geneva lake view',
-    'best spa hotel Geneva',
-    'most romantic hotel Geneva',
-    'best business hotel Geneva Switzerland',
-  ],
-  'Zurich': [
-    'best luxury hotel Zurich Switzerland',
-    'top 5 star hotel Zurich',
-    'best boutique hotel Zurich',
-    'most luxurious hotel Zurich',
-    'best hotel Zurich city centre',
-  ],
-  'Zermatt': [
-    'best luxury hotel Zermatt Matterhorn view',
-    'top ski hotel Zermatt Switzerland',
-    'most romantic hotel Zermatt',
-    'best 5 star hotel Zermatt',
-    'best hotel Zermatt for honeymoon',
-  ],
-  'Interlaken': [
-    'best luxury hotel Interlaken Switzerland',
-    'top hotel Interlaken Jungfrau view',
-    'best wellness hotel Interlaken',
-    'most luxurious hotel Interlaken',
-    'best 5 star hotel Interlaken',
-  ],
-  'Bern': [
-    'best luxury hotel Bern Switzerland',
-    'top hotel Bern city centre',
-    'best 5 star hotel Bern',
-    'most prestigious hotel Bern',
-    'best business hotel Bern',
-  ],
-  'Crans-Montana': [
-    'best ski hotel Crans-Montana Switzerland',
-    'top luxury hotel Crans-Montana',
-    'best hotel Crans-Montana Alps',
-    'most luxurious hotel Crans-Montana',
-    'best wellness hotel Crans-Montana',
-  ],
-  'Davos': [
-    'best ski hotel Davos Switzerland',
-    'top luxury hotel Davos',
-    'best 5 star hotel Davos',
-    'most prestigious hotel Davos',
-    'best hotel Davos Parsenn',
-  ],
-  'Flims': [
-    'best wellness hotel Flims Switzerland',
-    'top luxury hotel Flims Laax',
-    'best hotel Flims Alps',
-    'most luxurious hotel Flims',
-    'best spa hotel Flims Switzerland',
-  ],
-  'St. Moritz': [
-    'best luxury hotel St Moritz Switzerland',
-    'top ski hotel St Moritz Engadin',
-    'best 5 star hotel St Moritz',
-    'most exclusive hotel St Moritz',
-    'best hotel St Moritz winter',
-  ],
-  'Gstaad': [
-    'best luxury hotel Gstaad Switzerland',
-    'top ski hotel Gstaad Alps',
-    'most exclusive hotel Gstaad',
-    'best 5 star hotel Gstaad',
-    'best chalet hotel Gstaad',
-  ],
-  'Verbier': [
-    'best luxury ski hotel Verbier Switzerland',
-    'top hotel Verbier Alps',
-    'best 5 star hotel Verbier',
-    'most exclusive hotel Verbier',
-    'best chalet hotel Verbier',
-  ],
-  'Andermatt': [
-    'best luxury hotel Andermatt Switzerland',
-    'top ski hotel Andermatt Alps',
-    'best 5 star hotel Andermatt',
-    'most exclusive hotel Andermatt',
-  ],
-  'Lucerne': [
-    'best luxury hotel Lucerne Switzerland',
-    'top hotel Lucerne lake view',
-    'best 5 star hotel Lucerne',
-    'most romantic hotel Lucerne',
-    'best hotel Lucerne city',
-  ],
-  'Lugano': [
-    'best luxury hotel Lugano Switzerland',
-    'top hotel Lugano lake view',
-    'best 5 star hotel Lugano',
-    'most romantic hotel Lugano',
-  ],
-  'Ascona': [
-    'best luxury hotel Ascona Switzerland',
-    'top hotel Ascona Lake Maggiore',
-    'best 5 star hotel Ascona Ticino',
-    'most romantic hotel Ascona',
-  ],
-  'Montreux': [
-    'best luxury hotel Montreux Switzerland',
-    'top hotel Montreux Lake Geneva',
-    'best 5 star hotel Montreux',
-    'most romantic hotel Montreux Swiss Riviera',
-  ],
-  'Grindelwald': [
-    'best luxury hotel Grindelwald Switzerland',
-    'top ski hotel Grindelwald Jungfrau',
-    'best 5 star hotel Grindelwald',
-    'best hotel Grindelwald Eiger view',
-  ],
-  'Engelberg': [
-    'best luxury hotel Engelberg Switzerland',
-    'top ski hotel Engelberg Alps',
-    'best 5 star hotel Engelberg',
-  ],
-  'Basel': [
-    'best luxury hotel Basel Switzerland',
-    'top 5 star hotel Basel',
-    'best hotel Basel Art Basel',
-  ],
-  'Lausanne': [
-    'best luxury hotel Lausanne Switzerland',
-    'top hotel Lausanne Lake Geneva',
-    'best 5 star hotel Lausanne',
-    'most romantic hotel Lausanne',
-  ],
+const { data: regionQueriesData } = await supabase
+  .from('region_queries')
+  .select('region, query')
+  .eq('is_active', true)
+
+const QUERIES_PER_REGION: Record<string, string[]> = {}
+for (const row of regionQueriesData || []) {
+  if (!QUERIES_PER_REGION[row.region]) QUERIES_PER_REGION[row.region] = []
+  QUERIES_PER_REGION[row.region].push(row.query)
 }
 
 async function queryPerplexity(query: string): Promise<string> {
