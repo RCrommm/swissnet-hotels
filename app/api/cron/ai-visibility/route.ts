@@ -131,42 +131,37 @@ export async function GET(request: Request) {
 
     // Run one platform at a time, queries in parallel within each platform
     for (const platform of platformsToRun) {
-      const platformResults = await Promise.all(
-        queriesToRun.map(async query => {
-          const responseText = await platform.queryFn(query)
-          if (platform.id === 'chatgpt') estimatedCost += 0.01
-          else estimatedCost += 0.001
-          totalQueries++
+      for (const query of queriesToRun) {
+        const responseText = await platform.queryFn(query)
+        if (platform.id === 'chatgpt') estimatedCost += 0.01
+        else estimatedCost += 0.001
+        totalQueries++
 
-          const appeared = checkAppeared(hotel.name, responseText)
-          let snippet: string | null = null
+        const appeared = checkAppeared(hotel.name, responseText)
+        let snippet: string | null = null
 
-          if (appeared && responseText) {
-            const r = responseText.toLowerCase()
-            const n = hotel.name.toLowerCase()
-            const idx = r.indexOf(n) !== -1 ? r.indexOf(n) : r.indexOf(hotel.name.split(' ').slice(-2).join(' ').toLowerCase())
-            if (idx !== -1) snippet = responseText.substring(Math.max(0, idx - 50), idx + 150).trim()
-            totalAppearances++
-          }
+        if (appeared && responseText) {
+          const r = responseText.toLowerCase()
+          const n = hotel.name.toLowerCase()
+          const idx = r.indexOf(n) !== -1 ? r.indexOf(n) : r.indexOf(hotel.name.split(' ').slice(-2).join(' ').toLowerCase())
+          if (idx !== -1) snippet = responseText.substring(Math.max(0, idx - 50), idx + 150).trim()
+          totalAppearances++
+        }
 
-          await supabase.from('ai_visibility_scores').upsert({
-            hotel_id: hotel.id,
-            hotel_name: hotel.name,
-            query,
-            appeared,
-            platform: platform.id,
-            response_snippet: snippet,
-            checked_at: new Date().toISOString(),
-          }, { onConflict: 'hotel_id,query,platform' })
+        await supabase.from('ai_visibility_scores').upsert({
+          hotel_id: hotel.id,
+          hotel_name: hotel.name,
+          query,
+          appeared,
+          platform: platform.id,
+          response_snippet: snippet,
+          checked_at: new Date().toISOString(),
+        }, { onConflict: 'hotel_id,query,platform' })
 
-          return { hotel: hotel.name, query, platform: platform.id, appeared, hasResponse: !!responseText }
-        })
-      )
-
-      appeared_results.push(...platformResults.filter(r => r.appeared))
-      
-      // Small delay between platforms
-      await new Promise(r => setTimeout(r, 500))
+        if (appeared) appeared_results.push({ hotel: hotel.name, query, platform: platform.id, appeared })
+        await new Promise(r => setTimeout(r, 500))
+      }
+      await new Promise(r => setTimeout(r, 1000))
     }
   }
 
