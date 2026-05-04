@@ -34,8 +34,7 @@ export default function AIVisibilityToggle({ enabled }: { enabled: boolean }) {
       <div>
         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 14, fontWeight: 600, color: '#3D2B1F', margin: '0 0 4px' }}>AI Visibility Tracker</p>
         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: '#a8a29e', margin: 0 }}>
-          Runs daily at 8am UTC · Checks partner hotels across 15 AI queries · ~$0.10/day
-        </p>
+Runs weekly on Mondays at 8am UTC · Checks partner hotels across custom queries · ~$0.10/week        </p>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         {runResult && (
