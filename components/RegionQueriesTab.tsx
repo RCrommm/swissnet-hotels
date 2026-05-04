@@ -15,6 +15,29 @@ const text = '#2A1A0E'
 const textMuted = 'rgba(42,26,14,0.45)'
 const bg = '#F8F5EF'
 
+const SUGGESTED_QUERIES: Record<string, string[]> = {
+  'Geneva': ['best luxury hotel Geneva Switzerland', 'top 5 star hotel Geneva lake view', 'most romantic hotel Geneva', 'best spa hotel Geneva', 'best business hotel Geneva'],
+  'Zurich': ['best luxury hotel Zurich Switzerland', 'top 5 star hotel Zurich', 'best boutique hotel Zurich', 'most luxurious hotel Zurich', 'best hotel Zurich lake view'],
+  'Zermatt': ['best luxury hotel Zermatt Matterhorn view', 'top ski hotel Zermatt Switzerland', 'most romantic hotel Zermatt', 'best 5 star hotel Zermatt', 'best hotel Zermatt honeymoon'],
+  'St. Moritz': ['best luxury hotel St Moritz Switzerland', 'top ski hotel St Moritz Engadin', 'most exclusive hotel St Moritz', 'best 5 star hotel St Moritz', 'best hotel St Moritz winter'],
+  'Gstaad': ['best luxury hotel Gstaad Switzerland', 'top ski hotel Gstaad Alps', 'most exclusive hotel Gstaad', 'best 5 star hotel Gstaad', 'best chalet hotel Gstaad'],
+  'Verbier': ['best luxury ski hotel Verbier Switzerland', 'top hotel Verbier Alps', 'best 5 star hotel Verbier', 'most exclusive hotel Verbier', 'best chalet hotel Verbier'],
+  'Interlaken': ['best luxury hotel Interlaken Switzerland', 'top hotel Interlaken Jungfrau view', 'best wellness hotel Interlaken', 'most luxurious hotel Interlaken', 'best 5 star hotel Interlaken'],
+  'Bern': ['best luxury hotel Bern Switzerland', 'top hotel Bern city centre', 'best 5 star hotel Bern', 'most prestigious hotel Bern', 'best business hotel Bern'],
+  'Crans-Montana': ['best ski hotel Crans-Montana Switzerland', 'top luxury hotel Crans-Montana', 'best hotel Crans-Montana Alps', 'most luxurious hotel Crans-Montana', 'best wellness hotel Crans-Montana'],
+  'Davos': ['best ski hotel Davos Switzerland', 'top luxury hotel Davos', 'best 5 star hotel Davos', 'most prestigious hotel Davos', 'best hotel Davos World Economic Forum'],
+  'Flims': ['best wellness hotel Flims Switzerland', 'top luxury hotel Flims Laax', 'best hotel Flims Alps', 'most luxurious hotel Flims', 'best spa hotel Flims Switzerland'],
+  'Andermatt': ['best luxury hotel Andermatt Switzerland', 'top ski hotel Andermatt Alps', 'best 5 star hotel Andermatt', 'most exclusive hotel Andermatt', 'best hotel Andermatt ski'],
+  'Lucerne': ['best luxury hotel Lucerne Switzerland', 'top hotel Lucerne lake view', 'best 5 star hotel Lucerne', 'most romantic hotel Lucerne', 'best hotel Lucerne city'],
+  'Lugano': ['best luxury hotel Lugano Switzerland', 'top hotel Lugano lake view', 'best 5 star hotel Lugano', 'most romantic hotel Lugano', 'best hotel Lugano Ticino'],
+  'Ascona': ['best luxury hotel Ascona Switzerland', 'top hotel Ascona Lake Maggiore', 'best 5 star hotel Ascona Ticino', 'most romantic hotel Ascona', 'best hotel Ascona Italy border'],
+  'Montreux': ['best luxury hotel Montreux Switzerland', 'top hotel Montreux Lake Geneva', 'best 5 star hotel Montreux', 'most romantic hotel Montreux Swiss Riviera', 'best hotel Montreux Jazz Festival'],
+  'Grindelwald': ['best luxury hotel Grindelwald Switzerland', 'top ski hotel Grindelwald Jungfrau', 'best 5 star hotel Grindelwald', 'best hotel Grindelwald Eiger view', 'most luxurious hotel Grindelwald'],
+  'Engelberg': ['best luxury hotel Engelberg Switzerland', 'top ski hotel Engelberg Alps', 'best 5 star hotel Engelberg', 'most exclusive hotel Engelberg', 'best wellness hotel Engelberg'],
+  'Basel': ['best luxury hotel Basel Switzerland', 'top 5 star hotel Basel', 'best hotel Basel Art Basel', 'most prestigious hotel Basel', 'best business hotel Basel'],
+  'Lausanne': ['best luxury hotel Lausanne Switzerland', 'top hotel Lausanne Lake Geneva', 'best 5 star hotel Lausanne', 'most romantic hotel Lausanne', 'best hotel Lausanne Olympic'],
+}
+
 export default function RegionQueriesTab() {
   const [region, setRegion] = useState('Zermatt')
   const [queries, setQueries] = useState<any[]>([])
@@ -111,6 +134,16 @@ export default function RegionQueriesTab() {
         <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: text, margin: '0 0 16px' }}>
           Queries for {region} — {queries.length} total
         </p>
+        {queries.length === 0 && SUGGESTED_QUERIES[region] && (
+  <button onClick={async () => {
+    for (const q of SUGGESTED_QUERIES[region]) {
+      await supabase.from('region_queries').insert({ region, query: q, is_active: true })
+    }
+    fetchQueries()
+  }} style={{ background: 'rgba(201,169,110,0.15)', color: gold, border: '1px solid ' + gold + '44', borderRadius: 6, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer', marginBottom: 12, display: 'block' }}>
+    ✦ Load suggested queries for {region}
+  </button>
+)}
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
           <input style={{ ...inp, flex: 1 }} value={newQuery} onChange={e => setNewQuery(e.target.value)}
             placeholder="Add a new query..." onKeyDown={e => e.key === 'Enter' && addQuery()} />
