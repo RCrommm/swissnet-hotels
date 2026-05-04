@@ -164,7 +164,7 @@ const matchTerm = responseLower.includes(hotelNameLower) ? hotelNameLower : last
             totalAppearances++
           }
 
-          await supabase.from('ai_visibility_scores').upsert({
+          await supabase.from('ai_visibility_scores').insert({
             hotel_id: hotel.id,
             hotel_name: hotel.name,
             query,
