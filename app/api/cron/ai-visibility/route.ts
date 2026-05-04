@@ -175,11 +175,12 @@ const matchTerm = responseLower.includes(hotelNameLower) ? hotelNameLower : last
           })
 
           results.push({ hotel: hotel.name, query, platform: platform.id, appeared })
-          await new Promise(r => setTimeout(r, 300))
+          await new Promise(r => setTimeout(r, 100))
 
         } catch (err: any) {
-          errors.push({ query, hotel: hotel.name, platform: platform.id, error: err.message })
-        }
+  console.error(`[ERROR] ${platform.id} | ${query} | ${err.message}`)
+  errors.push({ query, hotel: hotel.name, platform: platform.id, error: err.message })
+}
       }
     }
   }
