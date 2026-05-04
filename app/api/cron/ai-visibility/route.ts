@@ -118,71 +118,66 @@ export async function GET(request: Request) {
     if (!customQueries?.length) continue
 const queriesToRun = customQueries.map(q => q.query)
 
-    for (const platform of platformsToRun) {
-      for (const query of queriesToRun) {
+    await Promise.all(platformsToRun.flatMap(platform =>
+      queriesToRun.map(async query => {
         try {
           const responseText = await platform.queryFn(query)
-
-          // Cost estimates
           if (platform.id === 'chatgpt') estimatedCost += 0.002
-          else if (platform.id === 'perplexity') estimatedCost += 0.001
           else estimatedCost += 0.001
 
           const hotelNameLower = hotel.name.toLowerCase()
-const responseLower = responseText.toLowerCase()
-const noAccents = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-const words = hotelNameLower.split(' ').filter((w: string) => !['hotel', 'the', 'le', 'la', 'les', 'grand', 'de', 'du', 'au', 'aux', 'by', 'at', 'and', '&'].includes(w))
-const lastTwo = hotel.name.split(' ').slice(-2).join(' ').toLowerCase()
-const firstTwo = hotel.name.split(' ').slice(0, 2).join(' ').toLowerCase()
-const keyWords = words.slice(0, 3).join(' ')
-const shortName = words.slice(0, 2).join(' ')
-const coreNameVariants = [
-  'la réserve genève', 'la reserve geneve', 'la réserve geneva', 'la reserve geneva',
-  'mont cervin', 'monte rosa zermatt', 'schweizerhof zermatt',
-  'bellevue palace', 'alpengold', 'crans ambassador', 'hotel adula', 'adula hotel',
-  'victoria-jungfrau', 'victoria jungfrau',
-  'la réserve eden', 'la reserve eden', 'eden au lac', 'réserve eden au lac', 'reserve eden au lac',
-]
-const coreMatch = coreNameVariants.some(v => responseLower.includes(v))
-const appeared = coreMatch ||
-  responseLower.includes(hotelNameLower) ||
-  responseLower.includes(noAccents(hotelNameLower)) ||
-  responseLower.includes(lastTwo) ||
-  responseLower.includes(noAccents(lastTwo)) ||
-  responseLower.includes(firstTwo) ||
-  responseLower.includes(noAccents(firstTwo)) ||
-  responseLower.includes(keyWords) ||
-  responseLower.includes(noAccents(keyWords)) ||
-  responseLower.includes(shortName) ||
-  responseLower.includes(noAccents(shortName))
+          const responseLower = responseText.toLowerCase()
+          const noAccents = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+          const words = hotelNameLower.split(' ').filter((w: string) => !['hotel', 'the', 'le', 'la', 'les', 'grand', 'de', 'du', 'au', 'aux', 'by', 'at', 'and', '&'].includes(w))
+          const lastTwo = hotel.name.split(' ').slice(-2).join(' ').toLowerCase()
+          const firstTwo = hotel.name.split(' ').slice(0, 2).join(' ').toLowerCase()
+          const keyWords = words.slice(0, 3).join(' ')
+          const shortName = words.slice(0, 2).join(' ')
+          const coreNameVariants = [
+            'la réserve genève', 'la reserve geneve', 'la réserve geneva', 'la reserve geneva',
+            'mont cervin', 'monte rosa zermatt', 'schweizerhof zermatt',
+            'bellevue palace', 'alpengold', 'crans ambassador', 'hotel adula', 'adula hotel',
+            'victoria-jungfrau', 'victoria jungfrau',
+            'la réserve eden', 'la reserve eden', 'eden au lac', 'réserve eden au lac', 'reserve eden au lac',
+          ]
+          const coreMatch = coreNameVariants.some(v => responseLower.includes(v))
+          const appeared = coreMatch ||
+            responseLower.includes(hotelNameLower) ||
+            responseLower.includes(noAccents(hotelNameLower)) ||
+            responseLower.includes(lastTwo) ||
+            responseLower.includes(noAccents(lastTwo)) ||
+            responseLower.includes(firstTwo) ||
+            responseLower.includes(noAccents(firstTwo)) ||
+            responseLower.includes(keyWords) ||
+            responseLower.includes(noAccents(keyWords)) ||
+            responseLower.includes(shortName) ||
+            responseLower.includes(noAccents(shortName))
 
           let snippet: string | null = null
           if (appeared) {
-const matchTerm = responseLower.includes(hotelNameLower) ? hotelNameLower : lastTwo
+            const matchTerm = responseLower.includes(hotelNameLower) ? hotelNameLower : lastTwo
             const idx = responseLower.indexOf(matchTerm)
             snippet = responseText.substring(Math.max(0, idx - 50), idx + 150).trim()
             totalAppearances++
           }
 
           await supabase.from('ai_visibility_scores').upsert({
-  hotel_id: hotel.id,
-  hotel_name: hotel.name,
-  query,
-  appeared,
-  platform: platform.id,
-  response_snippet: snippet,
-  checked_at: new Date().toISOString(),
-}, { onConflict: 'hotel_id,query,platform' })
+            hotel_id: hotel.id,
+            hotel_name: hotel.name,
+            query,
+            appeared,
+            platform: platform.id,
+            response_snippet: snippet,
+            checked_at: new Date().toISOString(),
+          }, { onConflict: 'hotel_id,query,platform' })
 
           results.push({ hotel: hotel.name, query, platform: platform.id, appeared })
-          await new Promise(r => setTimeout(r, 100))
-
         } catch (err: any) {
-  console.error(`[ERROR] ${platform.id} | ${query} | ${err.message}`)
-  errors.push({ query, hotel: hotel.name, platform: platform.id, error: err.message })
-}
-      }
-    }
+          console.error(`[ERROR] ${platform.id} | ${query} | ${err.message}`)
+          errors.push({ query, hotel: hotel.name, platform: platform.id, error: err.message })
+        }
+      })
+    ))
   }
 
   // Log cost
