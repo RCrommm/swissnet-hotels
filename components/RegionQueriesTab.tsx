@@ -136,11 +136,10 @@ export default function RegionQueriesTab() {
         </p>
         {queries.length === 0 && SUGGESTED_QUERIES[region] && (
   <button onClick={async () => {
-    for (const q of SUGGESTED_QUERIES[region]) {
-      await supabase.from('region_queries').insert({ region, query: q, is_active: true })
-    }
+    const rows = SUGGESTED_QUERIES[region].map(q => ({ region, query: q, is_active: true }))
+    await supabase.from('region_queries').insert(rows)
     fetchQueries()
-  }} style={{ background: 'rgba(201,169,110,0.15)', color: gold, border: '1px solid ' + gold + '44', borderRadius: 6, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer', marginBottom: 12, display: 'block' }}>
+  }}style={{ background: 'rgba(201,169,110,0.15)', color: gold, border: '1px solid ' + gold + '44', borderRadius: 6, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer', marginBottom: 12, display: 'block' }}>
     ✦ Load suggested queries for {region}
   </button>
 )}
