@@ -147,6 +147,7 @@ const appeared = responseLower.includes(hotelNameLower) ||
   responseLower.includes(lastTwoWords) ||
   responseLower.includes(firstTwoWords) ||
   (words.length >= 2 && responseLower.includes(keyWords))
+  if (region === 'Geneva') console.log(`[DEBUG] ${hotel.name} | appeared: ${appeared} | response: ${responseText.slice(0, 200)}`)
             if (appeared) {
               results.push({ hotel: hotel.name, platform: platform.id, query: q, region })
             }
