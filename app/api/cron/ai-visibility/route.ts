@@ -141,7 +141,7 @@ const coreNameVariants = [
   'mont cervin', 'monte rosa zermatt', 'schweizerhof zermatt',
   'bellevue palace', 'alpengold', 'crans ambassador', 'hotel adula', 'adula hotel',
   'victoria-jungfrau', 'victoria jungfrau',
-  'la réserve eden', 'la reserve eden',
+  'la réserve eden', 'la reserve eden', 'eden au lac', 'réserve eden au lac', 'reserve eden au lac',
 ]
 const coreMatch = coreNameVariants.some(v => responseLower.includes(v))
 const appeared = coreMatch ||
