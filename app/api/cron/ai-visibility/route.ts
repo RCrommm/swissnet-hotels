@@ -57,7 +57,7 @@ async function queryClaude(query: string): Promise<string> {
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-haiku-4-5',
       max_tokens: 500,
       system: 'You are a helpful travel assistant. Answer questions about hotels by recommending specific properties by name.',
       messages: [{ role: 'user', content: `${query}. Please recommend 3-5 specific hotels by name.` }],
