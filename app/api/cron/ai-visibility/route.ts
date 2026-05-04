@@ -64,7 +64,6 @@ async function queryClaude(query: string): Promise<string> {
 }
 
 const PLATFORMS = [
-  { id: 'claude', queryFn: queryClaude },
   { id: 'chatgpt', queryFn: queryChatGPT },
   { id: 'perplexity', queryFn: queryPerplexity },
 ]
