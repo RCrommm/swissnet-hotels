@@ -136,7 +136,16 @@ const lastTwo = hotel.name.split(' ').slice(-2).join(' ').toLowerCase()
 const firstTwo = hotel.name.split(' ').slice(0, 2).join(' ').toLowerCase()
 const keyWords = words.slice(0, 3).join(' ')
 const shortName = words.slice(0, 2).join(' ')
-const appeared = responseLower.includes(hotelNameLower) ||
+const coreNameVariants = [
+  'la réserve genève', 'la reserve geneve', 'la réserve geneva', 'la reserve geneva',
+  'mont cervin', 'monte rosa zermatt', 'schweizerhof zermatt',
+  'bellevue palace', 'alpengold', 'crans ambassador', 'hotel adula', 'adula hotel',
+  'victoria-jungfrau', 'victoria jungfrau',
+  'la réserve eden', 'la reserve eden',
+]
+const coreMatch = coreNameVariants.some(v => responseLower.includes(v))
+const appeared = coreMatch ||
+  responseLower.includes(hotelNameLower) ||
   responseLower.includes(noAccents(hotelNameLower)) ||
   responseLower.includes(lastTwo) ||
   responseLower.includes(noAccents(lastTwo)) ||
