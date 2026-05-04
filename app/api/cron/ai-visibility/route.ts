@@ -130,18 +130,26 @@ const queriesToRun = customQueries.map(q => q.query)
 
           const hotelNameLower = hotel.name.toLowerCase()
 const responseLower = responseText.toLowerCase()
+const noAccents = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 const words = hotelNameLower.split(' ').filter((w: string) => !['hotel', 'the', 'le', 'la', 'les', 'grand', 'de', 'du', 'au', 'aux', 'by', 'at', 'and', '&'].includes(w))
-const lastTwoWords = hotel.name.split(' ').slice(-2).join(' ').toLowerCase()
-const firstTwoWords = hotel.name.split(' ').slice(0, 2).join(' ').toLowerCase()
+const lastTwo = hotel.name.split(' ').slice(-2).join(' ').toLowerCase()
+const firstTwo = hotel.name.split(' ').slice(0, 2).join(' ').toLowerCase()
 const keyWords = words.slice(0, 3).join(' ')
+const shortName = words.slice(0, 2).join(' ')
 const appeared = responseLower.includes(hotelNameLower) ||
-  responseLower.includes(lastTwoWords) ||
-  responseLower.includes(firstTwoWords) ||
-  (words.length >= 2 && responseLower.includes(keyWords))
+  responseLower.includes(noAccents(hotelNameLower)) ||
+  responseLower.includes(lastTwo) ||
+  responseLower.includes(noAccents(lastTwo)) ||
+  responseLower.includes(firstTwo) ||
+  responseLower.includes(noAccents(firstTwo)) ||
+  responseLower.includes(keyWords) ||
+  responseLower.includes(noAccents(keyWords)) ||
+  responseLower.includes(shortName) ||
+  responseLower.includes(noAccents(shortName))
 
           let snippet: string | null = null
           if (appeared) {
-            const matchTerm = responseLower.includes(hotelNameLower) ? hotelNameLower : lastTwoWords
+const matchTerm = responseLower.includes(hotelNameLower) ? hotelNameLower : lastTwo
             const idx = responseLower.indexOf(matchTerm)
             snippet = responseText.substring(Math.max(0, idx - 50), idx + 150).trim()
             totalAppearances++
