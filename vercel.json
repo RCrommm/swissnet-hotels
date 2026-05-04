@@ -1,7 +1,10 @@
 {
   "functions": {
     "app/api/cron/ai-visibility/route.ts": {
-      "maxDuration": 60
+      "maxDuration": 300
+    },
+    "app/api/cron/competitor-visibility/route.ts": {
+      "maxDuration": 300
     }
   },
   "crons": [
