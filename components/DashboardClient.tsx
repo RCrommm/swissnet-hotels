@@ -90,7 +90,7 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
   const totalQueries = aiVisibility?.length || 0
   const appearedQueries = aiVisibility?.filter((r: any) => r.appeared)?.length || 0
   const rawScore = totalQueries > 0 ? Math.round((appearedQueries / totalQueries) * 100) : 0
-const visibilityScore = Math.min(100, Math.round(rawScore * 1.15))
+const visibilityScore = Math.min(100, rawScore + 15)
 
   const now = new Date()
   const periodStart = new Date(now.getTime() - period * 24 * 60 * 60 * 1000)
