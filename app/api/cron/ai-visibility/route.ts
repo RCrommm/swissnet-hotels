@@ -198,47 +198,49 @@ export async function GET(request: Request) {
     const queriesToRun = customQueries.map(q => q.query)
 
     for (const query of queriesToRun) {
-      // Run all platforms in parallel for this query
-      await Promise.all(platformsToRun.map(async (platform) => {
-        let responseText: string | null = null
+  // Run all platforms in parallel for this query
+  await Promise.all(platformsToRun.map(async (platform) => {
+    let responseText: string | null = null
 
-        try {
-          responseText = await platform.queryFn(query)
-          estimatedCost += platform.id === 'chatgpt' ? 0.01 : 0.001
-          totalQueries++
-        } catch (e: any) {
-          totalErrors++
-          errors.push({ hotel: hotel.name, query, platform: platform.id, error: (e as any).message || 'Unknown error' })
-          console.error(`[SCORE SKIP] ${platform.id} failed for "${query}" — not writing to DB`)
-          return // skip DB write
-        }
-
-        const appeared = checkAppeared(hotel.name, responseText)
-        let snippet: string | null = null
-
-        if (appeared) {
-          const r = responseText.toLowerCase()
-          const n = hotel.name.toLowerCase()
-          const idx = r.indexOf(n) !== -1 ? r.indexOf(n) : r.indexOf(hotel.name.split(' ').slice(-2).join(' ').toLowerCase())
-          if (idx !== -1) snippet = responseText.substring(Math.max(0, idx - 50), idx + 150).trim()
-          totalAppearances++
-          appeared_results.push({ hotel: hotel.name, query, platform: platform.id })
-        }
-
-        await supabase.from('ai_visibility_scores').upsert({
-          hotel_id: hotel.id,
-          hotel_name: hotel.name,
-          query,
-          appeared,
-          platform: platform.id,
-          response_snippet: snippet,
-          checked_at: new Date().toISOString(),
-        }, { onConflict: 'hotel_id,query,platform' })
-      }))
-
-      await new Promise(r => setTimeout(r, 2000)) // 2s between queries only
+    try {
+      responseText = await platform.queryFn(query)
+      estimatedCost += platform.id === 'chatgpt' ? 0.01 : 0.001
+    } catch (e: any) {
+      totalErrors++
+      errors.push({ hotel: hotel.name, query, platform: platform.id, error: (e as any).message || 'Unknown error' })
+      console.error(`[SCORE SKIP] ${platform.id} failed for "${query}" — not writing to DB`)
+      return // skip DB write
     }
-  }
+
+    const appeared = checkAppeared(hotel.name, responseText)
+    let snippet: string | null = null
+
+    if (appeared) {
+      const r = responseText.toLowerCase()
+      const n = hotel.name.toLowerCase()
+      const idx = r.indexOf(n) !== -1 ? r.indexOf(n) : r.indexOf(hotel.name.split(' ').slice(-2).join(' ').toLowerCase())
+      if (idx !== -1) snippet = responseText.substring(Math.max(0, idx - 50), idx + 150).trim()
+      appeared_results.push({ hotel: hotel.name, query, platform: platform.id })
+    }
+
+    await supabase.from('ai_visibility_scores').upsert({
+      hotel_id: hotel.id,
+      hotel_name: hotel.name,
+      query,
+      appeared,
+      platform: platform.id,
+      response_snippet: snippet,
+      checked_at: new Date().toISOString(),
+    }, { onConflict: 'hotel_id,query,platform' })
+  }))
+
+  await new Promise(r => setTimeout(r, 2000)) // 2s between queries only
+}
+
+// Recalculate totals after all queries complete
+totalAppearances = appeared_results.length
+totalQueries = (queriesToRun.length * platformsToRun.length) - totalErrors
+}
 
   await supabase.from('cron_costs').insert({
     hotels_checked: hotels.length,
