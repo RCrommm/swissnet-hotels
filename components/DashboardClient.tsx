@@ -87,10 +87,24 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
   const hotelName = hotel?.name || 'Your Hotel'
   const hotelRegion = hotel?.region || 'Switzerland'
 
-  const totalQueries = aiVisibility?.length || 0
-  const appearedQueries = aiVisibility?.filter((r: any) => r.appeared)?.length || 0
-  const rawScore = totalQueries > 0 ? Math.round((appearedQueries / totalQueries) * 100) : 0
+  // Group scores by checked_at date, take last 4 runs, average them
+const runDates = [...new Set(aiVisibility?.map((r: any) => r.checked_at?.split('T')[0]) || [])]
+  .sort()
+  .slice(-4)
+
+const runScores = runDates.map((date: any) => {
+  const runQueries = aiVisibility?.filter((r: any) => r.checked_at?.startsWith(date)) || []
+  const runAppeared = runQueries.filter((r: any) => r.appeared).length
+  return runQueries.length > 0 ? (runAppeared / runQueries.length) * 100 : 0
+})
+
+const rawScore = runScores.length > 0
+  ? Math.round(runScores.reduce((a: number, b: number) => a + b, 0) / runScores.length)
+  : 0
 const visibilityScore = Math.min(100, rawScore + 15)
+
+const totalQueries = aiVisibility?.length || 0
+const appearedQueries = aiVisibility?.filter((r: any) => r.appeared)?.length || 0
 
   const now = new Date()
   const periodStart = new Date(now.getTime() - period * 24 * 60 * 60 * 1000)
