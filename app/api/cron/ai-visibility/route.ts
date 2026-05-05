@@ -129,7 +129,7 @@ async function queryClaude(query: string): Promise<string> {
 const PLATFORMS = [
   { id: 'chatgpt', queryFn: queryChatGPT },
   { id: 'perplexity', queryFn: queryPerplexity },
-  // { id: 'claude', queryFn: queryClaude }, // Re-enable once ANTHROPIC_API_KEY is verified in Vercel
+  { id: 'claude', queryFn: queryClaude },
 ]
 
 // ─── Hotel name matching ──────────────────────────────────────────────────────
