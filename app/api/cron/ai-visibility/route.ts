@@ -197,25 +197,20 @@ export async function GET(request: Request) {
     if (!customQueries?.length) continue
     const queriesToRun = customQueries.map(q => q.query)
 
-    for (const platform of platformsToRun) {
-      for (const query of queriesToRun) {
+    for (const query of queriesToRun) {
+      // Run all platforms in parallel for this query
+      await Promise.all(platformsToRun.map(async (platform) => {
         let responseText: string | null = null
-        let apiError: string | null = null
 
         try {
           responseText = await platform.queryFn(query)
-          // Count cost only on success
           estimatedCost += platform.id === 'chatgpt' ? 0.01 : 0.001
           totalQueries++
         } catch (e: any) {
-          // FIX: failed calls are tracked separately — NOT written to scores table
-          // so they don't pollute appeared/not-appeared counts
-          apiError = e.message || 'Unknown error'
           totalErrors++
-          errors.push({ hotel: hotel.name, query, platform: platform.id, error: apiError })
+          errors.push({ hotel: hotel.name, query, platform: platform.id, error: (e as any).message || 'Unknown error' })
           console.error(`[SCORE SKIP] ${platform.id} failed for "${query}" — not writing to DB`)
-          await new Promise(r => setTimeout(r, 2000))
-          continue // skip DB write entirely
+          return // skip DB write
         }
 
         const appeared = checkAppeared(hotel.name, responseText)
@@ -239,10 +234,9 @@ export async function GET(request: Request) {
           response_snippet: snippet,
           checked_at: new Date().toISOString(),
         }, { onConflict: 'hotel_id,query,platform' })
+      }))
 
-        await new Promise(r => setTimeout(r, 2000)) // reduced from 5000ms
-      }
-      await new Promise(r => setTimeout(r, 2000)) // reduced from 5000ms
+      await new Promise(r => setTimeout(r, 2000)) // 2s between queries only
     }
   }
 
