@@ -110,6 +110,7 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
     { data: offers },
     { data: content },
     { data: hotelSections },
+    { data: awards },
   ] = await Promise.all([
     supabase.from('hotel_keywords').select('keyword').eq('hotel_id', hotel.id),
     showSchema ? supabase.from('room_types').select('*').eq('hotel_id', hotel.id).eq('is_available', true).order('sort_order', { ascending: true }) : { data: [] },
@@ -117,7 +118,11 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
     showSchema ? supabase.from('hotel_restaurants').select('*').eq('hotel_id', hotel.id).eq('is_available', true).order('sort_order', { ascending: true }) : { data: [] },
     showSchema ? supabase.from('hotel_offers').select('*').eq('hotel_id', hotel.id).eq('is_available', true).order('sort_order', { ascending: true }) : { data: [] },
     supabase.from('hotel_content').select('*').eq('hotel_id', hotel.id).single(),
-supabase.from('hotel_sections').select('*').eq('hotel_id', hotel.id),  ])
+    supabase.from('hotel_sections').select('*').eq('hotel_id', hotel.id),
+    supabase.from('hotel_awards').select('*').eq('hotel_id', hotel.id).eq('is_active', true).order('sort_order', { ascending: true }),
+  ])
+
+  const featuredAward = awards?.find((a: any) => a.is_featured)
 
   const faqs = content?.faqs || []
   const verdict = content?.verdict || null
@@ -243,9 +248,27 @@ supabase.from('hotel_sections').select('*').eq('hotel_id', hotel.id),  ])
             {/* DIVIDER */}
             <div style={{ height: 1, background: border, marginBottom: '4rem' }} />
 
-          
+            {/* AWARDS & RECOGNITION */}
+            {awards && awards.length > 0 && (
+              <>
+                <section style={{ marginBottom: '4rem' }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>Awards & Recognition</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    {awards.map((award: any) => (
+                      <div key={award.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: award.is_featured ? `rgba(201,169,76,0.1)` : 'rgba(0,0,0,0.03)', border: `1px solid ${award.is_featured ? 'rgba(201,169,76,0.4)' : border}`, borderRadius: 20, padding: '0.35rem 0.875rem' }}>
+                        <span style={{ color: gold, fontSize: '0.65rem' }}>✦</span>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: award.is_featured ? gold : text, fontWeight: award.is_featured ? 600 : 400 }}>{award.award_name}</span>
+                        {award.year && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: textMuted }}>{award.year}</span>}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+                <div style={{ height: 1, background: border, marginBottom: '4rem' }} />
+              </>
+            )}
 
             {/* SPECIAL OFFERS */}
+
             {showSchema && offers && offers.length > 0 && (
               <>
                 <section style={{ marginBottom: '4rem' }}>
@@ -504,7 +527,19 @@ supabase.from('hotel_sections').select('*').eq('hotel_id', hotel.id),  ])
             {/* PRICING CARD */}
             <div style={{ background: white, borderRadius: 4, padding: '2rem', marginBottom: '1.5rem', boxShadow: '0 2px 20px rgba(0,0,0,0.06)' }}>
               {hotel.is_partner && (
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: gold, margin: '0 0 1.25rem', paddingBottom: '1rem', borderBottom: `1px solid ${border}` }}>✦ SwissNet Partner Hotel</p>
+                <div style={{ marginBottom: '1.25rem', paddingBottom: '1rem', borderBottom: `1px solid ${border}` }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: gold, margin: '0 0 0.75rem' }}>✦ SwissNet Partner Hotel</p>
+                  {awards && awards.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      {awards.slice(0, 3).map((award: any) => (
+                        <div key={award.id} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span style={{ color: gold, fontSize: '0.55rem', flexShrink: 0 }}>✦</span>
+                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: award.is_featured ? gold : textMuted, fontWeight: award.is_featured ? 600 : 400 }}>{award.award_name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
 
               <div style={{ marginBottom: '1.5rem' }}>
