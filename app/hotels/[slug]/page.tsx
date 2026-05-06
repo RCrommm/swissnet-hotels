@@ -256,7 +256,7 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
                     {awards.map((award: any) => (
                       <div key={award.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: award.is_featured ? `rgba(201,169,76,0.1)` : 'rgba(0,0,0,0.03)', border: `1px solid ${award.is_featured ? 'rgba(201,169,76,0.4)' : border}`, borderRadius: 20, padding: '0.35rem 0.875rem' }}>
                         <span style={{ color: gold, fontSize: '0.65rem' }}>✦</span>
-                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: award.is_featured ? gold : text, fontWeight: award.is_featured ? 600 : 400 }}>{award.award_name}</span>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: text, fontWeight: 600 }}>{award.award_name}</span>
                         {award.year && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: textMuted }}>{award.year}</span>}
                       </div>
                     ))}
@@ -533,7 +533,7 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
                       {awards.slice(0, 3).map((award: any) => (
                         <div key={award.id} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                           <span style={{ color: gold, fontSize: '0.55rem', flexShrink: 0 }}>✦</span>
-                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: award.is_featured ? gold : textMuted, fontWeight: award.is_featured ? 600 : 400 }}>{award.award_name}</span>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: textMuted, fontWeight: 600 }}>{award.award_name}</span>
                         </div>
                       ))}
                     </div>
