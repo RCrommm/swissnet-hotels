@@ -354,52 +354,67 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
   const bg = '#F8F5EF'
   const white = '#FFFFFF'
 
+  const pageUrl = `https://swissnethotels.com/best/${slug}`
+
+  const pageUrl = `https://swissnethotels.com/best/${slug}`
   const schema = {
     '@context': 'https://schema.org',
-    '@type': 'ItemList',
-    name: page.title,
-    description: page.description,
-    url: `https://swissnethotels.com/best/${slug}`,
-    numberOfItems: hotelsList.length,
-    itemListElement: hotelsList.map((h: any, i: number) => ({
-      '@type': 'ListItem',
-      position: i + 1,
-      item: {
-        '@type': 'Hotel',
-        name: h.name,
-        url: `https://swissnethotels.com/hotels/${h.slug || h.id}`,
-        priceRange: `CHF ${h.nightly_rate_chf}+`,
-        starRating: { '@type': 'Rating', ratingValue: h.star_classification || 5 },
-        address: { '@type': 'PostalAddress', addressLocality: h.location, addressCountry: 'CH' },
-      }
-    }))
-  }
-
-  const faqSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: page.faqs.map(f => ({
-      '@type': 'Question',
-      name: f.q,
-      acceptedAnswer: { '@type': 'Answer', text: f.a }
-    }))
-  }
-
-  const breadcrumbSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://swissnethotels.com' },
-      { '@type': 'ListItem', position: 2, name: 'Best Hotels', item: 'https://swissnethotels.com/best' },
-      { '@type': 'ListItem', position: 3, name: page.h1, item: `https://swissnethotels.com/best/${slug}` },
+    '@graph': [
+      {
+        '@type': 'CollectionPage',
+        '@id': `${pageUrl}#webpage`,
+        url: pageUrl,
+        name: page.title + ' | SwissNet Hotels',
+        description: page.description,
+        isPartOf: { '@id': 'https://swissnethotels.com#website' },
+        breadcrumb: { '@id': `${pageUrl}#breadcrumb` },
+        mainEntity: { '@id': `${pageUrl}#list` },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        '@id': `${pageUrl}#breadcrumb`,
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://swissnethotels.com' },
+          { '@type': 'ListItem', position: 2, name: 'Best Hotels', item: 'https://swissnethotels.com/best' },
+          { '@type': 'ListItem', position: 3, name: page.h1, item: pageUrl },
+        ]
+      },
+      {
+        '@type': 'ItemList',
+        '@id': `${pageUrl}#list`,
+        name: page.title,
+        description: page.description,
+        url: pageUrl,
+        numberOfItems: hotelsList.length,
+        itemListElement: hotelsList.map((h: any, i: number) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          item: {
+            '@type': 'Hotel',
+            '@id': `https://swissnethotels.com/hotels/${h.slug || h.id}#hotel`,
+            name: h.name,
+            url: `https://swissnethotels.com/hotels/${h.slug || h.id}`,
+            priceRange: `CHF ${h.nightly_rate_chf}+`,
+            starRating: { '@type': 'Rating', ratingValue: h.star_classification || 5 },
+            address: { '@type': 'PostalAddress', addressLocality: h.location, addressCountry: 'CH' },
+          }
+        }))
+      },
+      ...(page.faqs.length > 0 ? [{
+        '@type': 'FAQPage',
+        '@id': `${pageUrl}#faq`,
+        mainEntity: page.faqs.map(f => ({
+          '@type': 'Question',
+          name: f.q,
+          acceptedAnswer: { '@type': 'Answer', text: f.a }
+        }))
+      }] : []),
     ]
   }
 
   return (
     <div style={{ background: bg, minHeight: '100vh' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
       {/* Hero */}
       <div style={{ background: '#1a0e06', padding: '6rem 2rem 4rem' }}>
