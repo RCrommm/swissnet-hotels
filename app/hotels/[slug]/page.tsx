@@ -40,6 +40,7 @@ function SchemaMarkup({ hotel, keywords, roomTypes, faqs, restaurants, spaData, 
       about: { '@id': hotelId },
       mainEntity: { '@id': hotelId },
       breadcrumb: { '@id': `${pageUrl}#breadcrumb` },
+      dateModified: new Date().toISOString().split('T')[0],
     },
 
     // BreadcrumbList
@@ -536,7 +537,7 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
 
             <section style={{ marginBottom: '4rem' }}>
   <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>Location</p>
-  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, margin: '0 0 1rem' }}>📍 {hotel.location}, Switzerland</p>
+<p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, margin: '0 0 1rem' }}>📍 {hotel.street_address ? `${hotel.street_address}, ` : ''}{hotel.location}, Switzerland{hotel.postal_code ? ` ${hotel.postal_code}` : ''}</p>
   <iframe
     src={`https://maps.google.com/maps?q=${encodeURIComponent(hotel.name + ', ' + hotel.location + ', Switzerland')}&output=embed`}
     width="100%"
