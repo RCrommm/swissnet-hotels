@@ -10,6 +10,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `Best Luxury Hotels in ${dest.name}, Switzerland | SwissNet Hotels`,
     description: `Discover the best luxury hotels in ${dest.name}, Switzerland. ${dest.tagline}. Compare top-rated 5-star hotels, rates and direct booking options.`,
+    alternates: {
+      canonical: `https://swissnethotels.com/destinations/${slug}`,
+    },
     openGraph: {
       title: `Best Luxury Hotels in ${dest.name}, Switzerland`,
       description: dest.description,

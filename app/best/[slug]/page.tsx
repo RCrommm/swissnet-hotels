@@ -326,6 +326,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: page.title + ' | SwissNet Hotels',
     description: page.description,
+    alternates: {
+      canonical: `https://swissnethotels.com/best/${slug}`,
+    },
   }
 }
 

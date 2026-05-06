@@ -18,7 +18,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   return {
     title: `${hotelA.name} vs ${hotelB.name} — Which is Better? | SwissNet Hotels`,
-    description: `Compare ${hotelA.name} and ${hotelB.name} side by side. Ratings, prices, rooms, spa and dining compared to help you choose the best luxury hotel in Switzerland.`,
+    description: `Compare ${hotelA.name} and ${hotelB.name} side by side...`,
+    alternates: {
+      canonical: `https://swissnethotels.com/compare/${slug}`,
+    },
     openGraph: {
       title: `${hotelA.name} vs ${hotelB.name} | SwissNet Hotels`,
       description: `Detailed comparison of two of Switzerland's finest luxury hotels.`,
