@@ -125,10 +125,11 @@ export default function Navigation() {
       ))}
       <div style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' as const, color: gold, padding: '0.75rem 1.25rem 0.4rem', borderTop: '1px solid rgba(201,169,110,0.15)', marginTop: '0.5rem' }}>Comparisons</div>
 {[
-  {label:'La Réserve vs Four Seasons Geneva', href:'/compare/la-reserve-geneve-vs-four-seasons-hotel-des-bergues-geneva'},
-  {label:'Mont Cervin vs The Omnia Zermatt', href:'/compare/mont-cervin-palace-vs-the-omnia-zermatt'},
-{label:'La Réserve Eden au Lac vs Baur au Lac', href:'/compare/la-reserve-zurich-vs-baur-au-lac-zurich'},  {label:'Badrutt\'s Palace vs Kulm St. Moritz', href:'/compare/badrutts-palace-hotel-vs-kulm-hotel-st-moritz'},
-  {label:'Alpina Gstaad vs Palace Gstaad', href:'/compare/the-alpina-gstaad-vs-palace-hotel-gstaad'},
+  { label: 'Mont Cervin vs Schweizerhof Zermatt', href: '/compare/mont-cervin-palace-vs-schweizerhof-zermatt' },
+  { label: 'Mont Cervin vs Monte Rosa Zermatt', href: '/compare/mont-cervin-palace-vs-monte-rosa-zermatt' },
+  { label: 'La Réserve Genève vs La Réserve Eden Zurich', href: '/compare/la-reserve-geneve-vs-la-reserve-zurich' },
+  { label: 'Victoria-Jungfrau vs Bellevue Palace', href: '/compare/victoriajungfrau-grand-hotel-interlaken-vs-bellevue-palace' },
+  { label: 'Crans Ambassador vs Alpengold', href: '/compare/crans-ambassador-vs-alpengold-hotel' },
 ].map(item => (
   <Link key={item.href} href={item.href} style={dropdownItemStyle} onMouseEnter={e => { e.currentTarget.style.color = gold; e.currentTarget.style.background = 'rgba(201,169,110,0.1)' }} onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; e.currentTarget.style.background = 'transparent' }}>{item.label}</Link>
 ))}
