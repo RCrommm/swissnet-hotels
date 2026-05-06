@@ -354,7 +354,6 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
   const bg = '#F8F5EF'
   const white = '#FFFFFF'
 
-  const pageUrl = `https://swissnethotels.com/best/${slug}`
 
   const pageUrl = `https://swissnethotels.com/best/${slug}`
   const schema = {
