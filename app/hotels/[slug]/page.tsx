@@ -38,6 +38,7 @@ function SchemaMarkup({ hotel, keywords, roomTypes, faqs, restaurants, spaData, 
       description: hotel.description,
       isPartOf: { '@id': 'https://swissnethotels.com#website' },
       about: { '@id': hotelId },
+      mainEntity: { '@id': hotelId },
       breadcrumb: { '@id': `${pageUrl}#breadcrumb` },
     },
 
@@ -71,6 +72,15 @@ function SchemaMarkup({ hotel, keywords, roomTypes, faqs, restaurants, spaData, 
         addressRegion: hotel.region,
         postalCode: hotel.postal_code || undefined,
         addressCountry: 'CH',
+      },
+      containedInPlace: {
+        '@type': 'City',
+        name: hotel.location,
+        containedInPlace: {
+          '@type': 'Country',
+          name: 'Switzerland',
+          sameAs: 'https://www.wikidata.org/wiki/Q39',
+        },
       },
       geo: hotel.latitude && hotel.longitude ? {
         '@type': 'GeoCoordinates',
