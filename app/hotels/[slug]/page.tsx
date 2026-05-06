@@ -113,6 +113,22 @@ function SchemaMarkup({ hotel, keywords, roomTypes, faqs, restaurants, spaData, 
       ],
     },
 
+    // Spa entity
+    ...(spaData && spaData.length > 0 ? spaData.map((spa: any) => ({
+      '@type': 'HealthAndBeautyBusiness',
+      '@id': `${pageUrl}/spa#spa`,
+      name: spa.name || `Spa at ${hotel.name}`,
+      description: spa.description || undefined,
+      url: `${pageUrl}/spa`,
+      containedInPlace: { '@id': hotelId },
+      amenityFeature: [
+        spa.pool && { '@type': 'LocationFeatureSpecification', name: 'Swimming pool', value: true },
+        spa.sauna && { '@type': 'LocationFeatureSpecification', name: 'Sauna', value: true },
+        spa.hammam && { '@type': 'LocationFeatureSpecification', name: 'Hammam', value: true },
+        spa.size_sqm && { '@type': 'LocationFeatureSpecification', name: `${spa.size_sqm} m² spa facility`, value: true },
+      ].filter(Boolean),
+    })) : []),
+
     // FAQPage
     ...(faqs?.length > 0 ? [{
       '@type': 'FAQPage',
