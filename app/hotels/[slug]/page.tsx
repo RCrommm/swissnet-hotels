@@ -20,71 +20,115 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 function SchemaMarkup({ hotel, keywords, roomTypes, faqs, restaurants, spaData, awards }: any) {
-const hotelSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'Hotel',
-    '@id': `https://swissnethotels.com/hotels/${hotel.slug || hotel.id}`,
-    name: hotel.name,
-    description: hotel.description,
-    url: `https://swissnethotels.com/hotels/${hotel.slug || hotel.id}`,
-    image: hotel.images?.[0],
-    email: hotel.contact_email || undefined,
-    address: {
-      '@type': 'PostalAddress',
-      addressLocality: hotel.location,
-      addressCountry: 'CH',
-      addressRegion: hotel.region,
+  const hotelId = `https://swissnethotels.com/hotels/${hotel.slug || hotel.id}#hotel`
+  const pageUrl = `https://swissnethotels.com/hotels/${hotel.slug || hotel.id}`
+
+  // Separate memberships from actual awards
+  const membershipCategories = ['membership']
+  const memberships = (awards || []).filter((a: any) => membershipCategories.includes(a.category))
+  const actualAwards = (awards || []).filter((a: any) => !membershipCategories.includes(a.category))
+
+  const graph: any[] = [
+    // WebPage
+    {
+      '@type': 'WebPage',
+      '@id': `${pageUrl}#webpage`,
+      url: pageUrl,
+      name: `${hotel.name} — Luxury Hotel in ${hotel.location} | SwissNet Hotels`,
+      description: hotel.description,
+      isPartOf: { '@id': 'https://swissnethotels.com#website' },
+      about: { '@id': hotelId },
+      breadcrumb: { '@id': `${pageUrl}#breadcrumb` },
     },
-    starRating: { '@type': 'Rating', ratingValue: hotel.star_classification || 5 },
-    aggregateRating: hotel.rating ? {
-      '@type': 'AggregateRating',
-      ratingValue: hotel.rating,
-      bestRating: 5,
-      worstRating: 1,
-      reviewCount: 50,
-    } : undefined,
-    priceRange: `CHF ${hotel.nightly_rate_chf}+`,
-    amenityFeature: (hotel.amenities || []).map((a: string) => ({ '@type': 'LocationFeatureSpecification', name: a, value: true })),
-    keywords: [...(hotel.amenities || []), ...(hotel.best_for || []), hotel.region, hotel.category, hotel.name, 'luxury hotel Switzerland', ...keywords.map((k: any) => k.keyword)].filter(Boolean).join(', '),
-    sameAs: [hotel.tripadvisor_url, hotel.booking_url, hotel.google_maps_url, hotel.wikipedia_url, hotel.direct_booking_url].filter(Boolean),
-award: (awards || []).map((a: any) => a.award_name),
-    containsPlace: (roomTypes || []).map((rt: any) => ({
-      '@type': 'HotelRoom',
-      name: rt.name,
-      description: rt.description,
-      occupancy: { '@type': 'QuantitativeValue', maxValue: rt.max_occupancy || 2 },
-      bed: rt.bed_type ? { '@type': 'BedDetails', typeOfBed: rt.bed_type } : undefined,
-      floorSize: rt.size_sqm ? { '@type': 'QuantitativeValue', value: rt.size_sqm, unitCode: 'MTK' } : undefined,
-    })),
-  }
 
-  const faqSchema = faqs?.length > 0 ? {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqs.map((f: any) => ({
-      '@type': 'Question',
-      name: f.question,
-      acceptedAnswer: { '@type': 'Answer', text: f.answer },
-    }))
-  } : null
+    // BreadcrumbList
+    {
+      '@type': 'BreadcrumbList',
+      '@id': `${pageUrl}#breadcrumb`,
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://swissnethotels.com' },
+        { '@type': 'ListItem', position: 2, name: 'Hotels', item: 'https://swissnethotels.com/hotels' },
+        { '@type': 'ListItem', position: 3, name: hotel.region, item: `https://swissnethotels.com/destinations/${hotel.region?.toLowerCase().replace(/\s+/g, '-')}` },
+        { '@type': 'ListItem', position: 4, name: hotel.name, item: pageUrl },
+      ]
+    },
 
-  const breadcrumbSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://swissnethotels.com' },
-      { '@type': 'ListItem', position: 2, name: 'Hotels', item: 'https://swissnethotels.com/hotels' },
-      { '@type': 'ListItem', position: 3, name: hotel.region, item: `https://swissnethotels.com/destinations/${hotel.region?.toLowerCase().replace(/\s+/g, '-')}` },
-      { '@type': 'ListItem', position: 4, name: hotel.name, item: `https://swissnethotels.com/hotels/${hotel.slug || hotel.id}` },
-    ]
-  }
+    // Hotel
+    {
+      '@type': 'Hotel',
+      '@id': hotelId,
+      name: hotel.name,
+      description: hotel.description,
+      url: pageUrl,
+      image: (hotel.images || []).slice(0, 3).filter(Boolean),
+      telephone: hotel.telephone || undefined,
+      email: hotel.contact_email || undefined,
+      priceRange: `CHF ${hotel.nightly_rate_chf}+`,
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: hotel.street_address || undefined,
+        addressLocality: hotel.location,
+        addressRegion: hotel.region,
+        postalCode: hotel.postal_code || undefined,
+        addressCountry: 'CH',
+      },
+      geo: hotel.latitude && hotel.longitude ? {
+        '@type': 'GeoCoordinates',
+        latitude: hotel.latitude,
+        longitude: hotel.longitude,
+      } : undefined,
+      hasMap: hotel.google_maps_url || undefined,
+      starRating: { '@type': 'Rating', ratingValue: hotel.star_classification || 5 },
+      amenityFeature: (hotel.amenities || []).map((a: string) => ({
+        '@type': 'LocationFeatureSpecification',
+        name: a,
+        value: true,
+      })),
+      memberOf: memberships.length > 0 ? memberships.map((m: any) => ({
+        '@type': 'Organization',
+        name: m.award_name,
+      })) : undefined,
+      award: actualAwards.length > 0 ? actualAwards.map((a: any) => a.award_name) : undefined,
+      keywords: [...(hotel.amenities || []), ...(hotel.best_for || []), hotel.region, hotel.category, hotel.name, 'luxury hotel Switzerland', ...keywords.map((k: any) => k.keyword)].filter(Boolean).join(', '),
+      sameAs: [hotel.tripadvisor_url, hotel.booking_url, hotel.google_maps_url, hotel.wikipedia_url, hotel.direct_booking_url].filter(Boolean),
+      containsPlace: [
+        ...(roomTypes || []).map((rt: any) => ({
+          '@type': 'HotelRoom',
+          '@id': `${pageUrl}/rooms/${rt.name?.toLowerCase().replace(/\s+/g, '-')}#room`,
+          name: rt.name,
+          description: rt.description,
+          occupancy: { '@type': 'QuantitativeValue', maxValue: rt.max_occupancy || 2 },
+          bed: rt.bed_type ? { '@type': 'BedDetails', typeOfBed: rt.bed_type } : undefined,
+          floorSize: rt.size_sqm ? { '@type': 'QuantitativeValue', value: rt.size_sqm, unitCode: 'MTK' } : undefined,
+        })),
+        ...(restaurants || []).map((r: any) => ({
+          '@type': 'Restaurant',
+          '@id': `${pageUrl}/dining/${r.name?.toLowerCase().replace(/\s+/g, '-')}#restaurant`,
+          name: r.name,
+          description: r.description || undefined,
+          servesCuisine: r.cuisine_type || undefined,
+          containedInPlace: { '@id': hotelId },
+          award: r.michelin_stars > 0 ? [`${r.michelin_stars} Michelin Star${r.michelin_stars > 1 ? 's' : ''}`] : undefined,
+        })),
+      ],
+    },
+
+    // FAQPage
+    ...(faqs?.length > 0 ? [{
+      '@type': 'FAQPage',
+      '@id': `${pageUrl}#faq`,
+      mainEntity: faqs.map((f: any) => ({
+        '@type': 'Question',
+        name: f.question,
+        acceptedAnswer: { '@type': 'Answer', text: f.answer },
+      }))
+    }] : []),
+  ]
 
   return (
-    <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(hotelSchema) }} />
-      {faqSchema && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-    </>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{
+      __html: JSON.stringify({ '@context': 'https://schema.org', '@graph': graph })
+    }} />
   )
 }
 
