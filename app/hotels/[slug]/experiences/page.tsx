@@ -38,17 +38,37 @@ export default async function ExperiencesPage({ params }: { params: Promise<{ sl
   const hotelUrl = hotel.slug || hotel.id
   const trackingUrl = `/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIComponent(hotel.name)}&destination=${encodeURIComponent(hotel.direct_booking_url)}&medium=website&campaign=experiences_page`
 
+  const hotelId = `https://swissnethotels.com/hotels/${hotelUrl}#hotel`
+  const pageUrl = `https://swissnethotels.com/hotels/${hotelUrl}/experiences`
+
   const schema = {
     '@context': 'https://schema.org',
-    '@type': 'Hotel',
-    name: hotel.name,
-    url: `https://swissnethotels.com/hotels/${hotelUrl}`,
-    amenityFeature: (experiences || []).map(e => ({
-      '@type': 'LocationFeatureSpecification',
-      name: e.name,
-      description: e.description,
-      value: true,
-    }))
+    '@graph': [
+      {
+        '@type': 'WebPage',
+        '@id': `${pageUrl}#webpage`,
+        url: pageUrl,
+        name: `${hotel.name} Experiences & Activities | SwissNet Hotels`,
+        isPartOf: { '@id': 'https://swissnethotels.com#website' },
+        about: { '@id': hotelId },
+      },
+      ...(experiences || []).map((e: any) => ({
+        '@type': e.category === 'outdoor' || e.category === 'adventure' ? 'TouristAttraction' : 'Service',
+        '@id': `${pageUrl}/${e.name?.toLowerCase().replace(/\s+/g, '-')}#experience`,
+        name: e.name,
+        description: e.description || undefined,
+        provider: { '@id': hotelId },
+        url: pageUrl,
+        areaServed: {
+          '@type': 'Place',
+          name: hotel.location,
+          containedInPlace: {
+            '@type': 'Country',
+            name: 'Switzerland',
+          }
+        },
+      })),
+    ]
   }
 
   return (
