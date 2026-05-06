@@ -19,8 +19,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 }
 
-function SchemaMarkup({ hotel, keywords, roomTypes, faqs, restaurants, spaData }: any) {
-  const hotelSchema = {
+function SchemaMarkup({ hotel, keywords, roomTypes, faqs, restaurants, spaData, awards }: any) {
+const hotelSchema = {
     '@context': 'https://schema.org',
     '@type': 'Hotel',
     '@id': `https://swissnethotels.com/hotels/${hotel.slug || hotel.id}`,
@@ -47,6 +47,11 @@ function SchemaMarkup({ hotel, keywords, roomTypes, faqs, restaurants, spaData }
     amenityFeature: (hotel.amenities || []).map((a: string) => ({ '@type': 'LocationFeatureSpecification', name: a, value: true })),
     keywords: [...(hotel.amenities || []), ...(hotel.best_for || []), hotel.region, hotel.category, hotel.name, 'luxury hotel Switzerland', ...keywords.map((k: any) => k.keyword)].filter(Boolean).join(', '),
     sameAs: [hotel.tripadvisor_url, hotel.booking_url, hotel.google_maps_url, hotel.wikipedia_url, hotel.direct_booking_url].filter(Boolean),
+award: (awards || []).map((a: any) => ({
+  '@type': 'Thing',
+  name: a.award_name,
+  description: a.description || undefined,
+})),
     dateModified: hotel.updated_at ? new Date(hotel.updated_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
     containsPlace: (roomTypes || []).map((rt: any) => ({
       '@type': 'HotelRoom',
@@ -151,7 +156,7 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
 
   return (
     <div style={{ background: bg, minHeight: '100vh' }}>
-      <SchemaMarkup hotel={hotel} keywords={keywords || []} roomTypes={roomTypes || []} faqs={faqs} restaurants={restaurants || []} spaData={spaData || []} />
+      <SchemaMarkup hotel={hotel} keywords={keywords || []} roomTypes={roomTypes || []} faqs={faqs} restaurants={restaurants || []} spaData={spaData || []} awards={awards || []} />
       <ViewTracker hotelId={hotel.id} hotelName={hotel.name} />
 
       {/* HERO — full screen */}
