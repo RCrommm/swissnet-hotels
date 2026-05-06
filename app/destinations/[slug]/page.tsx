@@ -213,25 +213,51 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
   const bg = '#F8F5EF'
 
   // Destination schema
+  const pageUrl = `https://swissnethotels.com/destinations/${slug}`
   const schema = {
     '@context': 'https://schema.org',
-    '@type': 'ItemList',
-    name: `Best Luxury Hotels in ${dest.name}, Switzerland`,
-    description: dest.description,
-    url: `https://swissnethotels.com/destinations/${slug}`,
-    numberOfItems: hotelsList.length,
-    itemListElement: hotelsList.map((h, i) => ({
-      '@type': 'ListItem',
-      position: i + 1,
-      item: {
-        '@type': 'Hotel',
-        name: h.name,
-        url: `https://swissnethotels.com/hotels/${h.id}`,
-        priceRange: `CHF ${h.nightly_rate_chf}+`,
-        starRating: { '@type': 'Rating', ratingValue: h.rating },
-        address: { '@type': 'PostalAddress', addressLocality: h.location, addressCountry: 'CH' },
-      }
-    }))
+    '@graph': [
+      {
+        '@type': 'CollectionPage',
+        '@id': `${pageUrl}#webpage`,
+        url: pageUrl,
+        name: `Best Luxury Hotels in ${dest.name}, Switzerland | SwissNet Hotels`,
+        description: dest.description,
+        isPartOf: { '@id': 'https://swissnethotels.com#website' },
+        breadcrumb: { '@id': `${pageUrl}#breadcrumb` },
+        mainEntity: { '@id': `${pageUrl}#list` },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        '@id': `${pageUrl}#breadcrumb`,
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://swissnethotels.com' },
+          { '@type': 'ListItem', position: 2, name: 'Hotels', item: 'https://swissnethotels.com/hotels' },
+          { '@type': 'ListItem', position: 3, name: dest.name, item: pageUrl },
+        ]
+      },
+      {
+        '@type': 'ItemList',
+        '@id': `${pageUrl}#list`,
+        name: `Best Luxury Hotels in ${dest.name}, Switzerland`,
+        description: dest.description,
+        url: pageUrl,
+        numberOfItems: hotelsList.length,
+        itemListElement: hotelsList.map((h, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          item: {
+            '@type': 'Hotel',
+            '@id': `https://swissnethotels.com/hotels/${(h as any).slug || h.id}#hotel`,
+            name: h.name,
+            url: `https://swissnethotels.com/hotels/${(h as any).slug || h.id}`,
+            priceRange: `CHF ${h.nightly_rate_chf}+`,
+            starRating: { '@type': 'Rating', ratingValue: h.rating },
+            address: { '@type': 'PostalAddress', addressLocality: h.location, addressCountry: 'CH' },
+          }
+        }))
+      },
+    ]
   }
 
   return (
