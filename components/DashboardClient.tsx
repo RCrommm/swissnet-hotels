@@ -286,7 +286,7 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
                 {[
                   { label: 'ChatGPT', note: 'Via Bing index', key: 'chatgpt' },
                   { label: 'Perplexity', note: 'Via Bing index', key: 'perplexity' },
-                  { label: 'Google AI', note: 'Via Google index', key: 'google' },
+                  { label: 'Claude', note: 'Via Anthropic', key: 'claude' },
                 ].map(src => {
                   const score = platformScore(src.key)
                   const status = score === null ? 'Pending' : score === 0 ? 'Low' : score < 30 ? 'Growing' : score < 60 ? 'Medium' : 'Strong'
