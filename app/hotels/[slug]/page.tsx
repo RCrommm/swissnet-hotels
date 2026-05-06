@@ -295,7 +295,7 @@ supabase.from('hotel_sections').select('*').eq('hotel_id', hotel.id),  ])
                         </div>
                         {rt.base_rate_chf && (
                           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: text, margin: 0, flexShrink: 0, marginLeft: '1rem' }}>
-                            CHF {rt.base_rate_chf.toLocaleString()}<span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: textMuted }}>/night</span>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: textMuted, marginRight: '0.2rem' }}>from</span>CHF {rt.base_rate_chf.toLocaleString()}<span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: textMuted }}>/night</span>
                           </p>
                         )}
                       </div>
