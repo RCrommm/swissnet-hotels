@@ -2,6 +2,30 @@ import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const parts = slug.split('-vs-')
+  if (parts.length !== 2) return {}
+
+  const { data: allHotels } = await supabase.from('hotels').select('name, location').eq('is_active', true)
+  if (!allHotels) return {}
+
+  const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-')
+  const hotelA = allHotels.find(h => (h as any).slug === parts[0]) || allHotels.find(h => normalize(h.name) === parts[0])
+  const hotelB = allHotels.find(h => (h as any).slug === parts[1]) || allHotels.find(h => normalize(h.name) === parts[1])
+
+  if (!hotelA || !hotelB) return {}
+
+  return {
+    title: `${hotelA.name} vs ${hotelB.name} — Which is Better? | SwissNet Hotels`,
+    description: `Compare ${hotelA.name} and ${hotelB.name} side by side. Ratings, prices, rooms, spa and dining compared to help you choose the best luxury hotel in Switzerland.`,
+    openGraph: {
+      title: `${hotelA.name} vs ${hotelB.name} | SwissNet Hotels`,
+      description: `Detailed comparison of two of Switzerland's finest luxury hotels.`,
+    }
+  }
+}
+
 export default async function ComparePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
 
