@@ -3,6 +3,20 @@ import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const dest = DESTINATIONS[slug]
+  if (!dest) return {}
+  return {
+    title: `Best Luxury Hotels in ${dest.name}, Switzerland | SwissNet Hotels`,
+    description: `Discover the best luxury hotels in ${dest.name}, Switzerland. ${dest.tagline}. Compare top-rated 5-star hotels, rates and direct booking options.`,
+    openGraph: {
+      title: `Best Luxury Hotels in ${dest.name}, Switzerland`,
+      description: dest.description,
+    }
+  }
+}
+
 const DESTINATIONS: Record<string, {
   name: string
   region: string
