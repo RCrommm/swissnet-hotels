@@ -85,6 +85,9 @@ const hotelB = allHotels.find(h => (h as any).slug === slugB) ||
 
   return (
     <div style={{ background: bg, minHeight: '100vh' }}>
+      <head>
+        <link rel="canonical" href={`https://swissnethotels.com/compare/${slug}`} />
+      </head>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
 
       {/* Header */}

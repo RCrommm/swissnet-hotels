@@ -224,6 +224,9 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
 
   return (
     <div style={{ background: bg, minHeight: '100vh' }}>
+      <head>
+        <link rel="canonical" href={`https://swissnethotels.com/hotels/${hotelUrl}`} />
+      </head>
       <SchemaMarkup hotel={hotel} keywords={keywords || []} roomTypes={roomTypes || []} faqs={faqs} restaurants={restaurants || []} spaData={spaData || []} awards={awards || []} />
       <ViewTracker hotelId={hotel.id} hotelName={hotel.name} />
 
