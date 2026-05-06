@@ -118,7 +118,7 @@ const hotelB = allHotels.find(h => (h as any).slug === slugB) ||
                     View Profile
                   </Link>
                   <a href={i === 0 ? trackingUrlA : trackingUrlB} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'block', textAlign: 'center', background: gold, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#1a0e06', padding: '0.6rem', textDecoration: 'none' }}>
-                    Book Direct
+                    Official Website
                   </a>
                 </div>
               </div>

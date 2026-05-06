@@ -161,8 +161,7 @@ export default function HotelsClient({ hotels, initialRegion, initialCategory, i
                       <div style={{ display: 'flex', gap: '0.5rem', position: 'relative', zIndex: 2 }}>
                         {hotel.is_partner && (
                           <>
-                            <a href={websiteUrl} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 500, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: '#3D2B1F', border: '1px solid rgba(201,169,110,0.35)', borderRadius: 8, padding: '0.6rem 0.875rem', textDecoration: 'none' }}>Website</a>
-                            <a href={bookUrl} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: '#1a0e06', background: gold, borderRadius: 8, padding: '0.6rem 0.875rem', textDecoration: 'none' }}>Book Direct</a>
+                          <a href={bookUrl} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: '#1a0e06', background: gold, borderRadius: 8, padding: '0.6rem 0.875rem', textDecoration: 'none' }}>Official Website</a>
                           </>
                         )}
                       </div>

@@ -196,7 +196,7 @@ supabase.from('hotel_sections').select('*').eq('hotel_id', hotel.id),  ])
                 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: 'rgba(255,255,255,0.5)', margin: '0 0 0.4rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>From</p>
                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.5rem', color: white, margin: '0 0 0.75rem', lineHeight: 1 }}>CHF {hotel.nightly_rate_chf?.toLocaleString()}<span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)' }}>/night</span></p>
                 <a href={trackingUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: gold, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.875rem 2rem', textDecoration: 'none' }}>
-                  Check Availability →
+                  Official Website →
                 </a>
               </div>
             )}
@@ -528,7 +528,7 @@ supabase.from('hotel_sections').select('*').eq('hotel_id', hotel.id),  ])
               {hotel.is_partner && trackingUrl ? (
                 <>
                   <a href={trackingUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', background: text, color: white, fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '1rem', textAlign: 'center', textDecoration: 'none', marginBottom: '0.75rem' }}>
-                    Check Availability →
+                  Official Website →
                   </a>
                   <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: textMuted, textAlign: 'center', margin: '0 0 1.5rem', lineHeight: 1.5 }}>
                     Direct booking · No fees · Best rate guaranteed
