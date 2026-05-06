@@ -243,22 +243,13 @@ supabase.from('hotel_sections').select('*').eq('hotel_id', hotel.id),  ])
             {/* DIVIDER */}
             <div style={{ height: 1, background: border, marginBottom: '4rem' }} />
 
-            {/* EXCLUSIVE OFFER */}
-            {hotel.exclusive_offer && (
-              <>
-                <section style={{ marginBottom: '4rem' }}>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1rem' }}>Exclusive Offer</p>
-                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 300, color: text, lineHeight: 1.6, margin: 0 }}>{hotel.exclusive_offer}</p>
-                </section>
-                <div style={{ height: 1, background: border, marginBottom: '4rem' }} />
-              </>
-            )}
+          
 
             {/* SPECIAL OFFERS */}
             {showSchema && offers && offers.length > 0 && (
               <>
                 <section style={{ marginBottom: '4rem' }}>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>Current Offers</p>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>Exclusive Offers</p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                     {offers.map((offer: any) => (
                       <div key={offer.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: '1.5rem', borderBottom: `1px solid ${border}` }}>
