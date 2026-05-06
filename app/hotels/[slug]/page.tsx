@@ -90,7 +90,7 @@ function SchemaMarkup({ hotel, keywords, roomTypes, faqs, restaurants, spaData, 
       })) : undefined,
       award: actualAwards.length > 0 ? actualAwards.map((a: any) => a.award_name) : undefined,
       keywords: [...(hotel.amenities || []), ...(hotel.best_for || []), hotel.region, hotel.category, hotel.name, 'luxury hotel Switzerland', ...keywords.map((k: any) => k.keyword)].filter(Boolean).join(', '),
-      sameAs: [hotel.tripadvisor_url, hotel.booking_url, hotel.google_maps_url, hotel.wikipedia_url, hotel.direct_booking_url].filter(Boolean),
+      sameAs: [hotel.direct_booking_url, hotel.tripadvisor_url, hotel.booking_url, hotel.google_maps_url, hotel.wikipedia_url, hotel.michelin_url, hotel.lhw_url].filter(Boolean),
       containsPlace: [
         ...(roomTypes || []).map((rt: any) => ({
           '@type': 'HotelRoom',
