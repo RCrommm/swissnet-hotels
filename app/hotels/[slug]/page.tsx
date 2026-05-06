@@ -47,12 +47,7 @@ const hotelSchema = {
     amenityFeature: (hotel.amenities || []).map((a: string) => ({ '@type': 'LocationFeatureSpecification', name: a, value: true })),
     keywords: [...(hotel.amenities || []), ...(hotel.best_for || []), hotel.region, hotel.category, hotel.name, 'luxury hotel Switzerland', ...keywords.map((k: any) => k.keyword)].filter(Boolean).join(', '),
     sameAs: [hotel.tripadvisor_url, hotel.booking_url, hotel.google_maps_url, hotel.wikipedia_url, hotel.direct_booking_url].filter(Boolean),
-award: (awards || []).map((a: any) => ({
-  '@type': 'Thing',
-  name: a.award_name,
-  description: a.description || undefined,
-})),
-    dateModified: hotel.updated_at ? new Date(hotel.updated_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+award: (awards || []).map((a: any) => a.award_name),
     containsPlace: (roomTypes || []).map((rt: any) => ({
       '@type': 'HotelRoom',
       name: rt.name,
@@ -60,7 +55,6 @@ award: (awards || []).map((a: any) => ({
       occupancy: { '@type': 'QuantitativeValue', maxValue: rt.max_occupancy || 2 },
       bed: rt.bed_type ? { '@type': 'BedDetails', typeOfBed: rt.bed_type } : undefined,
       floorSize: rt.size_sqm ? { '@type': 'QuantitativeValue', value: rt.size_sqm, unitCode: 'MTK' } : undefined,
-      offers: rt.base_rate_chf ? { '@type': 'Offer', price: rt.base_rate_chf, priceCurrency: 'CHF', url: hotel.direct_booking_url } : undefined,
     })),
   }
 
