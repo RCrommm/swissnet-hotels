@@ -7,7 +7,6 @@ import HotelsTab from '@/components/HotelsTab'
 import SchemaTab from '@/components/SchemaTab'
 import AIVisibilityToggle from '@/components/AIVisibilityToggle'
 import AIVisibilityQueries from '@/components/AIVisibilityQueries'
-import RegionQueriesTab from '@/components/RegionQueriesTab'
 
 async function isAuthenticated(password?: string) {
   const cookieStore = await cookies()
@@ -388,7 +387,6 @@ export default async function AdminPage({
         )}
 
         {tab === 'keywords' && <KeywordsTab hotels={hotelsList} keywords={keywordsList} password={pw} />}
-        {tab === 'region queries' && <RegionQueriesTab />}
         {tab === 'clicks' && (
           <div>
             <div className="flex justify-between items-center mb-4">
