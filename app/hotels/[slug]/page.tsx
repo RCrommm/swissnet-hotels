@@ -519,9 +519,9 @@ supabase.from('hotel_sections').select('*').eq('hotel_id', hotel.id),  ])
               <div style={{ marginBottom: '1.5rem' }}>
                 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: textMuted, margin: '0 0 0.4rem' }}>Pricing</p>
                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.75rem', fontWeight: 300, color: text, margin: '0 0 0.25rem', lineHeight: 1 }}>
-                  CHF {hotel.nightly_rate_chf?.toLocaleString()}
-                </p>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: textMuted, margin: 0 }}>per night · best available direct rate</p>
+  From CHF {hotel.nightly_rate_chf?.toLocaleString()}
+</p>
+<p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: textMuted, margin: 0 }}>per night · typical direct rate</p>
                 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, margin: '0.4rem 0 0' }}>Price varies by dates and room type</p>
               </div>
 
