@@ -8,7 +8,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!hotelMeta) return {}
   return {
     title: `${hotelMeta.name} Rooms & Suites in ${hotelMeta.location}, Switzerland | SwissNet Hotels`,
-    description: `Explore all rooms and suites at ${hotelMeta.name} in ${hotelMeta.location}, Switzerland. View sizes, bed types, views and rates from CHF ${hotelMeta.nightly_rate_chf}/night. Book direct for the best rate.`,
+    description: hotelMeta.nightly_rate_chf
+      ? `Explore all rooms and suites at ${hotelMeta.name} in ${hotelMeta.location}, Switzerland. View sizes, bed types, views and rates from CHF ${hotelMeta.nightly_rate_chf}/night. Book direct for the best rate.`
+      : `Explore all rooms and suites at ${hotelMeta.name} in ${hotelMeta.location}, Switzerland. View sizes, bed types, views and book direct for the best available rate.`,
     alternates: {
       canonical: `https://swissnethotels.com/hotels/${hotelMeta.slug || slug}/rooms`,
     },
@@ -92,7 +94,7 @@ const minRate = rates.length > 0 ? Math.min(...rates) : hotel.nightly_rate_chf |
         mainEntity: [
           {
             '@type': 'Question',
-            name: `How many rooms does ${hotel.name} have?`,
+            name: `What room types does ${hotel.name} offer?`,
             acceptedAnswer: {
               '@type': 'Answer',
               text: `${hotel.name} in ${hotel.location}, Switzerland offers ${roomTypes?.length || 'multiple'} room types${minRate ? `, with rates from CHF ${minRate.toLocaleString()} per night` : ''}.${suites.length > 0 ? ` The hotel features ${suites.length} suite categories.` : ''}`
@@ -131,8 +133,9 @@ const minRate = rates.length > 0 ? Math.min(...rates) : hotel.nightly_rate_chf |
 
   const faqs = [
     {
-      q: `What room types does ${hotel.name} offer?`,
-    },
+  q: `What room types does ${hotel.name} offer?`,
+  a: `${hotel.name} in ${hotel.location}, Switzerland offers ${roomTypes?.length || 'multiple'} room categories${minRate ? `, with rates from CHF ${minRate.toLocaleString()} per night` : ''}.${suites.length > 0 ? ` The hotel features ${suites.length} suite categories.` : ''}`
+},
     {
       q: `Does ${hotel.name} have suites?`,
       a: suites.length > 0
