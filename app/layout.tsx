@@ -21,6 +21,35 @@ export const metadata: Metadata = {
   },
 }
 
+const organizationSchema = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': 'https://swissnethotels.com#organization',
+      name: 'SwissNet Hotels',
+      url: 'https://swissnethotels.com',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://swissnethotels.com/apple-touch-icon.png',
+      },
+      description: 'SwissNet Hotels is a direct booking platform for luxury hotels in Switzerland.',
+      areaServed: {
+        '@type': 'Country',
+        name: 'Switzerland',
+      },
+    },
+    {
+      '@type': 'WebSite',
+      '@id': 'https://swissnethotels.com#website',
+      url: 'https://swissnethotels.com',
+      name: 'SwissNet Hotels',
+      description: 'Direct booking platform for luxury Swiss hotels.',
+      publisher: { '@id': 'https://swissnethotels.com#organization' },
+    },
+  ],
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -28,7 +57,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head />
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        />
+      </head>
       <body>
         {children}
       </body>
