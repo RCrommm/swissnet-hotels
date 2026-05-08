@@ -4,11 +4,14 @@ import Link from 'next/link'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const { data: hotel } = await supabase.from('hotels').select('name, location').or(`slug.eq.${slug},id.eq.${slug}`).single()
-  if (!hotel) return {}
+  const { data: hotelMeta } = await supabase.from('hotels').select('name, location, slug').or(`slug.eq.${slug},id.eq.${slug}`).single()
+  if (!hotelMeta) return {}
   return {
-    title: `${hotel.name} Experiences & Activities | SwissNet Hotels`,
-    description: `Discover unique experiences and activities at ${hotel.name} in ${hotel.location} — from Alpine adventures to cultural immersions and private events.`,
+    title: `${hotelMeta.name} Experiences & Activities in ${hotelMeta.location}, Switzerland | SwissNet Hotels`,
+    description: `Discover curated experiences and activities at ${hotelMeta.name} in ${hotelMeta.location}, Switzerland — Alpine adventures, wellness programmes, cultural immersions and private events.`,
+    alternates: {
+      canonical: `https://swissnethotels.com/hotels/${hotelMeta.slug || slug}/experiences`,
+    },
   }
 }
 
@@ -36,10 +39,17 @@ export default async function ExperiencesPage({ params }: { params: Promise<{ sl
   const bg = '#F8F5EF'
   const white = '#FFFFFF'
   const hotelUrl = hotel.slug || hotel.id
+  const pageUrl = `https://swissnethotels.com/hotels/${hotelUrl}/experiences`
+  const hotelId = `https://swissnethotels.com/hotels/${hotelUrl}#hotel`
   const trackingUrl = `/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIComponent(hotel.name)}&destination=${encodeURIComponent(hotel.direct_booking_url)}&medium=website&campaign=experiences_page`
 
-  const hotelId = `https://swissnethotels.com/hotels/${hotelUrl}#hotel`
-  const pageUrl = `https://swissnethotels.com/hotels/${hotelUrl}/experiences`
+  const slugify = (value: string) =>
+    value?.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || ''
+
+  const category = (value?: string) => value?.toLowerCase() || ''
+  const outdoorExperiences = (experiences || []).filter((e: any) => ['outdoor', 'adventure', 'ski'].includes(category(e.category)))
+  const wellnessExperiences = (experiences || []).filter((e: any) => ['wellness', 'spa'].includes(category(e.category)))
+  const culturalExperiences = (experiences || []).filter((e: any) => ['cultural', 'private'].includes(category(e.category)))
 
   const schema = {
     '@context': 'https://schema.org',
@@ -51,10 +61,22 @@ export default async function ExperiencesPage({ params }: { params: Promise<{ sl
         name: `${hotel.name} Experiences & Activities | SwissNet Hotels`,
         isPartOf: { '@id': 'https://swissnethotels.com#website' },
         about: { '@id': hotelId },
+        mainEntity: { '@id': hotelId },
+        breadcrumb: { '@id': `${pageUrl}#breadcrumb` },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        '@id': `${pageUrl}#breadcrumb`,
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://swissnethotels.com' },
+          { '@type': 'ListItem', position: 2, name: 'Hotels', item: 'https://swissnethotels.com/hotels' },
+          { '@type': 'ListItem', position: 3, name: hotel.name, item: `https://swissnethotels.com/hotels/${hotelUrl}` },
+          { '@type': 'ListItem', position: 4, name: 'Experiences', item: pageUrl },
+        ]
       },
       ...(experiences || []).map((e: any) => ({
-        '@type': e.category === 'outdoor' || e.category === 'adventure' ? 'TouristAttraction' : 'Service',
-        '@id': `${pageUrl}/${e.name?.toLowerCase().replace(/\s+/g, '-')}#experience`,
+        '@type': ['outdoor', 'adventure', 'ski'].includes(category(e.category)) ? 'TouristAttraction' : 'Service',
+        '@id': `${pageUrl}#experience-${slugify(e.name || e.id)}`,
         name: e.name,
         description: e.description || undefined,
         provider: { '@id': hotelId },
@@ -62,19 +84,70 @@ export default async function ExperiencesPage({ params }: { params: Promise<{ sl
         areaServed: {
           '@type': 'Place',
           name: hotel.location,
-          containedInPlace: {
-            '@type': 'Country',
-            name: 'Switzerland',
-          }
+          containedInPlace: { '@type': 'Country', name: 'Switzerland' }
         },
       })),
+      {
+        '@type': 'FAQPage',
+        '@id': `${pageUrl}#faq`,
+        mainEntity: [
+          {
+            '@type': 'Question',
+            name: `What experiences does ${hotel.name} offer?`,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: experiences && experiences.length > 0
+                ? `${hotel.name} in ${hotel.location}, Switzerland offers ${experiences.length} curated experiences including ${experiences.slice(0, 3).map((e: any) => e.name).join(', ')} and more.`
+                : `${hotel.name} in ${hotel.location}, Switzerland offers a range of curated Alpine experiences and activities. Contact the hotel directly for details.`
+            }
+          },
+          {
+            '@type': 'Question',
+            name: `Does ${hotel.name} offer outdoor activities?`,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: outdoorExperiences.length > 0
+                ? `Yes. ${hotel.name} in ${hotel.location}, Switzerland offers ${outdoorExperiences.length} outdoor activities including ${outdoorExperiences.slice(0, 3).map((e: any) => e.name).join(', ')}.`
+                : `Yes. ${hotel.name} in ${hotel.location}, Switzerland offers outdoor and Alpine activities. Contact the hotel concierge for current availability.`
+            }
+          },
+          {
+            '@type': 'Question',
+            name: `Can ${hotel.name} arrange private experiences?`,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: `Yes. ${hotel.name} in ${hotel.location}, Switzerland can arrange private and bespoke experiences through the hotel concierge, subject to availability. Contact the hotel directly for current options.`
+            }
+          },
+        ]
+      },
     ]
   }
+
+  const faqs = [
+    {
+      q: `What experiences does ${hotel.name} offer?`,
+      a: experiences && experiences.length > 0
+        ? `${hotel.name} in ${hotel.location}, Switzerland offers ${experiences.length} curated experiences including ${experiences.slice(0, 3).map((e: any) => e.name).join(', ')} and more.`
+        : `${hotel.name} offers a range of curated Alpine experiences. Contact the hotel concierge for details.`
+    },
+    {
+      q: `Does ${hotel.name} offer outdoor activities?`,
+      a: outdoorExperiences.length > 0
+        ? `Yes. ${hotel.name} offers ${outdoorExperiences.length} outdoor activities including ${outdoorExperiences.slice(0, 3).map((e: any) => e.name).join(', ')}.`
+        : `Yes. ${hotel.name} in ${hotel.location} offers outdoor and Alpine activities arranged through the hotel concierge.`
+    },
+    {
+      q: `Can ${hotel.name} arrange private experiences?`,
+      a: `Yes. ${hotel.name} in ${hotel.location}, Switzerland offers private and bespoke experiences arranged through the hotel concierge, including private dining, cultural tours and curated Alpine adventures.`
+    },
+  ]
 
   return (
     <div style={{ background: bg, minHeight: '100vh' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
 
+      {/* HEADER */}
       <div style={{ background: '#F8F5EF', padding: '6rem 2rem 3rem' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, marginBottom: '1.5rem', flexWrap: 'wrap' }}>
@@ -91,8 +164,14 @@ export default async function ExperiencesPage({ params }: { params: Promise<{ sl
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: textMuted, margin: '0 0 1rem' }}>
             Part of <Link href={`/hotels/${hotelUrl}`} style={{ color: gold, textDecoration: 'none', fontWeight: 600 }}>{hotel.name}</Link>
           </p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: textMuted, margin: '0 0 2rem', fontWeight: 300 }}>
-            Curated experiences · Alpine adventures · Cultural immersions
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: textMuted, margin: '0 0 0.5rem', fontWeight: 300 }}>
+            {experiences?.length || 0} curated experiences
+            {outdoorExperiences.length > 0 ? ` · ${outdoorExperiences.length} outdoor activities` : ''}
+            {wellnessExperiences.length > 0 ? ` · ${wellnessExperiences.length} wellness experiences` : ''}
+            {culturalExperiences.length > 0 ? ` · ${culturalExperiences.length} cultural experiences` : ''}
+          </p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text, margin: '0 0 2rem', fontWeight: 500 }}>
+            Curated experiences at {hotel.name} in {hotel.location}, Switzerland — arranged through the hotel concierge.
           </p>
           <a href={trackingUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: gold, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.875rem 2rem', textDecoration: 'none', borderRadius: 2 }}>
             Book an Experience →
@@ -101,6 +180,8 @@ export default async function ExperiencesPage({ params }: { params: Promise<{ sl
       </div>
 
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '4rem 2rem' }}>
+
+        {/* NAV */}
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '3rem', flexWrap: 'wrap' }}>
           {[
             { label: 'Overview', href: `/hotels/${hotelUrl}` },
@@ -115,18 +196,19 @@ export default async function ExperiencesPage({ params }: { params: Promise<{ sl
           ))}
         </div>
 
+        {/* EXPERIENCES */}
         {experiences && experiences.length > 0 ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
             {experiences.map((exp: any) => (
               <div key={exp.id} style={{ background: white, border: `1px solid ${border}`, borderRadius: 8, overflow: 'hidden' }}>
                 {exp.images?.[0] && (
                   <div style={{ height: 200, overflow: 'hidden' }}>
-                    <img src={exp.images[0]} alt={exp.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={exp.images[0]} alt={`${exp.name} at ${hotel.name}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                 )}
                 <div style={{ padding: '1.5rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                    <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 400, color: text, margin: 0 }}>{exp.name}</h3>
+                    <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 400, color: text, margin: 0 }}>{exp.name}</h2>
                     {exp.price_from && (
                       <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1rem' }}>
                         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: textMuted, margin: '0 0 0.1rem' }}>From</p>
@@ -149,14 +231,45 @@ export default async function ExperiencesPage({ params }: { params: Promise<{ sl
         ) : (
           <div style={{ background: white, border: `1px solid ${border}`, borderRadius: 8, padding: '4rem', textAlign: 'center' }}>
             <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 300, color: textMuted, margin: '0 0 1rem' }}>Experiences coming soon</p>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, margin: '0 0 1.5rem' }}>Contact the hotel to discover their exclusive experiences and activities.</p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, margin: '0 0 1.5rem' }}>Contact the hotel concierge to discover exclusive experiences and activities.</p>
             <a href={trackingUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: gold, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.875rem 2rem', textDecoration: 'none', borderRadius: 2 }}>
               Contact Hotel →
             </a>
           </div>
         )}
 
-        <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: `1px solid ${border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        {/* FAQ */}
+        <div style={{ marginTop: '4rem', paddingTop: '3rem', borderTop: `1px solid ${border}` }}>
+          <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: text, margin: '0 0 2rem' }}>Frequently Asked Questions</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+            {faqs.map((faq, i) => (
+              <div key={i} style={{ padding: '1.25rem 0', borderBottom: `1px solid ${border}` }}>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', fontWeight: 600, color: text, margin: '0 0 0.4rem' }}>{faq.q}</p>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted, lineHeight: 1.7, margin: 0 }}>{faq.a}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* INTERNAL LINKS */}
+        <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: `1px solid ${border}` }}>
+          <h3 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1rem' }}>Explore {hotel.name}</h3>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '2rem' }}>
+            {[
+              { label: `${hotel.name} Spa & Wellness`, href: `/hotels/${hotelUrl}/spa` },
+              { label: `${hotel.name} Dining & Restaurants`, href: `/hotels/${hotelUrl}/dining` },
+              { label: `${hotel.name} Rooms & Suites`, href: `/hotels/${hotelUrl}/rooms` },
+              { label: `Luxury Hotels in ${hotel.location}`, href: `/destinations/${hotel.region?.toLowerCase().replace(/\s+/g, '-')}` },
+              { label: `Best Luxury Hotels in Switzerland`, href: `/best/luxury-hotels-switzerland` },
+            ].map(link => (
+              <Link key={link.label} href={link.href} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: textMuted, textDecoration: 'none', border: `1px solid ${border}`, padding: '0.4rem 0.875rem', background: white, borderRadius: 2 }}>
+                {link.label} →
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Link href={`/hotels/${hotelUrl}/spa`} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted, textDecoration: 'none' }}>← Spa & Wellness</Link>
           <Link href={`/hotels/${hotelUrl}`} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: gold, textDecoration: 'none' }}>Back to Overview →</Link>
         </div>
