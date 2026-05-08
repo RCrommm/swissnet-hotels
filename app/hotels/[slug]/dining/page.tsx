@@ -6,8 +6,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params
   const { data: hotel } = await supabase.from('hotels').select('name, location').or(`slug.eq.${slug},id.eq.${slug}`).single()
   if (!hotel) return {}
-  const michelinHotels = ['la-reserve-geneve', 'la-reserve-zurich', 'mont-cervin-palace', 'victoriajungfrau-grand-hotel-interlaken']
-  const hasMichelin = michelinHotels.includes(slug)
+  const { data: hotelForMeta } = await supabase.from('hotels').select('id').or(`slug.eq.${slug},id.eq.${slug}`).single()
+  const { data: michelinCheck } = hotelForMeta 
+    ? await supabase.from('hotel_restaurants').select('id').eq('hotel_id', hotelForMeta.id).gt('michelin_stars', 0).limit(1)
+    : { data: null }
+  const hasMichelin = (michelinCheck?.length ?? 0) > 0
   return {
     title: hasMichelin
       ? `${hotel.name} Dining — Michelin-Starred Restaurant in ${hotel.location} | SwissNet Hotels`
@@ -139,9 +142,7 @@ export default async function DiningPage({ params }: { params: Promise<{ slug: s
 
   return (
     <div style={{ background: bg, minHeight: '100vh' }}>
-      <head>
-        <link rel="canonical" href={pageUrl} />
-      </head>
+      
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
 
       {/* HEADER */}
