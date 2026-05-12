@@ -401,7 +401,7 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
                   const appeared = dayQueries.filter((r: any) => r.appeared).length
                   const score = dayQueries.length > 0 ? Math.round((appeared / dayQueries.length) * 100) : null
                   return { date: d, score }
-                }).filter((d): d is { date: string, score: number } => d.score !== null && d.date >= cutoff)
+                }).filter((d): d is { date: string, score: number } => d.score !== null)
                 if (realPoints.length < 1) return <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, padding: '2rem 0' }}>No data in selected range</p>
 
                 // Generate interpolated daily points between real data points
