@@ -143,10 +143,18 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
   }
 
   const sourceBreakdown = recentViews.reduce((acc: any, v: any) => {
-  const src = v.source || 'direct'
-  acc[src] = (acc[src] || 0) + 1
-  return acc
-}, {})
+    const ref = v.referrer || ''
+    const utm = v.utm_source || v.source || ''
+    let src = 'Direct'
+    if (utm === 'chatgpt' || ref.includes('chatgpt.com') || ref.includes('chat.openai.com')) src = 'ChatGPT'
+    else if (utm === 'perplexity' || ref.includes('perplexity.ai')) src = 'Perplexity'
+    else if (utm === 'google' || ref.includes('google.com')) src = 'Google'
+    else if (utm === 'bing' || ref.includes('bing.com')) src = 'Bing'
+    else if (ref.includes('swissnethotels.com')) src = 'SwissNet'
+    else if (ref) src = 'Referral'
+    acc[src] = (acc[src] || 0) + 1
+    return acc
+  }, {})
 
   const navItems = [
     { id: 'overview', label: 'Overview' },
