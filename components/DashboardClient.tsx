@@ -550,7 +550,7 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
             </div>
 
             {/* Traffic sources + Leads table */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+            <div style={{ marginBottom: '1.5rem' }}>
               <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem' }}>
                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 1rem' }}>Traffic Sources</p>
                 {Object.keys(sourceBreakdown).length === 0 ? (
@@ -572,24 +572,7 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
                 )}
               </div>
 
-              <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem' }}>
-                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 1rem' }}>Recent Enquiries</p>
-                {leads?.length === 0 ? (
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>No enquiries yet.</p>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-                    {leads?.slice(0, 5).map((lead: any, i: number) => (
-                      <div key={i} style={{ padding: '0.6rem 0', borderBottom: '1px solid ' + BORDER }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, color: TEXT, margin: 0 }}>{lead.name}</p>
-                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>{new Date(lead.created_at).toLocaleDateString('en-GB')}</p>
-                        </div>
-                        <a href={'mailto:' + lead.email} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: GOLD, textDecoration: 'none' }}>{lead.email}</a>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              
             </div>
 
             
