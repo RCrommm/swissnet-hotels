@@ -435,8 +435,8 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 15))
 
                 if (allPoints.length < 2) return null
                 const scores = allPoints.map(d => d.score)
-                const minV = Math.max(0, Math.min(...scores) - 10)
-                const maxV = Math.min(100, Math.max(...scores) + 10)
+                const minV = 0
+                const maxV = 100
                 const W = 580, H = 155, pL = 40, pR = 80, pT = 10, pB = 28
                 const cW = W - pL - pR, cH = H - pT - pB
                 const px = (i: number) => pL + (i / (allPoints.length - 1)) * cW
