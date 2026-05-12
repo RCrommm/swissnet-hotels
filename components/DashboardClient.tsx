@@ -354,7 +354,7 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
                       { label: 'Perplexity', key: 'perplexity' },
                       { label: 'Google AI', key: 'google_ai' },
                     ].map(p => (
-                      <button key={p.key} onClick={() => setChartPlatform(p.key)} style={{ padding: '0.2rem 0.65rem', borderRadius: 20, border: '1px solid ' + (chartPlatform === p.key ? GOLD : BORDER), background: chartPlatform === p.key ? GOLD + '18' : 'transparent', color: chartPlatform === p.key ? TEXT : TEXT_MUTED, fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: chartPlatform === p.key ? 700 : 400, cursor: 'pointer' }}>{p.label}</button>
+                      <button key={p.key} onClick={() => setChartPlatform(p.key)} style={{ padding: '0.25rem 0.75rem', borderRadius: 20, border: '1px solid ' + (chartPlatform === p.key ? TEXT : 'rgba(42,26,14,0.15)'), background: chartPlatform === p.key ? TEXT : 'transparent', color: chartPlatform === p.key ? WHITE : 'rgba(42,26,14,0.5)', fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, cursor: 'pointer' }}>{p.label}</button>
                     ))}
                   </div>
                 </div>
@@ -365,7 +365,7 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
                     const delta = cur - prev
                     return (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', color: TEXT, lineHeight: 1 }}>{cur}%</span>
+                        <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', color: '#000', lineHeight: 1, fontWeight: 500 }}>{cur}%</span>
                         {delta !== 0 && (
                           <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, color: delta > 0 ? GREEN : RED, background: (delta > 0 ? GREEN : RED) + '12', padding: '2px 7px', borderRadius: 20 }}>
                             {delta > 0 ? '↑' : '↓'} {Math.abs(delta)}%
@@ -489,7 +489,7 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
                     {marketAvg >= minV && marketAvg <= maxV && (
                       <g>
                         <line x1={pL} y1={py(marketAvg)} x2={pL+cW} y2={py(marketAvg)} stroke="rgba(42,26,14,0.08)" strokeWidth="1" strokeDasharray="3 6" />
-                        <text x={pL+cW+6} y={py(marketAvg)+3.5} fill="rgba(42,26,14,0.28)" fontSize="7" fontFamily="Montserrat, sans-serif">Avg market 35%</text>
+                        <text x={pL+cW+6} y={py(marketAvg)+3.5} fill="rgba(42,26,14,0.5)" fontSize="8" fontFamily="Montserrat, sans-serif" fontWeight="600">Avg 35%</text>
                       </g>
                     )}
                     {/* Area */}
