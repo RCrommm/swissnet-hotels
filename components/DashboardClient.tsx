@@ -623,7 +623,7 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: BG }}>
-                    {['Rank', 'Hotel', 'Rating', 'AI Visibility', 'Position'].map(h => (
+                    {['Rank', 'Hotel', 'Trend', 'AI Visibility', 'Position'].map(h => (
                       <th key={h} style={{ textAlign: 'left', padding: '0.75rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, borderBottom: '1px solid ' + BORDER }}>{h}</th>
                     ))}
                   </tr>
@@ -642,7 +642,18 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
                           {h.is_current && <span style={{ background: GOLD, color: WHITE, fontFamily: 'Montserrat, sans-serif', fontSize: '0.48rem', fontWeight: 700, padding: '2px 6px', borderRadius: 20 }}>YOU</span>}
                         </div>
                       </td>
-                      <td style={{ padding: '1rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT }}>★ {h.rating}</td>
+                      <td style={{ padding: '1rem 1.5rem' }}>
+                        {h.is_current && runScores.length >= 2 ? (() => {
+                          const latest = runScores[runScores.length - 1]
+                          const previous = runScores[runScores.length - 2]
+                          const lastDate = runDates[runDates.length - 2] as string
+                          const daysSince = lastDate ? Math.floor((Date.now() - new Date(lastDate).getTime()) / (1000 * 60 * 60 * 24)) : 99
+                          if (daysSince > 7) return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>—</span>
+                          if (latest > previous) return <span style={{ fontSize: '1rem', color: GREEN }}>↑</span>
+                          if (latest < previous) return <span style={{ fontSize: '1rem', color: RED }}>↓</span>
+                          return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>→</span>
+                        })() : <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>—</span>}
+                      </td>
                       <td style={{ padding: '1rem 1.5rem' }}>
                         {h.is_current ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
