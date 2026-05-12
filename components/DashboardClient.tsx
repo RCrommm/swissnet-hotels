@@ -362,7 +362,7 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
                 />
               )}
             </div>
-            
+
             <InsightCard
               text={`Your hotel has appeared in ${appearedQueries} of ${totalQueries} tracked searches — a ${visibilityScore}% visibility score. ${visibilityScore < 30 ? 'Completing your hotel profile with FAQs, spa details and dining information will significantly improve this score.' : 'Keep your content fresh and complete to maintain and grow your position.'}`}
               type={visibilityScore < 30 ? 'warning' : 'success'}
@@ -505,9 +505,19 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
                         )}
                       </td>
                       <td style={{ padding: '1rem 1.5rem' }}>
-                        <span style={{ background: h.is_current ? GREEN + '18' : BG, color: h.is_current ? GREEN : TEXT_MUTED, fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, padding: '3px 10px', borderRadius: 20 }}>
-                          {h.is_current ? 'Your hotel' : 'Competitor'}
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ background: h.is_current ? GREEN + '18' : BG, color: h.is_current ? GREEN : TEXT_MUTED, fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, padding: '3px 10px', borderRadius: 20 }}>
+                            {h.is_current ? 'Your hotel' : 'Competitor'}
+                          </span>
+                          {(() => {
+                            if (!h.previousRank || !h.currentRank) return null
+                            const daysSince = h.lastChangeDays || 99
+                            if (daysSince > 7) return null
+                            if (h.currentRank < h.previousRank) return <span style={{ color: GREEN, fontSize: '0.8rem', fontWeight: 700 }}>↑</span>
+                            if (h.currentRank > h.previousRank) return <span style={{ color: RED, fontSize: '0.8rem', fontWeight: 700 }}>↓</span>
+                            return null
+                          })()}
+                        </div>
                       </td>
                     </tr>
                   ))}
