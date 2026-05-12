@@ -387,7 +387,8 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
                 </div>
               ) : (() => {
                 const cutoff = new Date(Date.now() - chartPeriod * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-                // Get all unique dates across all platforms
+
+                // Get real data points only for selected platform
                 const allDates = chartPlatform === 'overall'
                   ? runDates as string[]
                   : [...new Set(aiVisibility?.filter((r: any) => r.platform === chartPlatform).map((r: any) => r.checked_at?.split('T')[0]).filter(Boolean) || [])].sort() as string[]
@@ -402,115 +403,100 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
                   const score = dayQueries.length > 0 ? Math.round((appeared / dayQueries.length) * 100) : null
                   return { date: d, score }
                 }).filter((d): d is { date: string, score: number } => d.score !== null)
-                if (realPoints.length < 1) return <div style={{ height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED }}>No data yet for this platform</p></div>
-                if (realPoints.length === 1) {
-                  const score = realPoints[0].score
-                  return (
-                    <div style={{ height: 160, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                      <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.5rem', color: GOLD, margin: 0 }}>{score}%</p>
-                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Recorded on {new Date(realPoints[0].date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })} · Add more data points to see trend</p>
-                    </div>
-                  )
-                }
 
-                // Generate interpolated daily points between real data points
+                // Build full calendar for selected period
                 const startDate = new Date(cutoff)
                 const endDate = new Date()
                 const totalDays = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
-                const interval = Math.max(1, Math.floor(totalDays / 30))
-                const allPoints: { date: string, score: number, isReal: boolean }[] = []
-
-                for (let day = 0; day <= totalDays; day += interval) {
-                  const d = new Date(startDate.getTime() + day * 24 * 60 * 60 * 1000)
-                  const dateStr = d.toISOString().split('T')[0]
-                  const real = realPoints.find(p => p.date === dateStr)
-                  if (real) {
-                    allPoints.push({ ...real, isReal: true })
-                  } else {
-                    // Interpolate between nearest real points
-                    const before = [...realPoints].reverse().find(p => p.date <= dateStr)
-                    const after = realPoints.find(p => p.date >= dateStr)
-                    if (before && after && before.date !== after.date) {
-                      const t = (d.getTime() - new Date(before.date).getTime()) / (new Date(after.date).getTime() - new Date(before.date).getTime())
-                      const interpolated = Math.round(before.score + (after.score - before.score) * t)
-                      // Add small natural fluctuation
-                      const noise = Math.sin(day * 0.3) * 1.2
-                      allPoints.push({ date: dateStr, score: Math.max(0, Math.min(100, interpolated + Math.round(noise))), isReal: false })
-                    } else if (before) {
-                      allPoints.push({ date: dateStr, score: before.score, isReal: false })
-                    }
-                  }
+                const calendarDays: string[] = []
+                for (let i = 0; i <= totalDays; i++) {
+                  const d = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000)
+                  calendarDays.push(d.toISOString().split('T')[0])
                 }
 
-                if (allPoints.length < 2) return null
-                const scores = allPoints.map(d => d.score)
-                const minV = 0
-                const maxV = 100
-                const W = 580, H = 155, pL = 40, pR = 80, pT = 10, pB = 28
+                if (realPoints.length === 0) return (
+                  <div style={{ height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED }}>No data yet for this platform</p>
+                  </div>
+                )
+
+                if (realPoints.length === 1) return (
+                  <div style={{ height: 160, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.5rem', color: GOLD, margin: 0 }}>{realPoints[0].score}%</p>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Recorded on {new Date(realPoints[0].date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })} · More runs needed to show trend</p>
+                  </div>
+                )
+
+                const W = 580, H = 170, pL = 40, pR = 80, pT = 16, pB = 30
                 const cW = W - pL - pR, cH = H - pT - pB
-                const px = (i: number) => pL + (i / (allPoints.length - 1)) * cW
-                const py = (v: number) => pT + cH - ((v - minV) / (maxV - minV || 1)) * cH
                 const marketAvg = 35
 
-                const smoothPath = (points: {x:number,y:number}[]) => {
-                  let d = `M ${points[0].x} ${points[0].y}`
-                  for (let i = 1; i < points.length; i++) {
-                    const p = points[i-1], c = points[i]
-                    const cp1x = p.x + (c.x - p.x) * 0.4
-                    const cp2x = c.x - (c.x - p.x) * 0.4
-                    d += ` C ${cp1x} ${p.y} ${cp2x} ${c.y} ${c.x} ${c.y}`
-                  }
-                  return d
+                // Map date to X position on full calendar
+                const dateToX = (date: string) => {
+                  const idx = calendarDays.indexOf(date)
+                  return pL + (idx / (calendarDays.length - 1)) * cW
+                }
+                const py = (v: number) => pT + cH - (v / 100) * cH
+
+                // Build line segments — only between consecutive real points
+                const segments: { x1: number, y1: number, x2: number, y2: number }[] = []
+                for (let i = 1; i < realPoints.length; i++) {
+                  segments.push({
+                    x1: dateToX(realPoints[i-1].date),
+                    y1: py(realPoints[i-1].score),
+                    x2: dateToX(realPoints[i].date),
+                    y2: py(realPoints[i].score),
+                  })
                 }
 
-                const pts = allPoints.map((d, i) => ({ x: px(i), y: py(d.score) }))
-                const linePath = smoothPath(pts)
-                const areaPath = linePath + ` L ${px(allPoints.length-1)} ${pT+cH} L ${px(0)} ${pT+cH} Z`
-
-                // X axis labels — show ~5 evenly spaced
-                const xLabels = allPoints.filter((_, i) => i % Math.ceil(allPoints.length / 5) === 0)
+                // X axis labels — evenly spaced calendar dates
+                const labelCount = Math.min(6, calendarDays.length)
+                const xLabels = calendarDays.filter((_, i) => i % Math.floor(calendarDays.length / (labelCount - 1)) === 0)
 
                 return (
                   <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow: 'visible' }}>
                     <defs>
-                      <linearGradient id="ag3" x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient id="ag4" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor={GOLD} stopOpacity="0.07" />
                         <stop offset="100%" stopColor={GOLD} stopOpacity="0" />
                       </linearGradient>
                     </defs>
-                    {/* Grid */}
-                    {[0,25,50,75,100].filter(v => v >= minV && v <= maxV).map(v => (
+
+                    {/* Grid lines */}
+                    {[0, 25, 50, 75, 100].map(v => (
                       <g key={v}>
                         <line x1={pL} y1={py(v)} x2={pL+cW} y2={py(v)} stroke="rgba(0,0,0,0.03)" strokeWidth="1" />
                         <text x={pL-6} y={py(v)+4} textAnchor="end" fill="rgba(42,26,14,0.3)" fontSize="7.5" fontFamily="Montserrat, sans-serif">{v}%</text>
                       </g>
                     ))}
+
                     {/* Market average */}
-                    {marketAvg >= minV && marketAvg <= maxV && (
-                      <g>
-                        <line x1={pL} y1={py(marketAvg)} x2={pL+cW} y2={py(marketAvg)} stroke="rgba(42,26,14,0.08)" strokeWidth="1" strokeDasharray="3 6" />
-                        <text x={pL+cW+6} y={py(marketAvg)+3.5} fill="rgba(42,26,14,0.5)" fontSize="8" fontFamily="Montserrat, sans-serif" fontWeight="600">Avg 35%</text>
+                    <line x1={pL} y1={py(marketAvg)} x2={pL+cW} y2={py(marketAvg)} stroke="rgba(42,26,14,0.08)" strokeWidth="1" strokeDasharray="3 6" />
+                    <text x={pL+cW+6} y={py(marketAvg)+3.5} fill="rgba(42,26,14,0.5)" fontSize="8" fontFamily="Montserrat, sans-serif" fontWeight="600">Avg 35%</text>
+
+                    {/* Area fill under segments */}
+                    {segments.map((s, i) => (
+                      <path key={i} d={`M${s.x1} ${s.y1} L${s.x2} ${s.y2} L${s.x2} ${pT+cH} L${s.x1} ${pT+cH} Z`} fill="url(#ag4)" />
+                    ))}
+
+                    {/* Line segments */}
+                    {segments.map((s, i) => (
+                      <line key={i} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} stroke={GOLD} strokeWidth="2" strokeLinecap="round" opacity="0.9" />
+                    ))}
+
+                    {/* Data points */}
+                    {realPoints.map((d, i) => (
+                      <g key={i}>
+                        <circle cx={dateToX(d.date)} cy={py(d.score)} r="3" fill={WHITE} stroke={GOLD} strokeWidth="1.5" />
+                        <text x={dateToX(d.date)} y={py(d.score)-9} textAnchor="middle" fill={TEXT} fontSize="8" fontFamily="Montserrat, sans-serif" fontWeight="600">{d.score}%</text>
                       </g>
-                    )}
-                    {/* Area */}
-                    <path d={areaPath} fill="url(#ag3)" />
-                    {/* Line */}
-                    <path d={linePath} fill="none" stroke={GOLD} strokeWidth="2" strokeLinecap="round" opacity="0.9" />
-                    {/* Real data point markers only */}
-                    {allPoints.filter(d => d.isReal).map((d, i) => {
-                      const idx = allPoints.indexOf(d)
-                      return (
-                        <g key={i}>
-                          <circle cx={px(idx)} cy={py(d.score)} r="3" fill={WHITE} stroke={GOLD} strokeWidth="1.5" />
-                          <text x={px(idx)} y={py(d.score)-8} textAnchor="middle" fill={TEXT} fontSize="8" fontFamily="Montserrat, sans-serif" fontWeight="600">{d.score}%</text>
-                        </g>
-                      )
-                    })}
+                    ))}
+
                     {/* X axis */}
                     <line x1={pL} y1={pT+cH} x2={pL+cW} y2={pT+cH} stroke="rgba(0,0,0,0.06)" strokeWidth="1" />
                     {xLabels.map((d, i) => (
-                        <text key={i} x={px(allPoints.indexOf(d))} y={H-6} textAnchor="middle" fill="rgba(42,26,14,0.3)" fontSize="7" fontFamily="Montserrat, sans-serif">
-                        {new Date(d.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                      <text key={i} x={dateToX(d)} y={H-4} textAnchor="middle" fill="rgba(42,26,14,0.3)" fontSize="7" fontFamily="Montserrat, sans-serif">
+                        {new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
                       </text>
                     ))}
                   </svg>
