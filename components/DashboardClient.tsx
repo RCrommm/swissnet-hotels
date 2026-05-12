@@ -350,8 +350,8 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                   {runScores.length >= 2 && (() => {
-                    const cur = Math.min(100, runScores[runScores.length - 1] + 15)
-                    const prev = Math.min(100, runScores[runScores.length - 2] + 15)
+                    const cur = Math.round(Math.min(100, runScores[runScores.length - 1] + 15))
+                    const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 15))
                     const delta = cur - prev
                     return (
                       <div style={{ textAlign: 'right' }}>
@@ -368,48 +368,91 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
                 </div>
               </div>
               {runDates.length < 2 ? (
-                <div style={{ height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center', background: BG, borderRadius: 8 }}>
+                <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', background: BG, borderRadius: 8 }}>
                   <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>Score history appears after multiple cron runs</p>
                 </div>
               ) : (() => {
                 const cutoff = new Date(Date.now() - chartPeriod * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-                const filtered = (runDates as string[]).map((d, i) => ({ date: d, score: Math.min(100, runScores[i] + 15) })).filter(d => d.date >= cutoff)
-                if (filtered.length < 2) return <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>No data in this range</p>
+                const filtered = (runDates as string[]).map((d, i) => ({ date: d, score: Math.round(Math.min(100, runScores[i] + 15)) })).filter(d => d.date >= cutoff)
+                if (filtered.length < 2) return <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, padding: '2rem 0' }}>No data in selected range</p>
                 const scores = filtered.map(d => d.score)
-                const minV = Math.max(0, Math.min(...scores) - 10)
-                const maxV = Math.min(100, Math.max(...scores) + 10)
-                const W = 560, H = 160, pL = 36, pR = 12, pT = 12, pB = 28
+                const minV = Math.max(0, Math.min(...scores) - 15)
+                const maxV = Math.min(100, Math.max(...scores) + 15)
+                const W = 580, H = 200, pL = 42, pR = 60, pT = 20, pB = 36
                 const cW = W - pL - pR, cH = H - pT - pB
                 const px = (i: number) => pL + (i / (filtered.length - 1)) * cW
                 const py = (v: number) => pT + cH - ((v - minV) / (maxV - minV || 1)) * cH
-                const pts = filtered.map((d, i) => `${px(i)},${py(d.score)}`).join(' ')
-                const areaPath = `M${px(0)},${py(filtered[0].score)} ` + filtered.slice(1).map((d, i) => `L${px(i + 1)},${py(d.score)}`).join(' ') + ` L${px(filtered.length - 1)},${pT + cH} L${px(0)},${pT + cH} Z`
-                const linePath = `M${px(0)},${py(filtered[0].score)} ` + filtered.slice(1).map((d, i) => `L${px(i + 1)},${py(d.score)}`).join(' ')
+                const marketAvg = 35
+                // Smooth bezier path
+                const smoothPath = (points: {x:number,y:number}[]) => {
+                  let d = `M ${points[0].x} ${points[0].y}`
+                  for (let i = 1; i < points.length; i++) {
+                    const p = points[i-1], c = points[i]
+                    const cp1x = p.x + (c.x - p.x) / 3
+                    const cp2x = c.x - (c.x - p.x) / 3
+                    d += ` C ${cp1x} ${p.y} ${cp2x} ${c.y} ${c.x} ${c.y}`
+                  }
+                  return d
+                }
+                const pts = filtered.map((d,i) => ({ x: px(i), y: py(d.score) }))
+                const linePath = smoothPath(pts)
+                const areaPath = linePath + ` L ${px(filtered.length-1)} ${pT+cH} L ${px(0)} ${pT+cH} Z`
                 return (
                   <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow: 'visible' }}>
                     <defs>
-                      <linearGradient id="ag" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={GOLD} stopOpacity="0.12" />
+                      <linearGradient id="ag2" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={GOLD} stopOpacity="0.18" />
                         <stop offset="100%" stopColor={GOLD} stopOpacity="0" />
                       </linearGradient>
                     </defs>
-                    {[0, 25, 50, 75, 100].filter(v => v >= minV && v <= maxV).map(v => (
+                    {/* Axes */}
+                    <line x1={pL} y1={pT} x2={pL} y2={pT+cH} stroke="rgba(0,0,0,0.08)" strokeWidth="1" />
+                    <line x1={pL} y1={pT+cH} x2={pL+cW} y2={pT+cH} stroke="rgba(0,0,0,0.08)" strokeWidth="1" />
+                    {/* Grid + Y labels */}
+                    {[0,25,50,75,100].filter(v => v >= minV && v <= maxV).map(v => (
                       <g key={v}>
-                        <line x1={pL} y1={py(v)} x2={pL + cW} y2={py(v)} stroke={BORDER} strokeWidth="1" strokeDasharray="3 6" />
-                        <text x={pL - 6} y={py(v) + 4} textAnchor="end" fill={TEXT_MUTED} fontSize="8" fontFamily="Montserrat, sans-serif">{v}</text>
+                        <line x1={pL} y1={py(v)} x2={pL+cW} y2={py(v)} stroke="rgba(0,0,0,0.05)" strokeWidth="1" />
+                        <text x={pL-8} y={py(v)+4} textAnchor="end" fill={TEXT_MUTED} fontSize="9" fontFamily="Montserrat, sans-serif">{v}%</text>
                       </g>
                     ))}
-                    <path d={areaPath} fill="url(#ag)" />
-                    <path d={linePath} fill="none" stroke={GOLD} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    {/* Market average line */}
+                    {marketAvg >= minV && marketAvg <= maxV && (
+                      <g>
+                        <line x1={pL} y1={py(marketAvg)} x2={pL+cW} y2={py(marketAvg)} stroke="rgba(42,26,14,0.18)" strokeWidth="1.5" strokeDasharray="5 5" />
+                        <text x={pL+cW+6} y={py(marketAvg)+4} fill={TEXT_MUTED} fontSize="8" fontFamily="Montserrat, sans-serif">Avg market 35%</text>
+                      </g>
+                    )}
+                    {/* Area */}
+                    <path d={areaPath} fill="url(#ag2)" />
+                    {/* Smooth line */}
+                    <path d={linePath} fill="none" stroke={GOLD} strokeWidth="2.5" strokeLinecap="round" />
+                    {/* Data points + score labels */}
                     {filtered.map((d, i) => (
-                      <circle key={i} cx={px(i)} cy={py(d.score)} r="3" fill={WHITE} stroke={GOLD} strokeWidth="1.5" />
+                      <g key={i}>
+                        <circle cx={px(i)} cy={py(d.score)} r="4.5" fill={WHITE} stroke={GOLD} strokeWidth="2" />
+                        <text x={px(i)} y={py(d.score)-10} textAnchor="middle" fill={TEXT} fontSize="9" fontFamily="Montserrat, sans-serif" fontWeight="600">{d.score}%</text>
+                      </g>
                     ))}
-                    {filtered.filter((_, i) => i % Math.ceil(filtered.length / 5) === 0).map((d, i) => (
-                      <text key={i} x={px(filtered.indexOf(d))} y={H - 4} textAnchor="middle" fill={TEXT_MUTED} fontSize="8" fontFamily="Montserrat, sans-serif">{d.date.slice(5)}</text>
+                    {/* X axis dates */}
+                    {filtered.map((d, i) => (
+                      <text key={i} x={px(i)} y={H-4} textAnchor="middle" fill={TEXT_MUTED} fontSize="8" fontFamily="Montserrat, sans-serif">
+                        {new Date(d.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                      </text>
                     ))}
                   </svg>
                 )
               })()}
+              {/* Legend */}
+              <div style={{ display: 'flex', gap: '1.5rem', marginTop: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <div style={{ width: 16, height: 2.5, background: GOLD, borderRadius: 2 }} />
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED }}>Your AI Visibility</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <div style={{ width: 16, height: 0, borderTop: '1.5px dashed rgba(42,26,14,0.25)' }} />
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED }}>Average Market</span>
+                </div>
+              </div>
             </div>
 
             <InsightCard
