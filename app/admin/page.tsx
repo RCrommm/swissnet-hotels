@@ -145,7 +145,7 @@ export default async function AdminPage({
         </div>
 
         <div className="flex gap-1 mb-6 border-b border-stone-200 flex-wrap">
-{['hotels', 'schema', 'ai visibility', 'google ai', 'analytics', 'leads', 'keywords', 'clicks'].map(t => (           <a key={t} href={'/admin?password=' + pw + '&tab=' + t}
+{['hotels', 'schema', 'ai visibility', 'analytics', 'keywords', 'clicks'].map(t => (     <a key={t} href={'/admin?password=' + pw + '&tab=' + t}
               className={'px-5 py-3 text-sm uppercase tracking-wide capitalize transition-colors ' +
                 (tab === t ? 'border-b-2 border-amber-700 text-amber-700 font-semibold' : 'text-stone-500 hover:text-stone-700')}>
               {t}
@@ -237,6 +237,9 @@ export default async function AdminPage({
                   <p className="text-center text-stone-400 py-10 text-sm">No appearances yet.</p>
                 )}
               </div>
+            </div>
+          <div style={{ marginTop: 32 }}>
+              <GoogleAITab hotels={partnerHotels} />
             </div>
           </div>
         )}
@@ -360,35 +363,9 @@ export default async function AdminPage({
           </div>
         )}
 
-        {tab === 'leads' && (
-          <div className="bg-white border border-stone-200 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-stone-50 border-b border-stone-200">
-                <tr>
-                  {['Name', 'Email', 'Hotel', 'Dates', 'Guests', 'Submitted'].map(h => (
-                    <th key={h} className="text-left px-4 py-3 text-xs uppercase tracking-wide text-stone-500">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {leadsList.map((lead: any, i: number) => (
-                  <tr key={lead.id} className={i % 2 === 0 ? 'bg-white' : 'bg-stone-50'}>
-                    <td className="px-4 py-3 font-medium text-stone-800">{lead.name}</td>
-                    <td className="px-4 py-3"><a href={'mailto:' + lead.email} className="text-amber-700 hover:underline">{lead.email}</a></td>
-                    <td className="px-4 py-3 text-stone-600">{lead.hotel_name || '—'}</td>
-                    <td className="px-4 py-3 text-stone-600 text-xs">{lead.check_in ? lead.check_in + ' → ' + lead.check_out : '—'}</td>
-                    <td className="px-4 py-3 text-stone-600">{lead.guests || '—'}</td>
-                    <td className="px-4 py-3 text-stone-500 text-xs">{new Date(lead.created_at).toLocaleDateString('en-GB')}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {leadsList.length === 0 && <p className="text-center text-stone-400 py-10 text-sm">No leads yet.</p>}
-          </div>
-        )}
+      
 
         {tab === 'keywords' && <KeywordsTab hotels={hotelsList} keywords={keywordsList} password={pw} />}
-        {tab === 'google ai' && <GoogleAITab hotels={partnerHotels} />}
         {tab === 'clicks' && (
           <div>
             <div className="flex justify-between items-center mb-4">
