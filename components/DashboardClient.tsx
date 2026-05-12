@@ -103,7 +103,7 @@ const runScores = runDates.map((date: any) => {
 const rawScore = runScores.length > 0
   ? Math.round(runScores.reduce((a: number, b: number) => a + b, 0) / runScores.length)
   : 0
-const visibilityScore = Math.min(100, rawScore + 15)
+const visibilityScore = Math.min(100, rawScore + 8)
 
 const totalQueries = aiVisibility?.length || 0
 const appearedQueries = aiVisibility?.filter((r: any) => r.appeared)?.length || 0
@@ -361,7 +361,7 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   {runScores.length >= 2 && (() => {
                     const cur = visibilityScore
-const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 15))
+const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
                     const delta = cur - prev
                     return (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -395,7 +395,7 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 15))
                 const realPoints = allDates.map((d, i, arr) => {
                   if (chartPlatform === 'overall') {
                     const idx = (runDates as string[]).indexOf(d)
-                    return { date: d, score: i === arr.length - 1 ? visibilityScore : Math.round(Math.min(100, runScores[idx] + 15)) }
+                    return { date: d, score: i === arr.length - 1 ? visibilityScore : Math.round(Math.min(100, runScores[idx] + 8)) }
                   }
                   const dayQueries = aiVisibility?.filter((r: any) => r.checked_at?.startsWith(d) && r.platform === chartPlatform) || []
                   const appeared = dayQueries.filter((r: any) => r.appeared).length
