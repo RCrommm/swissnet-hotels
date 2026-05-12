@@ -141,6 +141,11 @@ export default function Navigation() {
     </div>
   )}
 </div>
+<Link href="/concierge" style={linkStyle}
+            onMouseEnter={e => (e.currentTarget.style.color = gold)}
+            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}>
+            AI Concierge
+          </Link>
           <a href="/#pricing" style={linkStyle}
             onMouseEnter={e => (e.currentTarget.style.color = gold)}
             onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}>
