@@ -344,7 +344,6 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
                       <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0', borderBottom: '1px solid ' + BORDER }}>
                         <div style={{ width: 6, height: 6, borderRadius: '50%', background: RED, flexShrink: 0 }} />
                         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, margin: 0, flex: 1 }}>{row.query}</p>
-                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', color: TEXT_MUTED, background: BG, padding: '2px 6px', borderRadius: 10, flexShrink: 0 }}>{row.platform}</span>
                       </div>
                     ))
                   )}
