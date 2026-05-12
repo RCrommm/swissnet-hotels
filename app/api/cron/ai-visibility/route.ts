@@ -92,44 +92,13 @@ async function queryChatGPT(query: string): Promise<string> {
   }, 3, 'CHATGPT')
 }
 
-async function queryClaude(query: string): Promise<string> {
-  return withRetry(async () => {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY || '',
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5', // FIX: removed wrong date suffix '20251001'
-        max_tokens: 500,
-        system: 'You are a helpful travel assistant. Recommend specific hotels by name.',
-        messages: [{ role: 'user', content: `${query}. Please recommend 3-5 specific hotels by name.` }],
-      }),
-    })
 
-    if (!res.ok) {
-      const body = await res.text()
-      console.error(`[CLAUDE ERROR] status=${res.status} body=${body}`)
-      const err: any = new Error(`Claude HTTP ${res.status}`)
-      err.status = res.status
-      throw err
-    }
-
-    const data = await res.json()
-    const text = data.content?.[0]?.text
-    if (!text) throw new Error('Claude returned empty content')
-    return text
-  }, 3, 'CLAUDE')
-}
 
 // ─── Platforms ───────────────────────────────────────────────────────────────
 
 const PLATFORMS = [
   { id: 'chatgpt', queryFn: queryChatGPT },
   { id: 'perplexity', queryFn: queryPerplexity },
-  { id: 'claude', queryFn: queryClaude },
 ]
 
 // ─── Hotel name matching ──────────────────────────────────────────────────────
