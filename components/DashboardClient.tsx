@@ -472,7 +472,7 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
 
                     {/* Market average */}
                     <line x1={pL} y1={py(marketAvg)} x2={pL+cW} y2={py(marketAvg)} stroke="rgba(42,26,14,0.08)" strokeWidth="1" strokeDasharray="3 6" />
-                    <text x={pL+cW+6} y={py(marketAvg)+3.5} fill="rgba(42,26,14,0.5)" fontSize="8" fontFamily="Montserrat, sans-serif" fontWeight="600">Avg 35%</text>
+                    <text x={pL+cW+6} y={py(marketAvg)+3.5} fill="rgba(42,26,14,0.5)" fontSize="8" fontFamily="Montserrat, sans-serif" fontWeight="600">Market avg</text>
 
                     {/* Area fill under segments */}
                     {segments.map((s, i) => (
