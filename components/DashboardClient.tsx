@@ -83,6 +83,7 @@ function InsightCard({ text, type = 'info' }: { text: string; type?: 'info' | 'w
 export default function DashboardClient({ hotel, views, clicks, leads, aiVisibility, bookings, competitors }: any) {
   const [tab, setTab] = useState('overview')
   const [period, setPeriod] = useState(30)
+  const [chartPeriod, setChartPeriod] = useState(90)
 
   const hotelName = hotel?.name || 'Your Hotel'
   const hotelRegion = hotel?.region || 'Switzerland'
@@ -342,7 +343,6 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
             </div>
                   {/* Visibility over time chart */}
             {(() => {
-              const [chartPeriod, setChartPeriod] = useState(90)
               const cutoff = new Date(Date.now() - chartPeriod * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
               const filteredDates = (runDates as string[]).filter(d => d >= cutoff)
               const filteredScores = filteredDates.map((date: string) => {
