@@ -326,19 +326,20 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
               </div>
 
               <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem' }}>
-                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 1rem' }}>Growth Opportunities</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {[
-                    totalQueries - appearedQueries > 0 && 'Improve content to appear in more searches',
-                    !hotel?.faqs?.length && 'Add FAQs to your profile for better coverage',
-                    'Complete spa and dining schema for wellness queries',
-                    'Add intent pages for honeymoon and family travel',
-                  ].filter(Boolean).slice(0, 4).map((rec: any, i: number) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', padding: '0.5rem 0', borderBottom: '1px solid ' + BORDER }}>
-                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: GOLD, flexShrink: 0, marginTop: 4 }} />
-                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.5 }}>{rec}</p>
-                    </div>
-                  ))}
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 0.25rem' }}>Queries to Improve</p>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: '0 0 1rem' }}>Searches where your hotel did not appear</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+                  {aiVisibility?.filter((r: any) => !r.appeared).slice(0, 6).length === 0 ? (
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>No missed queries — excellent coverage.</p>
+                  ) : (
+                    aiVisibility?.filter((r: any) => !r.appeared).slice(0, 6).map((row: any, i: number) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0', borderBottom: '1px solid ' + BORDER }}>
+                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: RED, flexShrink: 0 }} />
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, margin: 0, flex: 1 }}>{row.query}</p>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', color: TEXT_MUTED, background: BG, padding: '2px 6px', borderRadius: 10, flexShrink: 0 }}>{row.platform}</span>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>
@@ -514,10 +515,7 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
               </div>
             </div>
 
-            <InsightCard
-              text={`Your hotel has appeared in ${appearedQueries} of ${totalQueries} tracked searches — a ${visibilityScore}% visibility score. ${visibilityScore < 30 ? 'Completing your hotel profile with FAQs, spa details and dining information will significantly improve this score.' : 'Keep your content fresh and complete to maintain and grow your position.'}`}
-              type={visibilityScore < 30 ? 'warning' : 'success'}
-            />
+            
           </div>
         )}
 
@@ -594,15 +592,7 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
               </div>
             </div>
 
-            <InsightCard
-              text={recentClicks.length === 0
-                ? `No clicks recorded in the last ${period} days. As your pages become indexed in Google and Bing, organic traffic from AI platforms will begin to arrive.`
-                : recentLeads.length === 0
-                ? `You received ${recentClicks.length} clicks but no enquiries. Consider making the enquiry form more prominent on your hotel profile.`
-                : `You generated ${recentLeads.length} enquiries from ${recentClicks.length} clicks — a ${conversionRate}% conversion rate. ${conversionRate > 10 ? 'Strong performance.' : 'Adding more detail to your profile can improve conversion.'}`
-              }
-              type={recentLeads.length > 0 ? 'success' : 'info'}
-            />
+            
           </div>
         )}
 
