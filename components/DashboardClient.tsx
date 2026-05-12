@@ -341,27 +341,86 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
               </div>
             </div>
                   {/* Visibility over time chart */}
-            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', marginBottom: '1.5rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: 0 }}>AI Visibility Score Over Time</p>
-                <div style={{ display: 'flex', gap: '0.4rem' }}>
-                  {[7, 30, 90].map(p => (
-                    <button key={p} onClick={() => setPeriod(p)} style={{ padding: '0.35rem 0.75rem', borderRadius: 4, border: '1px solid ' + BORDER, background: period === p ? GOLD : WHITE, color: period === p ? WHITE : TEXT_MUTED, fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, cursor: 'pointer' }}>{p}d</button>
-                  ))}
+            {(() => {
+              const [chartPeriod, setChartPeriod] = useState(90)
+              const cutoff = new Date(Date.now() - chartPeriod * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+              const filteredDates = (runDates as string[]).filter(d => d >= cutoff)
+              const filteredScores = filteredDates.map((date: string) => {
+                const idx = (runDates as string[]).indexOf(date)
+                return Math.min(100, runScores[idx] + 15)
+              })
+              const currentScore = filteredScores[filteredScores.length - 1] || 0
+              const firstScore = filteredScores[0] || 0
+              const scoreDelta = currentScore - firstScore
+              const hasData = filteredDates.length >= 2
+
+              return (
+                <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', marginBottom: '1.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+                    <div>
+                      <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 0.25rem' }}>AI Visibility Score Over Time</p>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED, margin: 0 }}>
+                        {hasData ? `${filteredDates.length} data points · ${filteredDates[0]} → ${filteredDates[filteredDates.length - 1]}` : 'Score history builds after each cron run'}
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', gap: '0.4rem' }}>
+                        {[{ label: '7d', val: 7 }, { label: '30d', val: 30 }, { label: '90d', val: 90 }, { label: 'All', val: 365 }].map(p => (
+                          <button key={p.val} onClick={() => setChartPeriod(p.val)} style={{ padding: '0.35rem 0.75rem', borderRadius: 4, border: '1px solid ' + BORDER, background: chartPeriod === p.val ? GOLD : WHITE, color: chartPeriod === p.val ? WHITE : TEXT_MUTED, fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, cursor: 'pointer' }}>{p.label}</button>
+                        ))}
+                      </div>
+                      {hasData && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', color: GOLD, fontWeight: 400 }}>{currentScore}%</span>
+                          {scoreDelta !== 0 && (
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: scoreDelta > 0 ? GREEN : RED, background: (scoreDelta > 0 ? GREEN : RED) + '18', padding: '2px 8px', borderRadius: 20 }}>
+                              {scoreDelta > 0 ? '↑' : '↓'} {Math.abs(scoreDelta)}%
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {!hasData ? (
+                    <div style={{ height: 160, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: BG, borderRadius: 8 }}>
+                      <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT_MUTED, margin: '0 0 0.5rem' }}>No data yet</p>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED, margin: 0 }}>Score history will appear after multiple cron runs</p>
+                    </div>
+                  ) : (
+                    <div style={{ position: 'relative' }}>
+                      <LineChart
+                        datasets={[{ data: filteredScores, color: GOLD, label: 'AI Visibility %' }]}
+                        labels={filteredDates}
+                        height={180}
+                      />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.75rem' }}>
+                        <div style={{ display: 'flex', gap: '1.5rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <div style={{ width: 12, height: 2, background: GOLD, borderRadius: 1 }} />
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED }}>AI Visibility Score</span>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '1.5rem' }}>
+                          <div style={{ textAlign: 'center' }}>
+                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: '0 0 0.1rem' }}>Start</p>
+                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 700, color: TEXT, margin: 0 }}>{firstScore}%</p>
+                          </div>
+                          <div style={{ textAlign: 'center' }}>
+                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: '0 0 0.1rem' }}>Current</p>
+                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 700, color: GOLD, margin: 0 }}>{currentScore}%</p>
+                          </div>
+                          <div style={{ textAlign: 'center' }}>
+                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: '0 0 0.1rem' }}>Change</p>
+                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 700, color: scoreDelta >= 0 ? GREEN : RED, margin: 0 }}>{scoreDelta >= 0 ? '+' : ''}{scoreDelta}%</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-              {runDates.length < 2 ? (
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>Not enough data yet — score history will appear after multiple cron runs.</p>
-              ) : (
-                <LineChart
-                  datasets={[
-                    { data: runScores.map((s: number) => Math.min(100, s + 15)), color: GOLD, label: 'AI Visibility %' },
-                  ]}
-                  labels={runDates as string[]}
-                  height={140}
-                />
-              )}
-            </div>
+              )
+            })()}
 
             <InsightCard
               text={`Your hotel has appeared in ${appearedQueries} of ${totalQueries} tracked searches — a ${visibilityScore}% visibility score. ${visibilityScore < 30 ? 'Completing your hotel profile with FAQs, spa details and dining information will significantly improve this score.' : 'Keep your content fresh and complete to maintain and grow your position.'}`}
