@@ -350,8 +350,8 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   {runScores.length >= 2 && (() => {
-                    const cur = Math.round(Math.min(100, runScores[runScores.length - 1] + 15))
-                    const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 15))
+                    const cur = visibilityScore
+const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 15))
                     const delta = cur - prev
                     return (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -378,7 +378,7 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
               ) : (() => {
                 const cutoff = new Date(Date.now() - chartPeriod * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
                 const realPoints = (runDates as string[])
-                  .map((d, i) => ({ date: d, score: Math.round(Math.min(100, runScores[i] + 15)) }))
+                  .map((d, i, arr) => ({ date: d, score: i === arr.length - 1 ? visibilityScore : Math.round(Math.min(100, runScores[i] + 15)) }))
                   .filter(d => d.date >= cutoff)
                 if (realPoints.length < 1) return <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, padding: '2rem 0' }}>No data in selected range</p>
 
