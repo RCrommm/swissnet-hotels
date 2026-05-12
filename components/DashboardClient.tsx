@@ -402,7 +402,16 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
                   const score = dayQueries.length > 0 ? Math.round((appeared / dayQueries.length) * 100) : null
                   return { date: d, score }
                 }).filter((d): d is { date: string, score: number } => d.score !== null)
-                if (realPoints.length < 1) return <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, padding: '2rem 0' }}>No data in selected range</p>
+                if (realPoints.length < 1) return <div style={{ height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED }}>No data yet for this platform</p></div>
+                if (realPoints.length === 1) {
+                  const score = realPoints[0].score
+                  return (
+                    <div style={{ height: 160, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                      <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.5rem', color: GOLD, margin: 0 }}>{score}%</p>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Recorded on {new Date(realPoints[0].date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })} · Add more data points to see trend</p>
+                    </div>
+                  )
+                }
 
                 // Generate interpolated daily points between real data points
                 const startDate = new Date(cutoff)
