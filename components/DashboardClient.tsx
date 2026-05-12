@@ -342,7 +342,7 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
               </div>
             </div>
                   {/* Visibility over time chart */}
-            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.25rem 1.5rem', marginBottom: '1.5rem' }}>
+              <div style={{ background: WHITE, border: '1px solid rgba(201,169,76,0.08)', borderRadius: 10, padding: '1.25rem 1.5rem', marginBottom: '1.5rem', boxShadow: '0 1px 12px rgba(42,26,14,0.04)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                 <div>
                   <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', color: TEXT, margin: '0 0 0.15rem' }}>AI Visibility Over Time</p>
@@ -403,7 +403,7 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
                       const t = (d.getTime() - new Date(before.date).getTime()) / (new Date(after.date).getTime() - new Date(before.date).getTime())
                       const interpolated = Math.round(before.score + (after.score - before.score) * t)
                       // Add small natural fluctuation
-                      const noise = (Math.sin(day * 0.7) * 2 + Math.cos(day * 1.3) * 1.5)
+                      const noise = Math.sin(day * 0.3) * 1.2
                       allPoints.push({ date: dateStr, score: Math.max(0, Math.min(100, interpolated + Math.round(noise))), isReal: false })
                     } else if (before) {
                       allPoints.push({ date: dateStr, score: before.score, isReal: false })
@@ -415,7 +415,7 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
                 const scores = allPoints.map(d => d.score)
                 const minV = Math.max(0, Math.min(...scores) - 10)
                 const maxV = Math.min(100, Math.max(...scores) + 10)
-                const W = 580, H = 170, pL = 40, pR = 80, pT = 16, pB = 30
+                const W = 580, H = 155, pL = 40, pR = 80, pT = 10, pB = 28
                 const cW = W - pL - pR, cH = H - pT - pB
                 const px = (i: number) => pL + (i / (allPoints.length - 1)) * cW
                 const py = (v: number) => pT + cH - ((v - minV) / (maxV - minV || 1)) * cH
@@ -443,22 +443,22 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
                   <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow: 'visible' }}>
                     <defs>
                       <linearGradient id="ag3" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={GOLD} stopOpacity="0.12" />
+                        <stop offset="0%" stopColor={GOLD} stopOpacity="0.07" />
                         <stop offset="100%" stopColor={GOLD} stopOpacity="0" />
                       </linearGradient>
                     </defs>
                     {/* Grid */}
                     {[0,25,50,75,100].filter(v => v >= minV && v <= maxV).map(v => (
                       <g key={v}>
-                        <line x1={pL} y1={py(v)} x2={pL+cW} y2={py(v)} stroke="rgba(0,0,0,0.04)" strokeWidth="1" />
-                        <text x={pL-6} y={py(v)+4} textAnchor="end" fill={TEXT_MUTED} fontSize="8" fontFamily="Montserrat, sans-serif">{v}%</text>
+                        <line x1={pL} y1={py(v)} x2={pL+cW} y2={py(v)} stroke="rgba(0,0,0,0.03)" strokeWidth="1" />
+                        <text x={pL-6} y={py(v)+4} textAnchor="end" fill="rgba(42,26,14,0.3)" fontSize="7.5" fontFamily="Montserrat, sans-serif">{v}%</text>
                       </g>
                     ))}
                     {/* Market average */}
                     {marketAvg >= minV && marketAvg <= maxV && (
                       <g>
-                        <line x1={pL} y1={py(marketAvg)} x2={pL+cW} y2={py(marketAvg)} stroke="rgba(42,26,14,0.12)" strokeWidth="1" strokeDasharray="4 5" />
-                        <text x={pL+cW+6} y={py(marketAvg)+4} fill={TEXT_MUTED} fontSize="7.5" fontFamily="Montserrat, sans-serif">Avg market 35%</text>
+                        <line x1={pL} y1={py(marketAvg)} x2={pL+cW} y2={py(marketAvg)} stroke="rgba(42,26,14,0.08)" strokeWidth="1" strokeDasharray="3 6" />
+                        <text x={pL+cW+6} y={py(marketAvg)+3.5} fill="rgba(42,26,14,0.28)" fontSize="7" fontFamily="Montserrat, sans-serif">Avg market 35%</text>
                       </g>
                     )}
                     {/* Area */}
@@ -470,15 +470,15 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
                       const idx = allPoints.indexOf(d)
                       return (
                         <g key={i}>
-                          <circle cx={px(idx)} cy={py(d.score)} r="4" fill={WHITE} stroke={GOLD} strokeWidth="2" />
-                          <text x={px(idx)} y={py(d.score)-9} textAnchor="middle" fill={TEXT} fontSize="8.5" fontFamily="Montserrat, sans-serif" fontWeight="600">{d.score}%</text>
+                          <circle cx={px(idx)} cy={py(d.score)} r="3" fill={WHITE} stroke={GOLD} strokeWidth="1.5" />
+                          <text x={px(idx)} y={py(d.score)-8} textAnchor="middle" fill={TEXT} fontSize="8" fontFamily="Montserrat, sans-serif" fontWeight="600">{d.score}%</text>
                         </g>
                       )
                     })}
                     {/* X axis */}
                     <line x1={pL} y1={pT+cH} x2={pL+cW} y2={pT+cH} stroke="rgba(0,0,0,0.06)" strokeWidth="1" />
                     {xLabels.map((d, i) => (
-                      <text key={i} x={px(allPoints.indexOf(d))} y={H-4} textAnchor="middle" fill={TEXT_MUTED} fontSize="7.5" fontFamily="Montserrat, sans-serif">
+                        <text key={i} x={px(allPoints.indexOf(d))} y={H-6} textAnchor="middle" fill="rgba(42,26,14,0.3)" fontSize="7" fontFamily="Montserrat, sans-serif">
                         {new Date(d.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
                       </text>
                     ))}
