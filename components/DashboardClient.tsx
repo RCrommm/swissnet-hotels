@@ -697,10 +697,13 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
 
         {/* ── SETTINGS ── */}
         {tab === 'settings' && (
-          <div style={{ maxWidth: 560 }}>
+          <div style={{ maxWidth: 680 }}>
+
+            {/* Hotel Profile */}
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, overflow: 'hidden', marginBottom: '1rem' }}>
-              <div style={{ padding: '1rem 1.5rem', background: BG, borderBottom: '1px solid ' + BORDER }}>
+              <div style={{ padding: '1rem 1.5rem', background: BG, borderBottom: '1px solid ' + BORDER, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: 0 }}>Hotel Profile</p>
+                <a href={`/hotels/${hotel?.slug || hotel?.id}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: GOLD, textDecoration: 'none', fontWeight: 600 }}>View public page →</a>
               </div>
               <div style={{ padding: '1.25rem 1.5rem' }}>
                 {[
@@ -709,18 +712,66 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
                   { label: 'Region', value: hotel?.region || '—' },
                   { label: 'Category', value: hotel?.category || '—' },
                   { label: 'Nightly Rate', value: hotel?.nightly_rate_chf ? `CHF ${hotel.nightly_rate_chf}/night` : '—' },
+                  { label: 'Direct Booking URL', value: hotel?.direct_booking_url ? 'Connected ✓' : 'Not set' },
+                  { label: 'Contact Email', value: hotel?.contact_email || '—' },
+                  { label: 'Telephone', value: hotel?.telephone || '—' },
                 ].map(field => (
                   <div key={field.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.625rem 0', borderBottom: '1px solid ' + BORDER }}>
                     <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 600, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{field.label}</span>
-                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT }}>{field.value}</span>
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: field.value?.includes('✓') ? GREEN : TEXT }}>{field.value}</span>
                   </div>
                 ))}
               </div>
             </div>
 
+            {/* AI Visibility Status */}
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, overflow: 'hidden', marginBottom: '1rem' }}>
+              <div style={{ padding: '1rem 1.5rem', background: BG, borderBottom: '1px solid ' + BORDER }}>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: 0 }}>AI Visibility Status</p>
+              </div>
+              <div style={{ padding: '1.25rem 1.5rem' }}>
+                {[
+                  { label: 'Schema Status', value: hotel?.show_schema ? 'Active ✓' : 'Inactive', ok: hotel?.show_schema },
+                  { label: 'FAQs', value: '9 published', ok: true },
+                  { label: 'Rooms & Suites', value: hotel?.show_schema ? 'Schema active' : 'Inactive', ok: hotel?.show_schema },
+                  { label: 'Spa & Wellness', value: hotel?.show_schema ? 'Schema active' : 'Inactive', ok: hotel?.show_schema },
+                  { label: 'Dining & Restaurants', value: hotel?.show_schema ? 'Schema active' : 'Inactive', ok: hotel?.show_schema },
+                  { label: 'Tracking Queries', value: `${totalQueries} active queries`, ok: totalQueries > 0 },
+                  { label: 'Last Visibility Run', value: runDates.length > 0 ? new Date(runDates[runDates.length - 1] as string).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Never', ok: runDates.length > 0 },
+                ].map(field => (
+                  <div key={field.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.625rem 0', borderBottom: '1px solid ' + BORDER }}>
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 600, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{field.label}</span>
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: field.ok ? GREEN : '#d97706' }}>{field.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Your SwissNet Pages */}
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, overflow: 'hidden', marginBottom: '1rem' }}>
+              <div style={{ padding: '1rem 1.5rem', background: BG, borderBottom: '1px solid ' + BORDER }}>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: 0 }}>Your SwissNet Pages</p>
+              </div>
+              <div style={{ padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {[
+                  { label: 'Hotel Profile', path: `/hotels/${hotel?.slug || hotel?.id}` },
+                  { label: 'Rooms & Suites', path: `/hotels/${hotel?.slug || hotel?.id}/rooms` },
+                  { label: 'Dining', path: `/hotels/${hotel?.slug || hotel?.id}/dining` },
+                  { label: 'Spa & Wellness', path: `/hotels/${hotel?.slug || hotel?.id}/spa` },
+                  { label: 'Experiences', path: `/hotels/${hotel?.slug || hotel?.id}/experiences` },
+                ].map(page => (
+                  <div key={page.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid ' + BORDER }}>
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT }}>{page.label}</span>
+                    <a href={`https://swissnethotels.com${page.path}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: GOLD, textDecoration: 'none', fontWeight: 600 }}>View →</a>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Subscription + Support */}
             {[
-              { title: 'Billing', desc: 'AI Visibility Growth Programme · CHF 699/month' },
-              { title: 'Monthly Reports', desc: 'Performance reports sent automatically each month' },
+              { title: 'Subscription', desc: 'AI Visibility Growth Programme · CHF 699/month', badge: 'Active' },
+              { title: 'Monthly Reports', desc: 'Automated performance reports sent each month' },
               { title: 'Integrations', desc: 'Connect your booking system for live rate sync', badge: 'Coming Soon' },
             ].map(s => (
               <div key={s.title} style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.25rem 1.5rem', marginBottom: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -729,9 +780,9 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
                   <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0 }}>{s.desc}</p>
                 </div>
                 {s.badge ? (
-                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, padding: '3px 10px', borderRadius: 20 }}>{s.badge}</span>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, color: s.badge === 'Active' ? GREEN : TEXT_MUTED, background: s.badge === 'Active' ? GREEN + '15' : BG, border: '1px solid ' + (s.badge === 'Active' ? GREEN + '30' : BORDER), padding: '3px 10px', borderRadius: 20 }}>{s.badge}</span>
                 ) : (
-                  <button style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: GOLD, background: GOLD_LIGHT, border: '1px solid ' + BORDER, padding: '0.35rem 0.875rem', borderRadius: 4, cursor: 'pointer' }}>Manage</button>
+                  <a href="mailto:contact@swissnethotels.com" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: GOLD, background: GOLD_LIGHT, border: '1px solid ' + BORDER, padding: '0.35rem 0.875rem', borderRadius: 4, textDecoration: 'none' }}>Contact</a>
                 )}
               </div>
             ))}
