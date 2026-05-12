@@ -387,9 +387,15 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 15))
                 </div>
               ) : (() => {
                 const cutoff = new Date(Date.now() - chartPeriod * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-                const realPoints = (runDates as string[]).map((d, i, arr) => {
+                // Get all unique dates across all platforms
+                const allDates = chartPlatform === 'overall'
+                  ? runDates as string[]
+                  : [...new Set(aiVisibility?.filter((r: any) => r.platform === chartPlatform).map((r: any) => r.checked_at?.split('T')[0]).filter(Boolean) || [])].sort() as string[]
+
+                const realPoints = allDates.map((d, i, arr) => {
                   if (chartPlatform === 'overall') {
-                    return { date: d, score: i === arr.length - 1 ? visibilityScore : Math.round(Math.min(100, runScores[i] + 15)) }
+                    const idx = (runDates as string[]).indexOf(d)
+                    return { date: d, score: i === arr.length - 1 ? visibilityScore : Math.round(Math.min(100, runScores[idx] + 15)) }
                   }
                   const dayQueries = aiVisibility?.filter((r: any) => r.checked_at?.startsWith(d) && r.platform === chartPlatform) || []
                   const appeared = dayQueries.filter((r: any) => r.appeared).length
