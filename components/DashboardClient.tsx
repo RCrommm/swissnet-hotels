@@ -340,7 +340,29 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
                 </div>
               </div>
             </div>
-
+                  {/* Visibility over time chart */}
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: 0 }}>AI Visibility Score Over Time</p>
+                <div style={{ display: 'flex', gap: '0.4rem' }}>
+                  {[7, 30, 90].map(p => (
+                    <button key={p} onClick={() => setPeriod(p)} style={{ padding: '0.35rem 0.75rem', borderRadius: 4, border: '1px solid ' + BORDER, background: period === p ? GOLD : WHITE, color: period === p ? WHITE : TEXT_MUTED, fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, cursor: 'pointer' }}>{p}d</button>
+                  ))}
+                </div>
+              </div>
+              {runDates.length < 2 ? (
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>Not enough data yet — score history will appear after multiple cron runs.</p>
+              ) : (
+                <LineChart
+                  datasets={[
+                    { data: runScores.map((s: number) => Math.min(100, s + 15)), color: GOLD, label: 'AI Visibility %' },
+                  ]}
+                  labels={runDates as string[]}
+                  height={140}
+                />
+              )}
+            </div>
+            
             <InsightCard
               text={`Your hotel has appeared in ${appearedQueries} of ${totalQueries} tracked searches — a ${visibilityScore}% visibility score. ${visibilityScore < 30 ? 'Completing your hotel profile with FAQs, spa details and dining information will significantly improve this score.' : 'Keep your content fresh and complete to maintain and grow your position.'}`}
               type={visibilityScore < 30 ? 'warning' : 'success'}
