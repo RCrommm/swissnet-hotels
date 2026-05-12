@@ -84,6 +84,7 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
   const [tab, setTab] = useState('overview')
   const [period, setPeriod] = useState(30)
   const [chartPeriod, setChartPeriod] = useState(90)
+  const [chartPlatform, setChartPlatform] = useState('overall')
 
   const hotelName = hotel?.name || 'Your Hotel'
   const hotelRegion = hotel?.region || 'Switzerland'
@@ -344,9 +345,18 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
                   {/* Visibility over time chart */}
               <div style={{ background: WHITE, border: '1px solid rgba(201,169,76,0.08)', borderRadius: 10, padding: '1.25rem 1.5rem', marginBottom: '1.5rem', boxShadow: '0 1px 12px rgba(42,26,14,0.04)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                <div>
-                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', color: TEXT, margin: '0 0 0.15rem' }}>AI Visibility Over Time</p>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: 0 }}>{runDates.length} tracked runs · rolling average</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', color: TEXT, margin: 0 }}>AI Visibility Over Time</p>
+                  <div style={{ display: 'flex', gap: '0.25rem' }}>
+                    {[
+                      { label: 'Overall', key: 'overall' },
+                      { label: 'ChatGPT', key: 'chatgpt' },
+                      { label: 'Perplexity', key: 'perplexity' },
+                      { label: 'Google AI', key: 'google_ai' },
+                    ].map(p => (
+                      <button key={p.key} onClick={() => setChartPlatform(p.key)} style={{ padding: '0.2rem 0.65rem', borderRadius: 20, border: '1px solid ' + (chartPlatform === p.key ? GOLD : BORDER), background: chartPlatform === p.key ? GOLD + '18' : 'transparent', color: chartPlatform === p.key ? TEXT : TEXT_MUTED, fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: chartPlatform === p.key ? 700 : 400, cursor: 'pointer' }}>{p.label}</button>
+                    ))}
+                  </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   {runScores.length >= 2 && (() => {
@@ -377,9 +387,15 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 15))
                 </div>
               ) : (() => {
                 const cutoff = new Date(Date.now() - chartPeriod * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-                const realPoints = (runDates as string[])
-                  .map((d, i, arr) => ({ date: d, score: i === arr.length - 1 ? visibilityScore : Math.round(Math.min(100, runScores[i] + 15)) }))
-                  .filter(d => d.date >= cutoff)
+                const realPoints = (runDates as string[]).map((d, i, arr) => {
+                  if (chartPlatform === 'overall') {
+                    return { date: d, score: i === arr.length - 1 ? visibilityScore : Math.round(Math.min(100, runScores[i] + 15)) }
+                  }
+                  const dayQueries = aiVisibility?.filter((r: any) => r.checked_at?.startsWith(d) && r.platform === chartPlatform) || []
+                  const appeared = dayQueries.filter((r: any) => r.appeared).length
+                  const score = dayQueries.length > 0 ? Math.round((appeared / dayQueries.length) * 100) : null
+                  return { date: d, score }
+                }).filter((d): d is { date: string, score: number } => d.score !== null && d.date >= cutoff)
                 if (realPoints.length < 1) return <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, padding: '2rem 0' }}>No data in selected range</p>
 
                 // Generate interpolated daily points between real data points
