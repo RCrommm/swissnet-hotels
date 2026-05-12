@@ -405,8 +405,8 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
                 }).filter((d): d is { date: string, score: number } => d.score !== null)
 
                 // Build full calendar for selected period
-                const startDate = new Date(realPoints[0].date)
-                const endDate = new Date(realPoints[realPoints.length - 1].date)
+                const startDate = chartPeriod === 365 ? new Date(realPoints[0].date) : new Date(cutoff)
+                const endDate = chartPeriod === 365 ? new Date(realPoints[realPoints.length - 1].date) : new Date()
                 const totalDays = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
                 const calendarDays: string[] = []
                 for (let i = 0; i <= totalDays; i++) {
