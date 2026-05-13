@@ -127,7 +127,8 @@ const appearedQueries = aiVisibility?.filter((r: any) => r.appeared)?.length || 
   const leadsByDay = days.map(d => recentLeads.filter((l: any) => l.created_at?.startsWith(d)).length)
   const viewsByDay = days.map(d => recentViews.filter((v: any) => v.viewed_at?.startsWith(d)).length)
 
-  const regionHotels = competitors?.filter((h: any) => h.region === hotelRegion) || []
+  const regionHotels = competitors?.filter((h: any) => h.region === hotelRegion || h.region === hotel?.region) || []
+console.log('hotelRegion:', hotelRegion, 'competitors total:', competitors?.length, 'regionHotels:', regionHotels.length)
 const allHotelsInRegion = [
   { name: hotelName, rating: hotel?.rating || 4.5, is_current: true, visibility: visibilityScore },
   ...regionHotels.map((h: any) => ({ ...h, is_current: false, visibility: null }))
