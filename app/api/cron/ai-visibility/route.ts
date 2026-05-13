@@ -141,7 +141,7 @@ export async function GET(request: Request) {
     if (setting?.value !== 'true') return NextResponse.json({ message: 'AI visibility cron is disabled' })
   }
 
-  let hotelsQuery = supabase.from('hotels').select('id, name, region').eq('is_active', true)
+  let hotelsQuery = supabase.from('hotels').select('id, name, region').eq('is_active', true).eq('is_partner', true)
   if (hotelIdParam) hotelsQuery = hotelsQuery.eq('id', hotelIdParam)
   const { data: hotels, error: hotelsError } = await hotelsQuery
   if (hotelsError) return NextResponse.json({ error: hotelsError.message })
