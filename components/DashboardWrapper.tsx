@@ -45,11 +45,25 @@ export default function DashboardWrapper() {
         supabase.from('bookings').select('*').eq('hotel_id', hotelId).eq('source', 'swissnet').order('booked_at', { ascending: false }).then(r => r.data || []),
       ])
 
-      const { data: competitors } = await supabase
+      const { data: competitorHotels } = await supabase
         .from('hotels')
-        .select('name, rating, nightly_rate_chf, region, category')
+        .select('id, name, rating, nightly_rate_chf, region, category')
         .eq('is_active', true)
         .neq('id', hotelId)
+
+      const competitorIds = (competitorHotels || []).map((h: any) => h.id)
+
+      const { data: competitorScores } = await supabase
+        .from('ai_visibility_scores')
+        .select('hotel_id, appeared')
+        .in('hotel_id', competitorIds)
+
+      const competitors = (competitorHotels || []).map((h: any) => {
+        const hotelScores = competitorScores?.filter((s: any) => s.hotel_id === h.id) || []
+        const appeared = hotelScores.filter((s: any) => s.appeared).length
+        const visibilityScore = hotelScores.length > 0 ? Math.round((appeared / hotelScores.length) * 100) : null
+        return { ...h, visibilityScore }
+      })
 
       setData({
         hotel,

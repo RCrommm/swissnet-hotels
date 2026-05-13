@@ -132,7 +132,11 @@ console.log('hotelRegion:', hotelRegion, 'competitors total:', competitors?.leng
 const allHotelsInRegion = [
   { name: hotelName, rating: hotel?.rating || 4.5, is_current: true, visibility: visibilityScore },
   ...regionHotels.map((h: any) => ({ ...h, is_current: false, visibility: null }))
-].sort((a, b) => (b.rating || 0) - (a.rating || 0))
+].sort((a, b) => {
+  const scoreA = a.is_current ? visibilityScore : (a.visibilityScore ?? -1)
+  const scoreB = b.is_current ? visibilityScore : (b.visibilityScore ?? -1)
+  return scoreB - scoreA
+})
 const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
 
   const conversionRate = recentClicks.length > 0 ? Math.round((recentLeads.length / recentClicks.length) * 100) : 0
@@ -642,6 +646,13 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
                               <div style={{ height: '100%', width: visibilityScore + '%', background: GOLD, borderRadius: 2 }} />
                             </div>
                             <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: GOLD }}>{visibilityScore}%</span>
+                          </div>
+                        ) : h.visibilityScore !== null ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <div style={{ width: 70, height: 4, background: BORDER, borderRadius: 2, overflow: 'hidden' }}>
+                              <div style={{ height: '100%', width: h.visibilityScore + '%', background: TEXT_MUTED, borderRadius: 2 }} />
+                            </div>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED }}>{h.visibilityScore}%</span>
                           </div>
                         ) : (
                           <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>—</span>
