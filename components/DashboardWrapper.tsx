@@ -48,7 +48,7 @@ export default function DashboardWrapper() {
       const { data: competitors } = await supabase
         .from('hotels')
         .select('name, rating, nightly_rate_chf, region, category')
-        .eq('region', hotel?.region || '')
+        .eq('is_active', true)
         .neq('id', hotelId)
 
       setData({
