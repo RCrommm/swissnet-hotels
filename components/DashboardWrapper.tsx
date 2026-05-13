@@ -36,7 +36,7 @@ export default function DashboardWrapper() {
 
       const hotelId = hotelUser.hotel_id
 
-      const [hotel, views, clicks, leads, aiVisibility] = await Promise.all([
+      const [hotel, views, clicks, leads, aiVisibility, bookings] = await Promise.all([
         supabase.from('hotels').select('*').eq('id', hotelId).single().then(r => r.data),
         supabase.from('hotel_views').select('*').eq('hotel_id', hotelId).order('viewed_at', { ascending: false }).then(r => r.data || []),
         supabase.from('referral_clicks').select('*').eq('hotel_id', hotelId).order('clicked_at', { ascending: false }).then(r => r.data || []),
@@ -57,7 +57,7 @@ export default function DashboardWrapper() {
         clicks,
         leads,
         aiVisibility,
-        bookings: [],
+        bookings: bookings || [],
         competitors: competitors || [],
       })
       setLoading(false)
