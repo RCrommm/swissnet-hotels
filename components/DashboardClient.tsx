@@ -976,7 +976,7 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
                   const appeared = dayQueries.filter((r: any) => r.appeared).length
                   const score = dayQueries.length > 0 ? Math.round((appeared / dayQueries.length) * 100) : null
                   return { date: d, score }
-                }).filter((d): d is { date: string, score: number } => d.score !== null && d.date >= cutoff)
+                }).filter((d): d is { date: string, score: number } => d.score !== null)
 
                 // Build full calendar for selected period
                 const startDate = chartPeriod === 365 ? new Date(realPoints[0].date) : new Date(cutoff)
@@ -1008,17 +1008,21 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
                 // Map date to X position on full calendar
                 const dateToX = (date: string) => {
                   const idx = calendarDays.indexOf(date)
-                  return pL + (idx / (calendarDays.length - 1)) * cW
+                  if (idx === -1) return pL
+                  return pL + (idx / Math.max(calendarDays.length - 1, 1)) * cW
                 }
                 const py = (v: number) => pT + cH - (v / 100) * cH
 
                 // Build line segments — only between consecutive real points
                 const segments: { x1: number, y1: number, x2: number, y2: number }[] = []
                 for (let i = 1; i < realPoints.length; i++) {
+                  const x1 = dateToX(realPoints[i-1].date)
+                  const x2 = dateToX(realPoints[i].date)
+                  if (x1 === pL && calendarDays.indexOf(realPoints[i-1].date) === -1) continue
                   segments.push({
-                    x1: dateToX(realPoints[i-1].date),
+                    x1: Math.max(pL, x1),
                     y1: py(realPoints[i-1].score),
-                    x2: dateToX(realPoints[i].date),
+                    x2: Math.max(pL, x2),
                     y2: py(realPoints[i].score),
                   })
                 }
@@ -1059,7 +1063,7 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
                     ))}
 
                     {/* Data points */}
-                    {realPoints.map((d, i) => (
+                    {realPoints.filter(d => calendarDays.includes(d.date)).map((d, i) => (
                       <g key={i}>
                         <circle cx={dateToX(d.date)} cy={py(d.score)} r="3" fill={WHITE} stroke={GOLD} strokeWidth="1.5" />
                         <text x={dateToX(d.date)} y={py(d.score)-9} textAnchor="middle" fill={TEXT} fontSize="8" fontFamily="Montserrat, sans-serif" fontWeight="600">{d.score}%</text>
