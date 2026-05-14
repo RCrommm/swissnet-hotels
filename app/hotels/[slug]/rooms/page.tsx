@@ -34,6 +34,14 @@ export default async function RoomsPage({ params }: { params: Promise<{ slug: st
     .eq('is_available', true)
     .order('sort_order', { ascending: true })
 
+  const { data: dbFaqs } = await supabase
+    .from('hotel_faq_suggestions')
+    .select('question, answer')
+    .eq('hotel_id', hotel.id)
+    .eq('page_type', 'rooms')
+    .eq('status', 'approved')
+    .order('created_at')
+
   const gold = '#C9A84C'
   const border = 'rgba(201,169,76,0.2)'
   const text = '#1a0e06'
@@ -47,43 +55,11 @@ export default async function RoomsPage({ params }: { params: Promise<{ slug: st
   const hotelId = `https://swissnethotels.com/hotels/${hotelUrl}#hotel`
   const trackingUrl = `/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIComponent(hotel.name)}&destination=${encodeURIComponent(hotel.direct_booking_url)}&medium=website&campaign=rooms_page`
 
-  const rates = (roomTypes || [])
-  .map((r: any) => r.base_rate_chf)
-  .filter((rate: any) => typeof rate === 'number' && rate > 0)
-const minRate = rates.length > 0 ? Math.min(...rates) : hotel.nightly_rate_chf || null
+  const rates = (roomTypes || []).map((r: any) => r.base_rate_chf).filter((rate: any) => typeof rate === 'number' && rate > 0)
+  const minRate = rates.length > 0 ? Math.min(...rates) : hotel.nightly_rate_chf || null
   const suites = (roomTypes || []).filter((r: any) => r.type_category === 'Suite' || r.name?.toLowerCase().includes('suite'))
   const hasLakeView = (roomTypes || []).some((r: any) => r.view?.toLowerCase().includes('lake'))
   const hasMountainView = (roomTypes || []).some((r: any) => r.view?.toLowerCase().includes('mountain') || r.view?.toLowerCase().includes('matterhorn') || r.view?.toLowerCase().includes('jungfrau') || r.view?.toLowerCase().includes('alps'))
-
-  const { data: dbFaqs } = await supabase
-    .from('hotel_faq_suggestions')
-    .select('question, answer')
-    .eq('hotel_id', hotel.id)
-    .eq('page_type', 'rooms')
-    .eq('status', 'approved')
-    .order('created_at')
-
-  const hardcodedFaqs = [
-    {
-      q: `What room types does ${hotel.name} offer?`,
-      a: `${hotel.name} in ${hotel.location}, Switzerland offers ${roomTypes?.length || 'multiple'} room categories${minRate ? `, with rates from CHF ${minRate.toLocaleString()} per night` : ''}.${suites.length > 0 ? ` The hotel features ${suites.length} suite categories.` : ''}`
-    },
-    {
-      q: `Does ${hotel.name} have suites?`,
-      a: suites.length > 0
-        ? `Yes. ${hotel.name} offers ${suites.length} suite categories including ${suites.slice(0, 3).map((s: any) => s.name).join(', ')}.`
-        : `Yes. ${hotel.name} in ${hotel.location}, Switzerland offers luxury accommodation. Contact the hotel directly for suite availability.`
-    },
-    {
-      q: `What is the most spacious room at ${hotel.name}?`,
-      a: (() => {
-        const largest = (roomTypes || []).filter((r: any) => r.size_sqm).sort((a: any, b: any) => b.size_sqm - a.size_sqm)[0]
-        return largest
-          ? `The most spacious accommodation at ${hotel.name} is the ${largest.name} at ${largest.size_sqm} m²${largest.view ? ` with ${largest.view}` : ''}.`
-          : `${hotel.name} in ${hotel.location}, Switzerland offers a range of luxury rooms and suites. Contact the hotel directly for recommendations.`
-      })()
-    },
-  ]
 
   const faqs = (dbFaqs || []).map((f: any) => ({ q: f.question, a: f.answer }))
 
@@ -120,10 +96,17 @@ const minRate = rates.length > 0 ? Math.min(...rates) : hotel.nightly_rate_chf |
         bed: rt.bed_type ? { '@type': 'BedDetails', typeOfBed: rt.bed_type } : undefined,
         floorSize: rt.size_sqm ? { '@type': 'QuantitativeValue', value: rt.size_sqm, unitCode: 'MTK' } : undefined,
       })),
-      ]
+      ...(faqs.length > 0 ? [{
+        '@type': 'FAQPage',
+        '@id': `${pageUrl}#faq`,
+        mainEntity: faqs.map(f => ({
+          '@type': 'Question',
+          name: f.q,
+          acceptedAnswer: { '@type': 'Answer', text: f.a },
+        })),
+      }] : []),
+    ]
   }
-
-  
 
   return (
     <div style={{ background: bg, minHeight: '100vh' }}>
@@ -171,13 +154,13 @@ const minRate = rates.length > 0 ? Math.min(...rates) : hotel.nightly_rate_chf |
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '3rem', flexWrap: 'wrap' }}>
           {[
             { label: 'Overview', href: `/hotels/${hotelUrl}` },
-            { label: 'Rooms', href: `/hotels/${hotelUrl}/rooms` },
+            { label: 'Rooms', href: `/hotels/${hotelUrl}/rooms`, active: true },
             { label: 'Dining', href: `/hotels/${hotelUrl}/dining` },
             { label: 'Spa', href: `/hotels/${hotelUrl}/spa` },
-            { label: 'Experiences', href: `/hotels/${hotelUrl}/experiences`, active: true },
+            { label: 'Experiences', href: `/hotels/${hotelUrl}/experiences` },
             { label: 'Events', href: `/hotels/${hotelUrl}/events` },
           ].map(nav => (
-            <Link key={nav.label} href={nav.href} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.5rem 1.25rem', textDecoration: 'none', borderRadius: 2, background: nav.active ? gold : white, color: nav.active ? '#1a0e06' : textMuted, border: `1px solid ${nav.active ? gold : border}` }}>
+            <Link key={nav.label} href={nav.href} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.5rem 1.25rem', textDecoration: 'none', borderRadius: 2, background: (nav as any).active ? gold : white, color: (nav as any).active ? '#1a0e06' : textMuted, border: `1px solid ${(nav as any).active ? gold : border}` }}>
               {nav.label}
             </Link>
           ))}
@@ -244,17 +227,19 @@ const minRate = rates.length > 0 ? Math.min(...rates) : hotel.nightly_rate_chf |
         )}
 
         {/* FAQ */}
-        <div style={{ marginTop: '4rem', paddingTop: '3rem', borderTop: `1px solid ${border}` }}>
-          <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: text, margin: '0 0 2rem' }}>Frequently Asked Questions</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-            {faqs.map((faq, i) => (
-              <div key={i} style={{ padding: '1.25rem 0', borderBottom: `1px solid ${border}` }}>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', fontWeight: 600, color: text, margin: '0 0 0.4rem' }}>{faq.q}</p>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted, lineHeight: 1.7, margin: 0 }}>{faq.a}</p>
-              </div>
-            ))}
+        {faqs.length > 0 && (
+          <div style={{ marginTop: '4rem', paddingTop: '3rem', borderTop: `1px solid ${border}` }}>
+            <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: text, margin: '0 0 2rem' }}>Frequently Asked Questions</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+              {faqs.map((faq, i) => (
+                <div key={i} style={{ padding: '1.25rem 0', borderBottom: `1px solid ${border}` }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', fontWeight: 600, color: text, margin: '0 0 0.4rem' }}>{faq.q}</p>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted, lineHeight: 1.7, margin: 0 }}>{faq.a}</p>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* INTERNAL LINKS */}
         <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: `1px solid ${border}` }}>

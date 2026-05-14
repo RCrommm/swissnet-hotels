@@ -205,7 +205,7 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
     showSchema ? supabase.from('room_types').select('*').eq('hotel_id', hotel.id).eq('is_available', true).order('sort_order', { ascending: true }) : { data: [] },
     showSchema ? supabase.from('hotel_spa').select('*').eq('hotel_id', hotel.id).eq('is_available', true) : { data: [] },
     showSchema ? supabase.from('hotel_restaurants').select('*').eq('hotel_id', hotel.id).eq('is_available', true).order('sort_order', { ascending: true }) : { data: [] },
-    showSchema ? supabase.from('hotel_offers').select('*').eq('hotel_id', hotel.id).eq('is_available', true).order('sort_order', { ascending: true }) : { data: [] },
+    showSchema ? supabase.from('hotel_offers').select('*').eq('hotel_id', hotel.id).eq('is_available', true).eq('offer_type', 'permanent').order('sort_order', { ascending: true }) : { data: [] },
     supabase.from('hotel_content').select('*').eq('hotel_id', hotel.id).single(),
     supabase.from('hotel_sections').select('*').eq('hotel_id', hotel.id),
    supabase.from('hotel_awards').select('*').eq('hotel_id', hotel.id).eq('is_active', true).order('sort_order', { ascending: true }),

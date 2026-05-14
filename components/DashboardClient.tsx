@@ -310,7 +310,7 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
       </div>
 
       {/* Sub tabs — Content / FAQs (not shown for events which has its own structure) */}
-      {mainTab !== 'overview' && (
+      {mainTab !== 'overview' && mainTab !== 'events' && (
         <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '1.5rem' }}>
           {[
             { key: 'content', label: 'Content' },
