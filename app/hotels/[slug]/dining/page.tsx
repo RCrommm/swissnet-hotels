@@ -7,7 +7,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { data: hotel } = await supabase.from('hotels').select('name, location').or(`slug.eq.${slug},id.eq.${slug}`).single()
   if (!hotel) return {}
   const { data: hotelForMeta } = await supabase.from('hotels').select('id').or(`slug.eq.${slug},id.eq.${slug}`).single()
-  const { data: michelinCheck } = hotelForMeta 
+  const { data: michelinCheck } = hotelForMeta
     ? await supabase.from('hotel_restaurants').select('id').eq('hotel_id', hotelForMeta.id).gt('michelin_stars', 0).limit(1)
     : { data: null }
   const hasMichelin = (michelinCheck?.length ?? 0) > 0
@@ -41,6 +41,14 @@ export default async function DiningPage({ params }: { params: Promise<{ slug: s
     .eq('is_available', true)
     .order('sort_order', { ascending: true })
 
+  const { data: dbFaqsDining } = await supabase
+    .from('hotel_faq_suggestions')
+    .select('question, answer')
+    .eq('hotel_id', hotel.id)
+    .eq('page_type', 'dining')
+    .eq('status', 'approved')
+    .order('created_at')
+
   const gold = '#C9A84C'
   const border = 'rgba(201,169,76,0.2)'
   const text = '#1a0e06'
@@ -54,6 +62,33 @@ export default async function DiningPage({ params }: { params: Promise<{ slug: s
 
   const michelinRestaurants = (restaurants || []).filter((r: any) => r.michelin_stars > 0)
   const hasMichelin = michelinRestaurants.length > 0
+
+  const faqs = [
+    ...(hasMichelin ? [
+      {
+        q: `Does ${hotel.name} have a Michelin-starred restaurant?`,
+        a: `Yes. ${hotel.name} is home to ${michelinRestaurants.map((r: any) => `${r.name} — a ${r.michelin_stars} Michelin-starred ${r.cuisine_type || 'fine dining'} restaurant`).join(' and ')}. ${hotel.location}, Switzerland.`
+      },
+      {
+        q: `Is ${hotel.name} good for a special occasion dinner?`,
+        a: `Yes. ${hotel.name} in ${hotel.location} offers Michelin-starred fine dining, private dining rooms and an exceptional wine programme — well suited for celebrations, business dinners and romantic evenings.`
+      },
+      {
+        q: `Can non-hotel guests dine at ${hotel.name}?`,
+        a: `Yes. The restaurants at ${hotel.name} in ${hotel.location}, Switzerland are open to non-hotel guests, subject to availability. Advance reservations are strongly recommended.`
+      },
+    ] : [
+      {
+        q: `What restaurants does ${hotel.name} have?`,
+        a: `${hotel.name} in ${hotel.location}, Switzerland offers ${restaurants?.length || 0} dining venues including ${(restaurants || []).slice(0, 3).map((r: any) => r.name).join(', ')}.`
+      },
+      {
+        q: `Can non-hotel guests dine at ${hotel.name}?`,
+        a: `Yes. The restaurants at ${hotel.name} in ${hotel.location}, Switzerland are open to non-hotel guests, subject to availability. Advance reservations are recommended.`
+      },
+    ]),
+    ...(dbFaqsDining || []).map((f: any) => ({ q: f.question, a: f.answer })),
+  ]
 
   const schema = {
     '@context': 'https://schema.org',
@@ -90,59 +125,20 @@ export default async function DiningPage({ params }: { params: Promise<{ slug: s
         award: r.michelin_stars > 0 ? [`${r.michelin_stars} Michelin Star${r.michelin_stars > 1 ? 's' : ''}`] : undefined,
         sameAs: r.michelin_url ? [r.michelin_url] : undefined,
       })),
-      ...(hasMichelin ? [{
+      ...(faqs.length > 0 ? [{
         '@type': 'FAQPage',
         '@id': `${pageUrl}#faq`,
-        mainEntity: [
-          {
-            '@type': 'Question',
-            name: `Does ${hotel.name} have a Michelin-starred restaurant?`,
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: `Yes. ${hotel.name} is home to ${michelinRestaurants.map((r: any) => `${r.name}, a ${r.michelin_stars} Michelin-starred restaurant`).join(' and ')}, located in ${hotel.location}, Switzerland.`
-            }
-          },
-          {
-            '@type': 'Question',
-            name: `How do I make a reservation at ${hotel.name} restaurant?`,
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: `Reservations at ${hotel.name} in ${hotel.location} can be made directly through the hotel website. Hotel guests receive priority reservation access.`
-            }
-          }
-        ]
+        mainEntity: faqs.map(f => ({
+          '@type': 'Question',
+          name: f.q,
+          acceptedAnswer: { '@type': 'Answer', text: f.a },
+        })),
       }] : []),
     ]
   }
 
-  // Build dynamic FAQ for on-page display
-  const faqs = hasMichelin ? [
-    {
-      q: `Does ${hotel.name} have a Michelin-starred restaurant?`,
-      a: `Yes. ${hotel.name} is home to ${michelinRestaurants.map((r: any) => `${r.name} — a ${r.michelin_stars} Michelin-starred ${r.cuisine_type || 'fine dining'} restaurant`).join(' and ')}. ${hotel.location}, Switzerland.`
-    },
-    {
-      q: `Is ${hotel.name} good for a special occasion dinner?`,
-      a: `Yes. ${hotel.name} in ${hotel.location} offers Michelin-starred fine dining, private dining rooms and an exceptional wine programme — well suited for celebrations, business dinners and romantic evenings.`
-    },
-    {
-      q: `Can non-hotel guests dine at ${hotel.name}?`,
-      a: `Yes. The restaurants at ${hotel.name} in ${hotel.location}, Switzerland are open to non-hotel guests, subject to availability. Advance reservations are strongly recommended.`
-    },
-  ] : [
-    {
-      q: `What restaurants does ${hotel.name} have?`,
-      a: `${hotel.name} in ${hotel.location}, Switzerland offers ${restaurants?.length || 0} dining venues including ${(restaurants || []).slice(0, 3).map((r: any) => r.name).join(', ')}.`
-    },
-    {
-      q: `Can non-hotel guests dine at ${hotel.name}?`,
-      a: `Yes. The restaurants at ${hotel.name} in ${hotel.location}, Switzerland are open to non-hotel guests, subject to availability. Advance reservations are recommended.`
-    },
-  ]
-
   return (
     <div style={{ background: bg, minHeight: '100vh' }}>
-      
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
 
       {/* HEADER */}
