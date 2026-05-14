@@ -31,6 +31,14 @@ export default async function SpaPage({ params }: { params: Promise<{ slug: stri
     .eq('hotel_id', hotel.id)
     .eq('is_available', true)
 
+  const { data: dbFaqsSpa } = await supabase
+    .from('hotel_faq_suggestions')
+    .select('question, answer')
+    .eq('hotel_id', hotel.id)
+    .eq('page_type', 'spa')
+    .eq('status', 'approved')
+    .order('created_at')
+
   const gold = '#C9A84C'
   const border = 'rgba(201,169,76,0.2)'
   const text = '#1a0e06'
@@ -43,6 +51,24 @@ export default async function SpaPage({ params }: { params: Promise<{ slug: stri
   const trackingUrl = `/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIComponent(hotel.name)}&destination=${encodeURIComponent(hotel.direct_booking_url)}&medium=website&campaign=spa_page`
 
   const primarySpa = spaData?.[0]
+
+  const faqs = [
+    {
+      q: `Does ${hotel.name} have a spa?`,
+      a: primarySpa
+        ? `Yes. ${hotel.name} features ${primarySpa.name || 'a luxury spa'} in ${hotel.location}, Switzerland${primarySpa.size_sqm ? ` spanning ${primarySpa.size_sqm} m²` : ''}${primarySpa.pool ? ' with indoor and outdoor pools' : ''}${primarySpa.sauna ? ', sauna' : ''}${primarySpa.hammam ? ', hammam' : ''} and a full range of wellness treatments.`
+        : `Yes. ${hotel.name} in ${hotel.location}, Switzerland features a luxury spa with wellness treatments and facilities.`
+    },
+    {
+      q: `Can non-hotel guests use the spa at ${hotel.name}?`,
+      a: `Spa access at ${hotel.name} in ${hotel.location}, Switzerland is primarily reserved for hotel guests. Day spa access for non-residents may be available — contact the hotel directly to confirm availability and book treatments.`
+    },
+    {
+      q: `Is ${hotel.name} good for a wellness retreat?`,
+      a: `Yes. ${hotel.name} is a luxury wellness hotel in Switzerland${primarySpa?.size_sqm ? ` with a ${primarySpa.size_sqm} m² spa` : ''}, offering a full range of treatments, wellness programmes and Alpine relaxation facilities in ${hotel.location}.`
+    },
+    ...(dbFaqsSpa || []).map((f: any) => ({ q: f.question, a: f.answer })),
+  ]
 
   const schema = {
     '@context': 'https://schema.org',
@@ -81,57 +107,17 @@ export default async function SpaPage({ params }: { params: Promise<{ slug: stri
           spa.size_sqm && { '@type': 'LocationFeatureSpecification', name: `${spa.size_sqm} m² spa facility`, value: true },
         ].filter(Boolean),
       })),
-      {
+      ...(faqs.length > 0 ? [{
         '@type': 'FAQPage',
         '@id': `${pageUrl}#faq`,
-        mainEntity: [
-          {
-            '@type': 'Question',
-            name: `Does ${hotel.name} have a spa?`,
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: primarySpa
-                ? `Yes. ${hotel.name} features ${primarySpa.name || 'a luxury spa'} in ${hotel.location}, Switzerland${primarySpa.size_sqm ? ` spanning ${primarySpa.size_sqm} m²` : ''}${primarySpa.pool ? ' with indoor and outdoor pools' : ''}${primarySpa.sauna ? ', sauna' : ''}${primarySpa.hammam ? ', hammam' : ''} and a full range of wellness treatments.`
-                : `Yes. ${hotel.name} in ${hotel.location}, Switzerland features a luxury spa with wellness treatments and facilities.`
-            }
-          },
-          {
-            '@type': 'Question',
-            name: `Can non-hotel guests use the spa at ${hotel.name}?`,
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: `Spa access at ${hotel.name} in ${hotel.location}, Switzerland is primarily reserved for hotel guests. Day spa access for non-residents may be available — contact the hotel directly to confirm availability and book treatments.`
-            }
-          },
-          {
-            '@type': 'Question',
-            name: `Is ${hotel.name} good for a wellness retreat?`,
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: `Yes. ${hotel.name} is a luxury wellness hotel in Switzerland${primarySpa?.size_sqm ? ` with a ${primarySpa.size_sqm} m² spa` : ''}, offering a full range of treatments, wellness programmes and Alpine relaxation facilities in ${hotel.location}.`
-            }
-          },
-        ]
-      },
+        mainEntity: faqs.map(f => ({
+          '@type': 'Question',
+          name: f.q,
+          acceptedAnswer: { '@type': 'Answer', text: f.a },
+        })),
+      }] : []),
     ]
   }
-
-  const faqs = [
-    {
-      q: `Does ${hotel.name} have a spa?`,
-      a: primarySpa
-        ? `Yes. ${hotel.name} features ${primarySpa.name || 'a luxury spa'} in ${hotel.location}, Switzerland${primarySpa.size_sqm ? ` spanning ${primarySpa.size_sqm} m²` : ''}${primarySpa.pool ? ' with indoor and outdoor pools' : ''}${primarySpa.sauna ? ', sauna' : ''}${primarySpa.hammam ? ', hammam' : ''} and a full range of wellness treatments.`
-        : `Yes. ${hotel.name} in ${hotel.location}, Switzerland features a luxury spa with wellness treatments and facilities.`
-    },
-    {
-      q: `Can non-hotel guests use the spa at ${hotel.name}?`,
-      a: `Spa access at ${hotel.name} in ${hotel.location}, Switzerland is primarily reserved for hotel guests. Day spa access for non-residents may be available — contact the hotel directly to confirm availability and book treatments.`
-    },
-    {
-      q: `Is ${hotel.name} good for a wellness retreat?`,
-      a: `Yes. ${hotel.name} is a luxury wellness hotel in Switzerland${primarySpa?.size_sqm ? ` with a ${primarySpa.size_sqm} m² spa` : ''}, offering a full range of treatments, wellness programmes and Alpine relaxation facilities in ${hotel.location}.`
-    },
-  ]
 
   return (
     <div style={{ background: bg, minHeight: '100vh' }}>
