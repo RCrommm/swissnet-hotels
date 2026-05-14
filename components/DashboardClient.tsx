@@ -560,7 +560,7 @@ function InsightCard({ text, type = 'info' }: { text: string; type?: 'info' | 'w
 export default function DashboardClient({ hotel, views, clicks, leads, aiVisibility, bookings, competitors }: any) {
   const [tab, setTab] = useState('overview')
   const [period, setPeriod] = useState(30)
-  const [chartPeriod, setChartPeriod] = useState(90)
+  const [chartPeriod, setChartPeriod] = useState(7)
   const [chartPlatform, setChartPlatform] = useState('overall')
 
   const hotelName = hotel?.name || 'Your Hotel'
@@ -835,7 +835,7 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
               </div>
             </div>
                   {/* Visibility over time chart */}
-              <div style={{ background: WHITE, border: '1px solid rgba(201,169,76,0.08)', borderRadius: 10, padding: '1.25rem 1.5rem', marginBottom: '1.5rem', boxShadow: '0 1px 12px rgba(42,26,14,0.04)' }}>
+              <div style={{ background: WHITE, border: '1px solid rgba(201,169,76,0.08)', borderRadius: 10, padding: '1.25rem 1.5rem', marginBottom: '1.5rem', overflow: 'hidden', boxShadow: '0 1px 12px rgba(42,26,14,0.04)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                   <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', color: TEXT, margin: 0 }}>AI Visibility Over Time</p>
@@ -919,7 +919,7 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
                   </div>
                 )
 
-                const W = 580, H = 170, pL = 40, pR = 80, pT = 16, pB = 30
+                const W = 580, H = 170, pL = 40, pR = 60, pT = 16, pB = 30
                 const cW = W - pL - pR, cH = H - pT - pB
                 const marketAvg = 35
 
@@ -964,7 +964,7 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
 
                     {/* Market average */}
                     <line x1={pL} y1={py(marketAvg)} x2={pL+cW} y2={py(marketAvg)} stroke="rgba(42,26,14,0.08)" strokeWidth="1" strokeDasharray="3 6" />
-                    <text x={pL+cW+6} y={py(marketAvg)+3.5} fill="rgba(42,26,14,0.5)" fontSize="8" fontFamily="Montserrat, sans-serif" fontWeight="600">Market avg</text>
+                    <text x={pL+cW-4} y={py(marketAvg)-5} textAnchor="end" fill="rgba(42,26,14,0.4)" fontSize="7" fontFamily="Montserrat, sans-serif" fontWeight="600">Market avg</text>
 
                     {/* Area fill under segments */}
                     {segments.map((s, i) => (
