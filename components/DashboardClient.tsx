@@ -976,7 +976,7 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
                   const appeared = dayQueries.filter((r: any) => r.appeared).length
                   const score = dayQueries.length > 0 ? Math.round((appeared / dayQueries.length) * 100) : null
                   return { date: d, score }
-                }).filter((d): d is { date: string, score: number } => d.score !== null)
+                }).filter((d): d is { date: string, score: number } => d.score !== null && d.date >= cutoff)
 
                 // Build full calendar for selected period
                 const startDate = chartPeriod === 365 ? new Date(realPoints[0].date) : new Date(cutoff)
