@@ -161,12 +161,12 @@ export default async function SpaPage({ params }: { params: Promise<{ slug: stri
         {/* NAV */}
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '3rem', flexWrap: 'wrap' }}>
           {[
-            { label: 'Overview', href: `/hotels/${hotelUrl}` },
-            { label: 'Rooms', href: `/hotels/${hotelUrl}/rooms` },
-            { label: 'Dining', href: `/hotels/${hotelUrl}/dining` },
-            { label: 'Spa', href: `/hotels/${hotelUrl}/spa` },
-            { label: 'Experiences', href: `/hotels/${hotelUrl}/experiences`, active: true },
-            { label: 'Events', href: `/hotels/${hotelUrl}/events` },
+            { label: 'Overview', href: `/hotels/${hotelUrl}`, active: false },
+            { label: 'Rooms', href: `/hotels/${hotelUrl}/rooms`, active: false },
+            { label: 'Dining', href: `/hotels/${hotelUrl}/dining`, active: false },
+            { label: 'Spa', href: `/hotels/${hotelUrl}/spa`, active: true },
+            { label: 'Experiences', href: `/hotels/${hotelUrl}/experiences`, active: false },
+            { label: 'Events', href: `/hotels/${hotelUrl}/events`, active: false },
           ].map(nav => (
             <Link key={nav.label} href={nav.href} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.5rem 1.25rem', textDecoration: 'none', borderRadius: 2, background: nav.active ? gold : white, color: nav.active ? '#1a0e06' : textMuted, border: `1px solid ${nav.active ? gold : border}` }}>
               {nav.label}

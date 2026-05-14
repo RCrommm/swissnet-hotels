@@ -29,7 +29,7 @@ export default async function EventsPage({ params }: { params: Promise<{ slug: s
 
   const today = new Date().toISOString().split('T')[0]
 
-  const { data: events } = await supabase
+  const { data: eventsData } = await supabase
     .from('hotel_offers')
     .select('*')
     .eq('hotel_id', hotel.id)
@@ -46,8 +46,7 @@ export default async function EventsPage({ params }: { params: Promise<{ slug: s
     .eq('status', 'approved')
     .order('created_at')
 
-  if (!events || events.length === 0) notFound()
-
+  const events = eventsData || []
   const gold = '#C9A84C'
   const border = 'rgba(201,169,76,0.2)'
   const text = '#1a0e06'
@@ -60,7 +59,6 @@ export default async function EventsPage({ params }: { params: Promise<{ slug: s
   const trackingUrl = `/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIComponent(hotel.name)}&destination=${encodeURIComponent(hotel.direct_booking_url)}&medium=website&campaign=events_page`
 
   const faqs = (dbFaqs || []).map((f: any) => ({ q: f.question, a: f.answer }))
-
   const formatDate = (d: string) => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
 
   const schema = {
@@ -85,7 +83,7 @@ export default async function EventsPage({ params }: { params: Promise<{ slug: s
           { '@type': 'ListItem', position: 4, name: 'Events & Offers', item: pageUrl },
         ]
       },
-      ...(events || []).map((e: any) => ({
+      ...events.map((e: any) => ({
         '@type': e.start_date ? 'Event' : 'Offer',
         '@id': `${pageUrl}#event-${e.id}`,
         name: e.name,
@@ -98,11 +96,7 @@ export default async function EventsPage({ params }: { params: Promise<{ slug: s
           location: {
             '@type': 'Place',
             name: hotel.name,
-            address: {
-              '@type': 'PostalAddress',
-              addressLocality: hotel.location,
-              addressCountry: 'CH',
-            }
+            address: { '@type': 'PostalAddress', addressLocality: hotel.location, addressCountry: 'CH' }
           },
           organizer: { '@id': hotelId },
           offers: e.price_from ? {
@@ -158,7 +152,7 @@ export default async function EventsPage({ params }: { params: Promise<{ slug: s
             Part of <Link href={`/hotels/${hotelUrl}`} style={{ color: gold, textDecoration: 'none', fontWeight: 600 }}>{hotel.name}</Link>
           </p>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, margin: '0 0 2rem', fontWeight: 300 }}>
-            {events.length} active {events.length === 1 ? 'event' : 'events & offers'} · {hotel.location}, Switzerland
+            {events.length > 0 ? `${events.length} active ${events.length === 1 ? 'event' : 'events & offers'}` : 'No current events'} · {hotel.location}, Switzerland
           </p>
           <a href={trackingUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: gold, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.875rem 2rem', textDecoration: 'none', borderRadius: 2 }}>
             Enquire Now →
@@ -171,81 +165,91 @@ export default async function EventsPage({ params }: { params: Promise<{ slug: s
         {/* NAV */}
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '3rem', flexWrap: 'wrap' }}>
           {[
-            { label: 'Overview', href: `/hotels/${hotelUrl}` },
-            { label: 'Rooms', href: `/hotels/${hotelUrl}/rooms` },
-            { label: 'Dining', href: `/hotels/${hotelUrl}/dining` },
-            { label: 'Spa', href: `/hotels/${hotelUrl}/spa` },
-            { label: 'Experiences', href: `/hotels/${hotelUrl}/experiences` },
+            { label: 'Overview', href: `/hotels/${hotelUrl}`, active: false },
+            { label: 'Rooms', href: `/hotels/${hotelUrl}/rooms`, active: false },
+            { label: 'Dining', href: `/hotels/${hotelUrl}/dining`, active: false },
+            { label: 'Spa', href: `/hotels/${hotelUrl}/spa`, active: false },
+            { label: 'Experiences', href: `/hotels/${hotelUrl}/experiences`, active: false },
             { label: 'Events', href: `/hotels/${hotelUrl}/events`, active: true },
           ].map(nav => (
-            <Link key={nav.label} href={nav.href} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.5rem 1.25rem', textDecoration: 'none', borderRadius: 2, background: (nav as any).active ? gold : white, color: (nav as any).active ? '#1a0e06' : textMuted, border: `1px solid ${(nav as any).active ? gold : border}` }}>
+            <Link key={nav.label} href={nav.href} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.5rem 1.25rem', textDecoration: 'none', borderRadius: 2, background: nav.active ? gold : white, color: nav.active ? '#1a0e06' : textMuted, border: `1px solid ${nav.active ? gold : border}` }}>
               {nav.label}
             </Link>
           ))}
         </div>
 
         {/* EVENTS */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginBottom: '4rem' }}>
-          {events.map((event: any) => {
-            const hasImage = event.image_url
-            const bookingLink = event.cta_url || event.booking_url || trackingUrl
-            return (
-              <div key={event.id} style={{ background: white, border: `1px solid ${border}`, borderRadius: 8, overflow: 'hidden' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: hasImage ? '340px 1fr' : '1fr', minHeight: 200 }}>
-                  {hasImage && (
-                    <div style={{ overflow: 'hidden' }}>
-                      <img src={event.image_url} alt={`${event.name} at ${hotel.name}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </div>
-                  )}
-                  <div style={{ padding: '2rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-                          <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 400, color: text, margin: 0 }}>{event.name}</h2>
-                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.48rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#16a34a', background: '#16a34a12', padding: '2px 8px', borderRadius: 10 }}>Live</span>
+        {events.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginBottom: '4rem' }}>
+            {events.map((event: any) => {
+              const hasImage = event.image_url
+              const bookingLink = event.cta_url || event.booking_url || trackingUrl
+              return (
+                <div key={event.id} style={{ background: white, border: `1px solid ${border}`, borderRadius: 8, overflow: 'hidden' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: hasImage ? '340px 1fr' : '1fr', minHeight: 200 }}>
+                    {hasImage && (
+                      <div style={{ overflow: 'hidden' }}>
+                        <img src={event.image_url} alt={`${event.name} at ${hotel.name}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                    )}
+                    <div style={{ padding: '2rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                            <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 400, color: text, margin: 0 }}>{event.name}</h2>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.48rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#16a34a', background: '#16a34a12', padding: '2px 8px', borderRadius: 10 }}>Live</span>
+                          </div>
+                          {(event.start_date || event.end_date) && (
+                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: gold, margin: '0 0 0.75rem', fontWeight: 600 }}>
+                              {event.start_date && formatDate(event.start_date)}
+                              {event.start_date && event.end_date && ' — '}
+                              {event.end_date && formatDate(event.end_date)}
+                            </p>
+                          )}
                         </div>
-                        {(event.start_date || event.end_date) && (
-                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: gold, margin: '0 0 0.75rem', fontWeight: 600 }}>
-                            {event.start_date && formatDate(event.start_date)}
-                            {event.start_date && event.end_date && ' — '}
-                            {event.end_date && formatDate(event.end_date)}
-                          </p>
+                        {event.price_from && (
+                          <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1.5rem' }}>
+                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: textMuted, margin: '0 0 0.2rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>From</p>
+                            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', color: gold, margin: 0, lineHeight: 1 }}>
+                              {event.price_currency || 'CHF'} {Number(event.price_from).toLocaleString()}
+                            </p>
+                          </div>
                         )}
                       </div>
-                      {event.price_from && (
-                        <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1.5rem' }}>
-                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: textMuted, margin: '0 0 0.2rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>From</p>
-                          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', color: gold, margin: 0, lineHeight: 1 }}>
-                            {event.price_currency || 'CHF'} {Number(event.price_from).toLocaleString()}
-                          </p>
+                      {event.description && (
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, lineHeight: 1.8, margin: '0 0 1rem', fontWeight: 300 }}>{event.description}</p>
+                      )}
+                      {event.includes && event.includes.length > 0 && (
+                        <div style={{ marginBottom: '1.25rem' }}>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, color: text, margin: '0 0 0.5rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Includes</p>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                            {event.includes.map((item: string) => (
+                              <span key={item} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, background: bg, border: `1px solid ${border}`, padding: '3px 10px', borderRadius: 2 }}>{item}</span>
+                            ))}
+                          </div>
                         </div>
                       )}
+                      {event.conditions && (
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: textMuted, margin: '0 0 1.25rem', fontStyle: 'italic' }}>{event.conditions}</p>
+                      )}
+                      <a href={bookingLink} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: gold, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0.6rem 1.5rem', textDecoration: 'none', borderRadius: 2 }}>
+                        Book Now →
+                      </a>
                     </div>
-                    {event.description && (
-                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, lineHeight: 1.8, margin: '0 0 1rem', fontWeight: 300 }}>{event.description}</p>
-                    )}
-                    {event.includes && event.includes.length > 0 && (
-                      <div style={{ marginBottom: '1.25rem' }}>
-                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, color: text, margin: '0 0 0.5rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Includes</p>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                          {event.includes.map((item: string) => (
-                            <span key={item} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, background: bg, border: `1px solid ${border}`, padding: '3px 10px', borderRadius: 2 }}>{item}</span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {event.conditions && (
-                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: textMuted, margin: '0 0 1.25rem', fontStyle: 'italic' }}>{event.conditions}</p>
-                    )}
-                    <a href={bookingLink} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: gold, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0.6rem 1.5rem', textDecoration: 'none', borderRadius: 2 }}>
-                      Book Now →
-                    </a>
                   </div>
                 </div>
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+        ) : (
+          <div style={{ background: white, border: `1px solid ${border}`, borderRadius: 8, padding: '4rem', textAlign: 'center', marginBottom: '4rem' }}>
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 300, color: textMuted, margin: '0 0 1rem' }}>No current events or offers</p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, margin: '0 0 1.5rem' }}>Check back soon for upcoming events, seasonal packages and exclusive offers.</p>
+            <a href={trackingUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: gold, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.875rem 2rem', textDecoration: 'none', borderRadius: 2 }}>
+              Contact Hotel →
+            </a>
+          </div>
+        )}
 
         {/* FAQ */}
         {faqs.length > 0 && (
