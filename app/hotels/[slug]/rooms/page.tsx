@@ -55,6 +55,38 @@ const minRate = rates.length > 0 ? Math.min(...rates) : hotel.nightly_rate_chf |
   const hasLakeView = (roomTypes || []).some((r: any) => r.view?.toLowerCase().includes('lake'))
   const hasMountainView = (roomTypes || []).some((r: any) => r.view?.toLowerCase().includes('mountain') || r.view?.toLowerCase().includes('matterhorn') || r.view?.toLowerCase().includes('jungfrau') || r.view?.toLowerCase().includes('alps'))
 
+  const { data: dbFaqs } = await supabase
+    .from('hotel_faq_suggestions')
+    .select('question, answer')
+    .eq('hotel_id', hotel.id)
+    .eq('page_type', 'rooms')
+    .eq('status', 'approved')
+    .order('created_at')
+
+  const hardcodedFaqs = [
+    {
+      q: `What room types does ${hotel.name} offer?`,
+      a: `${hotel.name} in ${hotel.location}, Switzerland offers ${roomTypes?.length || 'multiple'} room categories${minRate ? `, with rates from CHF ${minRate.toLocaleString()} per night` : ''}.${suites.length > 0 ? ` The hotel features ${suites.length} suite categories.` : ''}`
+    },
+    {
+      q: `Does ${hotel.name} have suites?`,
+      a: suites.length > 0
+        ? `Yes. ${hotel.name} offers ${suites.length} suite categories including ${suites.slice(0, 3).map((s: any) => s.name).join(', ')}.`
+        : `Yes. ${hotel.name} in ${hotel.location}, Switzerland offers luxury accommodation. Contact the hotel directly for suite availability.`
+    },
+    {
+      q: `What is the most spacious room at ${hotel.name}?`,
+      a: (() => {
+        const largest = (roomTypes || []).filter((r: any) => r.size_sqm).sort((a: any, b: any) => b.size_sqm - a.size_sqm)[0]
+        return largest
+          ? `The most spacious accommodation at ${hotel.name} is the ${largest.name} at ${largest.size_sqm} m²${largest.view ? ` with ${largest.view}` : ''}.`
+          : `${hotel.name} in ${hotel.location}, Switzerland offers a range of luxury rooms and suites. Contact the hotel directly for recommendations.`
+      })()
+    },
+  ]
+
+  const faqs = (dbFaqs || []).map((f: any) => ({ q: f.question, a: f.answer }))
+
   const schema = {
     '@context': 'https://schema.org',
     '@graph': [
@@ -91,41 +123,7 @@ const minRate = rates.length > 0 ? Math.min(...rates) : hotel.nightly_rate_chf |
       ]
   }
 
-  // Fetch approved FAQs from DB for this page
-const { data: dbFaqs } = await supabase
-  .from('hotel_faq_suggestions')
-  .select('question, answer')
-  .eq('hotel_id', hotel.id)
-  .eq('page_type', 'rooms')
-  .eq('status', 'approved')
-  .order('created_at')
-
-const hardcodedFaqs = [
-  {
-    q: `What room types does ${hotel.name} offer?`,
-    a: `${hotel.name} in ${hotel.location}, Switzerland offers ${roomTypes?.length || 'multiple'} room categories${minRate ? `, with rates from CHF ${minRate.toLocaleString()} per night` : ''}.${suites.length > 0 ? ` The hotel features ${suites.length} suite categories.` : ''}`
-  },
-  {
-    q: `Does ${hotel.name} have suites?`,
-    a: suites.length > 0
-      ? `Yes. ${hotel.name} offers ${suites.length} suite categories including ${suites.slice(0, 3).map((s: any) => s.name).join(', ')}.`
-      : `Yes. ${hotel.name} in ${hotel.location}, Switzerland offers luxury accommodation. Contact the hotel directly for suite availability.`
-  },
-  {
-    q: `What is the most spacious room at ${hotel.name}?`,
-    a: (() => {
-      const largest = (roomTypes || []).filter((r: any) => r.size_sqm).sort((a: any, b: any) => b.size_sqm - a.size_sqm)[0]
-      return largest
-        ? `The most spacious accommodation at ${hotel.name} is the ${largest.name} at ${largest.size_sqm} m²${largest.view ? ` with ${largest.view}` : ''}.`
-        : `${hotel.name} in ${hotel.location}, Switzerland offers a range of luxury rooms and suites. Contact the hotel directly for recommendations.`
-    })()
-  },
-]
-
-const faqs = [
-  ...hardcodedFaqs,
-  ...(dbFaqs || []).map((f: any) => ({ q: f.question, a: f.answer })),
-]
+  
 
   return (
     <div style={{ background: bg, minHeight: '100vh' }}>

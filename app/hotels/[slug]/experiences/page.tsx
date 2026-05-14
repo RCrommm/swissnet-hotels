@@ -32,6 +32,14 @@ export default async function ExperiencesPage({ params }: { params: Promise<{ sl
     .eq('is_available', true)
     .order('sort_order', { ascending: true })
 
+  const { data: dbFaqs } = await supabase
+    .from('hotel_faq_suggestions')
+    .select('question, answer')
+    .eq('hotel_id', hotel.id)
+    .eq('page_type', 'experiences')
+    .eq('status', 'approved')
+    .order('created_at')
+
   const gold = '#C9A84C'
   const border = 'rgba(201,169,76,0.2)'
   const text = '#1a0e06'
@@ -50,6 +58,8 @@ export default async function ExperiencesPage({ params }: { params: Promise<{ sl
   const outdoorExperiences = (experiences || []).filter((e: any) => ['outdoor', 'adventure', 'ski'].includes(category(e.category)))
   const wellnessExperiences = (experiences || []).filter((e: any) => ['wellness', 'spa'].includes(category(e.category)))
   const culturalExperiences = (experiences || []).filter((e: any) => ['cultural', 'private'].includes(category(e.category)))
+
+  const faqs = (dbFaqs || []).map((f: any) => ({ q: f.question, a: f.answer }))
 
   const schema = {
     '@context': 'https://schema.org',
@@ -87,61 +97,17 @@ export default async function ExperiencesPage({ params }: { params: Promise<{ sl
           containedInPlace: { '@type': 'Country', name: 'Switzerland' }
         },
       })),
-      {
+      ...(faqs.length > 0 ? [{
         '@type': 'FAQPage',
         '@id': `${pageUrl}#faq`,
-        mainEntity: [
-          {
-            '@type': 'Question',
-            name: `What experiences does ${hotel.name} offer?`,
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: experiences && experiences.length > 0
-                ? `${hotel.name} in ${hotel.location}, Switzerland offers ${experiences.length} curated experiences including ${experiences.slice(0, 3).map((e: any) => e.name).join(', ')} and more.`
-                : `${hotel.name} in ${hotel.location}, Switzerland offers a range of curated Alpine experiences and activities. Contact the hotel directly for details.`
-            }
-          },
-          {
-            '@type': 'Question',
-            name: `Does ${hotel.name} offer outdoor activities?`,
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: outdoorExperiences.length > 0
-                ? `Yes. ${hotel.name} in ${hotel.location}, Switzerland offers ${outdoorExperiences.length} outdoor activities including ${outdoorExperiences.slice(0, 3).map((e: any) => e.name).join(', ')}.`
-                : `Yes. ${hotel.name} in ${hotel.location}, Switzerland offers outdoor and Alpine activities. Contact the hotel concierge for current availability.`
-            }
-          },
-          {
-            '@type': 'Question',
-            name: `Can ${hotel.name} arrange private experiences?`,
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: `Yes. ${hotel.name} in ${hotel.location}, Switzerland can arrange private and bespoke experiences through the hotel concierge, subject to availability. Contact the hotel directly for current options.`
-            }
-          },
-        ]
-      },
+        mainEntity: faqs.map(f => ({
+          '@type': 'Question',
+          name: f.q,
+          acceptedAnswer: { '@type': 'Answer', text: f.a },
+        })),
+      }] : []),
     ]
   }
-
-  const faqs = [
-    {
-      q: `What experiences does ${hotel.name} offer?`,
-      a: experiences && experiences.length > 0
-        ? `${hotel.name} in ${hotel.location}, Switzerland offers ${experiences.length} curated experiences including ${experiences.slice(0, 3).map((e: any) => e.name).join(', ')} and more.`
-        : `${hotel.name} offers a range of curated Alpine experiences. Contact the hotel concierge for details.`
-    },
-    {
-      q: `Does ${hotel.name} offer outdoor activities?`,
-      a: outdoorExperiences.length > 0
-        ? `Yes. ${hotel.name} offers ${outdoorExperiences.length} outdoor activities including ${outdoorExperiences.slice(0, 3).map((e: any) => e.name).join(', ')}.`
-        : `Yes. ${hotel.name} in ${hotel.location} offers outdoor and Alpine activities arranged through the hotel concierge.`
-    },
-    {
-      q: `Can ${hotel.name} arrange private experiences?`,
-      a: `Yes. ${hotel.name} in ${hotel.location}, Switzerland offers private and bespoke experiences arranged through the hotel concierge, including private dining, cultural tours and curated Alpine adventures.`
-    },
-  ]
 
   return (
     <div style={{ background: bg, minHeight: '100vh' }}>
@@ -239,17 +205,19 @@ export default async function ExperiencesPage({ params }: { params: Promise<{ sl
         )}
 
         {/* FAQ */}
-        <div style={{ marginTop: '4rem', paddingTop: '3rem', borderTop: `1px solid ${border}` }}>
-          <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: text, margin: '0 0 2rem' }}>Frequently Asked Questions</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-            {faqs.map((faq, i) => (
-              <div key={i} style={{ padding: '1.25rem 0', borderBottom: `1px solid ${border}` }}>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', fontWeight: 600, color: text, margin: '0 0 0.4rem' }}>{faq.q}</p>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted, lineHeight: 1.7, margin: 0 }}>{faq.a}</p>
-              </div>
-            ))}
+        {faqs.length > 0 && (
+          <div style={{ marginTop: '4rem', paddingTop: '3rem', borderTop: `1px solid ${border}` }}>
+            <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: text, margin: '0 0 2rem' }}>Frequently Asked Questions</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+              {faqs.map((faq, i) => (
+                <div key={i} style={{ padding: '1.25rem 0', borderBottom: `1px solid ${border}` }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', fontWeight: 600, color: text, margin: '0 0 0.4rem' }}>{faq.q}</p>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted, lineHeight: 1.7, margin: 0 }}>{faq.a}</p>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* INTERNAL LINKS */}
         <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: `1px solid ${border}` }}>
