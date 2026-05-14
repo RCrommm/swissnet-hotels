@@ -541,9 +541,7 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
               <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: tab === item.id ? 600 : 400, color: tab === item.id ? TEXT : TEXT_MUTED }}>{item.label}</span>
             </button>
           ))}
-          <a href="/dashboard/optimise" style={{ width: '100%', display: 'flex', alignItems: 'center', padding: '0.65rem 1.5rem', background: GOLD_LIGHT, border: 'none', borderLeft: `3px solid ${GOLD}`, textDecoration: 'none' }}>
-  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 600, color: TEXT }}>✦ AI Optimisation</span>
-</a>
+          
         </div>
         <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid ' + BORDER }}>
           <div style={{ background: GOLD_LIGHT, borderRadius: 6, padding: '0.75rem' }}>
