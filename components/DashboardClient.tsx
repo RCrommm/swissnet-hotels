@@ -71,7 +71,8 @@ function KPICard({ label, value, sub, color, spark }: { label: string; value: st
   )
 }
 function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotelName: string, hotelSlug: string }) {
-  const [section, setSection] = useState<'overview' | 'rooms' | 'dining' | 'spa' | 'experiences' | 'offers' | 'events' | 'experiences-edit'>('offers')
+  const [mainTab, setMainTab] = useState<'events' | 'rooms' | 'dining' | 'spa' | 'experiences'>('events')
+  const [subTab, setSubTab] = useState<'content' | 'faqs'>('content')
   const [faqs, setFaqs] = useState<Record<string, {q: string, a: string}[]>>({
     overview: [], rooms: [], dining: [], spa: [], experiences: [], events: []
   })
@@ -79,6 +80,9 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
   const [offerForm, setOfferForm] = useState<any>(null)
   const [experiences, setExperiences] = useState<any[]>([])
   const [expForm, setExpForm] = useState<any>(null)
+  const [spaContent, setSpaContent] = useState<any>(null)
+  const [spaForm, setSpaForm] = useState<any>(null)
+  const [overviewFaqs, setOverviewFaqs] = useState<{q: string, a: string}[]>([])
   const [loaded, setLoaded] = useState(false)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
@@ -91,7 +95,6 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
       const { createClient } = await import('@supabase/supabase-js')
       const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
 
-      // Load temporary events/offers only
       const { data: offersData } = await sb.from('hotel_offers')
         .select('*').eq('hotel_id', hotelId).eq('is_available', true)
         .eq('offer_type', 'temporary').order('sort_order')
@@ -101,27 +104,22 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
         .select('*').eq('hotel_id', hotelId).eq('is_available', true).order('sort_order')
       setExperiences(expData || [])
 
-      // Load overview FAQs from hotel_content
+      const { data: spaData } = await sb.from('hotel_spa')
+        .select('*').eq('hotel_id', hotelId).eq('is_available', true).single()
+      setSpaContent(spaData || null)
+
       const { data: contentData } = await sb.from('hotel_content')
         .select('faqs').eq('hotel_id', hotelId).single()
-      const overviewFaqs = (contentData?.faqs || []).map((f: any) => ({ q: f.question, a: f.answer }))
+      const ovFaqs = (contentData?.faqs || []).map((f: any) => ({ q: f.question, a: f.answer }))
+      setOverviewFaqs(ovFaqs)
 
-      // Load page FAQs from hotel_faq_suggestions
       const { data: faqData } = await sb.from('hotel_faq_suggestions')
         .select('*').eq('hotel_id', hotelId).order('created_at')
-
       const grouped: Record<string, {q: string, a: string}[]> = {
-        overview: overviewFaqs,
-        rooms: [],
-        dining: [],
-        spa: [],
-        experiences: [],
-        events: [],
+        overview: ovFaqs, rooms: [], dining: [], spa: [], experiences: [], events: []
       }
       for (const f of faqData || []) {
-        if (grouped[f.page_type] !== undefined) {
-          grouped[f.page_type].push({ q: f.question, a: f.answer })
-        }
+        if (grouped[f.page_type] !== undefined) grouped[f.page_type].push({ q: f.question, a: f.answer })
       }
       setFaqs(grouped)
       setLoaded(true)
@@ -142,27 +140,20 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
     const { createClient } = await import('@supabase/supabase-js')
     const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
     const validFaqs = faqs[page].filter(f => f.q.trim() && f.a.trim())
-
     if (page === 'overview') {
-      // Overview FAQs save directly to hotel_content
-      const faqJson = validFaqs.map(f => ({ question: f.q, answer: f.a }))
-      await sb.from('hotel_content').update({ faqs: faqJson }).eq('hotel_id', hotelId)
-      await notify('Overview FAQs updated', `${validFaqs.length} FAQs saved`)
-      setMsg('Overview FAQs updated and live on your page.')
+      await sb.from('hotel_content').update({ faqs: validFaqs.map(f => ({ question: f.q, answer: f.a })) }).eq('hotel_id', hotelId)
+      await notify('Overview FAQs updated', `${validFaqs.length} FAQs`)
+      setMsg('Overview FAQs updated and live.')
     } else {
-      // Page FAQs go to hotel_faq_suggestions for review
       await sb.from('hotel_faq_suggestions').delete().eq('hotel_id', hotelId).eq('page_type', page)
-    const toInsert = faqs[page].filter(f => f.q.trim() && f.a.trim()).map(f => ({
-      hotel_id: hotelId,
-      hotel_name: hotelName,
-      page_type: page,
-      question: f.q,
-      answer: f.a,
-      status: 'approved',
-    }))
-    if (toInsert.length > 0) await sb.from('hotel_faq_suggestions').insert(toInsert)
-    await notify('Page FAQs updated', `${page}: ${toInsert.length} FAQs saved`)
-    setMsg('FAQs saved and live on your page.')
+      if (validFaqs.length > 0) {
+        await sb.from('hotel_faq_suggestions').insert(validFaqs.map(f => ({
+          hotel_id: hotelId, hotel_name: hotelName, page_type: page,
+          question: f.q, answer: f.a, status: 'approved',
+        })))
+      }
+      await notify('FAQs updated', `${page}: ${validFaqs.length} FAQs`)
+      setMsg('FAQs saved and live.')
     }
     setSaving(false)
     setTimeout(() => setMsg(''), 4000)
@@ -174,15 +165,9 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
     const { createClient } = await import('@supabase/supabase-js')
     const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
     const payload = {
-      hotel_id: hotelId,
-      name: offerForm.name,
-      description: offerForm.description,
-      start_date: offerForm.start_date || null,
-      end_date: offerForm.end_date || null,
-      is_available: true,
-      active: true,
-      offer_type: 'temporary',
-      sort_order: offers.length,
+      hotel_id: hotelId, name: offerForm.name, description: offerForm.description,
+      start_date: offerForm.start_date || null, end_date: offerForm.end_date || null,
+      is_available: true, active: true, offer_type: 'temporary', sort_order: offers.length,
     }
     if (offerForm.id) {
       await sb.from('hotel_offers').update(payload).eq('id', offerForm.id)
@@ -195,7 +180,7 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
     }
     setOfferForm(null)
     setSaving(false)
-    setMsg('Event saved and live on your page.')
+    setMsg('Event saved.')
     setTimeout(() => setMsg(''), 3000)
   }
 
@@ -209,20 +194,35 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
     setTimeout(() => setMsg(''), 3000)
   }
 
+  const saveSpa = async () => {
+    if (!spaForm) return
+    setSaving(true)
+    const { createClient } = await import('@supabase/supabase-js')
+    const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+    const payload = {
+      description: spaForm.description || null,
+      treatments: spaForm.treatments || null,
+      wellness_philosophy: spaForm.wellness_philosophy || null,
+    }
+    await sb.from('hotel_spa').update(payload).eq('hotel_id', hotelId)
+    setSpaContent((prev: any) => ({ ...prev, ...payload }))
+    setSpaForm(null)
+    await notify('Spa content updated', spaContent?.name || 'Spa')
+    setMsg('Spa content updated and live in schema.')
+    setSaving(false)
+    setTimeout(() => setMsg(''), 4000)
+  }
+
   const saveExperience = async () => {
     if (!expForm?.name?.trim() || !expForm?.description?.trim()) return
     setSaving(true)
     const { createClient } = await import('@supabase/supabase-js')
     const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
     const payload = {
-      hotel_id: hotelId,
-      name: expForm.name,
-      description: expForm.description,
-      category: expForm.category || null,
-      duration: expForm.duration || null,
+      hotel_id: hotelId, name: expForm.name, description: expForm.description,
+      category: expForm.category || null, duration: expForm.duration || null,
       price_from: expForm.price_from ? Number(expForm.price_from) : null,
-      is_available: true,
-      sort_order: expForm.sort_order ?? experiences.length,
+      is_available: true, sort_order: expForm.sort_order ?? experiences.length,
     }
     if (expForm.id) {
       await sb.from('hotel_experiences').update(payload).eq('id', expForm.id)
@@ -235,7 +235,7 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
     }
     setExpForm(null)
     setSaving(false)
-    setMsg('Experience saved.')
+    setMsg('Experience saved and live.')
     setTimeout(() => setMsg(''), 3000)
   }
 
@@ -273,15 +273,12 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
 
   const activeOffers = offers.filter(o => !o.end_date || o.end_date >= today)
 
-  const tabs = [
-    { key: 'offers', label: `Events & Offers (${activeOffers.length}/3)` },
-    { key: 'experiences-edit', label: `Experiences (${experiences.length})` },
-    { key: 'overview', label: `Overview FAQs (${(faqs.overview || []).length})` },
-    { key: 'rooms', label: `Rooms (${(faqs.rooms || []).length}/6)` },
-    { key: 'dining', label: `Dining (${(faqs.dining || []).length}/6)` },
-    { key: 'spa', label: `Spa (${(faqs.spa || []).length}/6)` },
-    { key: 'experiences', label: `Experiences (${(faqs.experiences || []).length}/6)` },
-    { key: 'events', label: `Events FAQs (${(faqs.events || []).length}/6)` },
+  const mainTabs = [
+    { key: 'events', label: `Events & Offers`, count: `${activeOffers.length}/3` },
+    { key: 'rooms', label: 'Rooms', count: `${(faqs.rooms || []).length}/6` },
+    { key: 'dining', label: 'Dining', count: `${(faqs.dining || []).length}/6` },
+    { key: 'spa', label: 'Spa', count: null },
+    { key: 'experiences', label: 'Experiences', count: `${experiences.length}` },
   ]
 
   const inp: any = {
@@ -290,41 +287,58 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
     padding: '0.55rem 0.875rem', background: BG, outline: 'none', boxSizing: 'border-box',
   }
 
-  const isFaqSection = section !== 'offers' && section !== 'experiences-edit'
-  const limit = section === 'overview' ? 4 : 6
-  
-  const currentFaqs = faqs[section] || []
+  const faqPageKey = mainTab === 'events' ? 'events' : mainTab
 
   return (
     <div>
-      {/* Tab bar */}
-      <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.75rem', flexWrap: 'wrap', borderBottom: '1px solid ' + BORDER, paddingBottom: '0' }}>
-        {tabs.map(t => (
-          <button key={t.key} onClick={() => setSection(t.key as any)} style={{
-            fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: section === t.key ? 700 : 400,
-            padding: '0.6rem 1rem', cursor: 'pointer', background: 'transparent', border: 'none',
-            borderBottom: section === t.key ? '2px solid ' + GOLD : '2px solid transparent',
-            color: section === t.key ? TEXT : TEXT_MUTED,
-          }}>{t.label}</button>
+      {/* Main tabs */}
+      <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid ' + BORDER, marginBottom: '1.5rem' }}>
+        {mainTabs.map(t => (
+          <button key={t.key} onClick={() => { setMainTab(t.key as any); setSubTab('content') }} style={{
+            fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: mainTab === t.key ? 700 : 400,
+            padding: '0.7rem 1.125rem', cursor: 'pointer', background: 'transparent', border: 'none',
+            borderBottom: mainTab === t.key ? '2px solid ' + GOLD : '2px solid transparent',
+            color: mainTab === t.key ? TEXT : TEXT_MUTED, whiteSpace: 'nowrap',
+          }}>
+            {t.label}{t.count ? <span style={{ marginLeft: '0.3rem', fontSize: '0.55rem', color: TEXT_MUTED }}>({t.count})</span> : null}
+          </button>
         ))}
       </div>
+
+      {/* Sub tabs — Content / FAQs (not shown for events which has its own structure) */}
+      {mainTab !== 'events' && (
+        <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '1.5rem' }}>
+          {[
+            { key: 'content', label: 'Content' },
+            { key: 'faqs', label: `FAQs (${(faqs[faqPageKey] || []).length}/6)` },
+          ].map(s => (
+            <button key={s.key} onClick={() => setSubTab(s.key as any)} style={{
+              fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600,
+              padding: '0.4rem 1rem', borderRadius: 4, cursor: 'pointer',
+              background: subTab === s.key ? TEXT : WHITE,
+              color: subTab === s.key ? WHITE : TEXT_MUTED,
+              border: '1px solid ' + (subTab === s.key ? TEXT : BORDER),
+            }}>{s.label}</button>
+          ))}
+        </div>
+      )}
 
       {msg && (
         <div style={{ background: GREEN + '12', border: '1px solid ' + GREEN + '30', borderRadius: 6, padding: '0.75rem 1rem', marginBottom: '1.25rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: GREEN }}>{msg}</div>
       )}
 
-      {/* ── OFFERS ── */}
-      {section === 'offers' && (
+      {/* ── EVENTS TAB ── */}
+      {mainTab === 'events' && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
             <div>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Events & Time-Limited Offers</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>e.g. Watches & Wonders, Christmas Gala, Ski Weekend Package · Appear in AI search · Maximum 3 active</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>e.g. Watches & Wonders, Christmas Gala, Ski Weekend · Appear on /events page · Max 3 active</p>
             </div>
             {activeOffers.length < 3 && !offerForm && (
               <button onClick={() => setOfferForm({ name: '', description: '', start_date: today, end_date: '' })}
-                style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer', letterSpacing: '0.08em', textTransform: 'uppercase', flexShrink: 0, marginLeft: '1rem' }}>
-                + Add
+                style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer', flexShrink: 0, marginLeft: '1rem' }}>
+                + Add Event
               </button>
             )}
           </div>
@@ -335,11 +349,11 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
               <div style={{ display: 'grid', gap: '0.75rem' }}>
                 <div>
                   <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Title *</label>
-                  <input value={offerForm.name} onChange={e => setOfferForm((p: any) => ({ ...p, name: e.target.value }))} placeholder="e.g. Watches & Wonders Geneva · Christmas Eve Gala Dinner · Alpine Ski Package" style={inp} />
+                  <input value={offerForm.name} onChange={e => setOfferForm((p: any) => ({ ...p, name: e.target.value }))} placeholder="e.g. Watches & Wonders Geneva · Christmas Gala Dinner" style={inp} />
                 </div>
                 <div>
                   <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Description *</label>
-                  <textarea value={offerForm.description} onChange={e => setOfferForm((p: any) => ({ ...p, description: e.target.value }))} placeholder="Describe the event or offer with specific details — dates, inclusions, pricing if relevant..." rows={3} style={{ ...inp, resize: 'vertical' }} />
+                  <textarea value={offerForm.description} onChange={e => setOfferForm((p: any) => ({ ...p, description: e.target.value }))} placeholder="Describe the event with specific details..." rows={3} style={{ ...inp, resize: 'vertical' }} />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                   <div>
@@ -362,8 +376,8 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
             {offers.length === 0 && !offerForm && (
               <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '2.5rem', textAlign: 'center' }}>
-                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>No events or offers yet</p>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0 }}>Add a time-limited event or special offer — it will appear on your hotel page and in AI search results</p>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>No events yet</p>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0 }}>Add a time-limited event or special offer — it will appear on your /events page and in AI search</p>
               </div>
             )}
             {offers.map((offer: any) => {
@@ -382,7 +396,7 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
                       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: '0 0 0.3rem', lineHeight: 1.5 }}>{offer.description}</p>
                       {(offer.start_date || offer.end_date) && (
                         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: 0 }}>
-                          {offer.start_date && offer.start_date}{offer.start_date && offer.end_date && ' → '}{offer.end_date && offer.end_date}
+                          {offer.start_date}{offer.start_date && offer.end_date && ' → '}{offer.end_date}
                         </p>
                       )}
                     </div>
@@ -398,29 +412,102 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
         </div>
       )}
 
-      {/* ── EXPERIENCES ── */}
-      {section === 'experiences-edit' && (
+      {/* ── ROOMS/DINING CONTENT ── */}
+      {(mainTab === 'rooms' || mainTab === 'dining') && subTab === 'content' && (
+        <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem' }}>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', color: TEXT, margin: '0 0 0.5rem' }}>{mainTab === 'rooms' ? 'Rooms & Suites' : 'Dining & Restaurants'}</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.7 }}>
+            {mainTab === 'rooms'
+              ? 'Room descriptions and data are managed by SwissNet to maintain schema precision. Use the FAQs tab to add targeted content for specific search queries.'
+              : 'Restaurant descriptions and Michelin data are managed by SwissNet. Use the FAQs tab to add targeted dining content for specific search queries.'}
+          </p>
+          <div style={{ marginTop: '1rem', background: BG, borderRadius: 6, padding: '0.75rem 1rem' }}>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>To update room rates, descriptions or restaurant data, contact <a href="mailto:contact@swissnethotels.com" style={{ color: GOLD }}>contact@swissnethotels.com</a></p>
+          </div>
+        </div>
+      )}
+
+      {/* ── SPA CONTENT ── */}
+      {mainTab === 'spa' && subTab === 'content' && (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+            <div>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Spa & Wellness</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Edit your spa description and treatments · Changes update live in schema</p>
+            </div>
+            {!spaForm && spaContent && (
+              <button onClick={() => setSpaForm({ description: spaContent.description || '', treatments: spaContent.treatments || '', wellness_philosophy: spaContent.wellness_philosophy || '' })}
+                style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer', flexShrink: 0, marginLeft: '1rem' }}>
+                Edit
+              </button>
+            )}
+          </div>
+
+          {spaForm ? (
+            <div style={{ background: WHITE, border: '1px solid ' + GOLD + '40', borderRadius: 10, padding: '1.25rem 1.5rem' }}>
+              <div style={{ display: 'grid', gap: '0.75rem' }}>
+                <div>
+                  <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Description</label>
+                  <textarea value={spaForm.description} onChange={e => setSpaForm((p: any) => ({ ...p, description: e.target.value }))} rows={4} style={{ ...inp, resize: 'vertical' }} />
+                </div>
+                <div>
+                  <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Treatments</label>
+                  <textarea value={spaForm.treatments} onChange={e => setSpaForm((p: any) => ({ ...p, treatments: e.target.value }))} placeholder="e.g. Deep tissue massage, Hot stone therapy, Alpine herb wrap..." rows={3} style={{ ...inp, resize: 'vertical' }} />
+                </div>
+                <div>
+                  <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Wellness Philosophy</label>
+                  <textarea value={spaForm.wellness_philosophy} onChange={e => setSpaForm((p: any) => ({ ...p, wellness_philosophy: e.target.value }))} placeholder="Your spa's approach to wellness..." rows={2} style={{ ...inp, resize: 'vertical' }} />
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+                <button onClick={saveSpa} disabled={saving} style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>{saving ? 'Saving...' : 'Save & Publish'}</button>
+                <button onClick={() => setSpaForm(null)} style={{ background: 'transparent', color: TEXT_MUTED, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', padding: '0.55rem 1rem', border: '1px solid ' + BORDER, borderRadius: 4, cursor: 'pointer' }}>Cancel</button>
+              </div>
+            </div>
+          ) : spaContent ? (
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1.25rem 1.5rem' }}>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: TEXT, margin: '0 0 0.5rem' }}>{spaContent.name}</p>
+              <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+                {spaContent.size_sqm && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>{spaContent.size_sqm} m²</span>}
+                {spaContent.pool && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>Pool</span>}
+                {spaContent.sauna && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>Sauna</span>}
+                {spaContent.hammam && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>Hammam</span>}
+              </div>
+              {spaContent.description && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: '0 0 0.5rem', lineHeight: 1.6 }}>{spaContent.description}</p>}
+              {spaContent.treatments && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: '0 0 0.25rem' }}><strong style={{ color: TEXT }}>Treatments:</strong> {spaContent.treatments}</p>}
+              {spaContent.wellness_philosophy && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0, fontStyle: 'italic' }}>{spaContent.wellness_philosophy}</p>}
+            </div>
+          ) : (
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '2rem', textAlign: 'center' }}>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: 0 }}>No spa data found. Contact SwissNet to add your spa.</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── EXPERIENCES CONTENT ── */}
+      {mainTab === 'experiences' && subTab === 'content' && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
             <div>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Experiences & Activities</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Permanent curated experiences shown on your Experiences page · Edit or add new ones</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Permanent curated experiences on your /experiences page · Changes live immediately</p>
             </div>
             {!expForm && (
               <button onClick={() => setExpForm({ name: '', description: '', category: '', duration: '', price_from: '' })}
-                style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer', letterSpacing: '0.08em', textTransform: 'uppercase', flexShrink: 0, marginLeft: '1rem' }}>
+                style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer', flexShrink: 0, marginLeft: '1rem' }}>
                 + Add
               </button>
             )}
           </div>
 
           {expForm && (
-            <div style={{ background: WHITE, border: `1px solid ${GOLD}40`, borderRadius: 10, padding: '1.25rem 1.5rem', marginBottom: '1.25rem' }}>
+            <div style={{ background: WHITE, border: '1px solid ' + GOLD + '40', borderRadius: 10, padding: '1.25rem 1.5rem', marginBottom: '1.25rem' }}>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', color: TEXT, margin: '0 0 1rem' }}>{expForm.id ? 'Edit Experience' : 'New Experience'}</p>
               <div style={{ display: 'grid', gap: '0.75rem' }}>
                 <div>
                   <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Title *</label>
-                  <input value={expForm.name} onChange={e => setExpForm((p: any) => ({ ...p, name: e.target.value }))} placeholder="e.g. Private Lake Geneva Cruise · Helicopter Alps Tour" style={inp} />
+                  <input value={expForm.name} onChange={e => setExpForm((p: any) => ({ ...p, name: e.target.value }))} placeholder="e.g. Private Lake Geneva Cruise" style={inp} />
                 </div>
                 <div>
                   <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Description *</label>
@@ -429,7 +516,7 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
                   <div>
                     <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Category</label>
-                    <input value={expForm.category} onChange={e => setExpForm((p: any) => ({ ...p, category: e.target.value }))} placeholder="e.g. Outdoor, Wellness, Culture" style={inp} />
+                    <input value={expForm.category} onChange={e => setExpForm((p: any) => ({ ...p, category: e.target.value }))} placeholder="e.g. Outdoor, Culture" style={inp} />
                   </div>
                   <div>
                     <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Duration</label>
@@ -437,26 +524,25 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
                   </div>
                   <div>
                     <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Price from (CHF)</label>
-                    <input type="number" value={expForm.price_from} onChange={e => setExpForm((p: any) => ({ ...p, price_from: e.target.value }))} placeholder="e.g. 450" style={inp} />
+                    <input type="number" value={expForm.price_from} onChange={e => setExpForm((p: any) => ({ ...p, price_from: e.target.value }))} placeholder="450" style={inp} />
                   </div>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
                 <button onClick={saveExperience} disabled={saving} style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>{saving ? 'Saving...' : 'Save'}</button>
-                <button onClick={() => setExpForm(null)} style={{ background: 'transparent', color: TEXT_MUTED, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', padding: '0.55rem 1rem', border: `1px solid ${BORDER}`, borderRadius: 4, cursor: 'pointer' }}>Cancel</button>
+                <button onClick={() => setExpForm(null)} style={{ background: 'transparent', color: TEXT_MUTED, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', padding: '0.55rem 1rem', border: '1px solid ' + BORDER, borderRadius: 4, cursor: 'pointer' }}>Cancel</button>
               </div>
             </div>
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
             {experiences.length === 0 && !expForm && (
-              <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 8, padding: '2.5rem', textAlign: 'center' }}>
+              <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '2.5rem', textAlign: 'center' }}>
                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>No experiences yet</p>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0 }}>Add curated experiences that appear permanently on your Experiences page</p>
               </div>
             )}
             {experiences.map((exp: any) => (
-              <div key={exp.id} style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 8, padding: '1rem 1.25rem' }}>
+              <div key={exp.id} style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1rem 1.25rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
@@ -470,8 +556,8 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '0.4rem', marginLeft: '1rem', flexShrink: 0 }}>
-                    <button onClick={() => setExpForm({ ...exp })} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, background: BG, border: `1px solid ${BORDER}`, padding: '0.28rem 0.65rem', borderRadius: 4, cursor: 'pointer' }}>Edit</button>
-                    <button onClick={() => removeExperience(exp.id, exp.name)} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, background: BG, border: `1px solid ${BORDER}`, padding: '0.28rem 0.65rem', borderRadius: 4, cursor: 'pointer' }}>Remove</button>
+                    <button onClick={() => setExpForm({ ...exp })} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, padding: '0.28rem 0.65rem', borderRadius: 4, cursor: 'pointer' }}>Edit</button>
+                    <button onClick={() => removeExperience(exp.id, exp.name)} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, padding: '0.28rem 0.65rem', borderRadius: 4, cursor: 'pointer' }}>Remove</button>
                   </div>
                 </div>
               </div>
@@ -479,68 +565,56 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
           </div>
         </div>
       )}
+
       {/* ── FAQ SECTIONS ── */}
-      {isFaqSection && (
+      {mainTab !== 'events' && subTab === 'faqs' && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
             <div>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>
-                {tabs.find(t => t.key === section)?.label?.split(' (')[0]} FAQs
+                {mainTab.charAt(0).toUpperCase() + mainTab.slice(1)} FAQs
               </p>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>
-                {section === 'overview'
-                  ? 'Changes go live immediately on your hotel page'
-                  : 'Changes go live immediately · Max 6 per page'}
+                Changes go live immediately · Max 6 per page · Appear in FAQPage schema
               </p>
             </div>
-            {currentFaqs.length < limit && (
-              <button onClick={() => addFaq(section)} style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer', letterSpacing: '0.08em', textTransform: 'uppercase', flexShrink: 0, marginLeft: '1rem' }}>
+            {(faqs[faqPageKey] || []).length < 6 && (
+              <button onClick={() => addFaq(faqPageKey)} style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer', flexShrink: 0, marginLeft: '1rem' }}>
                 + Add FAQ
               </button>
             )}
           </div>
 
-          {currentFaqs.length === 0 && (
+          {(faqs[faqPageKey] || []).length === 0 && (
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '2.5rem', textAlign: 'center', marginBottom: '1rem' }}>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>No FAQs yet for this page</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0 }}>Add FAQs to help AI systems answer guest questions about this section</p>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>No FAQs yet</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0 }}>Add FAQs to help AI systems answer guest questions</p>
             </div>
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
-            {currentFaqs.map((faq, idx) => (
+            {(faqs[faqPageKey] || []).map((faq, idx) => (
               <div key={idx} style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1rem 1.25rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
                   <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.1em', textTransform: 'uppercase' }}>FAQ {idx + 1}</span>
-                  <button onClick={() => removeFaq(section, idx)} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: RED, background: 'transparent', border: 'none', cursor: 'pointer' }}>Remove</button>
+                  <button onClick={() => removeFaq(faqPageKey, idx)} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: RED, background: 'transparent', border: 'none', cursor: 'pointer' }}>Remove</button>
                 </div>
-                <input
-                  value={faq.q}
-                  onChange={e => updateFaq(section, idx, 'q', e.target.value)}
-                  placeholder="Question — e.g. Which suites have lake views?"
-                  style={{ ...inp, marginBottom: '0.5rem' }}
-                />
-                <textarea
-                  value={faq.a}
-                  onChange={e => updateFaq(section, idx, 'a', e.target.value)}
-                  placeholder="Answer — be specific and factual..."
-                  rows={3}
-                  style={{ ...inp, resize: 'vertical' }}
-                />
+                <input value={faq.q} onChange={e => updateFaq(faqPageKey, idx, 'q', e.target.value)} placeholder="Question" style={{ ...inp, marginBottom: '0.5rem' }} />
+                <textarea value={faq.a} onChange={e => updateFaq(faqPageKey, idx, 'a', e.target.value)} placeholder="Answer — be specific and factual..." rows={3} style={{ ...inp, resize: 'vertical' }} />
               </div>
             ))}
           </div>
 
-          {currentFaqs.length > 0 && (
-            <button onClick={() => saveFaqs(section)} disabled={saving} style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.5rem', border: 'none', borderRadius: 4, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
+          {(faqs[faqPageKey] || []).length > 0 && (
+            <button onClick={() => saveFaqs(faqPageKey)} disabled={saving} style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.5rem', border: 'none', borderRadius: 4, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
               {saving ? 'Saving...' : 'Save & Publish'}
             </button>
           )}
 
           <div style={{ background: BG, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.75rem 1rem', marginTop: '1rem' }}>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.7 }}>
-              <strong style={{ color: TEXT }}>Good FAQs:</strong> "Which suites have Matterhorn views?" · "Is the spa adults-only?" · "Does the restaurant offer a tasting menu?" · "What outdoor experiences are available?"<br />
-              <strong style={{ color: TEXT }}>Avoid:</strong> "Is this hotel good?" · Generic marketing language
+              <strong style={{ color: TEXT }}>Good FAQs:</strong> "Which suites have lake views?" · "Is the spa adults-only?" · "Does the restaurant offer a tasting menu?"<br />
+              <strong style={{ color: TEXT }}>Avoid:</strong> Generic marketing language · Duplicate questions
             </p>
           </div>
         </div>
