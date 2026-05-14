@@ -71,7 +71,7 @@ function KPICard({ label, value, sub, color, spark }: { label: string; value: st
   )
 }
 function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotelName: string, hotelSlug: string }) {
-  const [mainTab, setMainTab] = useState<'events' | 'rooms' | 'dining' | 'spa' | 'experiences'>('events')
+  const [mainTab, setMainTab] = useState<'overview' | 'events' | 'rooms' | 'dining' | 'spa' | 'experiences'>('overview')
   const [subTab, setSubTab] = useState<'content' | 'faqs'>('content')
   const [faqs, setFaqs] = useState<Record<string, {q: string, a: string}[]>>({
     overview: [], rooms: [], dining: [], spa: [], experiences: [], events: []
@@ -274,12 +274,13 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
   const activeOffers = offers.filter(o => !o.end_date || o.end_date >= today)
 
   const mainTabs = [
-    { key: 'events', label: `Events & Offers`, count: `${activeOffers.length}/3` },
-    { key: 'rooms', label: 'Rooms', count: `${(faqs.rooms || []).length}/6` },
-    { key: 'dining', label: 'Dining', count: `${(faqs.dining || []).length}/6` },
-    { key: 'spa', label: 'Spa', count: null },
-    { key: 'experiences', label: 'Experiences', count: `${experiences.length}` },
-  ]
+  { key: 'overview', label: 'Overview', count: `${(faqs.overview || []).length}/4` },
+  { key: 'events', label: 'Events & Offers', count: `${activeOffers.length}/3` },
+  { key: 'rooms', label: 'Rooms', count: `${(faqs.rooms || []).length}/6` },
+  { key: 'dining', label: 'Dining', count: `${(faqs.dining || []).length}/6` },
+  { key: 'spa', label: 'Spa', count: `${(faqs.spa || []).length}/6` },
+  { key: 'experiences', label: 'Experiences', count: `${experiences.length}` },
+]
 
   const inp: any = {
     width: '100%', fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem',
@@ -294,7 +295,10 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
       {/* Main tabs */}
       <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid ' + BORDER, marginBottom: '1.5rem' }}>
         {mainTabs.map(t => (
-          <button key={t.key} onClick={() => { setMainTab(t.key as any); setSubTab('content') }} style={{
+          <button key={t.key} onClick={() => {
+  setMainTab(t.key as any)
+  setSubTab(t.key === 'overview' ? 'faqs' : 'content')
+}} style={{
             fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: mainTab === t.key ? 700 : 400,
             padding: '0.7rem 1.125rem', cursor: 'pointer', background: 'transparent', border: 'none',
             borderBottom: mainTab === t.key ? '2px solid ' + GOLD : '2px solid transparent',
@@ -306,7 +310,7 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
       </div>
 
       {/* Sub tabs — Content / FAQs (not shown for events which has its own structure) */}
-      {mainTab !== 'events' && (
+      {mainTab !== 'overview' && (
         <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '1.5rem' }}>
           {[
             { key: 'content', label: 'Content' },
@@ -328,7 +332,7 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
       )}
 
       {/* ── EVENTS TAB ── */}
-      {mainTab === 'events' && (
+      {mainTab === 'events' && subTab === 'content' && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
             <div>
@@ -567,18 +571,22 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
       )}
 
       {/* ── FAQ SECTIONS ── */}
-      {mainTab !== 'events' && subTab === 'faqs' && (
+      {subTab === 'faqs' && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
             <div>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>
-                {mainTab.charAt(0).toUpperCase() + mainTab.slice(1)} FAQs
+                {mainTab === 'overview'
+  ? 'Overview FAQs'
+  : mainTab === 'events'
+    ? 'Events & Offers FAQs'
+    : `${mainTab.charAt(0).toUpperCase() + mainTab.slice(1)} FAQs`}
               </p>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>
-                Changes go live immediately · Max 6 per page · Appear in FAQPage schema
+                Changes go live immediately · Max {faqPageKey === 'overview' ? 4 : 6} per page · Appear in FAQPage schema
               </p>
             </div>
-            {(faqs[faqPageKey] || []).length < 6 && (
+            {(faqs[faqPageKey] || []).length < (faqPageKey === 'overview' ? 4 : 6) && (
               <button onClick={() => addFaq(faqPageKey)} style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer', flexShrink: 0, marginLeft: '1rem' }}>
                 + Add FAQ
               </button>
