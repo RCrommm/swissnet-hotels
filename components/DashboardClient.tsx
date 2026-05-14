@@ -1197,7 +1197,6 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
               <div style={{ padding: '1rem 1.5rem', background: BG, borderBottom: '1px solid ' + BORDER, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: 0 }}>Hotel Profile</p>
                 <a href={`/hotels/${hotel?.slug || hotel?.id}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: GOLD, textDecoration: 'none', fontWeight: 600 }}>View public page →</a>
-<a href="/dashboard/optimise" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, color: '#1a0e06', background: GOLD, textDecoration: 'none', padding: '0.35rem 0.875rem', borderRadius: 4 }}>AI Optimisation →</a>
               </div>
               <div style={{ padding: '1.25rem 1.5rem' }}>
                 {[

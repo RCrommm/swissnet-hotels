@@ -513,6 +513,11 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
             desc: experiencesSection?.short_description || 'Curated experiences and Alpine adventures',
             href: `/hotels/${hotelUrl}/experiences`
           },
+          {
+            label: 'Events & Offers',
+            desc: 'Time-limited events, seasonal packages and exclusive offers',
+            href: `/hotels/${hotelUrl}/events`
+          },
         ].map(exp => (
           <Link key={exp.label} href={exp.href} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', marginBottom: '0.5rem', background: white, border: `1px solid ${border}`, borderRadius: 4, textDecoration: 'none', boxShadow: '0 1px 8px rgba(0,0,0,0.04)' }}>
             <div>
