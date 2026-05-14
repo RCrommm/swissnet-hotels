@@ -71,13 +71,11 @@ function KPICard({ label, value, sub, color, spark }: { label: string; value: st
   )
 }
 function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotelName: string, hotelSlug: string }) {
-  const [section, setSection] = useState<'faqs' | 'offers'>('offers')
-  const [faqPage, setFaqPage] = useState('rooms')
+  const [section, setSection] = useState<'overview' | 'rooms' | 'dining' | 'spa' | 'experiences' | 'offers'>('offers')
   const [faqs, setFaqs] = useState<Record<string, {q: string, a: string}[]>>({
-  rooms: [], dining: [], spa: [], experiences: []
-})
-const [existingFaqs, setExistingFaqs] = useState<{question: string, answer: string}[]>([])
-const [offers, setOffers] = useState<any[]>([])
+    overview: [], rooms: [], dining: [], spa: [], experiences: []
+  })
+  const [offers, setOffers] = useState<any[]>([])
   const [offerForm, setOfferForm] = useState<any>(null)
   const [loaded, setLoaded] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -90,33 +88,36 @@ const [offers, setOffers] = useState<any[]>([])
     const load = async () => {
       const { createClient } = await import('@supabase/supabase-js')
       const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-      // Only load temporary events/offers, not permanent ones
-const { data: offersData } = await sb.from('hotel_offers')
-  .select('*').eq('hotel_id', hotelId).eq('is_available', true)
-  .eq('offer_type', 'temporary').order('sort_order')
-setOffers(offersData || [])
 
-// Load FAQs from hotel_content (existing core FAQs)
-const { data: contentData } = await sb.from('hotel_content')
-  .select('faqs').eq('hotel_id', hotelId).single()
-const existingFaqs = contentData?.faqs || []
+      // Load temporary events/offers only
+      const { data: offersData } = await sb.from('hotel_offers')
+        .select('*').eq('hotel_id', hotelId).eq('is_available', true)
+        .eq('offer_type', 'temporary').order('sort_order')
+      setOffers(offersData || [])
 
-// Load hotel_faq_suggestions (hotel-submitted ones)
-const { data: faqData } = await sb.from('hotel_faq_suggestions')
-  .select('*').eq('hotel_id', hotelId).order('created_at')
+      // Load overview FAQs from hotel_content
+      const { data: contentData } = await sb.from('hotel_content')
+        .select('faqs').eq('hotel_id', hotelId).single()
+      const overviewFaqs = (contentData?.faqs || []).map((f: any) => ({ q: f.question, a: f.answer }))
 
-const grouped: Record<string, {q: string, a: string, existing?: boolean}[]> = {
-  rooms: [], dining: [], spa: [], experiences: []
-}
-// Add submitted suggestions per page
-for (const f of faqData || []) {
-  if (grouped[f.page_type]) {
-    grouped[f.page_type].push({ q: f.question, a: f.answer })
-  }
-}
-setFaqs(grouped)
-setExistingFaqs(existingFaqs)
-setLoaded(true)
+      // Load page FAQs from hotel_faq_suggestions
+      const { data: faqData } = await sb.from('hotel_faq_suggestions')
+        .select('*').eq('hotel_id', hotelId).order('created_at')
+
+      const grouped: Record<string, {q: string, a: string}[]> = {
+        overview: overviewFaqs,
+        rooms: [],
+        dining: [],
+        spa: [],
+        experiences: [],
+      }
+      for (const f of faqData || []) {
+        if (grouped[f.page_type] !== undefined) {
+          grouped[f.page_type].push({ q: f.question, a: f.answer })
+        }
+      }
+      setFaqs(grouped)
+      setLoaded(true)
     }
     load()
   }, [hotelId, loaded])
@@ -133,18 +134,30 @@ setLoaded(true)
     setSaving(true)
     const { createClient } = await import('@supabase/supabase-js')
     const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-    await sb.from('hotel_faq_suggestions').delete().eq('hotel_id', hotelId).eq('page_type', page)
-    const toInsert = faqs[page].filter(f => f.q.trim() && f.a.trim()).map(f => ({
-      hotel_id: hotelId,
-      hotel_name: hotelName,
-      page_type: page,
-      question: f.q,
-      answer: f.a,
-      status: 'pending',
-    }))
-    if (toInsert.length > 0) await sb.from('hotel_faq_suggestions').insert(toInsert)
-    await notify('FAQs updated', `${page}: ${toInsert.length} FAQs submitted`)
-    setMsg('FAQs submitted — SwissNet will review and publish.')
+    const validFaqs = faqs[page].filter(f => f.q.trim() && f.a.trim())
+
+    if (page === 'overview') {
+      // Overview FAQs save directly to hotel_content
+      const faqJson = validFaqs.map(f => ({ question: f.q, answer: f.a }))
+      await sb.from('hotel_content').update({ faqs: faqJson }).eq('hotel_id', hotelId)
+      await notify('Overview FAQs updated', `${validFaqs.length} FAQs saved`)
+      setMsg('Overview FAQs updated and live on your page.')
+    } else {
+      // Page FAQs go to hotel_faq_suggestions for review
+      await sb.from('hotel_faq_suggestions').delete().eq('hotel_id', hotelId).eq('page_type', page)
+      if (validFaqs.length > 0) {
+        await sb.from('hotel_faq_suggestions').insert(validFaqs.map(f => ({
+          hotel_id: hotelId,
+          hotel_name: hotelName,
+          page_type: page,
+          question: f.q,
+          answer: f.a,
+          status: 'pending',
+        })))
+      }
+      await notify('Page FAQs submitted', `${page}: ${validFaqs.length} FAQs`)
+      setMsg('FAQs submitted — SwissNet will review and publish within 24h.')
+    }
     setSaving(false)
     setTimeout(() => setMsg(''), 4000)
   }
@@ -155,28 +168,28 @@ setLoaded(true)
     const { createClient } = await import('@supabase/supabase-js')
     const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
     const payload = {
-  hotel_id: hotelId,
-  name: offerForm.name,
-  description: offerForm.description,
-  start_date: offerForm.start_date || null,
-  end_date: offerForm.end_date || null,
-  is_available: true,
-  active: true,
-  offer_type: 'temporary',
-  sort_order: offers.length,
-}
+      hotel_id: hotelId,
+      name: offerForm.name,
+      description: offerForm.description,
+      start_date: offerForm.start_date || null,
+      end_date: offerForm.end_date || null,
+      is_available: true,
+      active: true,
+      offer_type: 'temporary',
+      sort_order: offers.length,
+    }
     if (offerForm.id) {
       await sb.from('hotel_offers').update(payload).eq('id', offerForm.id)
       setOffers(prev => prev.map(o => o.id === offerForm.id ? { ...o, ...payload } : o))
-      await notify('Offer updated', offerForm.name)
+      await notify('Event updated', offerForm.name)
     } else {
       const { data } = await sb.from('hotel_offers').insert(payload).select().single()
       if (data) setOffers(prev => [...prev, data])
-      await notify('Offer added', offerForm.name)
+      await notify('Event added', offerForm.name)
     }
     setOfferForm(null)
     setSaving(false)
-    setMsg('Offer saved.')
+    setMsg('Event saved and live on your page.')
     setTimeout(() => setMsg(''), 3000)
   }
 
@@ -185,8 +198,8 @@ setLoaded(true)
     const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
     await sb.from('hotel_offers').update({ is_available: false }).eq('id', id)
     setOffers(prev => prev.filter(o => o.id !== id))
-    await notify('Offer removed', name)
-    setMsg('Offer removed.')
+    await notify('Event removed', name)
+    setMsg('Event removed.')
     setTimeout(() => setMsg(''), 3000)
   }
 
@@ -199,7 +212,8 @@ setLoaded(true)
   }
 
   const addFaq = (page: string) => {
-    if ((faqs[page] || []).length >= 3) return
+    const limit = page === 'overview' ? 4 : 6
+    if ((faqs[page] || []).length >= limit) return
     setFaqs(prev => ({ ...prev, [page]: [...(prev[page] || []), { q: '', a: '' }] }))
   }
 
@@ -212,12 +226,14 @@ setLoaded(true)
   }
 
   const activeOffers = offers.filter(o => !o.end_date || o.end_date >= today)
-const activeCount = activeOffers.length
-  const pages = [
-    { key: 'rooms', label: 'Rooms & Suites' },
-    { key: 'dining', label: 'Dining' },
-    { key: 'spa', label: 'Spa & Wellness' },
-    { key: 'experiences', label: 'Experiences' },
+
+  const tabs = [
+    { key: 'offers', label: `Events & Offers (${activeOffers.length}/3)` },
+    { key: 'overview', label: `Overview FAQs (${(faqs.overview || []).length})` },
+    { key: 'rooms', label: `Rooms (${(faqs.rooms || []).length}/6)` },
+    { key: 'dining', label: `Dining (${(faqs.dining || []).length}/6)` },
+    { key: 'spa', label: `Spa (${(faqs.spa || []).length}/6)` },
+    { key: 'experiences', label: `Experiences (${(faqs.experiences || []).length}/6)` },
   ]
 
   const inp: any = {
@@ -226,20 +242,21 @@ const activeCount = activeOffers.length
     padding: '0.55rem 0.875rem', background: BG, outline: 'none', boxSizing: 'border-box',
   }
 
+  const isFaqSection = section !== 'offers'
+  const limit = section === 'overview' ? 4 : 6
+  const currentFaqs = faqs[section] || []
+
   return (
     <div>
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.75rem' }}>
-        {[
-          { key: 'offers', label: `Events & Offers (${activeCount}/3)` },
-          { key: 'faqs', label: 'Page FAQs' },
-        ].map(s => (
-          <button key={s.key} onClick={() => setSection(s.key as any)} style={{
-            fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 600,
-            padding: '0.5rem 1.25rem', borderRadius: 4, cursor: 'pointer',
-            background: section === s.key ? TEXT : WHITE,
-            color: section === s.key ? WHITE : TEXT_MUTED,
-            border: '1px solid ' + (section === s.key ? TEXT : BORDER),
-          }}>{s.label}</button>
+      {/* Tab bar */}
+      <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.75rem', flexWrap: 'wrap', borderBottom: '1px solid ' + BORDER, paddingBottom: '0' }}>
+        {tabs.map(t => (
+          <button key={t.key} onClick={() => setSection(t.key as any)} style={{
+            fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: section === t.key ? 700 : 400,
+            padding: '0.6rem 1rem', cursor: 'pointer', background: 'transparent', border: 'none',
+            borderBottom: section === t.key ? '2px solid ' + GOLD : '2px solid transparent',
+            color: section === t.key ? TEXT : TEXT_MUTED,
+          }}>{t.label}</button>
         ))}
       </div>
 
@@ -247,16 +264,17 @@ const activeCount = activeOffers.length
         <div style={{ background: GREEN + '12', border: '1px solid ' + GREEN + '30', borderRadius: 6, padding: '0.75rem 1rem', marginBottom: '1.25rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: GREEN }}>{msg}</div>
       )}
 
+      {/* ── OFFERS ── */}
       {section === 'offers' && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
             <div>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Offers & Events</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Time-limited events and promotions · e.g. Watches & Wonders, Christmas Gala, Ski Weekend · Maximum 3 active · Appear in AI search automatically</p>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Events & Time-Limited Offers</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>e.g. Watches & Wonders, Christmas Gala, Ski Weekend Package · Appear in AI search · Maximum 3 active</p>
             </div>
-            {activeCount < 3 && !offerForm && (
+            {activeOffers.length < 3 && !offerForm && (
               <button onClick={() => setOfferForm({ name: '', description: '', start_date: today, end_date: '' })}
-                style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer', letterSpacing: '0.08em', textTransform: 'uppercase', flexShrink: 0, marginLeft: '1rem' }}>
                 + Add
               </button>
             )}
@@ -264,15 +282,15 @@ const activeCount = activeOffers.length
 
           {offerForm && (
             <div style={{ background: WHITE, border: '1px solid ' + GOLD + '40', borderRadius: 10, padding: '1.25rem 1.5rem', marginBottom: '1.25rem' }}>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', color: TEXT, margin: '0 0 1rem' }}>{offerForm.id ? 'Edit' : 'New Offer or Event'}</p>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', color: TEXT, margin: '0 0 1rem' }}>{offerForm.id ? 'Edit Event' : 'New Event or Offer'}</p>
               <div style={{ display: 'grid', gap: '0.75rem' }}>
                 <div>
                   <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Title *</label>
-                  <input value={offerForm.name} onChange={e => setOfferForm((p: any) => ({ ...p, name: e.target.value }))} placeholder="e.g. Summer Lake Retreat · Christmas Gala · Ski Weekend" style={inp} />
+                  <input value={offerForm.name} onChange={e => setOfferForm((p: any) => ({ ...p, name: e.target.value }))} placeholder="e.g. Watches & Wonders Geneva · Christmas Eve Gala Dinner · Alpine Ski Package" style={inp} />
                 </div>
                 <div>
                   <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Description *</label>
-                  <textarea value={offerForm.description} onChange={e => setOfferForm((p: any) => ({ ...p, description: e.target.value }))} placeholder="Brief description..." rows={3} style={{ ...inp, resize: 'vertical' }} />
+                  <textarea value={offerForm.description} onChange={e => setOfferForm((p: any) => ({ ...p, description: e.target.value }))} placeholder="Describe the event or offer with specific details — dates, inclusions, pricing if relevant..." rows={3} style={{ ...inp, resize: 'vertical' }} />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                   <div>
@@ -294,9 +312,9 @@ const activeCount = activeOffers.length
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
             {offers.length === 0 && !offerForm && (
-              <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '2rem', textAlign: 'center' }}>
-                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>No offers yet</p>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0 }}>Add a seasonal package, upcoming event, or limited promotion</p>
+              <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '2.5rem', textAlign: 'center' }}>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>No events or offers yet</p>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0 }}>Add a time-limited event or special offer — it will appear on your hotel page and in AI search results</p>
               </div>
             )}
             {offers.map((offer: any) => {
@@ -307,12 +325,15 @@ const activeCount = activeOffers.length
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
                         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: TEXT, margin: 0 }}>{offer.name}</p>
-                        {expired && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.48rem', fontWeight: 700, textTransform: 'uppercase', color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, padding: '2px 6px', borderRadius: 10 }}>Expired</span>}
+                        {expired
+                          ? <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.48rem', fontWeight: 700, textTransform: 'uppercase', color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, padding: '2px 6px', borderRadius: 10 }}>Expired</span>
+                          : <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.48rem', fontWeight: 700, textTransform: 'uppercase', color: GREEN, background: GREEN + '12', padding: '2px 6px', borderRadius: 10 }}>Live</span>
+                        }
                       </div>
                       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: '0 0 0.3rem', lineHeight: 1.5 }}>{offer.description}</p>
                       {(offer.start_date || offer.end_date) && (
                         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: 0 }}>
-                          {offer.start_date && `${offer.start_date}`}{offer.start_date && offer.end_date && ' → '}{offer.end_date && `${offer.end_date}`}
+                          {offer.start_date && offer.start_date}{offer.start_date && offer.end_date && ' → '}{offer.end_date && offer.end_date}
                         </p>
                       )}
                     </div>
@@ -328,79 +349,68 @@ const activeCount = activeOffers.length
         </div>
       )}
 
-      {section === 'faqs' && (
+      {/* ── FAQ SECTIONS ── */}
+      {isFaqSection && (
         <div>
-          <div style={{ marginBottom: '1.25rem' }}>
-  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Page FAQs</p>
-  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Add up to 3 FAQs per page · Reviewed by SwissNet before publishing</p>
-</div>
-
-{/* Show existing core FAQs from hotel_content */}
-{existingFaqs.length > 0 && (
-  <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.25rem 1.5rem', marginBottom: '1.5rem' }}>
-    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', color: TEXT, margin: '0 0 0.75rem' }}>Your Current Published FAQs</p>
-    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: '0 0 1rem' }}>These are live on your hotel page. To suggest changes, submit via the page tabs below.</p>
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-      {existingFaqs.map((f: any, i: number) => (
-        <div key={i} style={{ background: BG, borderRadius: 6, padding: '0.75rem 1rem' }}>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, color: TEXT, margin: '0 0 0.25rem' }}>{f.question}</p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6 }}>{f.answer}</p>
-        </div>
-      ))}
-    </div>
-  </div>
-)}
-
-          <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-            {pages.map(p => (
-              <button key={p.key} onClick={() => setFaqPage(p.key)} style={{
-                fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: faqPage === p.key ? 700 : 400,
-                padding: '0.4rem 0.875rem', borderRadius: 20, cursor: 'pointer',
-                border: '1px solid ' + (faqPage === p.key ? GOLD : BORDER),
-                background: faqPage === p.key ? GOLD + '18' : 'transparent',
-                color: faqPage === p.key ? TEXT : TEXT_MUTED,
-              }}>
-                {p.label} ({(faqs[p.key] || []).length}/3)
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+            <div>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>
+                {tabs.find(t => t.key === section)?.label?.split(' (')[0]} FAQs
+              </p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>
+                {section === 'overview'
+                  ? 'Changes go live immediately on your hotel page'
+                  : 'Suggestions reviewed by SwissNet before publishing · Max 6 per page'}
+              </p>
+            </div>
+            {currentFaqs.length < limit && (
+              <button onClick={() => addFaq(section)} style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer', letterSpacing: '0.08em', textTransform: 'uppercase', flexShrink: 0, marginLeft: '1rem' }}>
+                + Add FAQ
               </button>
+            )}
+          </div>
+
+          {currentFaqs.length === 0 && (
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '2.5rem', textAlign: 'center', marginBottom: '1rem' }}>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>No FAQs yet for this page</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0 }}>Add FAQs to help AI systems answer guest questions about this section</p>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
+            {currentFaqs.map((faq, idx) => (
+              <div key={idx} style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1rem 1.25rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.1em', textTransform: 'uppercase' }}>FAQ {idx + 1}</span>
+                  <button onClick={() => removeFaq(section, idx)} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: RED, background: 'transparent', border: 'none', cursor: 'pointer' }}>Remove</button>
+                </div>
+                <input
+                  value={faq.q}
+                  onChange={e => updateFaq(section, idx, 'q', e.target.value)}
+                  placeholder="Question — e.g. Which suites have lake views?"
+                  style={{ ...inp, marginBottom: '0.5rem' }}
+                />
+                <textarea
+                  value={faq.a}
+                  onChange={e => updateFaq(section, idx, 'a', e.target.value)}
+                  placeholder="Answer — be specific and factual..."
+                  rows={3}
+                  style={{ ...inp, resize: 'vertical' }}
+                />
+              </div>
             ))}
           </div>
 
-          <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.25rem 1.5rem', marginBottom: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', color: TEXT, margin: 0 }}>{pages.find(p => p.key === faqPage)?.label}</p>
-              {(faqs[faqPage] || []).length < 3 && (
-                <button onClick={() => addFaq(faqPage)} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: GOLD, background: GOLD + '12', border: '1px solid ' + GOLD + '30', padding: '0.3rem 0.75rem', borderRadius: 4, cursor: 'pointer' }}>+ Add FAQ</button>
-              )}
-            </div>
+          {currentFaqs.length > 0 && (
+            <button onClick={() => saveFaqs(section)} disabled={saving} style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.5rem', border: 'none', borderRadius: 4, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
+              {saving ? 'Saving...' : section === 'overview' ? 'Save & Publish' : 'Submit for Review →'}
+            </button>
+          )}
 
-            {(faqs[faqPage] || []).length === 0 && (
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, textAlign: 'center', padding: '1.5rem 0' }}>No FAQs for this page yet. Click Add FAQ to get started.</p>
-            )}
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {(faqs[faqPage] || []).map((faq, idx) => (
-                <div key={idx} style={{ background: BG, borderRadius: 8, padding: '1rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.1em', textTransform: 'uppercase' }}>FAQ {idx + 1}</span>
-                    <button onClick={() => removeFaq(faqPage, idx)} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: RED, background: 'transparent', border: 'none', cursor: 'pointer' }}>Remove</button>
-                  </div>
-                  <input value={faq.q} onChange={e => updateFaq(faqPage, idx, 'q', e.target.value)} placeholder="Question — e.g. Which suites have lake views?" style={{ ...inp, marginBottom: '0.5rem' }} />
-                  <textarea value={faq.a} onChange={e => updateFaq(faqPage, idx, 'a', e.target.value)} placeholder="Answer — be specific and factual..." rows={3} style={{ ...inp, resize: 'vertical' }} />
-                </div>
-              ))}
-            </div>
-
-            {(faqs[faqPage] || []).length > 0 && (
-              <button onClick={() => saveFaqs(faqPage)} disabled={saving} style={{ marginTop: '1rem', background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
-                {saving ? 'Saving...' : 'Submit for Review →'}
-              </button>
-            )}
-          </div>
-
-          <div style={{ background: BG, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.75rem 1rem' }}>
+          <div style={{ background: BG, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.75rem 1rem', marginTop: '1rem' }}>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.7 }}>
-              <strong style={{ color: TEXT }}>Good FAQs:</strong> "Which suites have Matterhorn views?" · "Is the spa adults-only?" · "Does the restaurant offer a tasting menu?"<br />
-              <strong style={{ color: TEXT }}>Avoid:</strong> "Is this hotel good?" · Generic marketing statements
+              <strong style={{ color: TEXT }}>Good FAQs:</strong> "Which suites have Matterhorn views?" · "Is the spa adults-only?" · "Does the restaurant offer a tasting menu?" · "What outdoor experiences are available?"<br />
+              <strong style={{ color: TEXT }}>Avoid:</strong> "Is this hotel good?" · Generic marketing language
             </p>
           </div>
         </div>
