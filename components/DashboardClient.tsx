@@ -258,7 +258,7 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
   }
 
   const addFaq = (page: string) => {
-    const limit = page === 'overview' ? 4 : 6
+    const limit = page === 'overview' ? 8 : 6
     if ((faqs[page] || []).length >= limit) return
     setFaqs(prev => ({ ...prev, [page]: [...(prev[page] || []), { q: '', a: '' }] }))
   }
@@ -274,7 +274,7 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
   const activeOffers = offers.filter(o => !o.end_date || o.end_date >= today)
 
   const mainTabs = [
-  { key: 'overview', label: 'Overview', count: `${(faqs.overview || []).length}/4` },
+  { key: 'overview', label: 'Overview', count: `${(faqs.overview || []).length}/8` },
   { key: 'events', label: 'Events & Offers', count: `${activeOffers.length}/3` },
   { key: 'rooms', label: 'Rooms', count: `${(faqs.rooms || []).length}/6` },
   { key: 'dining', label: 'Dining', count: `${(faqs.dining || []).length}/6` },
@@ -583,10 +583,10 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
     : `${mainTab.charAt(0).toUpperCase() + mainTab.slice(1)} FAQs`}
               </p>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>
-                Changes go live immediately · Max {faqPageKey === 'overview' ? 4 : 6} per page · Appear in FAQPage schema
+                Changes go live immediately · Max {faqPageKey === 'overview' ? 8 : 6} per page · Appear in FAQPage schema
               </p>
             </div>
-            {(faqs[faqPageKey] || []).length < (faqPageKey === 'overview' ? 4 : 6) && (
+            {(faqs[faqPageKey] || []).length < (faqPageKey === 'overview' ? 8 : 6) && (
               <button onClick={() => addFaq(faqPageKey)} style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer', flexShrink: 0, marginLeft: '1rem' }}>
                 + Add FAQ
               </button>
