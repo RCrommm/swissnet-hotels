@@ -74,9 +74,10 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
   const [section, setSection] = useState<'faqs' | 'offers'>('offers')
   const [faqPage, setFaqPage] = useState('rooms')
   const [faqs, setFaqs] = useState<Record<string, {q: string, a: string}[]>>({
-    rooms: [], dining: [], spa: [], experiences: []
-  })
-  const [offers, setOffers] = useState<any[]>([])
+  rooms: [], dining: [], spa: [], experiences: []
+})
+const [existingFaqs, setExistingFaqs] = useState<{question: string, answer: string}[]>([])
+const [offers, setOffers] = useState<any[]>([])
   const [offerForm, setOfferForm] = useState<any>(null)
   const [loaded, setLoaded] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -89,17 +90,33 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
     const load = async () => {
       const { createClient } = await import('@supabase/supabase-js')
       const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-      const { data: offersData } = await sb.from('hotel_offers')
-        .select('*').eq('hotel_id', hotelId).eq('is_available', true).order('sort_order')
-      setOffers(offersData || [])
-      const { data: faqData } = await sb.from('hotel_faq_suggestions')
-        .select('*').eq('hotel_id', hotelId).order('created_at')
-      const grouped: Record<string, {q: string, a: string}[]> = { rooms: [], dining: [], spa: [], experiences: [] }
-      for (const f of faqData || []) {
-        if (grouped[f.page_type]) grouped[f.page_type].push({ q: f.question, a: f.answer })
-      }
-      setFaqs(grouped)
-      setLoaded(true)
+      // Only load temporary events/offers, not permanent ones
+const { data: offersData } = await sb.from('hotel_offers')
+  .select('*').eq('hotel_id', hotelId).eq('is_available', true)
+  .eq('offer_type', 'temporary').order('sort_order')
+setOffers(offersData || [])
+
+// Load FAQs from hotel_content (existing core FAQs)
+const { data: contentData } = await sb.from('hotel_content')
+  .select('faqs').eq('hotel_id', hotelId).single()
+const existingFaqs = contentData?.faqs || []
+
+// Load hotel_faq_suggestions (hotel-submitted ones)
+const { data: faqData } = await sb.from('hotel_faq_suggestions')
+  .select('*').eq('hotel_id', hotelId).order('created_at')
+
+const grouped: Record<string, {q: string, a: string, existing?: boolean}[]> = {
+  rooms: [], dining: [], spa: [], experiences: []
+}
+// Add submitted suggestions per page
+for (const f of faqData || []) {
+  if (grouped[f.page_type]) {
+    grouped[f.page_type].push({ q: f.question, a: f.answer })
+  }
+}
+setFaqs(grouped)
+setExistingFaqs(existingFaqs)
+setLoaded(true)
     }
     load()
   }, [hotelId, loaded])
@@ -138,15 +155,16 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
     const { createClient } = await import('@supabase/supabase-js')
     const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
     const payload = {
-      hotel_id: hotelId,
-      name: offerForm.name,
-      description: offerForm.description,
-      start_date: offerForm.start_date || null,
-      end_date: offerForm.end_date || null,
-      is_available: true,
-      active: true,
-      sort_order: offers.length,
-    }
+  hotel_id: hotelId,
+  name: offerForm.name,
+  description: offerForm.description,
+  start_date: offerForm.start_date || null,
+  end_date: offerForm.end_date || null,
+  is_available: true,
+  active: true,
+  offer_type: 'temporary',
+  sort_order: offers.length,
+}
     if (offerForm.id) {
       await sb.from('hotel_offers').update(payload).eq('id', offerForm.id)
       setOffers(prev => prev.map(o => o.id === offerForm.id ? { ...o, ...payload } : o))
@@ -194,6 +212,7 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
   }
 
   const activeOffers = offers.filter(o => !o.end_date || o.end_date >= today)
+const activeCount = activeOffers.length
   const pages = [
     { key: 'rooms', label: 'Rooms & Suites' },
     { key: 'dining', label: 'Dining' },
@@ -211,7 +230,7 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
     <div>
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.75rem' }}>
         {[
-          { key: 'offers', label: `Offers & Events (${activeOffers.length}/3)` },
+          { key: 'offers', label: `Events & Offers (${activeCount}/3)` },
           { key: 'faqs', label: 'Page FAQs' },
         ].map(s => (
           <button key={s.key} onClick={() => setSection(s.key as any)} style={{
@@ -233,9 +252,9 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
             <div>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Offers & Events</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Seasonal packages, upcoming events, limited promotions · Maximum 3 active</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Time-limited events and promotions · e.g. Watches & Wonders, Christmas Gala, Ski Weekend · Maximum 3 active · Appear in AI search automatically</p>
             </div>
-            {activeOffers.length < 3 && !offerForm && (
+            {activeCount < 3 && !offerForm && (
               <button onClick={() => setOfferForm({ name: '', description: '', start_date: today, end_date: '' })}
                 style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                 + Add
@@ -312,9 +331,25 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
       {section === 'faqs' && (
         <div>
           <div style={{ marginBottom: '1.25rem' }}>
-            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Page FAQs</p>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Add up to 3 FAQs per page · Reviewed by SwissNet before publishing</p>
-          </div>
+  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Page FAQs</p>
+  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Add up to 3 FAQs per page · Reviewed by SwissNet before publishing</p>
+</div>
+
+{/* Show existing core FAQs from hotel_content */}
+{existingFaqs.length > 0 && (
+  <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.25rem 1.5rem', marginBottom: '1.5rem' }}>
+    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', color: TEXT, margin: '0 0 0.75rem' }}>Your Current Published FAQs</p>
+    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: '0 0 1rem' }}>These are live on your hotel page. To suggest changes, submit via the page tabs below.</p>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+      {existingFaqs.map((f: any, i: number) => (
+        <div key={i} style={{ background: BG, borderRadius: 6, padding: '0.75rem 1rem' }}>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, color: TEXT, margin: '0 0 0.25rem' }}>{f.question}</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6 }}>{f.answer}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
 
           <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
             {pages.map(p => (
