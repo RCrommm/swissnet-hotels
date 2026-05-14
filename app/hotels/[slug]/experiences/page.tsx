@@ -155,6 +155,7 @@ export default async function ExperiencesPage({ params }: { params: Promise<{ sl
             { label: 'Dining', href: `/hotels/${hotelUrl}/dining` },
             { label: 'Spa', href: `/hotels/${hotelUrl}/spa` },
             { label: 'Experiences', href: `/hotels/${hotelUrl}/experiences`, active: true },
+            { label: 'Events', href: `/hotels/${hotelUrl}/events` },
           ].map(nav => (
             <Link key={nav.label} href={nav.href} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.5rem 1.25rem', textDecoration: 'none', borderRadius: 2, background: nav.active ? gold : white, color: nav.active ? '#1a0e06' : textMuted, border: `1px solid ${nav.active ? gold : border}` }}>
               {nav.label}
