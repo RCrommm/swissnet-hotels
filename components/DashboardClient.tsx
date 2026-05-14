@@ -979,8 +979,8 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
                 }).filter((d): d is { date: string, score: number } => d.score !== null)
 
                 // Build full calendar for selected period
-                const startDate = chartPeriod === 365 ? new Date(realPoints[0].date) : new Date(cutoff)
-                const endDate = chartPeriod === 365 ? new Date(realPoints[realPoints.length - 1].date) : new Date()
+                const startDate = chartPeriod === 365 ? new Date(realPoints[0].date) : new Date(Math.min(...realPoints.map(p => new Date(p.date).getTime()), new Date(cutoff).getTime()))
+                const endDate = new Date()
                 const totalDays = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
                 const calendarDays: string[] = []
                 for (let i = 0; i <= totalDays; i++) {
@@ -1018,7 +1018,7 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
                 for (let i = 1; i < realPoints.length; i++) {
                   const x1 = dateToX(realPoints[i-1].date)
                   const x2 = dateToX(realPoints[i].date)
-                  if (x1 === pL && calendarDays.indexOf(realPoints[i-1].date) === -1) continue
+                  
                   segments.push({
                     x1: Math.max(pL, x1),
                     y1: py(realPoints[i-1].score),
@@ -1063,7 +1063,7 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
                     ))}
 
                     {/* Data points */}
-                    {realPoints.filter(d => calendarDays.includes(d.date)).map((d, i) => (
+                    {realPoints.map((d, i) => (
                       <g key={i}>
                         <circle cx={dateToX(d.date)} cy={py(d.score)} r="3" fill={WHITE} stroke={GOLD} strokeWidth="1.5" />
                         <text x={dateToX(d.date)} y={py(d.score)-9} textAnchor="middle" fill={TEXT} fontSize="8" fontFamily="Montserrat, sans-serif" fontWeight="600">{d.score}%</text>
