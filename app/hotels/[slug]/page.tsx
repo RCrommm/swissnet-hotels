@@ -542,6 +542,7 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
           { label: `Best luxury hotels in Switzerland`, href: `/best/luxury-hotels-switzerland` },
           hotel.category === 'Ski Resort' && { label: `Best ski hotels in Switzerland`, href: `/best/ski-hotels-switzerland` },
           hotel.category === 'Wellness Retreat' && { label: `Best wellness hotels in Switzerland`, href: `/best/wellness-hotels-switzerland` },
+          { label: `${hotel.name} Events & Offers`, href: `/hotels/${hotelUrl}/events` },
           { label: `${hotel.name} for Honeymoon`, href: `/hotels/${hotelUrl}/honeymoon` },
           { label: `${hotel.name} for Wellness`, href: `/hotels/${hotelUrl}/wellness` },
           { label: `${hotel.name} for Business`, href: `/hotels/${hotelUrl}/business` },

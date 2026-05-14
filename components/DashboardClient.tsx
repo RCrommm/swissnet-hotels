@@ -73,7 +73,7 @@ function KPICard({ label, value, sub, color, spark }: { label: string; value: st
 function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotelName: string, hotelSlug: string }) {
   const [section, setSection] = useState<'overview' | 'rooms' | 'dining' | 'spa' | 'experiences' | 'offers'>('offers')
   const [faqs, setFaqs] = useState<Record<string, {q: string, a: string}[]>>({
-    overview: [], rooms: [], dining: [], spa: [], experiences: []
+    overview: [], rooms: [], dining: [], spa: [], experiences: [], events: []
   })
   const [offers, setOffers] = useState<any[]>([])
   const [offerForm, setOfferForm] = useState<any>(null)
@@ -110,6 +110,7 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
         dining: [],
         spa: [],
         experiences: [],
+        events: [],
       }
       for (const f of faqData || []) {
         if (grouped[f.page_type] !== undefined) {
@@ -233,6 +234,7 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
     { key: 'dining', label: `Dining (${(faqs.dining || []).length}/6)` },
     { key: 'spa', label: `Spa (${(faqs.spa || []).length}/6)` },
     { key: 'experiences', label: `Experiences (${(faqs.experiences || []).length}/6)` },
+    { key: 'events', label: `Events FAQs (${(faqs.events || []).length}/6)` },
   ]
 
   const inp: any = {
@@ -243,6 +245,7 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
 
   const isFaqSection = section !== 'offers'
   const limit = section === 'overview' ? 4 : 6
+  
   const currentFaqs = faqs[section] || []
 
   return (
@@ -359,7 +362,7 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>
                 {section === 'overview'
                   ? 'Changes go live immediately on your hotel page'
-                  : 'Suggestions reviewed by SwissNet before publishing · Max 6 per page'}
+                  : 'Changes go live immediately · Max 6 per page'}
               </p>
             </div>
             {currentFaqs.length < limit && (
