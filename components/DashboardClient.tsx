@@ -145,18 +145,17 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
     } else {
       // Page FAQs go to hotel_faq_suggestions for review
       await sb.from('hotel_faq_suggestions').delete().eq('hotel_id', hotelId).eq('page_type', page)
-      if (validFaqs.length > 0) {
-        await sb.from('hotel_faq_suggestions').insert(validFaqs.map(f => ({
-          hotel_id: hotelId,
-          hotel_name: hotelName,
-          page_type: page,
-          question: f.q,
-          answer: f.a,
-          status: 'pending',
-        })))
-      }
-      await notify('Page FAQs submitted', `${page}: ${validFaqs.length} FAQs`)
-      setMsg('FAQs submitted — SwissNet will review and publish within 24h.')
+    const toInsert = faqs[page].filter(f => f.q.trim() && f.a.trim()).map(f => ({
+      hotel_id: hotelId,
+      hotel_name: hotelName,
+      page_type: page,
+      question: f.q,
+      answer: f.a,
+      status: 'approved',
+    }))
+    if (toInsert.length > 0) await sb.from('hotel_faq_suggestions').insert(toInsert)
+    await notify('Page FAQs updated', `${page}: ${toInsert.length} FAQs saved`)
+    setMsg('FAQs saved and live on your page.')
     }
     setSaving(false)
     setTimeout(() => setMsg(''), 4000)
@@ -403,7 +402,7 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
 
           {currentFaqs.length > 0 && (
             <button onClick={() => saveFaqs(section)} disabled={saving} style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.5rem', border: 'none', borderRadius: 4, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
-              {saving ? 'Saving...' : section === 'overview' ? 'Save & Publish' : 'Submit for Review →'}
+              {saving ? 'Saving...' : 'Save & Publish'}
             </button>
           )}
 
