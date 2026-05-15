@@ -945,12 +945,7 @@ const removeSpa = async (id: string, name: string) => {
             </button>
           )}
 
-          <div style={{ background: BG, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.75rem 1rem', marginTop: '1rem' }}>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.7 }}>
-              <strong style={{ color: TEXT }}>Good FAQs:</strong> "Which suites have lake views?" · "Is the spa adults-only?" · "Does the restaurant offer a tasting menu?"<br />
-              <strong style={{ color: TEXT }}>Avoid:</strong> Generic marketing language · Duplicate questions
-            </p>
-          </div>
+          
         </div>
       )}
     </div>
