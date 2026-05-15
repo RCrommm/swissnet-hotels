@@ -7,6 +7,8 @@ export async function POST(request: NextRequest) {
     if (!hotel_id) return NextResponse.json({ error: 'No hotel_id' }, { status: 400 })
 
     const referrer = request.headers.get('referer') || null
+    const country = request.headers.get('x-vercel-ip-country') || null
+    const city = request.headers.get('x-vercel-ip-city') || null
 
     let source = 'direct'
     if (referrer) {
@@ -24,6 +26,8 @@ export async function POST(request: NextRequest) {
       hotel_name,
       referrer,
       source,
+      country,
+      city,
       viewed_at: new Date().toISOString(),
     })
 
