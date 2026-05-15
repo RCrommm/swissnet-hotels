@@ -416,9 +416,7 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
 
   return (
     <div style={{ background: bg, minHeight: '100vh' }}>
-      <head>
-        <link rel="canonical" href={`https://swissnethotels.com/best/${slug}`} />
-      </head>
+      
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
 
       {/* Hero */}

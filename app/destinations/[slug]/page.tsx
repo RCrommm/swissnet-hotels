@@ -262,9 +262,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
 
   return (
     <div style={{ background: bg, minHeight: '100vh' }}>
-      <head>
-        <link rel="canonical" href={`https://swissnethotels.com/destinations/${slug}`} />
-      </head>
+      
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
 
       {/* Hero */}
