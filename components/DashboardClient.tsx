@@ -991,7 +991,7 @@ const appearedQueries = aiVisibility?.filter((r: any) => r.appeared)?.length || 
   const recentLeads = leads?.filter((l: any) => new Date(l.created_at) > periodStart) || []
 
 
-  const days = Array.from({ length: Math.min(period, 30) }, (_, i) => {
+  const days = Array.from({ length: period }, (_, i) => {
     const d = new Date(now.getTime() - (period - 1 - i) * 24 * 60 * 60 * 1000)
     return d.toISOString().split('T')[0]
   })
