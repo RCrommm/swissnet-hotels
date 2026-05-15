@@ -71,6 +71,7 @@ export default async function RoomsPage({ params }: { params: Promise<{ slug: st
         '@id': `${pageUrl}#webpage`,
         url: pageUrl,
         name: `${hotel.name} Rooms & Suites | SwissNet Hotels`,
+        inLanguage: ['en', 'fr', 'de'],
         isPartOf: { '@id': 'https://swissnethotels.com#website' },
         about: { '@id': hotelId },
         mainEntity: { '@id': hotelId },

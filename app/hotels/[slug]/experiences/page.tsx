@@ -69,6 +69,7 @@ export default async function ExperiencesPage({ params }: { params: Promise<{ sl
         '@id': `${pageUrl}#webpage`,
         url: pageUrl,
         name: `${hotel.name} Experiences & Activities | SwissNet Hotels`,
+        inLanguage: ['en', 'fr', 'de'],
         isPartOf: { '@id': 'https://swissnethotels.com#website' },
         about: { '@id': hotelId },
         mainEntity: { '@id': hotelId },

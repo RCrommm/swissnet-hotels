@@ -78,6 +78,7 @@ export default async function SpaPage({ params }: { params: Promise<{ slug: stri
         '@id': `${pageUrl}#webpage`,
         url: pageUrl,
         name: `${hotel.name} Spa & Wellness | SwissNet Hotels`,
+        inLanguage: ['en', 'fr', 'de'],
         isPartOf: { '@id': 'https://swissnethotels.com#website' },
         about: { '@id': hotelId },
         mainEntity: primarySpa ? { '@id': `${pageUrl}#spa-${primarySpa.id}` } : { '@id': hotelId },

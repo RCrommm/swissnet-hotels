@@ -73,6 +73,7 @@ export default async function DiningPage({ params }: { params: Promise<{ slug: s
         '@id': `${pageUrl}#webpage`,
         url: pageUrl,
         name: `${hotel.name} Dining & Restaurants | SwissNet Hotels`,
+        inLanguage: ['en', 'fr', 'de'],
         isPartOf: { '@id': 'https://swissnethotels.com#website' },
         about: { '@id': hotelId },
         mainEntity: { '@id': hotelId },

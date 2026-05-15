@@ -69,6 +69,7 @@ export default async function EventsPage({ params }: { params: Promise<{ slug: s
         '@id': `${pageUrl}#webpage`,
         url: pageUrl,
         name: `${hotel.name} Events & Offers | SwissNet Hotels`,
+        inLanguage: ['en', 'fr', 'de'],
         isPartOf: { '@id': 'https://swissnethotels.com#website' },
         about: { '@id': hotelId },
         breadcrumb: { '@id': `${pageUrl}#breadcrumb` },
