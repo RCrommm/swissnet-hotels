@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
 
   const results = (hotels || []).map(hotel => {
     let score = hotel.rating * 10
+    if (hotel.is_partner) score += 200
     let reasons: string[] = []
     let matchedKeywords: string[] = []
 
