@@ -70,6 +70,63 @@ function KPICard({ label, value, sub, color, spark }: { label: string; value: st
     </div>
   )
 }
+function CountryBreakdown({ hotelId, period }: { hotelId: string, period: number }) {
+  const [data, setData] = useState<{country: string, count: number}[]>([])
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    if (!hotelId) return
+    const load = async () => {
+      const { createClient } = await import('@supabase/supabase-js')
+      const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+      const since = new Date(Date.now() - period * 24 * 60 * 60 * 1000).toISOString()
+      const { data: views } = await sb.from('hotel_views')
+        .select('country')
+        .eq('hotel_id', hotelId)
+        .gte('viewed_at', since)
+        .not('country', 'is', null)
+      if (views) {
+        const counts: Record<string, number> = {}
+        for (const v of views) {
+          if (v.country) counts[v.country] = (counts[v.country] || 0) + 1
+        }
+        const sorted = Object.entries(counts)
+          .map(([country, count]) => ({ country, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 10)
+        setData(sorted)
+      }
+      setLoaded(true)
+    }
+    load()
+  }, [hotelId, period])
+
+  const total = data.reduce((s, d) => s + d.count, 0)
+
+  const countryName = (code: string) => {
+    try { return new Intl.DisplayNames(['en'], { type: 'region' }).of(code) || code }
+    catch { return code }
+  }
+
+  if (!loaded) return <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>Loading...</p>
+  if (data.length === 0) return <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>No country data yet — new visits will be tracked automatically.</p>
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      {data.map(({ country, count }) => (
+        <div key={country} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid ' + BORDER }}>
+          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT }}>{countryName(country)}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ width: 80, height: 4, background: BORDER, borderRadius: 2, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: Math.round((count / total) * 100) + '%', background: GOLD, borderRadius: 2 }} />
+            </div>
+            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, color: GOLD, minWidth: 20 }}>{count}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
 function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotelName: string, hotelSlug: string }) {
   const [mainTab, setMainTab] = useState<'overview' | 'events' | 'rooms' | 'dining' | 'spa' | 'experiences'>('overview')
   const [subTab, setSubTab] = useState<'content' | 'faqs'>('content')
@@ -1202,7 +1259,10 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
                   </div>
                 )}
               </div>
-
+                <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', marginTop: '1rem' }}>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 1rem' }}>Visitors by Country</p>
+                <CountryBreakdown hotelId={hotel?.id} period={period} />
+              </div>
               
             </div>
 
@@ -1324,6 +1384,8 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
             />
           </div>
         )}
+
+        
 {/* ── OPTIMISE ── */}
         {tab === 'optimise' && (
           <OptimiseTab hotelId={hotel?.id} hotelName={hotelName} hotelSlug={hotel?.slug} />
