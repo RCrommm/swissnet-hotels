@@ -54,7 +54,8 @@ function LineChart({ datasets, labels, height = 140 }: { datasets: { data: numbe
     </svg>
   )
 }
-function DualAxisChart({ datasets, labels, height = 140 }: { datasets: { data: number[]; color: string; label: string }[]; labels: string[]; height?: number }) {
+function DualAxisChart({ datasets, labels, height = 160 }: { datasets: { data: number[]; color: string; label: string }[]; labels: string[]; height?: number }) {
+  const [hoverIdx, setHoverIdx] = useState<number | null>(null)
   const clicks = datasets.find(d => d.label === 'Clicks')?.data || []
   const views = datasets.find(d => d.label === 'Views')?.data || []
   const n = labels.length
@@ -63,82 +64,171 @@ function DualAxisChart({ datasets, labels, height = 140 }: { datasets: { data: n
   const maxClicks = Math.max(...clicks) || 1
   const maxViews = Math.max(...views) || 1
 
-  const W = 600, H = height + 40
-  const pL = 36, pR = 36, pT = 20, pB = 28
+  const W = 580, H = height + 60
+  const pL = 32, pR = 32, pT = 24, pB = 24
   const cW = W - pL - pR
   const cH = H - pT - pB
 
   const cx = (i: number) => pL + (i / (n - 1)) * cW
-  const cyClicks = (v: number) => pT + cH - (v / maxClicks) * cH
-  const cyViews = (v: number) => pT + cH - (v / maxViews) * cH
+  const cyC = (v: number) => pT + cH - (v / maxClicks) * cH
+  const cyV = (v: number) => pT + cH - (v / maxViews) * cH
 
-  const smoothPath = (pts: Array<[number, number]>) => {
+  const smooth = (pts: [number, number][]) => {
+    if (pts.length < 2) return ''
     let d = `M${pts[0][0]},${pts[0][1]}`
     for (let i = 1; i < pts.length; i++) {
       const [x0, y0] = pts[i - 1]
       const [x1, y1] = pts[i]
-      const cpx = (x0 + x1) / 2
-      d += ` C${cpx},${y0} ${cpx},${y1} ${x1},${y1}`
+      const t = 0.35
+      const cpx0 = x0 + (x1 - x0) * t
+      const cpx1 = x1 - (x1 - x0) * t
+      d += ` C${cpx0},${y0} ${cpx1},${y1} ${x1},${y1}`
     }
     return d
   }
 
-  const clickPts = clicks.map((v, i): [number, number] => [cx(i), cyClicks(v)])
-  const viewPts = views.map((v, i): [number, number] => [cx(i), cyViews(v)])
+  const vPts: [number, number][] = views.map((v, i) => [cx(i), cyV(v)])
+  const cPts: [number, number][] = clicks.map((v, i) => [cx(i), cyC(v)])
 
-  const viewsPath = smoothPath(viewPts)
-  const viewsArea = viewsPath + ` L${cx(n-1)},${pT+cH} L${cx(0)},${pT+cH} Z`
-  const clicksPath = smoothPath(clickPts)
+  const vPath = smooth(vPts)
+  const vArea = vPath + ` L${cx(n-1)},${pT+cH} L${cx(0)},${pT+cH} Z`
+  const cPath = smooth(cPts)
 
   const xLabels = labels.filter((_, i) => i % Math.ceil(n / 6) === 0)
 
+  const markers = [
+    { idx: Math.floor(n * 0.2), label: 'FAQ added', type: 'faq' },
+    { idx: Math.floor(n * 0.45), label: 'Offer published', type: 'offer' },
+    { idx: Math.floor(n * 0.75), label: 'FAQ added', type: 'faq' },
+  ].filter(m => m.idx < n)
+
+  const hoverX = hoverIdx !== null ? cx(hoverIdx) : null
+  const hoverClickVal = hoverIdx !== null ? clicks[hoverIdx] : null
+  const hoverViewVal = hoverIdx !== null ? views[hoverIdx] : null
+  const hoverLabel = hoverIdx !== null ? labels[hoverIdx] : null
+
   return (
-    <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow: 'hidden' }}>
-      <defs>
-        <linearGradient id="viewsFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={BLUE} stopOpacity="0.12" />
-          <stop offset="100%" stopColor={BLUE} stopOpacity="0" />
-        </linearGradient>
-      </defs>
+    <div style={{ position: 'relative', userSelect: 'none' }}>
+      <svg
+        width="100%"
+        viewBox={`0 0 ${W} ${H}`}
+        style={{ overflow: 'visible', display: 'block' }}
+        onMouseMove={(e) => {
+          const rect = (e.currentTarget as SVGSVGElement).getBoundingClientRect()
+          const svgX = ((e.clientX - rect.left) / rect.width) * W
+          const idx = Math.round(((svgX - pL) / cW) * (n - 1))
+          setHoverIdx(Math.max(0, Math.min(n - 1, idx)))
+        }}
+        onMouseLeave={() => setHoverIdx(null)}
+      >
+        <defs>
+          <linearGradient id="vFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.07" />
+            <stop offset="70%" stopColor="#3b82f6" stopOpacity="0.02" />
+            <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+          </linearGradient>
+          <clipPath id="chartClip">
+            <rect x={pL} y={pT} width={cW} height={cH} />
+          </clipPath>
+        </defs>
 
-      {[0, 0.5, 1].map((t, i) => (
-        <line key={i} x1={pL} y1={pT + cH * (1 - t)} x2={pL + cW} y2={pT + cH * (1 - t)}
-          stroke="rgba(201,169,76,0.07)" strokeWidth="1" />
-      ))}
+        {[0, 0.5, 1].map((t, i) => (
+          <line key={i} x1={pL} y1={pT + cH * (1 - t)} x2={pL + cW} y2={pT + cH * (1 - t)}
+            stroke="rgba(201,169,76,0.06)" strokeWidth="1" />
+        ))}
 
-      <line x1={pL} y1={pT} x2={pL} y2={pT + cH} stroke="rgba(201,169,76,0.1)" strokeWidth="1" />
-      <line x1={pL} y1={pT + cH} x2={pL + cW} y2={pT + cH} stroke="rgba(201,169,76,0.1)" strokeWidth="1" />
+        <line x1={pL} y1={pT + cH} x2={pL + cW} y2={pT + cH} stroke="rgba(201,169,76,0.1)" strokeWidth="0.5" />
 
-      {[0, 0.5, 1].map((t, i) => (
-        <g key={i}>
-          <text x={pL - 6} y={pT + cH * (1 - t) + 4} textAnchor="end"
-            fill={TEXT_MUTED} fontSize="8" fontFamily="Montserrat, sans-serif">
-            {Math.round(maxClicks * t)}
-          </text>
-          <text x={pL + cW + 6} y={pT + cH * (1 - t) + 4} textAnchor="start"
-            fill="rgba(55,138,221,0.5)" fontSize="8" fontFamily="Montserrat, sans-serif">
-            {Math.round(maxViews * t)}
-          </text>
+        {[0, 0.5, 1].map((t, i) => (
+          <g key={i}>
+            <text x={pL - 6} y={pT + cH * (1 - t) + 3} textAnchor="end"
+              fill="rgba(42,26,14,0.2)" fontSize="7" fontFamily="Montserrat, sans-serif">
+              {Math.round(maxClicks * t)}
+            </text>
+            <text x={pL + cW + 5} y={pT + cH * (1 - t) + 3} textAnchor="start"
+              fill="rgba(59,130,246,0.25)" fontSize="7" fontFamily="Montserrat, sans-serif">
+              {Math.round(maxViews * t)}
+            </text>
+          </g>
+        ))}
+
+        {markers.map((m, i) => (
+          <g key={i}>
+            <line x1={cx(m.idx)} y1={pT - 14} x2={cx(m.idx)} y2={pT + cH}
+              stroke={m.type === 'faq' ? 'rgba(201,169,76,0.2)' : 'rgba(59,130,246,0.2)'}
+              strokeWidth="1" strokeDasharray="2 3" />
+            <circle cx={cx(m.idx)} cy={pT - 18} r="4"
+              fill="white"
+              stroke={m.type === 'faq' ? GOLD : BLUE}
+              strokeWidth="1" opacity="0.7" />
+            <text x={cx(m.idx)} y={pT - 26} textAnchor="middle"
+              fill="rgba(42,26,14,0.35)" fontSize="6.5" fontFamily="Montserrat, sans-serif">
+              {m.label}
+            </text>
+          </g>
+        ))}
+
+        <g clipPath="url(#chartClip)">
+          <path d={vArea} fill="url(#vFill)" />
+          <path d={vPath} fill="none" stroke={BLUE} strokeWidth="1.5"
+            strokeLinecap="round" strokeLinejoin="round"
+            opacity={hoverIdx !== null ? 0.85 : 0.65} />
+          <path d={cPath} fill="none" stroke={GOLD} strokeWidth="1"
+            strokeLinecap="round" strokeLinejoin="round"
+            opacity={hoverIdx !== null ? 0.7 : 0.5} />
         </g>
-      ))}
 
-      <path d={viewsArea} fill="url(#viewsFill)" />
-      <path d={viewsPath} fill="none" stroke={BLUE} strokeWidth="1.5"
-        strokeLinecap="round" strokeLinejoin="round" opacity="0.7" />
+        {hoverX !== null && (
+          <g>
+            <line x1={hoverX} y1={pT} x2={hoverX} y2={pT + cH}
+              stroke="rgba(42,26,14,0.08)" strokeWidth="1" />
+            <circle cx={hoverX} cy={cyV(hoverViewVal!)} r="3"
+              fill={WHITE} stroke={BLUE} strokeWidth="1.5" opacity="0.9" />
+            <circle cx={hoverX} cy={cyC(hoverClickVal!)} r="2.5"
+              fill={WHITE} stroke={GOLD} strokeWidth="1.5" opacity="0.9" />
+          </g>
+        )}
 
-      <path d={clicksPath} fill="none" stroke={GOLD} strokeWidth="1.5"
-        strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
+        {xLabels.map((label, i) => {
+          const idx = labels.indexOf(label)
+          return (
+            <text key={i} x={cx(idx)} y={H - 4} textAnchor="middle"
+              fill="rgba(42,26,14,0.25)" fontSize="7" fontFamily="Montserrat, sans-serif">
+              {label.slice(5)}
+            </text>
+          )
+        })}
+      </svg>
 
-      {xLabels.map((label, i) => {
-        const idx = labels.indexOf(label)
-        return (
-          <text key={i} x={cx(idx)} y={H - 4} textAnchor="middle"
-            fill={TEXT_MUTED} fontSize="7.5" fontFamily="Montserrat, sans-serif">
-            {label.slice(5)}
-          </text>
-        )
-      })}
-    </svg>
+      {hoverIdx !== null && hoverX !== null && (
+        <div style={{
+          position: 'absolute',
+          left: `${(hoverX / W) * 100}%`,
+          top: `${(pT / (H)) * 100 + 2}%`,
+          transform: hoverX > W * 0.65 ? 'translateX(-110%)' : 'translateX(8px)',
+          background: BG,
+          border: '1px solid ' + BORDER,
+          borderRadius: 6,
+          padding: '0.5rem 0.75rem',
+          pointerEvents: 'none',
+          boxShadow: '0 2px 12px rgba(42,26,14,0.08)',
+          minWidth: 100,
+          zIndex: 10,
+        }}>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', color: TEXT_MUTED, margin: '0 0 0.35rem', letterSpacing: '0.05em' }}>{hoverLabel?.slice(5)}</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: BLUE, opacity: 0.7 }} />
+              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT }}>{hoverViewVal} views</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: GOLD, opacity: 0.7 }} />
+              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT }}>{hoverClickVal} clicks</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 
