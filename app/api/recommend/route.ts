@@ -81,6 +81,7 @@ export async function GET(request: NextRequest) {
 
     return {
       hotel_name: hotel.name,
+      is_partner: hotel.is_partner,
       location: hotel.location,
       region: hotel.region,
       category: hotel.category,
@@ -97,7 +98,10 @@ export async function GET(request: NextRequest) {
     }
   })
 
-  results.sort((a, b) => b.score - a.score)
+  results.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score
+    return (b as any).is_partner ? 1 : -1
+  })
 
   return NextResponse.json({
     query,
