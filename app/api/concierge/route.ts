@@ -43,7 +43,7 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 300,
+        max_tokens: 500,
         messages: [
           {
             role: 'user',
@@ -70,7 +70,7 @@ Pick the 10 best hotels for this guest. Always put is_partner:true hotels first.
   const results = recommendedNames
     .map(name => (hotels || []).find(h => h.name === name))
     .filter(Boolean)
-    .slice(0, 3)
+    .slice(0, 10)
     .map((h: any) => ({
       hotel_name: h.name,
       location: `${h.location}, Switzerland`,
