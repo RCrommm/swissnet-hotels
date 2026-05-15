@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
 
   results.sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score
-    return (b as any).is_partner ? 1 : -1
+    return (b as any).is_partner ? -1 : 1
   })
 
   return NextResponse.json({
