@@ -10,7 +10,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { data: hotel } = await supabase.from('hotels').select('name, location, slug').or(`slug.eq.${slug},id.eq.${slug}`).single()
   if (!hotel) return {}
   return {
-    title: `${hotel.name} Events & Offers in ${hotel.location}, Switzerland | SwissNet Hotels`,
+    title: `${hotel.name} — Events & Offers | SwissNet Hotels`,
     description: `Discover current events, special offers and exclusive packages at ${hotel.name} in ${hotel.location}, Switzerland.`,
     alternates: {
       canonical: `https://swissnethotels.com/hotels/${hotel.slug || slug}/events`,

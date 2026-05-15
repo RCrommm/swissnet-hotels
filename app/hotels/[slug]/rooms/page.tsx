@@ -8,7 +8,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { data: hotelMeta } = await supabase.from('hotels').select('name, location, slug, nightly_rate_chf').or(`slug.eq.${slug},id.eq.${slug}`).single()
   if (!hotelMeta) return {}
   return {
-    title: `${hotelMeta.name} Rooms & Suites in ${hotelMeta.location}, Switzerland | SwissNet Hotels`,
+    title: `${hotelMeta.name} — Rooms & Suites | SwissNet Hotels`,
     description: hotelMeta.nightly_rate_chf
       ? `Explore all rooms and suites at ${hotelMeta.name} in ${hotelMeta.location}, Switzerland. View sizes, bed types, views and rates from CHF ${hotelMeta.nightly_rate_chf}/night. Book direct for the best rate.`
       : `Explore all rooms and suites at ${hotelMeta.name} in ${hotelMeta.location}, Switzerland. View sizes, bed types, views and book direct for the best available rate.`,

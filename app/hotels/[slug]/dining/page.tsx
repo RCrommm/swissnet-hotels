@@ -14,8 +14,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const hasMichelin = (michelinCheck?.length ?? 0) > 0
   return {
     title: hasMichelin
-      ? `${hotel.name} Dining — Michelin-Starred Restaurant in ${hotel.location} | SwissNet Hotels`
-      : `${hotel.name} Dining & Restaurants in ${hotel.location} | SwissNet Hotels`,
+      ? `${hotel.name} — Michelin Dining | SwissNet Hotels`
+      : `${hotel.name} — Dining & Restaurants | SwissNet Hotels`,
     description: hasMichelin
       ? `Discover Michelin-starred dining at ${hotel.name} in ${hotel.location}, Switzerland. Fine dining restaurants, signature cuisine and private dining experiences.`
       : `Discover the dining experiences at ${hotel.name} in ${hotel.location}, Switzerland — from fine dining to casual bars and private dining options.`,

@@ -8,7 +8,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { data: hotelMeta } = await supabase.from('hotels').select('name, location, slug').or(`slug.eq.${slug},id.eq.${slug}`).single()
   if (!hotelMeta) return {}
   return {
-    title: `${hotelMeta.name} Experiences & Activities in ${hotelMeta.location}, Switzerland | SwissNet Hotels`,
+    title: `${hotelMeta.name} — Experiences & Activities | SwissNet Hotels`,
     description: `Discover curated experiences and activities at ${hotelMeta.name} in ${hotelMeta.location}, Switzerland — Alpine adventures, wellness programmes, cultural immersions and private events.`,
     alternates: {
       canonical: `https://swissnethotels.com/hotels/${hotelMeta.slug || slug}/experiences`,
