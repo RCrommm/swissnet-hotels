@@ -7,5 +7,10 @@
       "maxDuration": 300
     }
   },
-  "crons": []
+  "crons": [
+    {
+      "path": "/api/indexnow",
+      "schedule": "0 9 * * *"
+    }
+  ]
 }
