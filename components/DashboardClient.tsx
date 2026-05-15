@@ -171,11 +171,11 @@ function DualAxisChart({ datasets, labels, height = 160, hotelId }: { datasets: 
         {[0, 0.5, 1].map((t, i) => (
           <g key={i}>
             <text x={pL - 6} y={pT + cH * (1 - t) + 3} textAnchor="end"
-              fill="rgba(42,26,14,0.2)" fontSize="7" fontFamily="Montserrat, sans-serif">
+              fill="rgba(42,26,14,0.5)" fontSize="7.5" fontFamily="Montserrat, sans-serif">
               {Math.round(maxClicks * t)}
             </text>
             <text x={pL + cW + 5} y={pT + cH * (1 - t) + 3} textAnchor="start"
-              fill="rgba(59,130,246,0.25)" fontSize="7" fontFamily="Montserrat, sans-serif">
+              fill="rgba(59,130,246,0.5)" fontSize="7.5" fontFamily="Montserrat, sans-serif">
               {Math.round(maxViews * t)}
             </text>
           </g>
@@ -222,7 +222,7 @@ function DualAxisChart({ datasets, labels, height = 160, hotelId }: { datasets: 
           const idx = labels.indexOf(label)
           return (
             <text key={i} x={cx(idx)} y={H - 4} textAnchor="middle"
-              fill="rgba(42,26,14,0.25)" fontSize="7" fontFamily="Montserrat, sans-serif">
+              fill="rgba(42,26,14,0.5)" fontSize="7.5" fontFamily="Montserrat, sans-serif">
               {label.slice(5)}
             </text>
           )
