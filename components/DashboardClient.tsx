@@ -54,8 +54,41 @@ function LineChart({ datasets, labels, height = 140 }: { datasets: { data: numbe
     </svg>
   )
 }
-function DualAxisChart({ datasets, labels, height = 160 }: { datasets: { data: number[]; color: string; label: string }[]; labels: string[]; height?: number }) {
+function DualAxisChart({ datasets, labels, height = 160, hotelId }: { datasets: { data: number[]; color: string; label: string }[]; labels: string[]; height?: number; hotelId?: string }) {
   const [hoverIdx, setHoverIdx] = useState<number | null>(null)
+  const [markers, setMarkers] = useState<{ idx: number; label: string; type: string }[]>([])
+
+  useEffect(() => {
+    if (!hotelId) return
+    const load = async () => {
+      const { createClient } = await import('@supabase/supabase-js')
+      const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+      const [{ data: faqs }, { data: offers }] = await Promise.all([
+        sb.from('hotel_faq_suggestions').select('page_type, created_at').eq('hotel_id', hotelId).eq('status', 'approved').order('created_at'),
+        sb.from('hotel_offers').select('name, created_at').eq('hotel_id', hotelId).eq('offer_type', 'temporary').eq('is_available', true).order('created_at'),
+      ])
+      const events: { date: string; label: string; type: string }[] = []
+      const seenFaqDates = new Set<string>()
+      for (const f of faqs || []) {
+        const date = f.created_at?.split('T')[0]
+        if (date && !seenFaqDates.has(date)) {
+          seenFaqDates.add(date)
+          events.push({ date, label: 'FAQs updated', type: 'faq' })
+        }
+      }
+      for (const o of offers || []) {
+        const date = o.created_at?.split('T')[0]
+        if (date) events.push({ date, label: o.name || 'Offer published', type: 'offer' })
+      }
+      const result = events.map(e => {
+        const idx = labels.indexOf(e.date)
+        if (idx === -1) return null
+        return { idx, label: e.label, type: e.type }
+      }).filter(Boolean) as { idx: number; label: string; type: string }[]
+      setMarkers(result)
+    }
+    load()
+  }, [hotelId, labels.join(',')])
   const clicks = datasets.find(d => d.label === 'Clicks')?.data || []
   const views = datasets.find(d => d.label === 'Views')?.data || []
   const n = labels.length
@@ -96,11 +129,7 @@ function DualAxisChart({ datasets, labels, height = 160 }: { datasets: { data: n
 
   const xLabels = labels.filter((_, i) => i % Math.ceil(n / 6) === 0)
 
-  const markers = [
-    { idx: Math.floor(n * 0.2), label: 'FAQ added', type: 'faq' },
-    { idx: Math.floor(n * 0.45), label: 'Offer published', type: 'offer' },
-    { idx: Math.floor(n * 0.75), label: 'FAQ added', type: 'faq' },
-  ].filter(m => m.idx < n)
+  
 
   const hoverX = hoverIdx !== null ? cx(hoverIdx) : null
   const hoverClickVal = hoverIdx !== null ? clicks[hoverIdx] : null
@@ -1439,7 +1468,7 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
               <DualAxisChart datasets={[
                 { data: clicksByDay, color: GOLD, label: 'Clicks' },
                 { data: viewsByDay, color: BLUE, label: 'Views' },
-              ]} labels={days} height={160} />
+              ]} labels={days} height={160} hotelId={hotel?.id} />
             </div>
 
             
