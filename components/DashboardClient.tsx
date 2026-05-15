@@ -28,29 +28,88 @@ function SparkLine({ data, color }: { data: number[]; color: string }) {
 }
 
 function LineChart({ datasets, labels, height = 140 }: { datasets: { data: number[]; color: string; label: string }[]; labels: string[]; height?: number }) {
-  const allVals = datasets.flatMap(d => d.data)
-  const max = Math.max(...allVals) || 1
-  const w = 600, h = height
-  const padL = 32, padB = 20, padR = 16, padT = 8
-  const chartW = w - padL - padR
-  const chartH = h - padB - padT
-  const n = datasets[0]?.data?.length || 1
+  const clicks = datasets.find(d => d.label === 'Clicks')?.data || []
+  const views = datasets.find(d => d.label === 'Views')?.data || []
+  const n = labels.length
+  if (n < 2) return null
+
+  const maxClicks = Math.max(...clicks) || 1
+  const maxViews = Math.max(...views) || 1
+
+  const W = 600, H = height + 40
+  const pL = 36, pR = 36, pT = 20, pB = 28
+  const cW = W - pL - pR
+  const cH = H - pT - pB
+
+  const cx = (i: number) => pL + (i / (n - 1)) * cW
+  const cyClicks = (v: number) => pT + cH - (v / maxClicks) * cH
+  const cyViews = (v: number) => pT + cH - (v / maxViews) * cH
+
+  const smoothPath = (pts: [number, number][]) => {
+    let d = `M${pts[0][0]},${pts[0][1]}`
+    for (let i = 1; i < pts.length; i++) {
+      const [x0, y0] = pts[i - 1]
+      const [x1, y1] = pts[i]
+      const cpx = (x0 + x1) / 2
+      d += ` C${cpx},${y0} ${cpx},${y1} ${x1},${y1}`
+    }
+    return d
+  }
+
+  const clickPts: [number, number][] = clicks.map((v, i) => [cx(i), cyClicks(v)])
+  const viewPts: [number, number][] = views.map((v, i) => [cx(i), cyViews(v)])
+
+  const viewsPath = smoothPath(viewPts)
+  const viewsArea = viewsPath + ` L${cx(n-1)},${pT+cH} L${cx(0)},${pT+cH} Z`
+  const clicksPath = smoothPath(clickPts)
+
+  const xLabels = labels.filter((_, i) => i % Math.ceil(n / 6) === 0)
+
   return (
-    <svg width="100%" viewBox={`0 0 ${w} ${h}`} style={{ overflow: 'visible' }}>
+    <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow: 'hidden' }}>
+      <defs>
+        <linearGradient id="viewsFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={BLUE} stopOpacity="0.12" />
+          <stop offset="100%" stopColor={BLUE} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+
+      {[0, 0.5, 1].map((t, i) => (
+        <line key={i} x1={pL} y1={pT + cH * (1 - t)} x2={pL + cW} y2={pT + cH * (1 - t)}
+          stroke="rgba(201,169,76,0.07)" strokeWidth="1" />
+      ))}
+
+      <line x1={pL} y1={pT} x2={pL} y2={pT + cH} stroke="rgba(201,169,76,0.1)" strokeWidth="1" />
+      <line x1={pL} y1={pT + cH} x2={pL + cW} y2={pT + cH} stroke="rgba(201,169,76,0.1)" strokeWidth="1" />
+
       {[0, 0.5, 1].map((t, i) => (
         <g key={i}>
-          <line x1={padL} y1={padT + chartH * (1 - t)} x2={w - padR} y2={padT + chartH * (1 - t)} stroke={BORDER} strokeWidth="1" />
-          <text x={padL - 6} y={padT + chartH * (1 - t) + 4} textAnchor="end" fill={TEXT_MUTED} fontSize="9">{Math.round(max * t)}</text>
+          <text x={pL - 6} y={pT + cH * (1 - t) + 4} textAnchor="end"
+            fill={TEXT_MUTED} fontSize="8" fontFamily="Montserrat, sans-serif">
+            {Math.round(maxClicks * t)}
+          </text>
+          <text x={pL + cW + 6} y={pT + cH * (1 - t) + 4} textAnchor="start"
+            fill="rgba(55,138,221,0.5)" fontSize="8" fontFamily="Montserrat, sans-serif">
+            {Math.round(maxViews * t)}
+          </text>
         </g>
       ))}
-      {datasets.map((ds, si) => {
-        if (n < 2) return null
-        const pts = ds.data.map((v, i) => `${padL + (i / (n - 1)) * chartW},${padT + chartH - (v / max) * chartH}`).join(' ')
-        return <polyline key={si} points={pts} fill="none" stroke={ds.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      })}
-      {labels.filter((_, i) => i % Math.ceil(n / 5) === 0).map((label, i) => {
+
+      <path d={viewsArea} fill="url(#viewsFill)" />
+      <path d={viewsPath} fill="none" stroke={BLUE} strokeWidth="1.5"
+        strokeLinecap="round" strokeLinejoin="round" opacity="0.7" />
+
+      <path d={clicksPath} fill="none" stroke={GOLD} strokeWidth="1.5"
+        strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
+
+      {xLabels.map((label, i) => {
         const idx = labels.indexOf(label)
-        return <text key={i} x={padL + (idx / (n - 1)) * chartW} y={h - 4} textAnchor="middle" fill={TEXT_MUTED} fontSize="8">{label.slice(5)}</text>
+        return (
+          <text key={i} x={cx(idx)} y={H - 4} textAnchor="middle"
+            fill={TEXT_MUTED} fontSize="7.5" fontFamily="Montserrat, sans-serif">
+            {label.slice(5)}
+          </text>
+        )
       })}
     </svg>
   )
@@ -1249,18 +1308,19 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', marginBottom: '1.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: 0 }}>Performance Over Time</p>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                  {[{ label: 'Clicks', color: GOLD }, { label: 'Leads', color: GREEN }, { label: 'Views', color: BLUE }].map(l => (
-                    <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      <div style={{ width: 8, height: 2, background: l.color, borderRadius: 1 }} />
-                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED }}>{l.label}</span>
-                    </div>
-                  ))}
-                </div>
+                
+              </div>
+              <div style={{ display: 'flex', gap: '1.25rem', marginBottom: '0.75rem' }}>
+                {[{ label: 'Clicks', color: GOLD }, { label: 'Views', color: BLUE }].map(l => (
+                  <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <div style={{ width: 18, height: 2, background: l.color, borderRadius: 2, opacity: l.label === 'Views' ? 0.7 : 0.9 }} />
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{l.label}</span>
+                    {l.label === 'Views' && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.48rem', color: 'rgba(55,138,221,0.5)', marginLeft: 2 }}>right axis</span>}
+                  </div>
+                ))}
               </div>
               <LineChart datasets={[
                 { data: clicksByDay, color: GOLD, label: 'Clicks' },
-                { data: bookingsByDay, color: GREEN, label: 'Conversions' },
                 { data: viewsByDay, color: BLUE, label: 'Views' },
               ]} labels={days} height={160} />
             </div>
