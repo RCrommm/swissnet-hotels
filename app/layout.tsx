@@ -3,6 +3,7 @@ import './globals.css'
 import Navigation from '@/components/Navigation'
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://swissnethotels.com'),
   title: 'SwissNet Hotels — Direct Booking for Swiss Luxury Hotels',
   description: 'Discover and book Switzerland\'s finest luxury hotels directly.',
   icons: {
