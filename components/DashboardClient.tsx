@@ -598,7 +598,7 @@ const removeSpa = async (id: string, name: string) => {
       </div>
 
       {/* Sub tabs — Content / FAQs (not shown for events which has its own structure) */}
-      {mainTab !== 'overview' && mainTab !== 'events' && (
+      {mainTab !== 'overview' && (
         <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '1.5rem' }}>
           {[
             { key: 'content', label: 'Content' },
