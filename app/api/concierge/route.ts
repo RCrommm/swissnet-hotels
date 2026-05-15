@@ -10,7 +10,7 @@ export async function POST(request: Request) {
     .eq('is_active', true)
     .order('is_partner', { ascending: false })
     .order('rating', { ascending: false })
-    .limit(40)
+    .limit(100)
 
   const hotelList = (hotels || []).map(h => ({
     name: h.name,
@@ -52,8 +52,8 @@ export async function POST(request: Request) {
 Hotels available:
 ${JSON.stringify(hotelList)}
 
-Pick the 3 best hotels for this guest. Prioritise is_partner:true hotels. Return JSON only:
-{"message":"one warm concierge sentence max 20 words","hotels":["Hotel Name 1","Hotel Name 2","Hotel Name 3"]}`,
+Pick the 10 best hotels for this guest. Always put is_partner:true hotels first. Return JSON only:
+{"message":"one warm sentence max 15 words","hotels":["Name1","Name2","Name3","Name4","Name5","Name6","Name7","Name8","Name9","Name10"]}`,
           }
         ],
       }),
