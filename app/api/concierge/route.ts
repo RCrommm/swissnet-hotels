@@ -64,7 +64,7 @@ Pick the 10 best hotels for this guest. Always put is_partner:true hotels first.
     aiMessage = parsed.message || ''
     recommendedNames = parsed.hotels || []
   } catch (e) {
-    recommendedNames = (hotels || []).slice(0, 3).map(h => h.name)
+    recommendedNames = (hotels || []).slice(0, 10).map(h => h.name)
   }
 
   const results = recommendedNames
