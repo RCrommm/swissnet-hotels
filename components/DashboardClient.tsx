@@ -1217,28 +1217,8 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
               <KPICard label="Profile Views" value={recentViews.length} sub={`last ${period} days`} color={BLUE} spark={viewsByDay} />
             </div>
 
-            {/* Chart */}
-            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', marginBottom: '1.5rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: 0 }}>Performance Over Time</p>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                  {[{ label: 'Clicks', color: GOLD }, { label: 'Leads', color: GREEN }, { label: 'Views', color: BLUE }].map(l => (
-                    <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      <div style={{ width: 8, height: 2, background: l.color, borderRadius: 1 }} />
-                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED }}>{l.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <LineChart datasets={[
-  { data: clicksByDay, color: GOLD, label: 'Clicks' },
-  { data: bookingsByDay, color: GREEN, label: 'Conversions' },
-  { data: viewsByDay, color: BLUE, label: 'Views' },
-]} labels={days} height={160} />
-            </div>
-
-            {/* Traffic sources + Leads table */}
-            <div style={{ marginBottom: '1.5rem' }}>
+            {/* Traffic Sources + Country side by side */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
               <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem' }}>
                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 1rem' }}>Traffic Sources</p>
                 {Object.keys(sourceBreakdown).length === 0 ? (
@@ -1259,11 +1239,30 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
                   </div>
                 )}
               </div>
-                <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', marginTop: '1rem' }}>
+              <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem' }}>
                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 1rem' }}>Visitors by Country</p>
                 <CountryBreakdown hotelId={hotel?.id} period={period} />
               </div>
-              
+            </div>
+
+            {/* Chart */}
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: 0 }}>Performance Over Time</p>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  {[{ label: 'Clicks', color: GOLD }, { label: 'Leads', color: GREEN }, { label: 'Views', color: BLUE }].map(l => (
+                    <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <div style={{ width: 8, height: 2, background: l.color, borderRadius: 1 }} />
+                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED }}>{l.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <LineChart datasets={[
+                { data: clicksByDay, color: GOLD, label: 'Clicks' },
+                { data: bookingsByDay, color: GREEN, label: 'Conversions' },
+                { data: viewsByDay, color: BLUE, label: 'Views' },
+              ]} labels={days} height={160} />
             </div>
 
             
