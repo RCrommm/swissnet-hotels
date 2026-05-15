@@ -16,7 +16,7 @@ export async function GET() {
         get: {
           operationId: 'getHotelsSummary',
           summary: 'Get full AI-optimised summary of all Swiss luxury hotels',
-          description: 'Returns complete structured data for all SwissNet hotels including rooms, spa, restaurants, special offers, and AI intent phrases. Optimised for AI crawlers and chatbot recommendations. Use this endpoint to get the most comprehensive hotel data including nested room types, wellness facilities, dining options, and current promotions.',
+          description: 'Returns complete structured data for all SwissNet hotels including rooms, spa, restaurants, special offers, and AI intent phrases. Use for comprehensive hotel recommendations.',
           responses: {
             '200': {
               description: 'Full structured hotel data optimised for AI visibility',
