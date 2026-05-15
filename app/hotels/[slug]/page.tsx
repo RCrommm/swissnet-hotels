@@ -44,6 +44,23 @@ function SchemaMarkup({ hotel, keywords, roomTypes, faqs, restaurants, spaData, 
   const hotelId = `https://swissnethotels.com/hotels/${hotel.slug || hotel.id}#hotel`
   const pageUrl = `https://swissnethotels.com/hotels/${hotel.slug || hotel.id}`
 
+  const regionSlug = hotel.region?.toLowerCase().replace(/\s+/g, '-')
+  const categorySlugMap: Record<string, string> = {
+    'Ski Resort': 'ski-hotels-switzerland',
+    'Wellness Retreat': 'wellness-hotels-switzerland',
+    'City Luxury': 'luxury-hotels-switzerland',
+  }
+  const categoryBestPage = categorySlugMap[hotel.category]
+  const relatedPages = [
+    regionSlug && `https://swissnethotels.com/destinations/${regionSlug}`,
+    regionSlug && `https://swissnethotels.com/best/luxury-hotels-${regionSlug}`,
+    categoryBestPage && `https://swissnethotels.com/best/${categoryBestPage}`,
+    `https://swissnethotels.com/best/luxury-hotels-switzerland`,
+    hotel.romantic && `https://swissnethotels.com/hotels/${hotel.slug || hotel.id}/honeymoon`,
+    hotel.wellness_focus && `https://swissnethotels.com/hotels/${hotel.slug || hotel.id}/wellness`,
+    hotel.business_hotel && `https://swissnethotels.com/hotels/${hotel.slug || hotel.id}/business`,
+  ].filter(Boolean) as string[]
+
   // Separate memberships from actual awards
   const membershipCategories = ['membership']
   const memberships = (awards || []).filter((a: any) => membershipCategories.includes(a.category))
@@ -63,6 +80,15 @@ function SchemaMarkup({ hotel, keywords, roomTypes, faqs, restaurants, spaData, 
         mainEntity: { '@id': hotelId },
         breadcrumb: { '@id': `${pageUrl}#breadcrumb` },
         dateModified: new Date().toISOString().split('T')[0],
+        relatedLink: relatedPages,
+        significantLink: [
+          `${pageUrl}/rooms`,
+          `${pageUrl}/dining`,
+          `${pageUrl}/spa`,
+          `${pageUrl}/experiences`,
+          `${pageUrl}/events`,
+          ...relatedPages,
+        ],
       },
 
     // BreadcrumbList
@@ -141,6 +167,10 @@ function SchemaMarkup({ hotel, keywords, roomTypes, faqs, restaurants, spaData, 
       award: actualAwards.length > 0 ? actualAwards.map((a: any) => a.award_name) : undefined,
       keywords: [...(hotel.amenities || []), ...(hotel.best_for || []), hotel.region, hotel.category, hotel.name, 'luxury hotel Switzerland', 'hôtel de luxe Suisse', 'Luxushotel Schweiz', ...keywords.map((k: any) => k.keyword)].filter(Boolean).join(', '),
       sameAs: [hotel.direct_booking_url, hotel.tripadvisor_url, hotel.booking_url, hotel.google_maps_url, hotel.wikipedia_url, hotel.michelin_url, hotel.lhw_url, hotel.swiss_deluxe_url].filter(Boolean),
+      subjectOf: relatedPages.map((url: string) => ({
+        '@type': 'WebPage',
+        url,
+      })),
       containsPlace: [
         ...(roomTypes || []).map((rt: any) => ({
           '@type': 'HotelRoom',

@@ -302,6 +302,26 @@ const PROMPT_PAGES: Record<string, {
       { q: 'How do I get to Andermatt?', a: 'Andermatt is located at the heart of the Swiss Alps at the junction of the Gotthard, Furka and Oberalp passes. By train, it is approximately 2 hours from Zurich and accessible via the famous Glacier Express from Zermatt. By car, it is reached via the A2 motorway through the Gotthard Tunnel from Zurich (approximately 1.5 hours) or Lugano (approximately 1 hour).' },
     ]
   },
+  'luxury-hotels-crans-montana': {
+    title: 'Best Luxury Hotels in Crans-Montana, Switzerland 2026',
+    h1: 'Best Luxury Hotels in Crans-Montana',
+    description: 'Crans-Montana\'s finest luxury hotels on the sunny balcony of the Swiss Alps — world-class skiing, golf and Alpine wellness.',
+    region: 'Crans-Montana',
+    faqs: [
+      { q: 'What is the best luxury hotel in Crans-Montana?', a: 'Crans Ambassador is one of Crans-Montana\'s finest luxury hotels, combining excellent ski access with panoramic Rhône Valley views and exceptional wellness facilities.' },
+      { q: 'What makes Crans-Montana special?', a: 'Crans-Montana is known as the sunniest ski resort in Switzerland, with exceptional sunshine hours, the FIS World Cup downhill course and a sophisticated resort atmosphere.' },
+    ]
+  },
+  'luxury-hotels-flims': {
+    title: 'Best Luxury Hotels in Flims, Switzerland 2026',
+    h1: 'Best Luxury Hotels in Flims',
+    description: 'Flims\'s finest luxury hotels in the heart of Graubünden — surrounded by the Rhine Gorge, alpine lakes and the Weisse Arena ski domain.',
+    region: 'Flims',
+    faqs: [
+      { q: 'What is the best luxury hotel in Flims?', a: 'Hotel Adula is the finest luxury hotel in Flims, offering exceptional wellness facilities, farm-to-table dining and direct access to the stunning Flims Laax natural landscape.' },
+      { q: 'Why stay in Flims?', a: 'Flims offers a unique combination of the Weisse Arena ski domain, the turquoise Caumasee lake, the dramatic Rhine Gorge and some of Switzerland\'s most pristine Alpine scenery.' },
+    ]
+  },
   'luxury-hotels-montreux': {
     title: 'Best Luxury Hotels in Montreux, Switzerland 2026',
     h1: 'Best Luxury Hotels in Montreux',
