@@ -7,11 +7,10 @@ export const metadata: Metadata = {
   description: 'Discover and book Switzerland\'s finest luxury hotels directly.',
   icons: {
     icon: [
-      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
-      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
       { url: '/favicon.ico' },
+      { url: '/icon.png', type: 'image/png', sizes: '512x512' },
     ],
-    apple: '/apple-touch-icon.png',
+    apple: '/apple-icon.png',
   },
   verification: {
     google: 'sIX8jPq9VMJjlEpiqXFd2gMtNUVheU-w6hmVCC661JI',
