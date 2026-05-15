@@ -342,7 +342,7 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
   const [offerForm, setOfferForm] = useState<any>(null)
   const [experiences, setExperiences] = useState<any[]>([])
   const [expForm, setExpForm] = useState<any>(null)
-  const [spaContent, setSpaContent] = useState<any>(null)
+  const [spaContent, setSpaContent] = useState<any[]>([])
   const [spaForm, setSpaForm] = useState<any>(null)
   const [overviewFaqs, setOverviewFaqs] = useState<{q: string, a: string}[]>([])
   const [loaded, setLoaded] = useState(false)
@@ -367,8 +367,8 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
       setExperiences(expData || [])
 
       const { data: spaData } = await sb.from('hotel_spa')
-        .select('*').eq('hotel_id', hotelId).eq('is_available', true).single()
-      setSpaContent(spaData || null)
+        .select('*').eq('hotel_id', hotelId).eq('is_available', true).order('created_at')
+      setSpaContent(spaData || [])
 
       const { data: contentData } = await sb.from('hotel_content')
         .select('faqs').eq('hotel_id', hotelId).single()
@@ -475,19 +475,32 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
       opening_hours: spaForm.opening_hours || null,
       is_available: true,
     }
-    if (spaContent) {
-      await sb.from('hotel_spa').update(payload).eq('hotel_id', hotelId)
+    
+    if (spaForm.id) {
+      await sb.from('hotel_spa').update(payload).eq('id', spaForm.id)
+      setSpaContent((prev: any[]) => prev.map(s => s.id === spaForm.id ? { ...s, ...payload } : s))
     } else {
-      await sb.from('hotel_spa').insert(payload)
+      const { data } = await sb.from('hotel_spa').insert(payload).select().single()
+      if (data) setSpaContent((prev: any[]) => [...prev, data])
     }
-    setSpaContent((prev: any) => ({ ...prev, ...payload }))
     setSpaForm(null)
     await notify('Spa content updated', spaForm.name || 'Spa')
     setMsg('Spa content updated and live in schema.')
     setSaving(false)
     setTimeout(() => setMsg(''), 4000)
   }
+const removeSpa = async (id: string, name: string) => {
+  const { createClient } = await import('@supabase/supabase-js')
+  const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
 
+  await sb.from('hotel_spa').update({ is_available: false }).eq('id', id)
+
+  setSpaContent((prev: any[]) => prev.filter(s => s.id !== id))
+  await notify('Spa venue removed', name)
+
+  setMsg('Removed.')
+  setTimeout(() => setMsg(''), 3000)
+}
   const saveExperience = async () => {
     if (!expForm?.name?.trim() || !expForm?.description?.trim()) return
     setSaving(true)
@@ -711,10 +724,10 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
             <div>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Spa & Wellness</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Edit your spa description and treatments · Changes update live in schema</p>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Spa & Wellness Venues</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Add spa, gym, hair salon and other wellness venues · Changes update live in schema</p>
             </div>
-            {!spaForm && !spaContent && (
+            {!spaForm && (
               <button onClick={() => setSpaForm({ name: '', description: '', treatments: '', wellness_philosophy: '', size_sqm: '', pool: false, sauna: false, hammam: false, price_from: '', opening_hours: '' })}
                 style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer', flexShrink: 0, marginLeft: '1rem' }}>
                 + Add
@@ -722,24 +735,20 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
             )}
           </div>
 
-          {spaForm ? (
-            <div style={{ background: WHITE, border: '1px solid ' + GOLD + '40', borderRadius: 10, padding: '1.25rem 1.5rem' }}>
+          {spaForm && (
+            <div style={{ background: WHITE, border: '1px solid ' + GOLD + '40', borderRadius: 10, padding: '1.25rem 1.5rem', marginBottom: '1.25rem' }}>
               <div style={{ display: 'grid', gap: '0.75rem' }}>
                 <div>
-                  <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Spa Name *</label>
-                  <input value={spaForm.name} onChange={e => setSpaForm((p: any) => ({ ...p, name: e.target.value }))} placeholder="e.g. Spa Nescens" style={inp} />
+                  <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Name *</label>
+                  <input value={spaForm.name} onChange={e => setSpaForm((p: any) => ({ ...p, name: e.target.value }))} placeholder="e.g. Spa Nescens · Gym · Hair Salon" style={inp} />
                 </div>
                 <div>
                   <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Description</label>
-                  <textarea value={spaForm.description} onChange={e => setSpaForm((p: any) => ({ ...p, description: e.target.value }))} rows={4} style={{ ...inp, resize: 'vertical' }} />
+                  <textarea value={spaForm.description} onChange={e => setSpaForm((p: any) => ({ ...p, description: e.target.value }))} rows={3} style={{ ...inp, resize: 'vertical' }} />
                 </div>
                 <div>
-                  <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Treatments</label>
-                  <textarea value={spaForm.treatments} onChange={e => setSpaForm((p: any) => ({ ...p, treatments: e.target.value }))} placeholder="e.g. Deep tissue massage, Hot stone therapy, Alpine herb wrap..." rows={3} style={{ ...inp, resize: 'vertical' }} />
-                </div>
-                <div>
-                  <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Wellness Philosophy</label>
-                  <textarea value={spaForm.wellness_philosophy} onChange={e => setSpaForm((p: any) => ({ ...p, wellness_philosophy: e.target.value }))} placeholder="Your spa's approach to wellness..." rows={2} style={{ ...inp, resize: 'vertical' }} />
+                  <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Treatments / Services</label>
+                  <textarea value={spaForm.treatments} onChange={e => setSpaForm((p: any) => ({ ...p, treatments: e.target.value }))} placeholder="e.g. Deep tissue massage, Hot stone therapy..." rows={2} style={{ ...inp, resize: 'vertical' }} />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
                   <div>
@@ -756,11 +765,7 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '1.5rem' }}>
-                  {[
-                    { key: 'pool', label: 'Pool' },
-                    { key: 'sauna', label: 'Sauna' },
-                    { key: 'hammam', label: 'Hammam' },
-                  ].map(f => (
+                  {[{ key: 'pool', label: 'Pool' }, { key: 'sauna', label: 'Sauna' }, { key: 'hammam', label: 'Hammam' }].map(f => (
                     <label key={f.key} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT }}>
                       <input type="checkbox" checked={spaForm[f.key] || false} onChange={e => setSpaForm((p: any) => ({ ...p, [f.key]: e.target.checked }))} style={{ accentColor: GOLD }} />
                       {f.label}
@@ -769,53 +774,44 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-                <button onClick={saveSpa} disabled={saving} style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>{saving ? 'Saving...' : 'Save & Publish'}</button>
+                <button onClick={saveSpa} disabled={saving} style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>{saving ? 'Saving...' : 'Save'}</button>
                 <button onClick={() => setSpaForm(null)} style={{ background: 'transparent', color: TEXT_MUTED, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', padding: '0.55rem 1rem', border: '1px solid ' + BORDER, borderRadius: 4, cursor: 'pointer' }}>Cancel</button>
               </div>
             </div>
-          ) : spaContent ? (
-            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1rem 1.25rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: TEXT, margin: 0 }}>{spaContent.name}</p>
+          )}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+            {spaContent.length === 0 && !spaForm && (
+              <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '2.5rem', textAlign: 'center' }}>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>No wellness venues yet</p>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0 }}>Add your spa, gym, hair salon and other wellness facilities</p>
+              </div>
+            )}
+            {spaContent.map((spa: any) => (
+              <div key={spa.id} style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1rem 1.25rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: TEXT, margin: 0 }}>{spa.name}</p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.3rem', flexWrap: 'wrap' }}>
+                      {spa.size_sqm && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>{spa.size_sqm} m²</span>}
+                      {spa.pool && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>Pool</span>}
+                      {spa.sauna && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>Sauna</span>}
+                      {spa.hammam && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>Hammam</span>}
+                      {spa.price_from && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: GOLD, fontWeight: 600 }}>From CHF {spa.price_from}</span>}
+                    </div>
+                    {spa.description && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: '0 0 0.25rem', lineHeight: 1.5 }}>{spa.description}</p>}
+                    {spa.treatments && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0 }}><strong style={{ color: TEXT }}>Services:</strong> {Array.isArray(spa.treatments) ? spa.treatments.join(', ') : spa.treatments}</p>}
                   </div>
-                  <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-                    {spaContent.size_sqm && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>{spaContent.size_sqm} m²</span>}
-                    {spaContent.pool && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>Pool</span>}
-                    {spaContent.sauna && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>Sauna</span>}
-                    {spaContent.hammam && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>Hammam</span>}
+                  <div style={{ display: 'flex', gap: '0.4rem', marginLeft: '1rem', flexShrink: 0 }}>
+                    <button onClick={() => setSpaForm({ ...spa, treatments: Array.isArray(spa.treatments) ? spa.treatments.join(', ') : (spa.treatments || '') })} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, padding: '0.28rem 0.65rem', borderRadius: 4, cursor: 'pointer' }}>Edit</button>
+                    <button onClick={() => removeSpa(spa.id, spa.name)} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, padding: '0.28rem 0.65rem', borderRadius: 4, cursor: 'pointer' }}>Remove</button>
                   </div>
-                  {spaContent.description && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: '0 0 0.3rem', lineHeight: 1.6 }}>{spaContent.description}</p>}
-                  {spaContent.treatments && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: '0 0 0.25rem' }}><strong style={{ color: TEXT }}>Treatments:</strong> {Array.isArray(spaContent.treatments) ? spaContent.treatments.join(', ') : spaContent.treatments}</p>}
-                  {spaContent.wellness_philosophy && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0, fontStyle: 'italic' }}>{spaContent.wellness_philosophy}</p>}
-                </div>
-                <div style={{ display: 'flex', gap: '0.4rem', marginLeft: '1rem', flexShrink: 0 }}>
-                  <button onClick={() => setSpaForm({
-                    name: spaContent?.name || '',
-                    description: spaContent?.description || '',
-                    treatments: Array.isArray(spaContent?.treatments) ? spaContent.treatments.join(', ') : (spaContent?.treatments || ''),
-                    wellness_philosophy: spaContent?.wellness_philosophy || '',
-                    size_sqm: spaContent?.size_sqm || '',
-                    pool: spaContent?.pool || false,
-                    sauna: spaContent?.sauna || false,
-                    hammam: spaContent?.hammam || false,
-                    price_from: spaContent?.price_from || '',
-                    opening_hours: spaContent?.opening_hours || '',
-                  })} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, padding: '0.28rem 0.65rem', borderRadius: 4, cursor: 'pointer' }}>Edit</button>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '2.5rem', textAlign: 'center' }}>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>No spa added yet</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: '0 0 1rem' }}>Add your spa details to appear in AI search and schema</p>
-              <button onClick={() => setSpaForm({ name: '', description: '', treatments: '', wellness_philosophy: '', size_sqm: '', pool: false, sauna: false, hammam: false, price_from: '', opening_hours: '' })}
-                style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
-                + Add Spa
-              </button>
-            </div>
-          )}
+            ))}
+          </div>
         </div>
       )}
             
@@ -1307,6 +1303,11 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
                   const score = dayQueries.length > 0 ? Math.round((appeared / dayQueries.length) * 100) : null
                   return { date: d, score }
                 }).filter((d): d is { date: string, score: number } => d.score !== null)
+                if (realPoints.length === 0) return (
+  <div style={{ height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED }}>No data yet for this platform</p>
+  </div>
+)
 
                 // Build full calendar for selected period
                 const startDate = chartPeriod === 365 ? new Date(realPoints[0].date) : new Date(Math.min(...realPoints.map(p => new Date(p.date).getTime()), new Date(cutoff).getTime()))
@@ -1318,11 +1319,7 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
                   calendarDays.push(d.toISOString().split('T')[0])
                 }
 
-                if (realPoints.length === 0) return (
-                  <div style={{ height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED }}>No data yet for this platform</p>
-                  </div>
-                )
+                
 
                 if (realPoints.length === 1) return (
                   <div style={{ height: 160, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
@@ -1359,7 +1356,8 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
 
                 // X axis labels — evenly spaced calendar dates
                 const labelCount = Math.min(6, calendarDays.length)
-                const xLabels = calendarDays.filter((_, i) => i % Math.floor(calendarDays.length / (labelCount - 1)) === 0)
+const labelStep = Math.max(1, Math.floor(calendarDays.length / Math.max(labelCount - 1, 1)))
+const xLabels = calendarDays.filter((_, i) => i % labelStep === 0)
 
                 return (
                   <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow: 'visible' }}>
