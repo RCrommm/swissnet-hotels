@@ -26,8 +26,35 @@ function SparkLine({ data, color }: { data: number[]; color: string }) {
     </svg>
   )
 }
-
 function LineChart({ datasets, labels, height = 140 }: { datasets: { data: number[]; color: string; label: string }[]; labels: string[]; height?: number }) {
+  const allVals = datasets.flatMap(d => d.data)
+  const max = Math.max(...allVals) || 1
+  const w = 600, h = height
+  const padL = 32, padB = 20, padR = 16, padT = 8
+  const chartW = w - padL - padR
+  const chartH = h - padB - padT
+  const n = datasets[0]?.data?.length || 1
+  return (
+    <svg width="100%" viewBox={`0 0 ${w} ${h}`} style={{ overflow: 'visible' }}>
+      {[0, 0.5, 1].map((t, i) => (
+        <g key={i}>
+          <line x1={padL} y1={padT + chartH * (1 - t)} x2={w - padR} y2={padT + chartH * (1 - t)} stroke={BORDER} strokeWidth="1" />
+          <text x={padL - 6} y={padT + chartH * (1 - t) + 4} textAnchor="end" fill={TEXT_MUTED} fontSize="9">{Math.round(max * t)}</text>
+        </g>
+      ))}
+      {datasets.map((ds, si) => {
+        if (n < 2) return null
+        const pts = ds.data.map((v, i) => `${padL + (i / (n - 1)) * chartW},${padT + chartH - (v / max) * chartH}`).join(' ')
+        return <polyline key={si} points={pts} fill="none" stroke={ds.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      })}
+      {labels.filter((_, i) => i % Math.ceil(n / 5) === 0).map((label, i) => {
+        const idx = labels.indexOf(label)
+        return <text key={i} x={padL + (idx / (n - 1)) * chartW} y={h - 4} textAnchor="middle" fill={TEXT_MUTED} fontSize="8">{label.slice(5)}</text>
+      })}
+    </svg>
+  )
+}
+function DualAxisChart({ datasets, labels, height = 140 }: { datasets: { data: number[]; color: string; label: string }[]; labels: string[]; height?: number }) {
   const clicks = datasets.find(d => d.label === 'Clicks')?.data || []
   const views = datasets.find(d => d.label === 'Views')?.data || []
   const n = labels.length
@@ -1004,7 +1031,7 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
                   ))}
                 </div>
               </div>
-              <LineChart datasets={[{ data: clicksByDay, color: GOLD, label: 'Clicks' }, { data: viewsByDay, color: BLUE, label: 'Views' }]} labels={days} />
+              <LineChart datasets={[{ data: clicksByDay, color: GOLD, label: 'Clicks' }, { data: bookingsByDay, color: GREEN, label: 'Conversions' }]} labels={days} />
             </div>
 
             {/* Key insight */}
@@ -1319,7 +1346,7 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
                   </div>
                 ))}
               </div>
-              <LineChart datasets={[
+              <DualAxisChart datasets={[
                 { data: clicksByDay, color: GOLD, label: 'Clicks' },
                 { data: viewsByDay, color: BLUE, label: 'Views' },
               ]} labels={days} height={160} />
