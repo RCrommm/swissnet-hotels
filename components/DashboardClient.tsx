@@ -45,7 +45,7 @@ function LineChart({ datasets, labels, height = 140 }: { datasets: { data: numbe
   const cyClicks = (v: number) => pT + cH - (v / maxClicks) * cH
   const cyViews = (v: number) => pT + cH - (v / maxViews) * cH
 
-  const smoothPath = (pts: [number, number][]) => {
+  const smoothPath = (pts: Array<[number, number]>) => {
     let d = `M${pts[0][0]},${pts[0][1]}`
     for (let i = 1; i < pts.length; i++) {
       const [x0, y0] = pts[i - 1]
@@ -56,8 +56,8 @@ function LineChart({ datasets, labels, height = 140 }: { datasets: { data: numbe
     return d
   }
 
-  const clickPts: [number, number][] = clicks.map((v, i) => [cx(i), cyClicks(v)])
-  const viewPts: [number, number][] = views.map((v, i) => [cx(i), cyViews(v)])
+  const clickPts = clicks.map((v, i): [number, number] => [cx(i), cyClicks(v)])
+  const viewPts = views.map((v, i): [number, number] => [cx(i), cyViews(v)])
 
   const viewsPath = smoothPath(viewPts)
   const viewsArea = viewsPath + ` L${cx(n-1)},${pT+cH} L${cx(0)},${pT+cH} Z`
