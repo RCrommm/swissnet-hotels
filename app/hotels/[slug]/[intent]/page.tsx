@@ -59,7 +59,21 @@ const INTENTS: Record<string, {
     ],
   },
 }
-
+export async function generateMetadata({ params }: { params: Promise<{ slug: string; intent: string }> }) {
+  const { slug, intent } = await params
+  const intentData = INTENTS[intent]
+  if (!intentData) return {}
+  const { data: hotel } = await supabase.from('hotels').select('name, location, slug').or(`slug.eq.${slug},id.eq.${slug}`).single()
+  if (!hotel) return {}
+  const hotelUrl = (hotel as any).slug || slug
+  return {
+    title: `${hotel.name} for ${intentData.label} — ${hotel.location}, Switzerland | SwissNet Hotels`,
+    description: intentData.description(hotel.name, hotel.location),
+    alternates: {
+      canonical: `https://swissnethotels.com/hotels/${hotelUrl}/${intent}`,
+    },
+  }
+}
 export async function generateStaticParams() {
   const { data: hotels } = await supabase
     .from('hotels')

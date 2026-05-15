@@ -2,6 +2,13 @@ import Link from 'next/link'
 import ContactForm from '@/components/ContactForm'
 import Navigation from '@/components/Navigation'
 
+export const metadata = {
+  title: 'SwissNet Hotels — AI Visibility for Swiss Luxury Hotels',
+  description: 'SwissNet helps luxury Swiss hotels appear in ChatGPT, Perplexity and Google AI search. Drive direct bookings and reduce OTA dependence.',
+  alternates: {
+    canonical: 'https://swissnethotels.com',
+  },
+}
 export default async function HomePage() {
   const gold = '#C9A84C'
   const bg = '#492816'
