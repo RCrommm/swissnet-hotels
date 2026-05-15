@@ -714,6 +714,12 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Spa & Wellness</p>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Edit your spa description and treatments · Changes update live in schema</p>
             </div>
+            {!spaForm && !spaContent && (
+              <button onClick={() => setSpaForm({ name: '', description: '', treatments: '', wellness_philosophy: '', size_sqm: '', pool: false, sauna: false, hammam: false, price_from: '', opening_hours: '' })}
+                style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer', flexShrink: 0, marginLeft: '1rem' }}>
+                + Add
+              </button>
+            )}
           </div>
 
           {spaForm ? (
@@ -813,7 +819,6 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string, hotel
         </div>
       )}
             
-
       {/* ── EXPERIENCES CONTENT ── */}
       {mainTab === 'experiences' && subTab === 'content' && (
         <div>
