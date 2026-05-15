@@ -4,44 +4,13 @@ import { supabase } from '@/lib/supabase'
 export async function POST(request: Request) {
   const { message, history } = await request.json()
 
-  const lowerMsg = message.toLowerCase()
-
-  const regions: Record<string, string> = {
-    'geneva': 'Geneva', 'genève': 'Geneva', 'zurich': 'Zurich', 'zürich': 'Zurich',
-    'zermatt': 'Zermatt', 'interlaken': 'Interlaken', 'davos': 'Davos',
-    'st. moritz': 'St. Moritz', 'st moritz': 'St. Moritz', 'verbier': 'Verbier',
-    'gstaad': 'Gstaad', 'lucerne': 'Lucerne', 'bern': 'Bern', 'flims': 'Flims',
-    'crans-montana': 'Crans-Montana', 'crans montana': 'Crans-Montana',
-    'ascona': 'Ascona', 'lugano': 'Lugano', 'andermatt': 'Andermatt',
-  }
-
-  let detectedRegion = ''
-  for (const [key, val] of Object.entries(regions)) {
-    if (lowerMsg.includes(key)) { detectedRegion = val; break }
-  }
-
-  const maxRateMatch = message.match(/chf\s*(\d+)/i) || message.match(/under\s*(\d+)/i) || message.match(/budget\s*(\d+)/i)
-  const maxRate = maxRateMatch ? parseInt(maxRateMatch[1]) : 99999
-
-  let dbQuery = supabase
+  const { data: hotels } = await supabase
     .from('hotels')
-    .select('id, name, slug, location, region, category, description, nightly_rate_chf, rating, images, direct_booking_url, has_spa, has_michelin_restaurant, ski_in_ski_out, lake_view, mountain_view, family_friendly, pet_friendly, exclusive_offer, amenities, best_for')
+    .select('id, name, slug, location, region, category, description, nightly_rate_chf, rating, images, direct_booking_url, has_spa, has_michelin_restaurant, ski_in_ski_out, lake_view, mountain_view, family_friendly, pet_friendly, exclusive_offer, amenities, best_for, is_partner')
     .eq('is_active', true)
-    .lte('nightly_rate_chf', maxRate)
     .order('is_partner', { ascending: false })
     .order('rating', { ascending: false })
-    .limit(20)
-
-  if (detectedRegion) dbQuery = dbQuery.ilike('region', `%${detectedRegion}%`)
-  if (lowerMsg.includes('spa') || lowerMsg.includes('wellness')) dbQuery = dbQuery.eq('has_spa', true)
-  if (lowerMsg.includes('michelin')) dbQuery = dbQuery.eq('has_michelin_restaurant', true)
-  if (lowerMsg.includes('ski')) dbQuery = dbQuery.eq('ski_in_ski_out', true)
-  if (lowerMsg.includes('lake')) dbQuery = dbQuery.eq('lake_view', true)
-  if (lowerMsg.includes('mountain') || lowerMsg.includes('matterhorn') || lowerMsg.includes('alps')) dbQuery = dbQuery.eq('mountain_view', true)
-  if (lowerMsg.includes('family') || lowerMsg.includes('children') || lowerMsg.includes('kids')) dbQuery = dbQuery.eq('family_friendly', true)
-  if (lowerMsg.includes('pet') || lowerMsg.includes('dog')) dbQuery = dbQuery.eq('pet_friendly', true)
-
-  const { data: hotels } = await dbQuery
+    .limit(40)
 
   const hotelList = (hotels || []).map(h => ({
     name: h.name,
@@ -50,11 +19,20 @@ export async function POST(request: Request) {
     category: h.category,
     rating: h.rating,
     price: h.nightly_rate_chf,
-    description: h.description?.slice(0, 150),
+    has_spa: h.has_spa,
+    ski_in_ski_out: h.ski_in_ski_out,
+    lake_view: h.lake_view,
+    mountain_view: h.mountain_view,
+    family_friendly: h.family_friendly,
+    has_michelin: h.has_michelin_restaurant,
+    is_partner: h.is_partner,
+    best_for: h.best_for,
+    description: h.description?.slice(0, 100),
   }))
 
-  // Use Claude to write a natural response
   let aiMessage = ''
+  let recommendedNames: string[] = []
+
   try {
     const aiResponse = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -65,50 +43,58 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 200,
+        max_tokens: 300,
         messages: [
           {
             role: 'user',
-            content: `You are a luxury Swiss hotel concierge. A guest said: "${message}". You found these ${hotelList.length} hotels: ${hotelList.map(h => h.name).join(', ')}. Write ONE warm sentence introducing these results. Maximum 25 words.`,
+            content: `You are a luxury Swiss hotel concierge. Guest request: "${message}"
+
+Hotels available:
+${JSON.stringify(hotelList)}
+
+Pick the 3 best hotels for this guest. Prioritise is_partner:true hotels. Return JSON only:
+{"message":"one warm concierge sentence max 20 words","hotels":["Hotel Name 1","Hotel Name 2","Hotel Name 3"]}`,
           }
         ],
       }),
     })
     const aiData = await aiResponse.json()
-    aiMessage = aiData.content?.[0]?.text || ''
+    const raw = aiData.content?.[0]?.text?.replace(/```json|```/g, '').trim() || '{}'
+    const parsed = JSON.parse(raw)
+    aiMessage = parsed.message || ''
+    recommendedNames = parsed.hotels || []
   } catch (e) {
-    // fallback
+    recommendedNames = (hotels || []).slice(0, 3).map(h => h.name)
   }
 
-  const regionText = detectedRegion ? ` in ${detectedRegion}` : ' in Switzerland'
-  const fallbackMessage = hotels && hotels.length > 0
-    ? `Here are my top recommendations${regionText} based on your search:`
-    : `I couldn't find exact matches. Here are our finest luxury hotels${regionText}:`
-
-  const results = (hotels || []).slice(0, 3).map(h => ({
-    hotel_name: h.name,
-    location: `${h.location}, Switzerland`,
-    category: h.category,
-    rating: h.rating,
-    nightly_rate_chf: h.nightly_rate_chf,
-    image: h.images?.[0] || null,
-    amenities: [
-      h.has_spa && 'Spa & Wellness',
-      h.has_michelin_restaurant && 'Michelin Restaurant',
-      h.ski_in_ski_out && 'Ski-in/Ski-out',
-      h.lake_view && 'Lake View',
-      h.mountain_view && 'Mountain View',
-      h.family_friendly && 'Family Friendly',
-      h.pet_friendly && 'Pet Friendly',
-    ].filter(Boolean),
-    exclusive_offer: h.exclusive_offer || null,
-    reason_recommended: h.description?.slice(0, 120) + '...' || '',
-    profile_url: `/hotels/${h.slug || h.id}`,
-    direct_booking_url: `/api/track?hotel_id=${h.id}&hotel_name=${encodeURIComponent(h.name)}&destination=${encodeURIComponent(h.direct_booking_url)}&medium=concierge&campaign=ai_concierge`,
-  }))
+  const results = recommendedNames
+    .map(name => (hotels || []).find(h => h.name === name))
+    .filter(Boolean)
+    .slice(0, 3)
+    .map((h: any) => ({
+      hotel_name: h.name,
+      location: `${h.location}, Switzerland`,
+      category: h.category,
+      rating: h.rating,
+      nightly_rate_chf: h.nightly_rate_chf,
+      image: h.images?.[0] || null,
+      amenities: [
+        h.has_spa && 'Spa & Wellness',
+        h.has_michelin_restaurant && 'Michelin Restaurant',
+        h.ski_in_ski_out && 'Ski-in/Ski-out',
+        h.lake_view && 'Lake View',
+        h.mountain_view && 'Mountain View',
+        h.family_friendly && 'Family Friendly',
+        h.pet_friendly && 'Pet Friendly',
+      ].filter(Boolean),
+      exclusive_offer: h.exclusive_offer || null,
+      reason_recommended: h.description?.slice(0, 120) + '...' || '',
+      profile_url: `/hotels/${h.slug || h.id}`,
+      direct_booking_url: `/api/track?hotel_id=${h.id}&hotel_name=${encodeURIComponent(h.name)}&destination=${encodeURIComponent(h.direct_booking_url)}&medium=concierge&campaign=ai_concierge`,
+    }))
 
   return NextResponse.json({
-    message: aiMessage || fallbackMessage,
+    message: aiMessage || 'Here are my top recommendations in Switzerland based on your search:',
     hotels: results,
   })
 }
