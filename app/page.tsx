@@ -71,7 +71,7 @@ export default async function HomePage() {
         <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '1rem' }}>
             <span style={{ width: '30px', height: '1px', background: gold, display: 'inline-block' }} />
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.3em', textTransform: 'uppercase', color: gold, margin: 0 }}>Join Us</p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.3em', textTransform: 'uppercase', color: gold, margin: 0 }}>Coming Soon</p>
             <span style={{ width: '30px', height: '1px', background: gold, display: 'inline-block' }} />
           </div>
           <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 300, color: text, margin: '0 0 1rem' }}>See How Your Hotel Appears in AI Search</h2>
