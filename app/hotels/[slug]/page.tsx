@@ -7,18 +7,36 @@ import HeroCarousel from '@/components/HeroCarousel'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const { data: hotel } = await supabase.from('hotels').select('name, description, location, region, category, nightly_rate_chf').or(`slug.eq.${slug},id.eq.${slug}`).single()
+  let { data: hotel } = await supabase
+    .from('hotels')
+    .select('name, location, slug, description, nightly_rate_chf, images')
+    .eq('slug', slug)
+    .single()
+  if (!hotel) {
+    const { data: hotelById } = await supabase
+      .from('hotels')
+      .select('name, location, slug, description, nightly_rate_chf, images')
+      .eq('id', slug)
+      .single()
+    hotel = hotelById
+  }
   if (!hotel) return {}
+  const hotelUrl = hotel.slug || slug
+  const image = hotel.images?.[0]
   return {
-    title: `${hotel.name} — Luxury Hotel in ${hotel.location} | SwissNet Hotels`,
-    description: `${hotel.name} is a ${hotel.category} in ${hotel.location}, Switzerland. From CHF ${hotel.nightly_rate_chf}/night. Book direct for the best rate.`,
+    title: `${hotel.name} — Luxury Hotel in ${hotel.location}, Switzerland | SwissNet Hotels`,
+    description: hotel.description || `Discover ${hotel.name}, a luxury hotel in ${hotel.location}, Switzerland. View rooms, spa, dining, experiences and book direct.`,
     alternates: {
-      canonical: `https://swissnethotels.com/hotels/${slug}`,
+      canonical: `https://swissnethotels.com/hotels/${hotelUrl}`,
     },
     openGraph: {
-      title: `${hotel.name} | SwissNet Hotels`,
-      description: hotel.description,
-    }
+      title: `${hotel.name} — Luxury Hotel in ${hotel.location}, Switzerland`,
+      description: hotel.description || `Discover ${hotel.name}, a luxury hotel in ${hotel.location}, Switzerland.`,
+      url: `https://swissnethotels.com/hotels/${hotelUrl}`,
+      siteName: 'SwissNet Hotels',
+      images: image ? [{ url: image }] : undefined,
+      type: 'website',
+    },
   }
 }
 
@@ -243,9 +261,7 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
 
   return (
     <div style={{ background: bg, minHeight: '100vh' }}>
-      <head>
-        <link rel="canonical" href={`https://swissnethotels.com/hotels/${hotelUrl}`} />
-      </head>
+      
       <SchemaMarkup hotel={hotel} keywords={keywords || []} roomTypes={roomTypes || []} faqs={faqs} restaurants={restaurants || []} spaData={spaData || []} awards={awards || []} />
       <ViewTracker hotelId={hotel.id} hotelName={hotel.name} />
 
