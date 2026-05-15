@@ -39,7 +39,9 @@ export default function DashboardWrapper() {
       const [hotel, views, clicks, leads, aiVisibility, bookings] = await Promise.all([
         supabase.from('hotels').select('*').eq('id', hotelId).single().then(r => r.data),
         supabase.from('hotel_views').select('*').eq('hotel_id', hotelId).order('viewed_at', { ascending: false }).then(r => r.data || []),
-        supabase.from('referral_clicks').select('*').eq('hotel_id', hotelId).order('clicked_at', { ascending: false }).then(r => r.data || []),
+        supabase.from('referral_clicks').select('*').eq('hotel_id', hotelId)
+          .in('utm_campaign', ['hotel_profile', 'rooms_page', 'dining_page', 'spa_page', 'experiences_page', 'events_page'])
+          .order('clicked_at', { ascending: false }).then(r => r.data || []),
         supabase.from('leads').select('*').eq('hotel_id', hotelId).order('created_at', { ascending: false }).then(r => r.data || []),
         supabase.from('ai_visibility_scores').select('*').eq('hotel_id', hotelId).order('checked_at', { ascending: false }).then(r => r.data || []),
         supabase.from('bookings').select('*').eq('hotel_id', hotelId).eq('source', 'swissnet').order('booked_at', { ascending: false }).then(r => r.data || []),

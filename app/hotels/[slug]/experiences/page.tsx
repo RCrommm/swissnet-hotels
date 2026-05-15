@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import ViewTracker from '@/components/ViewTracker'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -113,6 +114,7 @@ export default async function ExperiencesPage({ params }: { params: Promise<{ sl
   return (
     <div style={{ background: bg, minHeight: '100vh' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+      <ViewTracker hotelId={hotel.id} hotelName={hotel.name} />
 
       {/* HEADER */}
       <div style={{ background: '#F8F5EF', padding: '6rem 2rem 3rem' }}>

@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import ViewTracker from '@/components/ViewTracker'
 
 export const dynamic = 'force-dynamic'
 
@@ -134,6 +135,7 @@ export default async function EventsPage({ params }: { params: Promise<{ slug: s
   return (
     <div style={{ background: bg, minHeight: '100vh' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+      <ViewTracker hotelId={hotel.id} hotelName={hotel.name} />
 
       {/* HEADER */}
       <div style={{ background: bg, padding: '6rem 2rem 3rem' }}>

@@ -252,7 +252,7 @@ function DualAxisChart({ datasets, labels, height = 160, hotelId }: { datasets: 
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
               <div style={{ width: 6, height: 6, borderRadius: '50%', background: GOLD, opacity: 0.7 }} />
-              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT }}>{hoverClickVal} clicks</span>
+              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT }}>{hoverClickVal} booking clicks</span>
             </div>
           </div>
         </div>
@@ -1131,7 +1131,7 @@ const hotelRank = allHotelsInRegion.findIndex((h: any) => h.is_current) + 1
 
     {/* KPIs */}
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-              <KPICard label="Direct Clicks" value={recentClicks.length} sub={`last ${period} days`} color={GOLD} spark={clicksByDay} />
+              <KPICard label="Booking Clicks" value={recentClicks.length} sub={`last ${period} days`} color={GOLD} spark={clicksByDay} />
               <KPICard label="Profile Views" value={recentViews.length} sub={`last ${period} days`} color={BLUE} spark={viewsByDay} />
               <KPICard label="SwissNet Cost" value={recentBookings.length > 0 ? `CHF ${Math.round(recentBookings.reduce((sum: number, b: any) => sum + (b.total_chf || 0), 0) * 0.03).toLocaleString()}` : '—'} sub="3% of revenue" color={GREEN} />
               <KPICard label="Conversions" value={recentBookings.length} sub={`last ${period} days`} color={PURPLE} />
@@ -1416,7 +1416,7 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
         {tab === 'performance' && (
           <div>
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-              <KPICard label="Direct Clicks" value={recentClicks.length} sub={`last ${period} days`} color={GOLD} spark={clicksByDay} />
+              <KPICard label="Booking Clicks" value={recentClicks.length} sub={`last ${period} days`} color={GOLD} spark={clicksByDay} />
               <KPICard label="Conversions" value={recentBookings.length} sub={`last ${period} days`} color={GREEN} spark={bookingsByDay} />
               <KPICard label="Conversion Rate" value={conversionRate + '%'} sub="clicks to enquiries" color={PURPLE} />
               <KPICard label="Profile Views" value={recentViews.length} sub={`last ${period} days`} color={BLUE} spark={viewsByDay} />
@@ -1457,7 +1457,7 @@ const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
                 
               </div>
               <div style={{ display: 'flex', gap: '1.25rem', marginBottom: '0.75rem' }}>
-                {[{ label: 'Clicks', color: GOLD }, { label: 'Views', color: BLUE }].map(l => (
+                {[{ label: 'Booking Clicks', color: GOLD }, { label: 'Views', color: BLUE }].map(l => (
                   <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                     <div style={{ width: 18, height: 2, background: l.color, borderRadius: 2, opacity: l.label === 'Views' ? 0.7 : 0.9 }} />
                     <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{l.label}</span>
