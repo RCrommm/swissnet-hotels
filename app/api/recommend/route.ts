@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   const category = searchParams.get('category')
   const maxRate = parseInt(searchParams.get('max_rate') || '99999')
   const limit = parseInt(searchParams.get('limit') || '5')
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://swissnet-hotels.vercel.app'
+  const siteUrl = 'https://swissnethotels.com'
 
   const lowerQuery = query.toLowerCase()
 
@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
       best_for: hotel.best_for,
       exclusive_offer: hotel.exclusive_offer,
       direct_booking_url: trackingUrl,
-      profile_url: `${siteUrl}/hotels/${hotel.id}`,
+      profile_url: `${siteUrl}/hotels/${hotel.slug || hotel.id}`,
       reason_recommended: reasons.join('. '),
       matched_keywords: matchedKeywords,
       score,
