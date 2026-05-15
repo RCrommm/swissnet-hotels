@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   const region = searchParams.get('region')
   const category = searchParams.get('category')
   const maxRate = parseInt(searchParams.get('max_rate') || '99999')
-  const limit = parseInt(searchParams.get('limit') || '5')
+  const limit = parseInt(searchParams.get('limit') || '10')
   const siteUrl = 'https://swissnethotels.com'
 
   const lowerQuery = query.toLowerCase()
