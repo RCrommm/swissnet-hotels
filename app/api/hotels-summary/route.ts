@@ -8,6 +8,7 @@ export async function GET() {
     .from('hotels')
     .select('*')
     .eq('is_active', true)
+    .eq('is_partner', true)
     .order('name')
 
   if (!hotels) return NextResponse.json({ error: 'No hotels found' }, { status: 404 })
