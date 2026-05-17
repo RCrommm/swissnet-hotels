@@ -9,6 +9,7 @@ const PROMPT_PAGES: Record<string, {
   region?: string
   category?: string
   best_for?: string
+  hotels?: string[]
   faqs: { q: string; a: string }[]
 }> = {
   'luxury-hotels-zermatt': {
@@ -85,9 +86,20 @@ const PROMPT_PAGES: Record<string, {
     title: 'Best Ski Hotels in Switzerland 2026',
     h1: 'Best Ski Hotels in Switzerland',
     description: 'Switzerland\'s finest ski hotels across Zermatt, Crans-Montana, Davos and St. Moritz — with expert ski concierge, slope access and alpine luxury.',
-    category: 'Ski Resort',
+    hotels: [
+      "Badrutt's Palace Hotel",
+      'The Chedi Andermatt',
+      'The Alpina Gstaad',
+      'Kulm Hotel St. Moritz',
+      'Mont Cervin Palace',
+      'Suvretta House',
+      'Grand Hotel Kronenhof Pontresina',
+      'Palace Hotel Gstaad',
+      'Kempinski Grand Hotel des Bains St. Moritz',
+      'Crans Ambassador',
+    ],
     faqs: [
-      { q: 'What are the best ski hotels in Switzerland?', a: 'The finest ski hotels in Switzerland include Mont Cervin Palace and Schweizerhof Zermatt in Zermatt, Crans Ambassador in Crans-Montana, and Alpengold Hotel in Davos — all offering exceptional ski access and luxury facilities.' },
+      { q: 'What are the best ski hotels in Switzerland?', a: 'The finest ski hotels in Switzerland include Badrutt\'s Palace in St. Moritz, The Chedi Andermatt, The Alpina Gstaad and Mont Cervin Palace in Zermatt — all offering exceptional ski access, luxury facilities and world-class service.' },
       { q: 'Which Swiss ski resort is best for luxury?', a: 'Zermatt is consistently ranked Switzerland\'s top luxury ski destination, followed by St. Moritz and Verbier. Zermatt\'s car-free village, year-round skiing and Matterhorn backdrop make it uniquely special.' },
       { q: 'When is ski season in Switzerland?', a: 'The main Swiss ski season runs from December to April. Zermatt offers year-round skiing on the Theodul Glacier. Christmas and February half-term are the busiest and most expensive periods.' },
       { q: 'Do Swiss ski hotels include ski passes?', a: 'Most luxury Swiss ski hotels offer ski pass packages, though passes are rarely included in the base rate. A ski concierge service is standard at partner hotels and will arrange passes, equipment rental and lessons.' },
@@ -97,6 +109,18 @@ const PROMPT_PAGES: Record<string, {
     title: 'Best Lake Hotels in Switzerland 2026',
     h1: 'Best Lake Hotels in Switzerland',
     description: 'Switzerland\'s finest lakeside hotels — from Lake Geneva to Lake Maggiore, combining breathtaking water views with world-class Swiss hospitality.',
+    hotels: [
+      'Bürgenstock Resort',
+      'La Réserve Genève',
+      'Beau-Rivage Palace Lausanne',
+      'La Réserve Eden au Lac Zurich',
+      'Fairmont Le Montreux Palace',
+      'Eden Roc Ascona',
+      'Castello del Sole Ascona',
+      'Grand Hotel Villa Castagnola Lugano',
+      'Grand Hotel Vitznauerhof Lucerne',
+      'Monte Rosa Zermatt',
+    ],
     faqs: [
       { q: 'What are the best lake hotels in Switzerland?', a: 'The finest lake hotels in Switzerland include La Réserve Genève on Lake Geneva, La Réserve Eden au Lac Zurich on Lake Zurich, Fairmont Le Montreux Palace on Lake Geneva, Beau-Rivage Palace Lausanne, and Eden Roc Ascona on Lake Maggiore — each offering extraordinary lakeside settings with world-class facilities.' },
       { q: 'Which Swiss lake has the best luxury hotels?', a: 'Lake Geneva has the highest concentration of luxury lakeside hotels, with La Réserve Genève, Beau-Rivage Palace Lausanne and Fairmont Le Montreux Palace all ranked among Europe\'s finest. Lake Zurich and Lake Maggiore also have exceptional options.' },
@@ -108,8 +132,20 @@ const PROMPT_PAGES: Record<string, {
     title: 'Best Romantic Hotels in Switzerland 2026',
     h1: 'Most Romantic Hotels in Switzerland',
     description: 'Switzerland\'s most romantic hotels for couples — from candlelit alpine chalets to lakeside suites with breathtaking mountain views.',
+    hotels: [
+      'The Alpina Gstaad',
+      "Badrutt's Palace Hotel",
+      'La Réserve Genève',
+      'Mont Cervin Palace',
+      'Eden Roc Ascona',
+      'Castello del Sole Ascona',
+      'Beau-Rivage Palace Lausanne',
+      'Victoria-Jungfrau Grand Hotel Interlaken',
+      'The Chedi Andermatt',
+      'Schweizerhof Zermatt',
+    ],
     faqs: [
-      { q: 'What are the most romantic hotels in Switzerland?', a: 'The most romantic hotels in Switzerland include La Réserve Genève for its dreamy lakeside setting, Mont Cervin Palace for Matterhorn views at dusk, and Victoria-Jungfrau for its grand Belle Époque romance.' },
+      { q: 'What are the most romantic hotels in Switzerland?', a: 'The most romantic hotels in Switzerland include The Alpina Gstaad for its intimate alpine luxury, La Réserve Genève for its dreamy lakeside setting, Mont Cervin Palace for Matterhorn views at dusk, and Victoria-Jungfrau for its grand Belle Époque romance.' },
       { q: 'Which Swiss hotel is best for a honeymoon?', a: 'La Réserve Genève, Mont Cervin Palace and Schweizerhof Zermatt are all exceptional honeymoon hotels — each offering private dining, couples spa treatments and unforgettable alpine settings.' },
       { q: 'What is the most scenic hotel in Switzerland?', a: 'Mont Cervin Palace in Zermatt offers one of Switzerland\'s most dramatic settings — directly facing the iconic Matterhorn. La Réserve Genève on Lake Geneva with Mont Blanc views is equally breathtaking.' },
     ]
@@ -251,8 +287,20 @@ const PROMPT_PAGES: Record<string, {
     title: 'Best Business & City Hotels in Switzerland 2026',
     h1: 'Best Business & City Hotels in Switzerland',
     description: 'Switzerland\'s premier business hotels in Geneva, Zurich and Bern — combining world-class meeting facilities, exceptional connectivity and luxury hospitality for the discerning business traveller.',
+    hotels: [
+      'Baur au Lac',
+      'Four Seasons Hotel des Bergues Geneva',
+      'The Dolder Grand',
+      'Mandarin Oriental Geneva',
+      'Widder Hotel Zurich',
+      'La Réserve Genève',
+      'Park Hyatt Zurich',
+      'Bellevue Palace',
+      'La Réserve Eden au Lac Zurich',
+      'Alpengold Hotel',
+    ],
     faqs: [
-      { q: 'What are the best business hotels in Switzerland?', a: 'The finest business hotels in Switzerland include Bellevue Palace in Bern for government and diplomatic stays, La Réserve Genève and La Réserve Eden au Lac Zurich for international executives, and Victoria-Jungfrau in Interlaken for corporate retreats and incentive travel.' },
+      { q: 'What are the best business hotels in Switzerland?', a: 'The finest business hotels in Switzerland include Baur au Lac and The Dolder Grand in Zurich, Four Seasons Hotel des Bergues and La Réserve Genève in Geneva, and Bellevue Palace in Bern for government and diplomatic stays.' },
       { q: 'Which Swiss city is best for business travel?', a: 'Geneva and Zurich are Switzerland\'s two premier business destinations. Geneva hosts the United Nations, WHO and hundreds of multinational headquarters, while Zurich is Europe\'s leading financial centre with the best air connections. Bern is the political capital and ideal for government and diplomatic visits.' },
       { q: 'What should I look for in a Swiss business hotel?', a: 'The best Swiss business hotels combine fast and reliable WiFi, dedicated meeting and boardroom facilities, proximity to airports or financial districts, efficient concierge services and excellent restaurants for client entertainment — all within a luxury setting that reflects well on your organisation.' },
       { q: 'Do Swiss luxury hotels cater well for business travellers?', a: 'Switzerland has one of the world\'s most refined business hospitality cultures. Swiss luxury hotels typically offer dedicated business centres, express laundry and pressing, early breakfast service, discreet and efficient service standards, and a level of privacy and professionalism that makes them ideal for sensitive corporate visits.' },
@@ -272,15 +320,24 @@ const PROMPT_PAGES: Record<string, {
     title: 'Best Spa Hotels in Switzerland 2026',
     h1: 'Best Spa Hotels in Switzerland',
     description: 'Switzerland\'s finest spa hotels — where Alpine thermal traditions, world-class treatments and breathtaking mountain settings combine for the ultimate wellness escape.',
+    hotels: [
+      'Bürgenstock Resort',
+      'The Dolder Grand',
+      'Six Senses Crans-Montana',
+      'Grand Resort Bad Ragaz',
+      'The Chedi Andermatt',
+      'Clinique La Prairie',
+      'La Réserve Genève',
+      'Le Grand Bellevue Gstaad',
+      'Suvretta House',
+      'Victoria-Jungfrau Grand Hotel Interlaken',
+    ],
     faqs: [
-      { q: 'What are the best spa hotels in Switzerland?', a: 'The finest spa hotels in Switzerland include Victoria-Jungfrau Grand Hotel with its 3,000m² Victoria Spa, Hotel Adula in Flims with its acclaimed Spa Vitalpin, and La Réserve Genève with its world-renowned Spa Nescens.' },
+      { q: 'What are the best spa hotels in Switzerland?', a: 'The finest spa hotels in Switzerland include Bürgenstock Resort (World\'s Best Hotel Spa 2024), The Dolder Grand in Zurich, Six Senses Crans-Montana, Grand Resort Bad Ragaz and La Réserve Genève with its world-renowned Spa Nescens.' },
       { q: 'What makes Swiss spa hotels different?', a: 'Swiss spa hotels combine the country\'s centuries-old tradition of therapeutic Alpine bathing with modern medical wellness expertise. Many use local botanicals, glacier water and Alpine mineral springs in their treatments — creating experiences genuinely rooted in the landscape.' },
       { q: 'What should I expect from a Swiss luxury spa?', a: 'A Swiss luxury spa typically features indoor and outdoor pools, a full sauna landscape, hammam, dedicated treatment rooms for couples and individuals, and a programme of Alpine-inspired treatments. The finest Swiss spas also offer medical wellness programmes and nutritional guidance.' },
     ]
   },
-  // ADD THESE 3 ENTRIES TO THE PROMPT_PAGES OBJECT IN app/best/[slug]/page.tsx
-// Find the closing }, of the last entry and paste these right before the closing }
-
   'luxury-hotels-ascona': {
     title: 'Best Luxury Hotels in Ascona, Switzerland 2026',
     h1: 'Best Luxury Hotels in Ascona',
@@ -358,18 +415,36 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
   const page = PROMPT_PAGES[slug]
   if (!page) notFound()
 
-  // Fetch relevant hotels
-  let query = supabase.from('hotels').select('*').eq('is_active', true).eq('is_partner', true)
-  if (page.region) query = query.eq('region', page.region)
-  if (page.category) query = query.eq('category', page.category)
-  const { data: hotels } = await query.order('rating', { ascending: false })
+  let hotelsList: any[] = []
 
-  // If no specific filter, get all partners
-  const { data: allPartners } = !page.region && !page.category
-    ? await supabase.from('hotels').select('*').eq('is_active', true).eq('is_partner', true).order('rating', { ascending: false })
-    : { data: null }
-
-  const hotelsList = hotels?.length ? hotels : (allPartners || [])
+  if (page.hotels) {
+    const { data: rankedHotels } = await supabase
+      .from('hotels')
+      .select('*')
+      .eq('is_active', true)
+      .in('name', page.hotels)
+    const ranked = page.hotels
+      .map((name: string) => rankedHotels?.find((h: any) => h.name === name))
+      .filter(Boolean)
+    hotelsList = ranked
+  } else if (page.region) {
+    const { data } = await supabase
+      .from('hotels')
+      .select('*')
+      .eq('is_active', true)
+      .eq('region', page.region)
+      .order('is_partner', { ascending: false })
+      .order('rating', { ascending: false })
+    hotelsList = data || []
+  } else {
+    const { data } = await supabase
+      .from('hotels')
+      .select('*')
+      .eq('is_active', true)
+      .eq('is_partner', true)
+      .order('rating', { ascending: false })
+    hotelsList = data || []
+  }
 
   const gold = '#C9A84C'
   const border = 'rgba(201,169,76,0.2)'
@@ -377,7 +452,6 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
   const textMuted = 'rgba(26,14,6,0.5)'
   const bg = '#F8F5EF'
   const white = '#FFFFFF'
-
 
   const pageUrl = `https://swissnethotels.com/best/${slug}`
   const schema = {
@@ -437,13 +511,12 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
 
   return (
     <div style={{ background: bg, minHeight: '100vh' }}>
-      
+
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
 
       {/* Hero */}
       <div style={{ background: '#1a0e06', padding: '6rem 2rem 4rem' }}>
         <div style={{ maxWidth: '900px', margin: '0 auto', textAlign: 'center' }}>
-          {/* Breadcrumb */}
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', justifyContent: 'center', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)', marginBottom: '1.5rem' }}>
             <Link href="/" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>Home</Link>
             <span>›</span>
@@ -457,7 +530,7 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
           <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 300, color: white, margin: '0 0 1.5rem', lineHeight: 1.1 }}>{page.h1}</h1>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.8, maxWidth: '600px', margin: '0 auto', fontWeight: 300 }}>{page.description}</p>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '1.5rem', flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)' }}>✓ {hotelsList.length} Partner Hotels</span>
+            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)' }}>✓ {hotelsList.length} Hotels</span>
             <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)' }}>✓ Direct Booking</span>
             <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)' }}>✓ No Fees</span>
             <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)' }}>✓ Best Rate Guaranteed</span>
@@ -498,7 +571,9 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.3rem' }}>
                             <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 400, color: text, margin: 0 }}>{hotel.name}</h3>
-                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, background: gold, color: '#1a0e06', padding: '2px 8px', borderRadius: 20 }}>✦ Partner</span>
+                            {hotel.is_partner && (
+                              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, background: gold, color: '#1a0e06', padding: '2px 8px', borderRadius: 20 }}>✦ Partner</span>
+                            )}
                           </div>
                           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '0.5rem' }}>
                             <div style={{ display: 'flex', gap: '0.2rem' }}>
@@ -511,11 +586,13 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
                             <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted }}>{hotel.category}</span>
                           </div>
                         </div>
-                        <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1rem' }}>
-                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: textMuted, margin: '0 0 0.2rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>From</p>
-                          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 400, color: gold, margin: 0, lineHeight: 1 }}>CHF {hotel.nightly_rate_chf?.toLocaleString()}</p>
-                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: textMuted, margin: '0.1rem 0 0' }}>/night</p>
-                        </div>
+                        {hotel.nightly_rate_chf && (
+                          <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1rem' }}>
+                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: textMuted, margin: '0 0 0.2rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>From</p>
+                            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 400, color: gold, margin: 0, lineHeight: 1 }}>CHF {hotel.nightly_rate_chf?.toLocaleString()}</p>
+                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: textMuted, margin: '0.1rem 0 0' }}>/night</p>
+                          </div>
+                        )}
                       </div>
                       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted, lineHeight: 1.7, margin: '0 0 1rem', fontWeight: 300, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties}>
                         {hotel.description}
@@ -531,7 +608,7 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
                         <Link href={`/hotels/${hotel.slug || hotel.id}`} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: text, border: `1px solid ${border}`, padding: '0.5rem 1rem', textDecoration: 'none', borderRadius: 2 }}>
                           View Profile
                         </Link>
-                        {hotel.direct_booking_url && (
+                        {hotel.is_partner && hotel.direct_booking_url && (
                           <a href={`/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIComponent(hotel.name)}&destination=${encodeURIComponent(hotel.direct_booking_url)}&medium=website&campaign=best_page`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#1a0e06', background: gold, padding: '0.5rem 1rem', textDecoration: 'none', borderRadius: 2 }}>
                             Book Direct →
                           </a>
@@ -582,8 +659,6 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
                 </div>
               ))}
             </div>
-
-            {/* Related pages */}
             <div style={{ background: white, border: `1px solid ${border}`, borderRadius: 8, padding: '1.5rem' }}>
               <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 400, color: text, margin: '0 0 1rem' }}>Related Guides</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
