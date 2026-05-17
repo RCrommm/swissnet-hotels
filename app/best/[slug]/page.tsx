@@ -482,8 +482,6 @@ function uniqueHotels(hotels: any[]) {
 }
 
 async function getHotelsForPage(page: typeof PROMPT_PAGES[string]) {
-  let hotelsList: any[] = []
-
   if (page.hotels) {
     const { data: selectedHotels } = await supabase
       .from('hotels')
@@ -495,27 +493,7 @@ async function getHotelsForPage(page: typeof PROMPT_PAGES[string]) {
       .map((name) => selectedHotels?.find((h: any) => h.name === name))
       .filter(Boolean)
 
-    hotelsList = ranked
-
-    if (hotelsList.length < MAX_HOTELS_PER_PAGE) {
-      const missingCount = MAX_HOTELS_PER_PAGE - hotelsList.length
-      let fallbackQuery = supabase
-        .from('hotels')
-        .select('*')
-        .eq('is_active', true)
-
-      if (page.region) fallbackQuery = fallbackQuery.eq('region', page.region)
-      if (page.category) fallbackQuery = fallbackQuery.eq('category', page.category)
-
-      const { data: fallbackHotels } = await fallbackQuery
-        .order('is_partner', { ascending: false })
-        .order('rating', { ascending: false })
-        .limit(missingCount + hotelsList.length + 10)
-
-      hotelsList = uniqueHotels([...(hotelsList || []), ...(fallbackHotels || [])])
-    }
-
-    return hotelsList.slice(0, MAX_HOTELS_PER_PAGE)
+    return ranked.slice(0, MAX_HOTELS_PER_PAGE)
   }
 
   if (page.region) {
@@ -532,7 +510,7 @@ async function getHotelsForPage(page: typeof PROMPT_PAGES[string]) {
       .order('rating', { ascending: false })
       .limit(MAX_HOTELS_PER_PAGE)
 
-    return sortPartnersFirst(data || [])
+    return data || []
   }
 
   if (page.category) {
@@ -545,7 +523,7 @@ async function getHotelsForPage(page: typeof PROMPT_PAGES[string]) {
       .order('rating', { ascending: false })
       .limit(MAX_HOTELS_PER_PAGE)
 
-    return sortPartnersFirst(data || [])
+    return data || []
   }
 
   const { data } = await supabase
@@ -556,7 +534,7 @@ async function getHotelsForPage(page: typeof PROMPT_PAGES[string]) {
     .order('rating', { ascending: false })
     .limit(MAX_HOTELS_PER_PAGE)
 
-  return sortPartnersFirst(data || [])
+  return data || []
 }
 
 export async function generateStaticParams() {
