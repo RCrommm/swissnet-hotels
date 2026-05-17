@@ -19,91 +19,85 @@ const CATEGORY_COMPETITORS: Record<string, { label: string; hotels: string[] }> 
   spa: {
     label: 'Spa & Wellness',
     hotels: [
-      'Victoria-Jungfrau Grand Hotel Interlaken',
-      'Hotel Adula',
-      'La Réserve Genève',
-      'Six Senses Crans-Montana',
       'Bürgenstock Resort',
-      'Le Mirador Resort & Spa Mont-Pelerin',
-      'Lenkerhof Gourmet Spa Resort',
+      'The Dolder Grand',
+      'Six Senses Crans-Montana',
+      'Grand Resort Bad Ragaz',
       'The Chedi Andermatt',
-      'Ermitage Golf & Spa Gstaad',
-      'Grand Hotel Waldhaus Flims',
+      'Clinique La Prairie',
+      'La Réserve Genève',
+      'Le Grand Bellevue Gstaad',
+      'Suvretta House',
     ],
   },
   ski: {
     label: 'Ski Resort',
     hotels: [
-      'Mont Cervin Palace',
-      'Crans Ambassador',
-      'Alpengold Hotel',
-      'Schweizerhof Zermatt',
       "Badrutt's Palace Hotel",
-      'The Alpina Gstaad',
-      'Palace Hotel Gstaad',
       'The Chedi Andermatt',
+      'The Alpina Gstaad',
+      'Kulm Hotel St. Moritz',
+      'Mont Cervin Palace',
+      'Suvretta House',
+      'Grand Hotel Kronenhof Pontresina',
+      'Palace Hotel Gstaad',
       'Kempinski Grand Hotel des Bains St. Moritz',
-      'Grand Hotel Zermatterhof',
     ],
   },
   dining: {
     label: 'Fine Dining',
     hotels: [
-      'La Réserve Genève',
-      'La Réserve Eden au Lac Zurich',
-      'Victoria-Jungfrau Grand Hotel Interlaken',
-      'Mont Cervin Palace',
-      'Bellevue Palace',
-      'The Dolder Grand',
-      'Baur au Lac',
+      'Grand Resort Bad Ragaz',
       'Les Trois Rois Basel',
-      'Cheval Blanc Basel',
-      'Mandarin Oriental Geneva',
+      'The Chedi Andermatt',
+      'Giardino Mountain St. Moritz',
+      'Carlton Hotel St. Moritz',
+      'Baur au Lac',
+      'La Réserve Genève',
+      'Victoria-Jungfrau Grand Hotel Interlaken',
+      'Beau-Rivage Palace Lausanne',
     ],
   },
   business: {
     label: 'Business & City',
     hotels: [
-      'Bellevue Palace',
-      'La Réserve Eden au Lac Zurich',
-      'La Réserve Genève',
       'Baur au Lac',
-      'The Dolder Grand',
-      'Park Hyatt Zurich',
-      'Mandarin Oriental Savoy Zurich',
       'Four Seasons Hotel des Bergues Geneva',
+      'The Dolder Grand',
       'Mandarin Oriental Geneva',
       'Widder Hotel Zurich',
+      'La Réserve Genève',
+      'Park Hyatt Zurich',
+      'Bellevue Palace',
+      'La Réserve Eden au Lac Zurich',
     ],
   },
   romantic: {
     label: 'Romantic',
     hotels: [
+      'The Alpina Gstaad',
+      "Badrutt's Palace Hotel",
       'La Réserve Genève',
-      'La Réserve Eden au Lac Zurich',
       'Mont Cervin Palace',
       'Eden Roc Ascona',
       'Castello del Sole Ascona',
       'Beau-Rivage Palace Lausanne',
-      "Badrutt's Palace Hotel",
-      'The Alpina Gstaad',
-      'Grand Hotel Kronenhof Pontresina',
-      'Giardino Ascona',
+      'Victoria-Jungfrau Grand Hotel Interlaken',
+      'The Chedi Andermatt',
     ],
   },
   lake: {
     label: 'Lake Hotel',
     hotels: [
+      'Bürgenstock Resort',
       'La Réserve Genève',
-      'La Réserve Eden au Lac Zurich',
       'Beau-Rivage Palace Lausanne',
+      'La Réserve Eden au Lac Zurich',
       'Fairmont Le Montreux Palace',
       'Eden Roc Ascona',
       'Castello del Sole Ascona',
       'Grand Hotel Villa Castagnola Lugano',
-      'Beau-Rivage Geneva',
       'Grand Hotel Vitznauerhof Lucerne',
-      'Hotel Splendide Royal Lugano',
     ],
   },
 }
@@ -906,15 +900,24 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
     if (competitorView === 'region') return allHotelsInRegion
     const catData = CATEGORY_COMPETITORS[competitorView]
     if (!catData) return allHotelsInRegion
-    return [
-      { name: hotelName, rating: hotel?.rating || 4.5, is_current: true, visibilityScore },
-      ...catData.hotels
-        .filter(n => n !== hotelName)
-        .map(name => {
-          const found = competitors?.find((c: any) => c.name === name)
-          return found ? { ...found, is_current: false } : { name, is_current: false, visibilityScore: null, rating: null }
-        }),
-    ]
+
+    const top9 = catData.hotels
+    const alreadyInList = top9.some(n => n === hotelName)
+
+    const list = top9.map(name => {
+      const isCurrent = name === hotelName
+      if (isCurrent) return { name, is_current: true, visibilityScore, rating: hotel?.rating }
+      const found = competitors?.find((c: any) => c.name === name)
+      return found
+        ? { ...found, is_current: false }
+        : { name, is_current: false, visibilityScore: null, rating: null }
+    })
+
+    if (!alreadyInList) {
+      list.push({ name: hotelName, is_current: true, visibilityScore, rating: hotel?.rating })
+    }
+
+    return list
   }
 
   const competitorTableHotels = getCompetitorTableHotels()
