@@ -110,16 +110,16 @@ const CATEGORY_COMPETITORS: Record<string, { label: string; hotels: string[] }> 
 
 // Max 2 categories per hotel + region always shown
 const HOTEL_CATEGORIES: Record<string, string[]> = {
-  'La Réserve Genève': ['spa', 'romantic'],
-  'La Réserve Eden au Lac Zurich': ['business', 'romantic'],
-  'Victoria-Jungfrau Grand Hotel Interlaken': ['spa', 'dining'],
-  'Mont Cervin Palace': ['ski', 'dining'],
-  'Bellevue Palace': ['business', 'dining'],
-  'Hotel Adula': ['spa'],
+  'La Réserve Genève': ['spa', 'dining', 'romantic', 'lake', 'business'],
+  'La Réserve Eden au Lac Zurich': ['business', 'romantic', 'lake', 'dining'],
+  'Victoria-Jungfrau Grand Hotel Interlaken': ['spa', 'dining', 'romantic'],
+  'Mont Cervin Palace': ['ski', 'dining', 'romantic'],
+  'Bellevue Palace': ['business', 'dining', 'romantic'],
+  'Hotel Adula': ['spa', 'ski'],
   'Crans Ambassador': ['ski', 'spa'],
   'Alpengold Hotel': ['ski', 'business'],
-  'Schweizerhof Zermatt': ['ski'],
-  'Monte Rosa Zermatt': ['ski'],
+  'Schweizerhof Zermatt': ['ski', 'spa'],
+  'Monte Rosa Zermatt': ['ski', 'romantic'],
 }
 
 // ── CHART COMPONENTS ──────────────────────────────────────────────────────────
