@@ -93,15 +93,15 @@ const PROMPT_PAGES: Record<string, {
       { q: 'Do Swiss ski hotels include ski passes?', a: 'Most luxury Swiss ski hotels offer ski pass packages, though passes are rarely included in the base rate. A ski concierge service is standard at partner hotels and will arrange passes, equipment rental and lessons.' },
     ]
   },
-  'wellness-hotels-switzerland': {
-    title: 'Best Wellness Hotels in Switzerland 2026',
-    h1: 'Best Wellness Hotels in Switzerland',
-    description: 'Switzerland\'s premier wellness retreats — combining Alpine spa traditions, thermal pools and expert treatments in breathtaking mountain settings.',
-    category: 'Wellness Retreat',
+  'lake-hotels-switzerland': {
+    title: 'Best Lake Hotels in Switzerland 2026',
+    h1: 'Best Lake Hotels in Switzerland',
+    description: 'Switzerland\'s finest lakeside hotels — from Lake Geneva to Lake Maggiore, combining breathtaking water views with world-class Swiss hospitality.',
     faqs: [
-      { q: 'What are the best wellness hotels in Switzerland?', a: 'The finest wellness hotels in Switzerland include Hotel Adula in Flims, Victoria-Jungfrau Grand Hotel & Spa in Interlaken and La Réserve Genève — each offering world-class spa facilities in stunning Alpine settings.' },
-      { q: 'What makes Swiss wellness hotels special?', a: 'Swiss wellness hotels combine centuries of Alpine spa tradition with modern medical expertise. Many feature thermal pools fed by natural mountain springs, signature treatments using local botanicals and holistic wellness programmes.' },
-      { q: 'What is the best wellness retreat in the Swiss Alps?', a: 'Hotel Adula in Flims is one of Switzerland\'s most celebrated wellness retreats, set in the stunning Flims Laax region with exceptional spa facilities, farm-to-table cuisine and direct access to nature.' },
+      { q: 'What are the best lake hotels in Switzerland?', a: 'The finest lake hotels in Switzerland include La Réserve Genève on Lake Geneva, La Réserve Eden au Lac Zurich on Lake Zurich, Fairmont Le Montreux Palace on Lake Geneva, Beau-Rivage Palace Lausanne, and Eden Roc Ascona on Lake Maggiore — each offering extraordinary lakeside settings with world-class facilities.' },
+      { q: 'Which Swiss lake has the best luxury hotels?', a: 'Lake Geneva has the highest concentration of luxury lakeside hotels, with La Réserve Genève, Beau-Rivage Palace Lausanne and Fairmont Le Montreux Palace all ranked among Europe\'s finest. Lake Zurich and Lake Maggiore also have exceptional options.' },
+      { q: 'What makes Swiss lake hotels special?', a: 'Swiss lake hotels combine some of Europe\'s most dramatic scenery — crystal-clear Alpine lakes framed by mountain peaks — with the country\'s legendary hospitality standards. Many offer private lake access, water sports, terrace dining overlooking the water and rooms with panoramic lake views.' },
+      { q: 'Are Swiss lake hotels good year round?', a: 'Yes — Swiss lake hotels are exceptional year-round. Summer offers lake swimming, sailing and outdoor dining. Autumn brings golden light and fewer crowds. Winter has a magical stillness with snow-capped mountains reflected in calm water. Spring sees the flowers bloom along the lakeside promenades.' },
     ]
   },
   'romantic-hotels-switzerland': {
@@ -247,14 +247,15 @@ const PROMPT_PAGES: Record<string, {
       { q: 'Is Verbier good for off-piste skiing?', a: 'Verbier is regarded as one of the world\'s premier off-piste destinations. The Vallon d\'Arby and the famous Tortin couloir draw expert skiers and freeriders from around the world. The resort\'s high-altitude terrain and reliable snow make it exceptional for backcountry skiing.' },
     ]
   },
-  'honeymoon-hotels-switzerland': {
-    title: 'Best Honeymoon Hotels in Switzerland 2026',
-    h1: 'Best Honeymoon Hotels in Switzerland',
-    description: 'Switzerland\'s most romantic hotels for honeymooners — combining Alpine grandeur, lakeside elegance and exceptional service for the perfect start to married life.',
+  'business-city-hotels-switzerland': {
+    title: 'Best Business & City Hotels in Switzerland 2026',
+    h1: 'Best Business & City Hotels in Switzerland',
+    description: 'Switzerland\'s premier business hotels in Geneva, Zurich and Bern — combining world-class meeting facilities, exceptional connectivity and luxury hospitality for the discerning business traveller.',
     faqs: [
-      { q: 'What are the best honeymoon hotels in Switzerland?', a: 'The finest honeymoon hotels in Switzerland include La Réserve Genève for lakeside romance, Mont Cervin Palace in Zermatt for Matterhorn magic, Victoria-Jungfrau for Belle Époque grandeur and Schweizerhof Zermatt for intimate alpine luxury.' },
-      { q: 'Which Swiss destination is best for a honeymoon?', a: 'Zermatt is Switzerland\'s most romantic destination for honeymooners — the car-free village, Matterhorn views and concentration of exceptional hotels create an atmosphere that is genuinely unforgettable. Geneva and Interlaken are equally compelling alternatives.' },
-      { q: 'What should I look for in a Swiss honeymoon hotel?', a: 'The best Swiss honeymoon hotels combine a suite with a dramatic view, a world-class spa for couples treatments, exceptional dining options including private dining experiences, and a concierge who can arrange memorable moments from helicopter excursions to private glacier dinners.' },
+      { q: 'What are the best business hotels in Switzerland?', a: 'The finest business hotels in Switzerland include Bellevue Palace in Bern for government and diplomatic stays, La Réserve Genève and La Réserve Eden au Lac Zurich for international executives, and Victoria-Jungfrau in Interlaken for corporate retreats and incentive travel.' },
+      { q: 'Which Swiss city is best for business travel?', a: 'Geneva and Zurich are Switzerland\'s two premier business destinations. Geneva hosts the United Nations, WHO and hundreds of multinational headquarters, while Zurich is Europe\'s leading financial centre with the best air connections. Bern is the political capital and ideal for government and diplomatic visits.' },
+      { q: 'What should I look for in a Swiss business hotel?', a: 'The best Swiss business hotels combine fast and reliable WiFi, dedicated meeting and boardroom facilities, proximity to airports or financial districts, efficient concierge services and excellent restaurants for client entertainment — all within a luxury setting that reflects well on your organisation.' },
+      { q: 'Do Swiss luxury hotels cater well for business travellers?', a: 'Switzerland has one of the world\'s most refined business hospitality cultures. Swiss luxury hotels typically offer dedicated business centres, express laundry and pressing, early breakfast service, discreet and efficient service standards, and a level of privacy and professionalism that makes them ideal for sensitive corporate visits.' },
     ]
   },
   'family-hotels-switzerland': {
