@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!hotelA || !hotelB) return {}
 
   return {
-    title: `${hotelA.name} vs ${hotelB.name} — Which is Better? | SwissNet Hotels`,
+    title: `${hotelA.name} vs ${hotelB.name} | SwissNet`,
     description: `Compare ${hotelA.name} and ${hotelB.name} side by side...`,
     alternates: {
       canonical: `https://swissnethotels.com/compare/${slug}`,

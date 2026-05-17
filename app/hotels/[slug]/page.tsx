@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const hotelUrl = hotel.slug || slug
   const image = hotel.images?.[0]
   return {
-    title: `${hotel.name} — Luxury Hotel in ${hotel.location}, Switzerland | SwissNet Hotels`,
+    title: `${hotel.name} | SwissNet Hotels`,
     description: hotel.description || `Discover ${hotel.name}, a luxury hotel in ${hotel.location}, Switzerland. View rooms, spa, dining, experiences and book direct.`,
     alternates: {
       canonical: `https://swissnethotels.com/hotels/${hotelUrl}`,
