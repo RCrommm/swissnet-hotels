@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
     .from('hotels')
     .select('*')
     .eq('is_active', true)
+    .eq('is_partner', true)
     .lte('nightly_rate_chf', maxRate)
 
   if (region) dbQuery = dbQuery.eq('region', region)
