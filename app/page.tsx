@@ -53,8 +53,8 @@ export default async function HomePage() {
       <section style={{ background: bgLight, borderTop: '1px solid ' + border, borderBottom: '1px solid ' + border, padding: '2.5rem 0' }}>
         <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 2rem', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '2rem', textAlign: 'center' }}>
           {[
-            { n: '10+', label: 'Partner Hotels' },
-            { n: '17', label: 'Swiss Regions' },
+            { n: '10', label: 'Partner Hotels' },
+            { n: '115+', label: 'Swiss Hotels' },
             { n: '15%+', label: 'Saved vs OTAs' },
             { n: 'AI', label: 'Powered Discovery' },
           ].map(s => (
