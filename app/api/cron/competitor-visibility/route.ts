@@ -154,7 +154,14 @@ export async function GET(request: Request) {
         await supabase.from('competitor_visibility').insert(rows)
       }
     }
-
+    await supabase.from('cron_costs').insert({
+      hotels_checked: Object.values(CATEGORY_HOTELS).flat().length,
+      queries_run: Object.values(categoriesMap).flat().length * PLATFORMS.length,
+      platforms_checked: PLATFORMS.length,
+      estimated_cost_usd: catCost,
+      triggered_by: forceRun ? 'manual' : 'cron',
+      run_at: new Date().toISOString(),
+    })
     return NextResponse.json({
       success: true,
       categories_checked: Object.keys(categoriesMap).length,
@@ -250,7 +257,14 @@ export async function GET(request: Request) {
       }
     }
   }
-
+  await supabase.from('cron_costs').insert({
+    hotels_checked: competitors.length,
+    queries_run: results.length,
+    platforms_checked: PLATFORMS.length,
+    estimated_cost_usd: estimatedCost,
+    triggered_by: forceRun ? 'manual' : 'cron',
+    run_at: new Date().toISOString(),
+  })
   return NextResponse.json({
     success: true,
     regions_checked: regions.length,
