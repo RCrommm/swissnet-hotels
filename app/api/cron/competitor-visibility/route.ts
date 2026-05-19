@@ -20,7 +20,7 @@ async function queryPerplexity(query: string): Promise<string> {
       'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
     },
     body: JSON.stringify({
-      model: 'llama-3.1-sonar-small-128k-online',
+      model: 'sonar-pro',
       messages: [{ role: 'user', content: `${query}. Please recommend 3-5 specific hotels by name.` }],
       max_tokens: 500,
     }),
