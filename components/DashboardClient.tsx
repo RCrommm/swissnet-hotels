@@ -918,7 +918,11 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
       list.push({ name: hotelName, is_current: true, visibilityScore: competitorView === 'region' ? visibilityScore : (hotelCatScores?.[competitorView] ?? null), rating: hotel?.rating })
     }
 
-    return list
+    return list.sort((a: any, b: any) => {
+      const sA = a.is_current ? (hotelCatScores?.[competitorView] ?? -1) : (a.visibilityScore ?? -1)
+      const sB = b.is_current ? (hotelCatScores?.[competitorView] ?? -1) : (b.visibilityScore ?? -1)
+      return sB - sA
+    })
   }
 
   const competitorTableHotels = getCompetitorTableHotels()
@@ -1276,12 +1280,17 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
                         </div>
                       </td>
                       <td style={{ padding: '1rem 1.5rem' }}>
-                        {h.is_current ? (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <div style={{ width: 70, height: 4, background: BORDER, borderRadius: 2, overflow: 'hidden' }}><div style={{ height: '100%', width: visibilityScore + '%', background: GOLD, borderRadius: 2 }} /></div>
-                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: GOLD }}>{visibilityScore}%</span>
-                          </div>
-                        ) : h.visibilityScore !== null && h.visibilityScore !== undefined ? (
+                        {h.is_current ? (() => {
+                          const displayScore = competitorView === 'region' ? visibilityScore : (hotelCatScores?.[competitorView] ?? null)
+                          return displayScore !== null ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <div style={{ width: 70, height: 4, background: BORDER, borderRadius: 2, overflow: 'hidden' }}><div style={{ height: '100%', width: displayScore + '%', background: GOLD, borderRadius: 2 }} /></div>
+                              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: GOLD }}>{displayScore}%</span>
+                            </div>
+                          ) : (
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>Not tracked yet</span>
+                          )
+                        })() : h.visibilityScore !== null && h.visibilityScore !== undefined ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <div style={{ width: 70, height: 4, background: BORDER, borderRadius: 2, overflow: 'hidden' }}><div style={{ height: '100%', width: h.visibilityScore + '%', background: TEXT_MUTED, borderRadius: 2 }} /></div>
                             <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED }}>{h.visibilityScore}%</span>
