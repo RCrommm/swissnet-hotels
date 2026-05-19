@@ -9,6 +9,7 @@ import AIVisibilityToggle from '@/components/AIVisibilityToggle'
 import AIVisibilityQueries from '@/components/AIVisibilityQueries'
 import GoogleAITab from '@/components/GoogleAITab'
 import FaqReviewTab from '@/components/FaqReviewTab'
+import CategoryVisibilityQueries from '@/components/CategoryVisibilityQueries'
 
 async function isAuthenticated(password?: string) {
   const cookieStore = await cookies()
