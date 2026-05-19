@@ -67,7 +67,6 @@ async function queryClaude(query: string): Promise<string> {
 const PLATFORMS = [
   { id: 'chatgpt', queryFn: queryChatGPT },
   { id: 'perplexity', queryFn: queryPerplexity },
-  { id: 'claude', queryFn: queryClaude },
 ]
 
 export async function GET(request: Request) {
