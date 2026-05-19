@@ -198,7 +198,7 @@ const categoryParam = searchParams.get('category')
           })
         }
 
-        const { error: batchError } = await supabase.from('competitor_visibility').upsert(upsertRows, { onConflict: 'competitor_name,platform,month,category' })
+        const { error: batchError } = await supabase.from('competitor_visibility').insert(upsertRows)
         if (batchError) console.error('[BATCH UPSERT ERROR]', batchError.message, category, platform.id)
         else console.log('[BATCH UPSERT OK]', category, platform.id, upsertRows.length, 'rows')
         }
