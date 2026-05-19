@@ -123,6 +123,7 @@ const categoryParam = searchParams.get('category')
     for (const [category, queries] of Object.entries(categoriesMap)) {
       const hotels = CATEGORY_HOTELS[category] || []
       if (!hotels.length) continue
+      console.log(`[CATEGORY] Processing ${category} with ${hotels.length} hotels and ${queries.length} queries`)
       const responseCache: Record<string, string> = {}
 
       for (const platform of PLATFORMS) {
@@ -179,6 +180,7 @@ const categoryParam = searchParams.get('category')
             checked_at: new Date().toISOString(),
           }, { onConflict: 'competitor_name,platform,month,category' })
           if (upsertError) console.error('[UPSERT ERROR]', upsertError.message, hotelName, category)
+          else console.log('[UPSERT OK]', hotelName, category, platform.id, score)
         }
       }
     }
