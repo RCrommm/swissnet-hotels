@@ -63,7 +63,21 @@ export default function DashboardWrapper() {
       const { data: categoryScores } = await supabase
         .from('competitor_visibility')
         .select('competitor_name, category, platform, visibility_score')
-        .not('category', 'eq', 'region')
+        .not('category', 'is', null)
+        .neq('category', 'region')
+        const { data: partnerCatScores } = await supabase
+        .from('competitor_visibility')
+        .select('category, platform, visibility_score')
+        .eq('competitor_name', hotel?.name)
+        .neq('category', 'region')
+
+      const hotelCatScores: Record<string, number> = {}
+      for (const cat of ['spa', 'ski', 'dining', 'romantic', 'lake', 'business']) {
+        const entries = partnerCatScores?.filter((s: any) => s.category === cat) || []
+        if (entries.length > 0) {
+          hotelCatScores[cat] = Math.round(entries.reduce((sum: number, s: any) => sum + s.visibility_score, 0) / entries.length)
+        }
+      }
 
       const competitors = (competitorHotels || []).map((h: any) => {
         const hotelScores = competitorScores?.filter((s: any) => s.hotel_id === h.id) || []
@@ -91,6 +105,7 @@ export default function DashboardWrapper() {
         aiVisibility,
         bookings: bookings || [],
         competitors: competitors || [],
+        hotelCatScores,
       })
       setLoading(false)
     }

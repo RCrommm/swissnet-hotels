@@ -813,7 +813,7 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string; hotel
 
 // ── MAIN DASHBOARD ────────────────────────────────────────────────────────────
 
-export default function DashboardClient({ hotel, views, clicks, leads, aiVisibility, bookings, competitors }: any) {
+export default function DashboardClient({ hotel, views, clicks, leads, aiVisibility, bookings, competitors, hotelCatScores }: any) {
   const [tab, setTab] = useState('overview')
   const [period, setPeriod] = useState(30)
   const [chartPeriod, setChartPeriod] = useState(7)
@@ -906,7 +906,7 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
 
     const list = top9.map(name => {
       const isCurrent = name === hotelName
-      if (isCurrent) return { name, is_current: true, visibilityScore: competitorView === 'region' ? visibilityScore : null, rating: hotel?.rating }
+      if (isCurrent) return { name, is_current: true, visibilityScore: competitorView === 'region' ? visibilityScore : (hotelCatScores?.[competitorView] ?? null), rating: hotel?.rating }
       const found = competitors?.find((c: any) => c.name === name)
       const catScore = found?.catScores?.[competitorView] ?? null
       return found
@@ -915,7 +915,7 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
     })
 
     if (!alreadyInList) {
-      list.push({ name: hotelName, is_current: true, visibilityScore: competitorView === 'region' ? visibilityScore : null, rating: hotel?.rating })
+      list.push({ name: hotelName, is_current: true, visibilityScore: competitorView === 'region' ? visibilityScore : (hotelCatScores?.[competitorView] ?? null), rating: hotel?.rating })
     }
 
     return list
