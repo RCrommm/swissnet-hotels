@@ -136,7 +136,58 @@ export default function AIVisibilityQueries({ hotels }: { hotels: any[] }) {
     }
     setRunning(false)
   }
+const CATEGORIES = [
+    { key: 'spa', label: 'Spa & Wellness' },
+    { key: 'ski', label: 'Ski Resort' },
+    { key: 'dining', label: 'Fine Dining' },
+    { key: 'romantic', label: 'Romantic' },
+    { key: 'lake', label: 'Lake Hotel' },
+    { key: 'business', label: 'Business & City' },
+  ]
 
+  const [selectedCat, setSelectedCat] = useState('spa')
+  const [catQueries, setCatQueries] = useState<any[]>([])
+  const [catQuery, setCatQuery] = useState('')
+  const [catMsg, setCatMsg] = useState('')
+
+  useEffect(() => { fetchCatQueries() }, [selectedCat])
+
+  const fetchCatQueries = async () => {
+    const { data } = await supabase.from('category_queries').select('*').eq('category', selectedCat).order('created_at')
+    setCatQueries(data || [])
+  }
+
+  const addCatQuery = async () => {
+    if (!catQuery.trim()) return
+    await supabase.from('category_queries').insert({ category: selectedCat, query: catQuery.trim(), is_active: true })
+    setCatQuery(''); fetchCatQueries()
+  }
+
+  const toggleCatQuery = async (id: string, current: boolean) => {
+    await supabase.from('category_queries').update({ is_active: !current }).eq('id', id)
+    fetchCatQueries()
+  }
+
+  const deleteCatQuery = async (id: string) => {
+    await supabase.from('category_queries').delete().eq('id', id)
+    fetchCatQueries()
+  }
+
+  const runCategory = async (category?: string) => {
+    setRunning(true)
+    setCatMsg('')
+    try {
+      const url = category
+        ? `/api/cron/competitor-visibility?type=category&category=${category}&force=true`
+        : '/api/cron/competitor-visibility?type=category&force=true'
+      const res = await fetch(url)
+      const data = await res.json()
+      setCatMsg(`✓ Done — ${data.total_appearances || 0} appearances · $${data.estimated_cost_usd || '0.000'}`)
+    } catch {
+      setCatMsg('✗ Error running category check')
+    }
+    setRunning(false)
+  }
   const inp: React.CSSProperties = {
     background: '#fff', border: '1px solid ' + border, borderRadius: 6,
     padding: '8px 12px', color: text, fontSize: 13, outline: 'none',
@@ -235,6 +286,72 @@ export default function AIVisibilityQueries({ hotels }: { hotels: any[] }) {
               )
             })}
           </div>
+        </div>
+      </div>
+
+      {/* ── CATEGORY VISIBILITY QUERIES ── */}
+      <div style={{ marginTop: 32 }}>
+        <div style={{ background: '#fff', border: '1px solid ' + border, borderRadius: 8, padding: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <div>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: text, margin: '0 0 4px' }}>Category Visibility Queries</p>
+              <p style={{ fontSize: 11, color: textMuted, margin: 0 }}>Queries run per category · Populate competitor dashboard tabs</p>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => runCategory(selectedCat)} disabled={running}
+                style={{ background: gold, color: '#1a0e06', border: 'none', borderRadius: 6, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer', opacity: running ? 0.7 : 1 }}>
+                {running ? 'Running...' : `▶ Run ${CATEGORIES.find(c => c.key === selectedCat)?.label}`}
+              </button>
+              <button onClick={() => runCategory()} disabled={running}
+                style={{ background: text, color: '#fff', border: 'none', borderRadius: 6, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer', opacity: running ? 0.7 : 1 }}>
+                {running ? 'Running...' : '▶ Run All'}
+              </button>
+            </div>
+          </div>
+
+          {/* Category tabs */}
+          <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
+            {CATEGORIES.map(c => (
+              <button key={c.key} onClick={() => setSelectedCat(c.key)}
+                style={{ fontSize: 11, fontWeight: 600, padding: '4px 12px', borderRadius: 4, cursor: 'pointer', border: '1px solid ' + (selectedCat === c.key ? text : border), background: selectedCat === c.key ? text : '#fff', color: selectedCat === c.key ? '#fff' : textMuted }}>
+                {c.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Add query */}
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+            <input value={catQuery} onChange={e => setCatQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && addCatQuery()}
+              placeholder={`e.g. best ${selectedCat} hotels in Switzerland`}
+              style={{ ...inp, flex: 1 }} />
+            <button onClick={addCatQuery}
+              style={{ background: gold, color: '#1a0e06', border: 'none', borderRadius: 6, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              Add
+            </button>
+          </div>
+
+          {catMsg && (
+            <div style={{ padding: '8px 12px', borderRadius: 6, marginBottom: 12, fontSize: 12, background: catMsg.startsWith('✓') ? 'rgba(22,163,74,0.1)' : 'rgba(220,38,38,0.1)', color: catMsg.startsWith('✓') ? '#16a34a' : '#dc2626' }}>
+              {catMsg}
+            </div>
+          )}
+
+          {catQueries.length === 0 ? (
+            <p style={{ fontSize: 13, color: textMuted, textAlign: 'center', padding: '20px 0' }}>No queries yet for this category</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {catQueries.map((q: any) => (
+                <div key={q.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: q.is_active ? 'rgba(201,169,110,0.06)' : bg, border: '1px solid ' + border, borderRadius: 6, opacity: q.is_active ? 1 : 0.5 }}>
+                  <input type="checkbox" checked={q.is_active} onChange={() => toggleCatQuery(q.id, q.is_active)} style={{ accentColor: gold, flexShrink: 0 }} />
+                  <span style={{ flex: 1, fontSize: 12, color: text }}>{q.query}</span>
+                  <button onClick={() => deleteCatQuery(q.id)} style={{ background: 'none', border: 'none', color: '#dc2626', fontSize: 11, cursor: 'pointer', padding: '2px 6px' }}>✕</button>
+                </div>
+              ))}
+            </div>
+          )}
+          <p style={{ fontSize: 11, color: textMuted, margin: '12px 0 0' }}>
+            {catQueries.filter((q: any) => q.is_active).length} active queries · ~${(catQueries.filter((q: any) => q.is_active).length * 0.011 * 2).toFixed(3)}/run
+          </p>
         </div>
       </div>
     </div>

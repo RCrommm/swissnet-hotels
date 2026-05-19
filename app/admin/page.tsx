@@ -9,7 +9,6 @@ import AIVisibilityToggle from '@/components/AIVisibilityToggle'
 import AIVisibilityQueries from '@/components/AIVisibilityQueries'
 import GoogleAITab from '@/components/GoogleAITab'
 import FaqReviewTab from '@/components/FaqReviewTab'
-import CategoryVisibilityQueries from '@/components/CategoryVisibilityQueries'
 
 async function isAuthenticated(password?: string) {
   const cookieStore = await cookies()
@@ -165,9 +164,7 @@ export default async function AdminPage({
     <div style={{ marginTop: 24, marginBottom: 24 }}>
       <AIVisibilityQueries hotels={partnerHotels} />
     </div>
-    <div style={{ marginTop: 24, marginBottom: 24 }}>
-      <CategoryVisibilityQueries />
-    </div>
+    
             <div style={{ marginTop: 24 }}>
               <h2 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, color: '#78716c', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 16 }}>
                 AI Visibility Scores — Partner Hotels Only
