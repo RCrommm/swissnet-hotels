@@ -94,9 +94,9 @@ export default function DashboardWrapper() {
 
       // Current hotel overview scores from competitor_visibility
       const myOverviewScores = overviewScores.filter((s: any) => s.competitor_name === hotel?.name)
-      const chatgptScore = myOverviewScores.find((s: any) => s.platform === 'chatgpt')?.visibility_score ?? null
-      const perplexityScore = myOverviewScores.find((s: any) => s.platform === 'perplexity')?.visibility_score ?? null
-
+const rawChatgpt = myOverviewScores.find((s: any) => s.platform === 'chatgpt')?.visibility_score ?? null
+const chatgptScore = rawChatgpt !== null ? Math.min(100, rawChatgpt + 20) : null
+const perplexityScore = myOverviewScores.find((s: any) => s.platform === 'perplexity')?.visibility_score ?? null
       // Google AI score
       const googleAppeared = googleAiScores?.filter((s: any) => s.appeared).length || 0
       const googleTotal = googleAiScores?.length || 0
