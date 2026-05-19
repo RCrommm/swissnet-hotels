@@ -75,14 +75,8 @@ export default function DashboardWrapper() {
 
       const competitors = (regionHotels || []).map((h: any) => {
         const hotelOverviewScores = overviewScores.filter((s: any) => s.competitor_name === h.name)
-        const adjustedScores = hotelOverviewScores.map((s: any) => ({
-          ...s,
-          visibility_score: s.platform === 'chatgpt' 
-            ? Math.min(100, s.visibility_score + 20) 
-            : s.visibility_score
-        }))
-        const visibilityScore = adjustedScores.length > 0
-          ? Math.round(adjustedScores.reduce((sum: number, s: any) => sum + s.visibility_score, 0) / adjustedScores.length)
+        const visibilityScore = hotelOverviewScores.length > 0
+          ? Math.round(hotelOverviewScores.reduce((sum: number, s: any) => sum + s.visibility_score, 0) / hotelOverviewScores.length)
           : null
 
         // Category scores
