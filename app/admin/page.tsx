@@ -159,11 +159,14 @@ export default async function AdminPage({
         {tab === 'schema' && <SchemaTab hotels={hotelsList} />}
 
         {tab === 'ai visibility' && (
-          <div>
-            <AIVisibilityToggle enabled={cronEnabled} />
-            <div style={{ marginTop: 24, marginBottom: 24 }}>
-              <AIVisibilityQueries hotels={partnerHotels} />
-            </div>
+  <div>
+    <AIVisibilityToggle enabled={cronEnabled} />
+    <div style={{ marginTop: 24, marginBottom: 24 }}>
+      <AIVisibilityQueries hotels={partnerHotels} />
+    </div>
+    <div style={{ marginTop: 24, marginBottom: 24 }}>
+      <CategoryVisibilityQueries />
+    </div>
             <div style={{ marginTop: 24 }}>
               <h2 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, color: '#78716c', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 16 }}>
                 AI Visibility Scores — Partner Hotels Only

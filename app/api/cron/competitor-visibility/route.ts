@@ -74,6 +74,8 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const regionParam = searchParams.get('region')
   const forceRun = searchParams.get('force') === 'true'
+  const typeParam = searchParams.get('type')
+const categoryParam = searchParams.get('category')
 
   // Check if enabled
   if (!forceRun) {
