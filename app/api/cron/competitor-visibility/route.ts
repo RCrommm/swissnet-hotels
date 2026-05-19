@@ -158,7 +158,7 @@ const categoryParam = searchParams.get('category')
 
           const partnerHotel = await supabase.from('hotels').select('id').eq('name', hotelName).eq('is_partner', true).maybeSingle()
 
-          await supabase.from('competitor_visibility').upsert({
+          const { error: upsertError } = await supabase.from('competitor_visibility').upsert({
             competitor_id: partnerHotel.data?.id || null,
             competitor_name: hotelName,
             region: 'Switzerland',
@@ -170,6 +170,7 @@ const categoryParam = searchParams.get('category')
             month: currentMonth,
             checked_at: new Date().toISOString(),
           }, { onConflict: 'competitor_name,platform,month,category' })
+          if (upsertError) console.error('[UPSERT ERROR]', upsertError.message, hotelName, category)
         }
       }
     }
