@@ -152,10 +152,12 @@ const CATEGORIES = [
 
   useEffect(() => { fetchCatQueries() }, [selectedCat])
 
-  const fetchCatQueries = async () => {
+  const fetchCatQueries = useCallback(async () => {
     const { data } = await supabase.from('category_queries').select('*').eq('category', selectedCat).order('created_at')
     setCatQueries(data || [])
-  }
+  }, [selectedCat])
+
+  useEffect(() => { fetchCatQueries() }, [fetchCatQueries])
 
   const addCatQuery = async () => {
     if (!catQuery.trim()) return
