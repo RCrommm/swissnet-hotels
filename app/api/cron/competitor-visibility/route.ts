@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin as supabase } from '@/lib/supabase-admin'
 
 const { data: regionQueriesData } = await supabase
   .from('region_queries')
@@ -46,37 +46,37 @@ async function queryChatGPT(query: string): Promise<string> {
   return data.choices?.[0]?.message?.content || ''
 }
 
-async function queryClaude(query: string): Promise<string> {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': process.env.ANTHROPIC_API_KEY || '',
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 500,
-      messages: [{ role: 'user', content: `${query}. Please recommend 3-5 specific hotels by name.` }],
-    }),
-  })
-  const data = await res.json()
-  return data.content?.[0]?.text || ''
-}
-
 const PLATFORMS = [
   { id: 'chatgpt', queryFn: queryChatGPT },
   { id: 'perplexity', queryFn: queryPerplexity },
 ]
+
+const CATEGORY_HOTELS: Record<string, string[]> = {
+  spa: ['Bürgenstock Resort', 'The Dolder Grand', 'Six Senses Crans-Montana', 'Grand Resort Bad Ragaz', 'The Chedi Andermatt', 'Clinique La Prairie', 'La Réserve Genève', 'Le Grand Bellevue Gstaad', 'Suvretta House', 'Victoria-Jungfrau Grand Hotel Interlaken', 'Hotel Adula', 'Crans Ambassador', 'Alpengold Hotel', 'Mont Cervin Palace', 'Schweizerhof Zermatt'],
+  ski: ["Badrutt's Palace Hotel", 'The Chedi Andermatt', 'The Alpina Gstaad', 'Kulm Hotel St. Moritz', 'Mont Cervin Palace', 'Suvretta House', 'Grand Hotel Kronenhof Pontresina', 'Palace Hotel Gstaad', 'Kempinski Grand Hotel des Bains St. Moritz', 'Crans Ambassador', 'Alpengold Hotel', 'Schweizerhof Zermatt', 'Monte Rosa Zermatt'],
+  dining: ['Grand Resort Bad Ragaz', 'Les Trois Rois Basel', 'The Chedi Andermatt', 'Giardino Mountain St. Moritz', 'Carlton Hotel St. Moritz', 'Baur au Lac', 'La Réserve Genève', 'Victoria-Jungfrau Grand Hotel Interlaken', 'Beau-Rivage Palace Lausanne', 'Mont Cervin Palace', 'Bellevue Palace'],
+  business: ['Baur au Lac', 'Four Seasons Hotel des Bergues Geneva', 'The Dolder Grand', 'Mandarin Oriental Geneva', 'Widder Hotel', 'La Réserve Genève', 'Park Hyatt Zurich', 'Bellevue Palace', 'La Réserve Eden au Lac Zurich', 'Alpengold Hotel'],
+  romantic: ['The Alpina Gstaad', "Badrutt's Palace Hotel", 'La Réserve Genève', 'Mont Cervin Palace', 'Eden Roc Ascona', 'Castello del Sole', 'Beau-Rivage Palace Lausanne', 'Victoria-Jungfrau Grand Hotel Interlaken', 'The Chedi Andermatt', 'Schweizerhof Zermatt', 'Monte Rosa Zermatt', 'La Réserve Eden au Lac Zurich'],
+  lake: ['Bürgenstock Resort', 'La Réserve Genève', 'Beau-Rivage Palace Lausanne', 'La Réserve Eden au Lac Zurich', 'Fairmont Le Montreux Palace', 'Eden Roc Ascona', 'Castello del Sole', 'Grand Hotel Villa Castagnola Lugano', 'Grand Hotel Vitznauerhof Lucerne', 'Beau-Rivage Geneva'],
+}
+
+function checkAppeared(hotelName: string, responseText: string): boolean {
+  const r = responseText.toLowerCase()
+  const n = hotelName.toLowerCase()
+  const words = n.split(' ').filter((w: string) => !['hotel','the','le','la','les','grand','de','du','au','aux','by','at','and','&'].includes(w))
+  const lastTwo = hotelName.split(' ').slice(-2).join(' ').toLowerCase()
+  const firstTwo = hotelName.split(' ').slice(0, 2).join(' ').toLowerCase()
+  const keyWords = words.slice(0, 3).join(' ')
+  return r.includes(n) || r.includes(lastTwo) || r.includes(firstTwo) || (words.length >= 2 && r.includes(keyWords))
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const regionParam = searchParams.get('region')
   const forceRun = searchParams.get('force') === 'true'
   const typeParam = searchParams.get('type')
-const categoryParam = searchParams.get('category')
+  const categoryParam = searchParams.get('category')
 
-  // Check if enabled
   if (!forceRun) {
     const { data: setting } = await supabase
       .from('settings')
@@ -88,12 +88,7 @@ const categoryParam = searchParams.get('category')
     }
   }
 
-  const currentMonth = new Date().toISOString().slice(0, 7) // e.g. "2026-04"
-
-  // Get competitors
-  let query = supabase.from('competitor_hotels').select('*').eq('is_active', true)
-  if (regionParam) query = query.eq('region', regionParam)
-  const { data: competitors } = await query
+  const currentMonth = new Date().toISOString().slice(0, 7)
 
   // ── CATEGORY MODE ──
   if (typeParam === 'category') {
@@ -108,83 +103,44 @@ const categoryParam = searchParams.get('category')
       categoriesMap[q.category].push(q.query)
     }
 
-    const CATEGORY_HOTELS: Record<string, string[]> = {
-      spa: ['Bürgenstock Resort', 'The Dolder Grand', 'Six Senses Crans-Montana', 'Grand Resort Bad Ragaz', 'The Chedi Andermatt', 'Clinique La Prairie', 'La Réserve Genève', 'Le Grand Bellevue Gstaad', 'Suvretta House', 'Victoria-Jungfrau Grand Hotel Interlaken', 'Hotel Adula', 'Crans Ambassador', 'Alpengold Hotel', 'Mont Cervin Palace', 'Schweizerhof Zermatt'],
-      ski: ["Badrutt's Palace Hotel", 'The Chedi Andermatt', 'The Alpina Gstaad', 'Kulm Hotel St. Moritz', 'Mont Cervin Palace', 'Suvretta House', 'Grand Hotel Kronenhof Pontresina', 'Palace Hotel Gstaad', 'Kempinski Grand Hotel des Bains St. Moritz', 'Crans Ambassador', 'Alpengold Hotel', 'Schweizerhof Zermatt', 'Monte Rosa Zermatt'],
-      dining: ['Grand Resort Bad Ragaz', 'Les Trois Rois Basel', 'The Chedi Andermatt', 'Giardino Mountain St. Moritz', 'Carlton Hotel St. Moritz', 'Baur au Lac', 'La Réserve Genève', 'Victoria-Jungfrau Grand Hotel Interlaken', 'Beau-Rivage Palace Lausanne', 'Mont Cervin Palace', 'Bellevue Palace'],
-      business: ['Baur au Lac', 'Four Seasons Hotel des Bergues Geneva', 'The Dolder Grand', 'Mandarin Oriental Geneva', 'Widder Hotel', 'La Réserve Genève', 'Park Hyatt Zurich', 'Bellevue Palace', 'La Réserve Eden au Lac Zurich', 'Alpengold Hotel'],
-      romantic: ['The Alpina Gstaad', "Badrutt's Palace Hotel", 'La Réserve Genève', 'Mont Cervin Palace', 'Eden Roc Ascona', 'Castello del Sole', 'Beau-Rivage Palace Lausanne', 'Victoria-Jungfrau Grand Hotel Interlaken', 'The Chedi Andermatt', 'Schweizerhof Zermatt', 'Monte Rosa Zermatt', 'La Réserve Eden au Lac Zurich'],
-      lake: ['Bürgenstock Resort', 'La Réserve Genève', 'Beau-Rivage Palace Lausanne', 'La Réserve Eden au Lac Zurich', 'Fairmont Le Montreux Palace', 'Eden Roc Ascona', 'Castello del Sole', 'Grand Hotel Villa Castagnola Lugano', 'Grand Hotel Vitznauerhof Lucerne', 'Beau-Rivage Geneva'],
-    }
-
-    const catResults: any[] = []
     let catCost = 0
+    let totalAppearances = 0
 
     for (const [category, queries] of Object.entries(categoriesMap)) {
       const hotels = CATEGORY_HOTELS[category] || []
       if (!hotels.length) continue
-      console.log(`[CATEGORY] Processing ${category} with ${hotels.length} hotels and ${queries.length} queries`)
-      const responseCache: Record<string, string> = {}
+
+      const { data: partnerHotels } = await supabase
+        .from('hotels')
+        .select('id, name')
+        .eq('is_partner', true)
+        .in('name', hotels)
+
+      const partnerMap: Record<string, string> = {}
+      for (const p of partnerHotels || []) partnerMap[p.name] = p.id
 
       for (const platform of PLATFORMS) {
+        // Fetch all responses first
+        const responseCache: Record<string, string> = {}
         for (const q of queries) {
-          const cacheKey = `${platform.id}:${q}`
           try {
-            if (!responseCache[cacheKey]) {
-              responseCache[cacheKey] = await platform.queryFn(q)
-              catCost += platform.id === 'chatgpt' ? 0.002 : 0.001
-              await new Promise(r => setTimeout(r, 300))
-            }
+            responseCache[q] = await platform.queryFn(q)
+            catCost += platform.id === 'chatgpt' ? 0.002 : 0.001
+            await new Promise(r => setTimeout(r, 300))
           } catch (err: any) {
             console.error(`Error querying ${platform.id}:`, err.message)
-            continue
+            responseCache[q] = ''
           }
         }
 
-        // Fetch all partner ids at once
-        const { data: partnerHotels } = await supabase
-          .from('hotels')
-          .select('id, name')
-          .eq('is_partner', true)
-          .in('name', hotels)
-
-        const partnerMap: Record<string, string> = {}
-        for (const p of partnerHotels || []) partnerMap[p.name] = p.id
-
+        // Score all hotels and collect rows
+        const rows: any[] = []
         for (const hotelName of hotels) {
-          const appearances = queries.filter(q => {
-            const cacheKey = `${platform.id}:${q}`
-            if (!responseCache[cacheKey]) return false
-            const r = responseCache[cacheKey].toLowerCase()
-            const n = hotelName.toLowerCase()
-            const words = n.split(' ').filter((w: string) => !['hotel','the','le','la','les','grand','de','du','au','aux','by','at','and','&'].includes(w))
-            const lastTwo = hotelName.split(' ').slice(-2).join(' ').toLowerCase()
-            const firstTwo = hotelName.split(' ').slice(0, 2).join(' ').toLowerCase()
-            const keyWords = words.slice(0, 3).join(' ')
-            return r.includes(n) || r.includes(lastTwo) || r.includes(firstTwo) || (words.length >= 2 && r.includes(keyWords))
-          }).length
-
+          const appearances = queries.filter(q => responseCache[q] && checkAppeared(hotelName, responseCache[q])).length
           const score = queries.length > 0 ? Math.round((appearances / queries.length) * 100) : 0
-          if (appearances > 0) catResults.push({ hotel: hotelName, category, platform: platform.id, score })
+          if (appearances > 0) totalAppearances++
 
-          const upsertRows: any[] = []
-        for (const hotelName of hotels) {
-          const appearances = queries.filter(q => {
-            const cacheKey = `${platform.id}:${q}`
-            if (!responseCache[cacheKey]) return false
-            const r = responseCache[cacheKey].toLowerCase()
-            const n = hotelName.toLowerCase()
-            const words = n.split(' ').filter((w: string) => !['hotel','the','le','la','les','grand','de','du','au','aux','by','at','and','&'].includes(w))
-            const lastTwo = hotelName.split(' ').slice(-2).join(' ').toLowerCase()
-            const firstTwo = hotelName.split(' ').slice(0, 2).join(' ').toLowerCase()
-            const keyWords = words.slice(0, 3).join(' ')
-            return r.includes(n) || r.includes(lastTwo) || r.includes(firstTwo) || (words.length >= 2 && r.includes(keyWords))
-          }).length
-
-          const score = queries.length > 0 ? Math.round((appearances / queries.length) * 100) : 0
-          if (appearances > 0) catResults.push({ hotel: hotelName, category, platform: platform.id, score })
-
-          upsertRows.push({
+          rows.push({
             competitor_id: partnerMap[hotelName] || null,
             competitor_name: hotelName,
             region: 'Switzerland',
@@ -198,16 +154,10 @@ const categoryParam = searchParams.get('category')
           })
         }
 
-        await supabase.from('competitor_visibility')
-          .delete()
-          .eq('category', category)
-          .eq('platform', platform.id)
-          .eq('month', currentMonth)
-
-        const { error: batchError } = await supabase.from('competitor_visibility').insert(upsertRows)
-        if (batchError) console.error('[BATCH UPSERT ERROR]', batchError.message, category, platform.id)
-        else console.log('[BATCH UPSERT OK]', category, platform.id, upsertRows.length, 'rows')
-        }
+        // Delete old rows for this category+platform+month, then insert fresh
+        for (const row of rows) {
+  await supabase.from('competitor_visibility').upsert(row, { onConflict: 'competitor_name,platform,month,category' })
+}
       }
     }
 
@@ -223,16 +173,20 @@ const categoryParam = searchParams.get('category')
     return NextResponse.json({
       success: true,
       categories_checked: Object.keys(categoriesMap).length,
-      total_appearances: catResults.length,
+      total_appearances: totalAppearances,
       estimated_cost_usd: Number(catCost.toFixed(4)),
       month: currentMonth,
     })
   }
   // ── END CATEGORY MODE ──
 
+  // ── REGION MODE ──
+  let query = supabase.from('competitor_hotels').select('*').eq('is_active', true)
+  if (regionParam) query = query.eq('region', regionParam)
+  const { data: competitors } = await query
+
   if (!competitors?.length) return NextResponse.json({ error: 'No competitors found' })
 
-  // Group by region
   const regions = [...new Set(competitors.map((c: any) => c.region))]
   const results: any[] = []
   let estimatedCost = 0
@@ -242,7 +196,6 @@ const categoryParam = searchParams.get('category')
     const queries = QUERIES_PER_REGION[region] || []
     if (!queries.length) continue
 
-    // Also include partner hotels in same region for comparison
     const { data: partnerHotels } = await supabase
       .from('hotels')
       .select('id, name, region')
@@ -255,7 +208,6 @@ const categoryParam = searchParams.get('category')
       ...(partnerHotels || []).map((h: any) => ({ id: h.id, name: h.name, isPartner: true })),
     ]
 
-    // Run each query on each platform
     const responseCache: Record<string, string> = {}
 
     for (const platform of PLATFORMS) {
@@ -272,18 +224,17 @@ const categoryParam = searchParams.get('category')
           const responseText = responseCache[cacheKey]
           const responseLower = responseText.toLowerCase()
 
-          // Check each hotel
           for (const hotel of allHotels) {
             const hotelNameLower = hotel.name.toLowerCase()
-const words = hotelNameLower.split(' ').filter((w: string) => !['hotel', 'the', 'le', 'la', 'les', 'grand', 'de', 'du', 'au', 'aux', 'by', 'at', 'and', '&'].includes(w))
-const lastTwoWords = hotel.name.split(' ').slice(-2).join(' ').toLowerCase()
-const firstTwoWords = hotel.name.split(' ').slice(0, 2).join(' ').toLowerCase()
-const keyWords = words.slice(0, 3).join(' ')
-const appeared = responseLower.includes(hotelNameLower) || 
-  responseLower.includes(lastTwoWords) ||
-  responseLower.includes(firstTwoWords) ||
-  (words.length >= 2 && responseLower.includes(keyWords))
-  if (region === 'Geneva') console.log(`[DEBUG] ${hotel.name} | appeared: ${appeared} | response: ${responseText.slice(0, 200)}`)
+            const words = hotelNameLower.split(' ').filter((w: string) => !['hotel','the','le','la','les','grand','de','du','au','aux','by','at','and','&'].includes(w))
+            const lastTwoWords = hotel.name.split(' ').slice(-2).join(' ').toLowerCase()
+            const firstTwoWords = hotel.name.split(' ').slice(0, 2).join(' ').toLowerCase()
+            const keyWords = words.slice(0, 3).join(' ')
+            const appeared = responseLower.includes(hotelNameLower) ||
+              responseLower.includes(lastTwoWords) ||
+              responseLower.includes(firstTwoWords) ||
+              (words.length >= 2 && responseLower.includes(keyWords))
+
             if (appeared) {
               results.push({ hotel: hotel.name, platform: platform.id, query: q, region })
             }
@@ -293,7 +244,6 @@ const appeared = responseLower.includes(hotelNameLower) ||
         }
       }
 
-      // Save scores per hotel per platform
       for (const hotel of allHotels) {
         const hotelResults = results.filter(r => r.hotel === hotel.name && r.platform === platform.id && r.region === region)
         const appearances = hotelResults.length
@@ -314,10 +264,9 @@ const appeared = responseLower.includes(hotelNameLower) ||
     }
   }
 
-  // Log cost
   await supabase.from('cron_costs').insert({
     hotels_checked: competitors.length,
-    queries_run: Object.keys(results).length,
+    queries_run: results.length,
     platforms_checked: PLATFORMS.length,
     estimated_cost_usd: estimatedCost,
     triggered_by: forceRun ? 'manual' : 'cron',
