@@ -155,9 +155,13 @@ export async function GET(request: Request) {
         }
 
         // Delete old rows for this category+platform+month, then insert fresh
-        for (const row of rows) {
-  await supabase.from('competitor_visibility').upsert(row, { onConflict: 'competitor_name,platform,month,category' })
-}
+        await supabase.from('competitor_visibility')
+  .delete()
+  .eq('category', category)
+  .eq('platform', platform.id)
+  .eq('month', currentMonth)
+
+await supabase.from('competitor_visibility').insert(rows)
       }
     }
 
