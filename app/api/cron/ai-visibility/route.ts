@@ -135,13 +135,113 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const hotelIdParam = searchParams.get('hotel_id')
   const platformParam = searchParams.get('platform')
+  const regionParam = searchParams.get('region')
+  const forceRun = searchParams.get('force') === 'true'
+  const currentMonth = new Date().toISOString().slice(0, 7)
 
-  if (!hotelIdParam) {
+  // ── REGION MODE — runs all hotels in a region against general queries ──
+  if (regionParam) {
+    const { data: regionHotels } = await supabase
+      .from('hotels')
+      .select('id, name, region')
+      .eq('is_active', true)
+      .eq('region', regionParam)
+
+    if (!regionHotels?.length) {
+      return NextResponse.json({ error: `No hotels found in region: ${regionParam}` })
+    }
+
+    const { data: regionQueriesData } = await supabase
+      .from('region_queries')
+      .select('query')
+      .eq('region', regionParam)
+      .eq('is_active', true)
+
+    if (!regionQueriesData?.length) {
+      return NextResponse.json({ error: `No queries found for region: ${regionParam}` })
+    }
+
+    const queries = regionQueriesData.map((q: any) => q.query)
+    const platformsToRun = platformParam ? PLATFORMS.filter(p => p.id === platformParam) : PLATFORMS
+    let catCost = 0
+    let totalAppearances = 0
+    const results: any[] = []
+
+    for (const platform of platformsToRun) {
+      const responseCache: Record<string, string> = {}
+
+      for (const q of queries) {
+        try {
+          responseCache[q] = await platform.queryFn(q)
+          catCost += platform.id === 'chatgpt' ? 0.01 : 0.001
+          await new Promise(r => setTimeout(r, 500))
+        } catch (err: any) {
+          console.error(`Error querying ${platform.id}:`, err.message)
+          responseCache[q] = ''
+        }
+      }
+
+      const rows: any[] = []
+      for (const hotel of regionHotels) {
+        const appearances = queries.filter(q => responseCache[q] && checkAppeared(hotel.name, responseCache[q])).length
+        const score = queries.length > 0 ? Math.round((appearances / queries.length) * 100) : 0
+        if (appearances > 0) totalAppearances++
+
+        rows.push({
+          competitor_name: hotel.name,
+          region: regionParam,
+          category: null,
+          platform: platform.id,
+          visibility_score: score,
+          appearances,
+          total_queries: queries.length,
+          month: currentMonth,
+          checked_at: new Date().toISOString(),
+        })
+
+        if (appearances > 0) {
+          results.push({ hotel: hotel.name, platform: platform.id, score })
+        }
+      }
+
+      await supabase
+        .from('competitor_visibility')
+        .delete()
+        .eq('region', regionParam)
+        .is('category', null)
+        .eq('platform', platform.id)
+        .eq('month', currentMonth)
+
+      await supabase.from('competitor_visibility').insert(rows)
+    }
+
+    await supabase.from('cron_costs').insert({
+      hotels_checked: regionHotels.length,
+      queries_run: queries.length * platformsToRun.length,
+      platforms_checked: platformsToRun.length,
+      estimated_cost_usd: catCost,
+      triggered_by: 'manual',
+      run_at: new Date().toISOString(),
+    })
+
+    return NextResponse.json({
+      success: true,
+      region: regionParam,
+      hotels_checked: regionHotels.length,
+      queries_run: queries.length * platformsToRun.length,
+      total_appearances: totalAppearances,
+      estimated_cost_usd: Number(catCost.toFixed(4)),
+      results,
+    })
+  }
+  // ── END REGION MODE ──
+
+  if (!hotelIdParam && !forceRun) {
     const { data: setting } = await supabase.from('settings').select('value').eq('key', 'ai_visibility_cron_enabled').single()
     if (setting?.value !== 'true') return NextResponse.json({ message: 'AI visibility cron is disabled' })
   }
 
-  let hotelsQuery = supabase.from('hotels').select('id, name, region').eq('is_active', true)
+  let hotelsQuery = supabase.from('hotels').select('id, name, region').eq('is_active', true).eq('is_partner', true)
   if (hotelIdParam) hotelsQuery = hotelsQuery.eq('id', hotelIdParam)
   const { data: hotels, error: hotelsError } = await hotelsQuery
   if (hotelsError) return NextResponse.json({ error: hotelsError.message })
