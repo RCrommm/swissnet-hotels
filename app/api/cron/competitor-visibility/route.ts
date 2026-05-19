@@ -140,6 +140,16 @@ const categoryParam = searchParams.get('category')
           }
         }
 
+        // Fetch all partner ids at once
+        const { data: partnerHotels } = await supabase
+          .from('hotels')
+          .select('id, name')
+          .eq('is_partner', true)
+          .in('name', hotels)
+
+        const partnerMap: Record<string, string> = {}
+        for (const p of partnerHotels || []) partnerMap[p.name] = p.id
+
         for (const hotelName of hotels) {
           const appearances = queries.filter(q => {
             const cacheKey = `${platform.id}:${q}`
@@ -156,10 +166,8 @@ const categoryParam = searchParams.get('category')
           const score = queries.length > 0 ? Math.round((appearances / queries.length) * 100) : 0
           if (appearances > 0) catResults.push({ hotel: hotelName, category, platform: platform.id, score })
 
-          const partnerHotel = await supabase.from('hotels').select('id').eq('name', hotelName).eq('is_partner', true).maybeSingle()
-
           const { error: upsertError } = await supabase.from('competitor_visibility').upsert({
-            competitor_id: partnerHotel.data?.id || null,
+            competitor_id: partnerMap[hotelName] || null,
             competitor_name: hotelName,
             region: 'Switzerland',
             category,
