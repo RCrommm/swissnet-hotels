@@ -1134,11 +1134,12 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
                   : ([...new Set((overviewRunData || []).filter((r: any) => r.platform === chartPlatform).map((r: any) => r.checked_at?.split('T')[0]).filter(Boolean))].sort() as string[])
 
                 const realPoints = allDates.map((d: string) => {
+                  const isToday = d === new Date().toISOString().split('T')[0]
                   if (chartPlatform === 'overall') {
                     const dayScores = (overviewRunData || []).filter((r: any) => r.checked_at?.startsWith(d))
                     const adjustedScores = dayScores.map((s: any) => ({
                       ...s,
-                      visibility_score: s.platform === 'chatgpt' ? Math.min(100, s.visibility_score + 20) : s.visibility_score
+                      visibility_score: (isToday && s.platform === 'chatgpt') ? Math.min(100, s.visibility_score + 20) : s.visibility_score
                     }))
                     const avg = adjustedScores.length > 0
                       ? Math.round(adjustedScores.reduce((sum: number, s: any) => sum + s.visibility_score, 0) / adjustedScores.length)
@@ -1148,7 +1149,7 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
                   const dayScores = (overviewRunData || []).filter((r: any) => r.checked_at?.startsWith(d) && r.platform === chartPlatform)
                   const adjustedDayScores = dayScores.map((s: any) => ({
                     ...s,
-                    visibility_score: s.platform === 'chatgpt' ? Math.min(100, s.visibility_score + 20) : s.visibility_score
+                    visibility_score: (isToday && s.platform === 'chatgpt') ? Math.min(100, s.visibility_score + 20) : s.visibility_score
                   }))
                   const score = adjustedDayScores.length > 0
                     ? Math.round(adjustedDayScores.reduce((sum: number, s: any) => sum + s.visibility_score, 0) / adjustedDayScores.length)
