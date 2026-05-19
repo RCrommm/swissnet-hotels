@@ -813,7 +813,7 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string; hotel
 
 // ── MAIN DASHBOARD ────────────────────────────────────────────────────────────
 
-export default function DashboardClient({ hotel, views, clicks, leads, aiVisibility, bookings, competitors, hotelCatScores }: any) {
+export default function DashboardClient({ hotel, views, clicks, leads, aiVisibility, googleAiScores, bookings, competitors, hotelCatScores, platformScores, overviewRunData }: any) {
   const [tab, setTab] = useState('overview')
   const [period, setPeriod] = useState(30)
   const [chartPeriod, setChartPeriod] = useState(7)
@@ -823,14 +823,16 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
   const hotelName = hotel?.name || 'Your Hotel'
   const hotelRegion = hotel?.region || 'Switzerland'
 
-  const runDates = [...new Set(aiVisibility?.map((r: any) => r.checked_at?.split('T')[0]) || [])].sort().slice(-4) as string[]
-  const runScores = runDates.map((date: string) => {
-    const runQueries = aiVisibility?.filter((r: any) => r.checked_at?.startsWith(date)) || []
-    const runAppeared = runQueries.filter((r: any) => r.appeared).length
-    return runQueries.length > 0 ? (runAppeared / runQueries.length) * 100 : 0
-  })
-  const rawScore = runScores.length > 0 ? Math.round(runScores.reduce((a, b) => a + b, 0) / runScores.length) : 0
-  const visibilityScore = Math.min(100, rawScore + 8)
+  // Scores from competitor_visibility (overview) + google AI
+  const chatgptScore = platformScores?.chatgpt ?? null
+  const perplexityScore = platformScores?.perplexity ?? null
+  const googleScore = platformScores?.google_ai ?? null
+  const visibilityScore = platformScores?.overall ?? 0
+
+  // For chart — use overviewRunData grouped by date
+  const runDates = [...new Set((overviewRunData || []).map((r: any) => r.checked_at?.split('T')[0]))].sort() as string[]
+
+  // For "Where You Appear" and "Queries to Improve" — use hotelSpecificScores
   const totalQueries = aiVisibility?.length || 0
   const appearedQueries = aiVisibility?.filter((r: any) => r.appeared)?.length || 0
 
@@ -863,11 +865,11 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
   const conversionRate = recentClicks.length > 0 ? Math.round((recentLeads.length / recentClicks.length) * 100) : 0
 
   const platformScore = (platformId: string) => {
-    const pq = aiVisibility?.filter((r: any) => r.platform === platformId) || []
-    const pa = pq.filter((r: any) => r.appeared).length
-    return pq.length > 0 ? Math.round((pa / pq.length) * 100) : null
+    if (platformId === 'google_ai') return googleScore
+    if (platformId === 'chatgpt') return chatgptScore
+    if (platformId === 'perplexity') return perplexityScore
+    return null
   }
-
   const sourceBreakdown = recentViews.reduce((acc: any, v: any) => {
     const ref = v.referrer || ''; const utm = v.utm_source || v.source || ''
     let src = 'Direct'
@@ -1100,9 +1102,12 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  {runScores.length >= 2 && (() => {
+                  {runDates.length >= 2 && (() => {
                     const cur = visibilityScore
-                    const prev = Math.round(Math.min(100, runScores[runScores.length - 2] + 8))
+                    const prevDayScores = (overviewRunData || []).filter((r: any) => r.checked_at?.startsWith(runDates[runDates.length - 2]))
+                    const prev = prevDayScores.length > 0
+                      ? Math.round(prevDayScores.reduce((sum: number, s: any) => sum + s.visibility_score, 0) / prevDayScores.length)
+                      : cur
                     const delta = cur - prev
                     return (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -1124,15 +1129,22 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
                 </div>
               ) : (() => {
                 const cutoff = new Date(Date.now() - chartPeriod * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-                const allDates = chartPlatform === 'overall' ? runDates : ([...new Set(aiVisibility?.filter((r: any) => r.platform === chartPlatform).map((r: any) => r.checked_at?.split('T')[0]).filter(Boolean) || [])].sort() as string[])
-                const realPoints = allDates.map((d, i, arr) => {
+                const allDates = chartPlatform === 'overall'
+                  ? runDates
+                  : ([...new Set((overviewRunData || []).filter((r: any) => r.platform === chartPlatform).map((r: any) => r.checked_at?.split('T')[0]).filter(Boolean))].sort() as string[])
+
+                const realPoints = allDates.map((d: string) => {
                   if (chartPlatform === 'overall') {
-                    const idx = runDates.indexOf(d)
-                    return { date: d, score: i === arr.length - 1 ? visibilityScore : Math.round(Math.min(100, runScores[idx] + 8)) }
+                    const dayScores = (overviewRunData || []).filter((r: any) => r.checked_at?.startsWith(d))
+                    const avg = dayScores.length > 0
+                      ? Math.round(dayScores.reduce((sum: number, s: any) => sum + s.visibility_score, 0) / dayScores.length)
+                      : null
+                    return { date: d, score: avg }
                   }
-                  const dq = aiVisibility?.filter((r: any) => r.checked_at?.startsWith(d) && r.platform === chartPlatform) || []
-                  const ap = dq.filter((r: any) => r.appeared).length
-                  const score = dq.length > 0 ? Math.round((ap / dq.length) * 100) : null
+                  const dayScores = (overviewRunData || []).filter((r: any) => r.checked_at?.startsWith(d) && r.platform === chartPlatform)
+                  const score = dayScores.length > 0
+                    ? Math.round(dayScores.reduce((sum: number, s: any) => sum + s.visibility_score, 0) / dayScores.length)
+                    : null
                   return { date: d, score }
                 }).filter((d): d is { date: string; score: number } => d.score !== null)
 

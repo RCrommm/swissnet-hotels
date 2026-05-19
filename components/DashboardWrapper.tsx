@@ -17,78 +17,73 @@ export default function DashboardWrapper() {
   useEffect(() => {
     async function loadDashboard() {
       const { data: { session } } = await supabase.auth.getSession()
-
-      if (!session) {
-        router.push('/dashboard/login')
-        return
-      }
+      if (!session) { router.push('/dashboard/login'); return }
 
       const { data: hotelUser } = await supabase
         .from('hotel_users')
         .select('hotel_id')
         .eq('user_id', session.user.id)
         .single()
-
-      if (!hotelUser) {
-        router.push('/dashboard/login')
-        return
-      }
+      if (!hotelUser) { router.push('/dashboard/login'); return }
 
       const hotelId = hotelUser.hotel_id
 
-      const [hotel, views, clicks, leads, aiVisibility, bookings] = await Promise.all([
+      const [hotel, views, clicks, leads, bookings] = await Promise.all([
         supabase.from('hotels').select('*').eq('id', hotelId).single().then(r => r.data),
         supabase.from('hotel_views').select('*').eq('hotel_id', hotelId).order('viewed_at', { ascending: false }).then(r => r.data || []),
         supabase.from('referral_clicks').select('*').eq('hotel_id', hotelId)
           .in('utm_campaign', ['hotel_profile', 'rooms_page', 'dining_page', 'spa_page', 'experiences_page', 'events_page'])
           .order('clicked_at', { ascending: false }).then(r => r.data || []),
         supabase.from('leads').select('*').eq('hotel_id', hotelId).order('created_at', { ascending: false }).then(r => r.data || []),
-        supabase.from('ai_visibility_scores').select('*').eq('hotel_id', hotelId).order('checked_at', { ascending: false }).then(r => r.data || []),
         supabase.from('bookings').select('*').eq('hotel_id', hotelId).eq('source', 'swissnet').order('booked_at', { ascending: false }).then(r => r.data || []),
       ])
 
-      const { data: competitorHotels } = await supabase
+      const region = hotel?.region || 'Geneva'
+
+      // Fetch all competitor_visibility for this region (overview + categories)
+      const { data: allCompVisibility } = await supabase
+        .from('competitor_visibility')
+        .select('competitor_name, category, platform, visibility_score, checked_at')
+        .eq('region', region)
+
+      // Google AI scores for this hotel specifically
+      const { data: googleAiScores } = await supabase
+        .from('ai_visibility_scores')
+        .select('query, appeared, checked_at')
+        .eq('hotel_id', hotelId)
+        .eq('platform', 'google_ai')
+        .order('checked_at', { ascending: false })
+
+      // Per-hotel specific AI visibility scores (for "Where You Appear" and "Queries to Improve")
+      const { data: hotelSpecificScores } = await supabase
+        .from('ai_visibility_scores')
+        .select('*')
+        .eq('hotel_id', hotelId)
+        .neq('platform', 'google_ai')
+        .order('checked_at', { ascending: false })
+
+      // Build competitor list with overview scores
+      const { data: regionHotels } = await supabase
         .from('hotels')
         .select('id, name, rating, nightly_rate_chf, region, category')
         .eq('is_active', true)
+        .eq('region', region)
         .neq('id', hotelId)
 
-      const competitorIds = (competitorHotels || []).map((h: any) => h.id)
+      // Overview scores (category = null) per hotel
+      const overviewScores = allCompVisibility?.filter((s: any) => s.category === null) || []
 
-      const { data: competitorScores } = await supabase
-        .from('ai_visibility_scores')
-        .select('hotel_id, appeared')
-        .in('hotel_id', competitorIds)
+      const competitors = (regionHotels || []).map((h: any) => {
+        const hotelOverviewScores = overviewScores.filter((s: any) => s.competitor_name === h.name)
+        const appeared = hotelOverviewScores.reduce((sum: number, s: any) => sum + s.visibility_score, 0)
+        const visibilityScore = hotelOverviewScores.length > 0
+          ? Math.round(hotelOverviewScores.reduce((sum: number, s: any) => sum + s.visibility_score, 0) / hotelOverviewScores.length)
+          : null
 
-      const { data: categoryScores } = await supabase
-        .from('competitor_visibility')
-        .select('competitor_name, category, platform, visibility_score')
-        .not('category', 'is', null)
-        .neq('category', 'region')
-        const { data: partnerCatScores } = await supabase
-        .from('competitor_visibility')
-        .select('category, platform, visibility_score')
-        .eq('competitor_name', hotel?.name)
-        .neq('category', 'region')
-
-      const hotelCatScores: Record<string, number> = {}
-      for (const cat of ['spa', 'ski', 'dining', 'romantic', 'lake', 'business']) {
-        const entries = partnerCatScores?.filter((s: any) => s.category === cat) || []
-        if (entries.length > 0) {
-          hotelCatScores[cat] = Math.round(entries.reduce((sum: number, s: any) => sum + s.visibility_score, 0) / entries.length)
-        }
-      }
-
-      const competitors = (competitorHotels || []).map((h: any) => {
-        const hotelScores = competitorScores?.filter((s: any) => s.hotel_id === h.id) || []
-        const appeared = hotelScores.filter((s: any) => s.appeared).length
-        const visibilityScore = hotelScores.length > 0 ? Math.round((appeared / hotelScores.length) * 100) : null
-
-        // Build category scores map
+        // Category scores
         const catScores: Record<string, number> = {}
-        const hotelCatScores = categoryScores?.filter((s: any) => s.competitor_name === h.name) || []
         for (const cat of ['spa', 'ski', 'dining', 'romantic', 'lake', 'business']) {
-          const catEntries = hotelCatScores.filter((s: any) => s.category === cat)
+          const catEntries = allCompVisibility?.filter((s: any) => s.competitor_name === h.name && s.category === cat) || []
           if (catEntries.length > 0) {
             catScores[cat] = Math.round(catEntries.reduce((sum: number, s: any) => sum + s.visibility_score, 0) / catEntries.length)
           }
@@ -97,15 +92,51 @@ export default function DashboardWrapper() {
         return { ...h, visibilityScore, catScores }
       })
 
+      // Current hotel overview scores from competitor_visibility
+      const myOverviewScores = overviewScores.filter((s: any) => s.competitor_name === hotel?.name)
+      const chatgptScore = myOverviewScores.find((s: any) => s.platform === 'chatgpt')?.visibility_score ?? null
+      const perplexityScore = myOverviewScores.find((s: any) => s.platform === 'perplexity')?.visibility_score ?? null
+
+      // Google AI score
+      const googleAppeared = googleAiScores?.filter((s: any) => s.appeared).length || 0
+      const googleTotal = googleAiScores?.length || 0
+      const googleScore = googleTotal > 0 ? Math.round((googleAppeared / googleTotal) * 100) : null
+
+      // Overall = average of available platform scores
+      const availableScores = [chatgptScore, perplexityScore, googleScore].filter((s): s is number => s !== null)
+      const overallScore = availableScores.length > 0
+        ? Math.round(availableScores.reduce((a, b) => a + b, 0) / availableScores.length)
+        : null
+
+      // Category scores for current hotel
+      const hotelCatScores: Record<string, number> = {}
+      for (const cat of ['spa', 'ski', 'dining', 'romantic', 'lake', 'business']) {
+        const catEntries = allCompVisibility?.filter((s: any) => s.competitor_name === hotel?.name && s.category === cat) || []
+        if (catEntries.length > 0) {
+          hotelCatScores[cat] = Math.round(catEntries.reduce((sum: number, s: any) => sum + s.visibility_score, 0) / catEntries.length)
+        }
+      }
+
+      // Run dates for chart — from competitor_visibility overview scores for this hotel
+      const myRunDates = [...new Set(myOverviewScores.map((s: any) => s.checked_at?.split('T')[0]))].sort() as string[]
+
       setData({
         hotel,
         views,
         clicks,
         leads,
-        aiVisibility,
+        aiVisibility: hotelSpecificScores || [],
+        googleAiScores: googleAiScores || [],
         bookings: bookings || [],
         competitors: competitors || [],
         hotelCatScores,
+        platformScores: {
+          chatgpt: chatgptScore,
+          perplexity: perplexityScore,
+          google_ai: googleScore,
+          overall: overallScore,
+        },
+        overviewRunData: myOverviewScores,
       })
       setLoading(false)
     }
