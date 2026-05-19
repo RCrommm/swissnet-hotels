@@ -167,7 +167,24 @@ const categoryParam = searchParams.get('category')
           const score = queries.length > 0 ? Math.round((appearances / queries.length) * 100) : 0
           if (appearances > 0) catResults.push({ hotel: hotelName, category, platform: platform.id, score })
 
-          const { error: upsertError } = await supabase.from('competitor_visibility').upsert({
+          const upsertRows: any[] = []
+        for (const hotelName of hotels) {
+          const appearances = queries.filter(q => {
+            const cacheKey = `${platform.id}:${q}`
+            if (!responseCache[cacheKey]) return false
+            const r = responseCache[cacheKey].toLowerCase()
+            const n = hotelName.toLowerCase()
+            const words = n.split(' ').filter((w: string) => !['hotel','the','le','la','les','grand','de','du','au','aux','by','at','and','&'].includes(w))
+            const lastTwo = hotelName.split(' ').slice(-2).join(' ').toLowerCase()
+            const firstTwo = hotelName.split(' ').slice(0, 2).join(' ').toLowerCase()
+            const keyWords = words.slice(0, 3).join(' ')
+            return r.includes(n) || r.includes(lastTwo) || r.includes(firstTwo) || (words.length >= 2 && r.includes(keyWords))
+          }).length
+
+          const score = queries.length > 0 ? Math.round((appearances / queries.length) * 100) : 0
+          if (appearances > 0) catResults.push({ hotel: hotelName, category, platform: platform.id, score })
+
+          upsertRows.push({
             competitor_id: partnerMap[hotelName] || null,
             competitor_name: hotelName,
             region: 'Switzerland',
@@ -178,9 +195,12 @@ const categoryParam = searchParams.get('category')
             total_queries: queries.length,
             month: currentMonth,
             checked_at: new Date().toISOString(),
-          }, { onConflict: 'competitor_name,platform,month,category' })
-          if (upsertError) console.error('[UPSERT ERROR]', upsertError.message, hotelName, category)
-          else console.log('[UPSERT OK]', hotelName, category, platform.id, score)
+          })
+        }
+
+        const { error: batchError } = await supabase.from('competitor_visibility').upsert(upsertRows, { onConflict: 'competitor_name,platform,month,category' })
+        if (batchError) console.error('[BATCH UPSERT ERROR]', batchError.message, category, platform.id)
+        else console.log('[BATCH UPSERT OK]', category, platform.id, upsertRows.length, 'rows')
         }
       }
     }
