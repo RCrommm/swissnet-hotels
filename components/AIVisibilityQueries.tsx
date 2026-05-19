@@ -160,7 +160,8 @@ const CATEGORIES = [
   const addCatQuery = async () => {
     if (!catQuery.trim()) return
     await supabase.from('category_queries').insert({ category: selectedCat, query: catQuery.trim(), is_active: true })
-    setCatQuery(''); fetchCatQueries()
+    setCatQuery('')
+    await fetchCatQueries()
   }
 
   const toggleCatQuery = async (id: string, current: boolean) => {
