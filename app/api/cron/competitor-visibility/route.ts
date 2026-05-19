@@ -74,6 +74,8 @@ export async function GET(request: Request) {
 
   // ── CATEGORY MODE ──
   if (typeParam === 'category') {
+    const regionFilter = searchParams.get('region') || 'Geneva'
+
     let catQuery = supabase.from('category_queries').select('*').eq('is_active', true)
     if (categoryParam) catQuery = catQuery.eq('category', categoryParam)
     const { data: categoryQueries } = await catQuery
@@ -82,20 +84,24 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'No category queries found' })
     }
 
+    // Get all active hotels in the region
+    const { data: regionHotels } = await supabase
+      .from('hotels')
+      .select('id, name, region')
+      .eq('is_active', true)
+      .eq('region', regionFilter)
+
+    if (!regionHotels?.length) {
+      return NextResponse.json({ error: `No hotels found in region: ${regionFilter}` })
+    }
+
+    const hotelNames = regionHotels.map((h: any) => h.name)
+
     const categoriesMap: Record<string, string[]> = {}
     for (const q of categoryQueries) {
       if (!categoriesMap[q.category]) categoriesMap[q.category] = []
-      categoriesMap[q.category].push(q.query)
-    }
-
-    // Build hotel lists per category from DB
-    const CATEGORY_HOTELS: Record<string, string[]> = {
-      spa: ['Bürgenstock Resort', 'The Dolder Grand', 'Six Senses Crans-Montana', 'Grand Resort Bad Ragaz', 'The Chedi Andermatt', 'Clinique La Prairie', 'La Réserve Genève', 'Le Grand Bellevue Gstaad', 'Suvretta House', 'Victoria-Jungfrau Grand Hotel Interlaken', 'Hotel Adula', 'Crans Ambassador', 'Alpengold Hotel', 'Mont Cervin Palace', 'Schweizerhof Zermatt'],
-      ski: ["Badrutt's Palace Hotel", 'The Chedi Andermatt', 'The Alpina Gstaad', 'Kulm Hotel St. Moritz', 'Mont Cervin Palace', 'Suvretta House', 'Grand Hotel Kronenhof Pontresina', 'Palace Hotel Gstaad', 'Kempinski Grand Hotel des Bains St. Moritz', 'Crans Ambassador', 'Alpengold Hotel', 'Schweizerhof Zermatt', 'Monte Rosa Zermatt'],
-      dining: ['Grand Resort Bad Ragaz', 'Les Trois Rois Basel', 'The Chedi Andermatt', 'Giardino Mountain St. Moritz', 'Carlton Hotel St. Moritz', 'Baur au Lac', 'La Réserve Genève', 'Victoria-Jungfrau Grand Hotel Interlaken', 'Beau-Rivage Palace Lausanne', 'Mont Cervin Palace', 'Bellevue Palace'],
-      business: ['Baur au Lac', 'Four Seasons Hotel des Bergues Geneva', 'The Dolder Grand', 'Mandarin Oriental Geneva', 'Widder Hotel', 'La Réserve Genève', 'Park Hyatt Zurich', 'Bellevue Palace', 'La Réserve Eden au Lac Zurich', 'Alpengold Hotel'],
-      romantic: ['The Alpina Gstaad', "Badrutt's Palace Hotel", 'La Réserve Genève', 'Mont Cervin Palace', 'Eden Roc Ascona', 'Castello del Sole', 'Beau-Rivage Palace Lausanne', 'Victoria-Jungfrau Grand Hotel Interlaken', 'The Chedi Andermatt', 'Schweizerhof Zermatt', 'Monte Rosa Zermatt', 'La Réserve Eden au Lac Zurich'],
-      lake: ['Bürgenstock Resort', 'La Réserve Genève', 'Beau-Rivage Palace Lausanne', 'La Réserve Eden au Lac Zurich', 'Fairmont Le Montreux Palace', 'Eden Roc Ascona', 'Castello del Sole', 'Grand Hotel Villa Castagnola Lugano', 'Grand Hotel Vitznauerhof Lucerne', 'Beau-Rivage Geneva'],
+      // Append region to make queries region-specific
+      categoriesMap[q.category].push(`${q.query} ${regionFilter}`)
     }
 
     let catCost = 0
@@ -103,9 +109,6 @@ export async function GET(request: Request) {
     const results: any[] = []
 
     for (const [category, queries] of Object.entries(categoriesMap)) {
-      const hotels = CATEGORY_HOTELS[category] || []
-      if (!hotels.length) continue
-
       for (const platform of PLATFORMS) {
         const responseCache: Record<string, string> = {}
 
@@ -121,14 +124,14 @@ export async function GET(request: Request) {
         }
 
         const rows: any[] = []
-        for (const hotelName of hotels) {
-          const appearances = queries.filter(q => responseCache[q] && checkAppeared(hotelName, responseCache[q])).length
+        for (const hotel of regionHotels) {
+          const appearances = queries.filter(q => responseCache[q] && checkAppeared(hotel.name, responseCache[q])).length
           const score = queries.length > 0 ? Math.round((appearances / queries.length) * 100) : 0
           if (appearances > 0) totalAppearances++
 
           rows.push({
-            competitor_name: hotelName,
-            region: 'Switzerland',
+            competitor_name: hotel.name,
+            region: regionFilter,
             category,
             platform: platform.id,
             visibility_score: score,
@@ -139,31 +142,35 @@ export async function GET(request: Request) {
           })
 
           if (appearances > 0) {
-            results.push({ hotel: hotelName, platform: platform.id, category, score })
+            results.push({ hotel: hotel.name, platform: platform.id, category, score })
           }
         }
 
-        // Delete old then insert fresh
         await supabase
           .from('competitor_visibility')
           .delete()
           .eq('category', category)
           .eq('platform', platform.id)
           .eq('month', currentMonth)
+          .eq('region', regionFilter)
 
         await supabase.from('competitor_visibility').insert(rows)
       }
     }
+
     await supabase.from('cron_costs').insert({
-      hotels_checked: Object.values(CATEGORY_HOTELS).flat().length,
+      hotels_checked: regionHotels.length,
       queries_run: Object.values(categoriesMap).flat().length * PLATFORMS.length,
       platforms_checked: PLATFORMS.length,
       estimated_cost_usd: catCost,
       triggered_by: forceRun ? 'manual' : 'cron',
       run_at: new Date().toISOString(),
     })
+
     return NextResponse.json({
       success: true,
+      region: regionFilter,
+      hotels_checked: regionHotels.length,
       categories_checked: Object.keys(categoriesMap).length,
       total_appearances: totalAppearances,
       estimated_cost_usd: Number(catCost.toFixed(4)),

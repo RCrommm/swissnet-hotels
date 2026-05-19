@@ -892,41 +892,38 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
   // Competitor view helpers
   const hotelCategories = HOTEL_CATEGORIES[hotelName] || []
   const competitorTabs = [
-    { key: 'region', label: `Region (${hotelRegion})` },
-    ...hotelCategories.map(c => ({ key: c, label: CATEGORY_COMPETITORS[c]?.label || c })),
+    { key: 'region', label: 'Overview' },
+    { key: 'spa', label: 'Spa & Wellness' },
+    { key: 'ski', label: 'Ski Resort' },
+    { key: 'dining', label: 'Fine Dining' },
+    { key: 'romantic', label: 'Romantic' },
+    { key: 'lake', label: 'Lake Hotel' },
+    { key: 'business', label: 'Business & City' },
   ]
 
   const getCompetitorTableHotels = () => {
     if (competitorView === 'region') return allHotelsInRegion
-    const catData = CATEGORY_COMPETITORS[competitorView]
-    if (!catData) return allHotelsInRegion
 
-    const top9 = catData.hotels
-    const alreadyInList = top9.some(n => n === hotelName)
-
-    const list = top9.map(name => {
-      const isCurrent = name === hotelName
-      if (isCurrent) return { name, is_current: true, visibilityScore: competitorView === 'region' ? visibilityScore : (hotelCatScores?.[competitorView] ?? null), rating: hotel?.rating }
-      const found = competitors?.find((c: any) => c.name === name)
-      const catScore = found?.catScores?.[competitorView] ?? null
-      return found
-        ? { ...found, is_current: false, visibilityScore: catScore }
-        : { name, is_current: false, visibilityScore: null, rating: null }
+    // For all categories, use the same regional hotels
+    const list = allHotelsInRegion.map((h: any) => {
+      if (h.is_current) {
+        return { ...h, visibilityScore: hotelCatScores?.[competitorView] ?? null }
+      }
+      const catScore = h.catScores?.[competitorView] ?? null
+      return { ...h, visibilityScore: catScore }
     })
 
-    if (!alreadyInList) {
-      list.push({ name: hotelName, is_current: true, visibilityScore: competitorView === 'region' ? visibilityScore : (hotelCatScores?.[competitorView] ?? null), rating: hotel?.rating })
-    }
-
     return list.sort((a: any, b: any) => {
-      const sA = a.is_current ? (hotelCatScores?.[competitorView] ?? -1) : (a.visibilityScore ?? -1)
-      const sB = b.is_current ? (hotelCatScores?.[competitorView] ?? -1) : (b.visibilityScore ?? -1)
+      const sA = a.visibilityScore ?? -1
+      const sB = b.visibilityScore ?? -1
       return sB - sA
     })
   }
 
   const competitorTableHotels = getCompetitorTableHotels()
-  const competitorTableLabel = competitorView === 'region' ? `Regional Rankings — ${hotelRegion}` : `${CATEGORY_COMPETITORS[competitorView]?.label || ''} — Switzerland`
+  const competitorTableLabel = competitorView === 'region' 
+    ? `Overview — ${hotelRegion}` 
+    : `${competitorTabs.find(t => t.key === competitorView)?.label || ''} — ${hotelRegion}`
 
   const navItems = [
     { id: 'overview', label: 'Overview' },
