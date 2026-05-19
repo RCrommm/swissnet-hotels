@@ -157,7 +157,7 @@ const categoryParam = searchParams.get('category')
           const score = queries.length > 0 ? Math.round((appearances / queries.length) * 100) : 0
           if (appearances > 0) catResults.push({ hotel: hotelName, category, platform: platform.id, score })
 
-          const partnerHotel = await supabase.from('hotels').select('id').eq('name', hotelName).eq('is_partner', true).single()
+          const partnerHotel = await supabase.from('hotels').select('id').eq('name', hotelName).eq('is_partner', true).maybeSingle()
 
           await supabase.from('competitor_visibility').upsert({
             competitor_id: partnerHotel.data?.id || null,
@@ -193,7 +193,7 @@ const categoryParam = searchParams.get('category')
     })
   }
   // ── END CATEGORY MODE ──
-  
+
   if (!competitors?.length) return NextResponse.json({ error: 'No competitors found' })
 
   // Group by region
