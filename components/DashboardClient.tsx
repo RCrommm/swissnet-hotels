@@ -908,8 +908,9 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
       const isCurrent = name === hotelName
       if (isCurrent) return { name, is_current: true, visibilityScore, rating: hotel?.rating }
       const found = competitors?.find((c: any) => c.name === name)
+      const catScore = found?.catScores?.[competitorView] ?? null
       return found
-        ? { ...found, is_current: false }
+        ? { ...found, is_current: false, visibilityScore: catScore }
         : { name, is_current: false, visibilityScore: null, rating: null }
     })
 

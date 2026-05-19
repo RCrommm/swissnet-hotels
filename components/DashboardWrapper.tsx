@@ -60,11 +60,27 @@ export default function DashboardWrapper() {
         .select('hotel_id, appeared')
         .in('hotel_id', competitorIds)
 
+      const { data: categoryScores } = await supabase
+        .from('competitor_visibility')
+        .select('competitor_name, category, platform, visibility_score')
+        .not('category', 'eq', 'region')
+
       const competitors = (competitorHotels || []).map((h: any) => {
         const hotelScores = competitorScores?.filter((s: any) => s.hotel_id === h.id) || []
         const appeared = hotelScores.filter((s: any) => s.appeared).length
         const visibilityScore = hotelScores.length > 0 ? Math.round((appeared / hotelScores.length) * 100) : null
-        return { ...h, visibilityScore }
+
+        // Build category scores map
+        const catScores: Record<string, number> = {}
+        const hotelCatScores = categoryScores?.filter((s: any) => s.competitor_name === h.name) || []
+        for (const cat of ['spa', 'ski', 'dining', 'romantic', 'lake', 'business']) {
+          const catEntries = hotelCatScores.filter((s: any) => s.category === cat)
+          if (catEntries.length > 0) {
+            catScores[cat] = Math.round(catEntries.reduce((sum: number, s: any) => sum + s.visibility_score, 0) / catEntries.length)
+          }
+        }
+
+        return { ...h, visibilityScore, catScores }
       })
 
       setData({
