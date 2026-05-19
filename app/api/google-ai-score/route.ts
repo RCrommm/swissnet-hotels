@@ -2,17 +2,27 @@ import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
 export async function POST(request: Request) {
-  const { hotel_id, hotel_name, query, appeared } = await request.json()
+  const body = await request.json()
+  const { hotel_id, hotel_name, query, appeared } = body
 
-  const { error } = await supabase.from('ai_visibility_scores').upsert({
+  console.log('Google AI score request:', { hotel_id, hotel_name, query, appeared })
+
+  if (!hotel_id || !query || appeared === undefined) {
+    return NextResponse.json({ error: 'Missing required fields', body }, { status: 400 })
+  }
+
+  const { error, data } = await supabase.from('ai_visibility_scores').upsert({
     hotel_id,
-    hotel_name,
     query,
     appeared,
     platform: 'google_ai',
     checked_at: new Date().toISOString(),
   }, { onConflict: 'hotel_id,query,platform' })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('Supabase error:', error)
+    return NextResponse.json({ error: error.message, details: error }, { status: 500 })
+  }
+
   return NextResponse.json({ success: true })
 }
