@@ -41,7 +41,7 @@ const PLATFORMS = [
 ]
 
 function checkAppeared(hotelName: string, responseText: string): boolean {
-  const r = responseText.toLowerCase()
+  const r = responseText.toLowerCase().replace(/[*#_`\[\]]/g, ' ')
   const n = hotelName.toLowerCase()
   const noAccents = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
   const rn = noAccents(r)
