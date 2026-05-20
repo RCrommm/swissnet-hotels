@@ -106,14 +106,14 @@ const CATEGORY_COMPETITORS: Record<string, { label: string; hotels: string[] }> 
 const HOTEL_CATEGORIES: Record<string, string[]> = {
   'La Réserve Genève': ['spa', 'dining', 'romantic', 'lake', 'business'],
   'La Réserve Eden au Lac Zurich': ['business', 'romantic', 'lake', 'dining'],
-  'Victoria-Jungfrau Grand Hotel Interlaken': ['spa', 'dining', 'romantic'],
   'Mont Cervin Palace': ['ski', 'dining', 'romantic'],
+  'Monte Rosa Zermatt': ['ski', 'romantic'],
+  'Schweizerhof Zermatt': ['ski', 'spa'],
+  'Victoria-Jungfrau Grand Hotel Interlaken': ['spa', 'dining', 'romantic'],
   'Bellevue Palace': ['business', 'dining', 'romantic'],
-  'Hotel Adula': ['spa', 'ski'],
   'Crans Ambassador': ['ski', 'spa'],
   'Alpengold Hotel': ['ski', 'business'],
-  'Schweizerhof Zermatt': ['ski', 'spa'],
-  'Monte Rosa Zermatt': ['ski', 'romantic'],
+  'Hotel Adula': ['spa', 'ski'],
 }
 
 // ── CHART COMPONENTS ──────────────────────────────────────────────────────────
