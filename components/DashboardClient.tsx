@@ -1145,6 +1145,12 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
                       : null
                     return { date: d, score: avg }
                   }
+                  if (chartPlatform === 'google_ai') {
+                    const dayGoogleScores = (googleAiScores || []).filter((r: any) => r.checked_at?.startsWith(d))
+                    const appeared = dayGoogleScores.filter((r: any) => r.appeared).length
+                    const score = dayGoogleScores.length > 0 ? Math.round((appeared / dayGoogleScores.length) * 100) : null
+                    return { date: d, score }
+                  }
                   const dayScores = (overviewRunData || []).filter((r: any) => r.checked_at?.startsWith(d) && r.platform === chartPlatform)
                   const adjustedDayScores = dayScores.map((s: any) => ({
                     ...s,

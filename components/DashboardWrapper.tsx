@@ -117,7 +117,10 @@ const perplexityScore = myOverviewScores.find((s: any) => s.platform === 'perple
       }
 
       // Run dates for chart — from competitor_visibility overview scores for this hotel
-      const myRunDates = [...new Set(myOverviewScores.map((s: any) => s.checked_at?.split('T')[0]))].sort() as string[]
+      const myRunDates = [...new Set([
+        ...myOverviewScores.map((s: any) => s.checked_at?.split('T')[0]),
+        ...(googleAiScores || []).map((s: any) => s.checked_at?.split('T')[0])
+      ].filter(Boolean))].sort() as string[]
 
       setData({
         hotel,
