@@ -50,7 +50,7 @@ function checkAppeared(hotelName: string, responseText: string): boolean {
   const lastTwo = noAccents(hotelName.split(' ').slice(-2).join(' ').toLowerCase())
   const firstTwo = noAccents(hotelName.split(' ').slice(0, 2).join(' ').toLowerCase())
   const keyWords = words.slice(0, 3).join(' ')
-  return rn.includes(nn) || rn.includes(lastTwo) || rn.includes(firstTwo) || (words.length >= 2 && rn.includes(keyWords))
+  return rn.includes(nn) || rn.includes(lastTwo) || rn.includes(firstTwo) || (words.length >= 2 && rn.includes(keyWords)) || r.includes('réserve') || r.includes('reserve')
 }
 
 export async function GET(request: Request) {
