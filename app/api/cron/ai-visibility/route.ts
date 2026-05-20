@@ -70,10 +70,9 @@ async function queryChatGPT(query: string): Promise<string> {
         'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'gpt-4o-search-preview',
         messages: [{ role: 'user', content: `${query}. Please recommend 3-5 specific hotels by name.` }],
         max_tokens: 500,
-        temperature: 0,
       }),
     })
 
