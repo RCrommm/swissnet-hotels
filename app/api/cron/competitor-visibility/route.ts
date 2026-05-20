@@ -114,7 +114,9 @@ export async function GET(request: Request) {
 
         for (const q of queries) {
           try {
-            responseCache[q] = await platform.queryFn(q)
+            const response = await platform.queryFn(q)
+            responseCache[q] = response
+            if (platform.id === 'chatgpt') console.log(`QUERY: "${q}" | RESPONSE: ${response.slice(0, 300)}`)
             catCost += platform.id === 'chatgpt' ? 0.002 : 0.001
             await new Promise(r => setTimeout(r, 300))
           } catch (err: any) {
