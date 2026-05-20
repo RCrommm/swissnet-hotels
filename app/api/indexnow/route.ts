@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
 
   const { data: hotels } = await supabase
     .from('hotels')
-    .select('slug, id')
+    .select('slug, id, is_partner')
     .eq('is_active', true)
 
   const base = 'https://swissnethotels.com'
@@ -19,14 +19,18 @@ export async function GET(request: NextRequest) {
 
   const hotelUrls = (hotels || []).flatMap((h: any) => {
     const slug = h.slug || h.id
-    return [
-      `${base}/hotels/${slug}`,
-      `${base}/hotels/${slug}/rooms`,
-      `${base}/hotels/${slug}/dining`,
-      `${base}/hotels/${slug}/spa`,
-      `${base}/hotels/${slug}/experiences`,
-      `${base}/hotels/${slug}/events`,
-    ]
+    const base_url = `${base}/hotels/${slug}`
+    if (h.is_partner) {
+      return [
+        base_url,
+        `${base_url}/rooms`,
+        `${base_url}/dining`,
+        `${base_url}/spa`,
+        `${base_url}/experiences`,
+        `${base_url}/events`,
+      ]
+    }
+    return [base_url]
   })
 
   const urls = [...staticUrls, ...hotelUrls]
