@@ -104,7 +104,7 @@ const CATEGORY_COMPETITORS: Record<string, { label: string; hotels: string[] }> 
 
 // Max 2 categories per hotel + region always shown
 const HOTEL_CATEGORIES: Record<string, string[]> = {
-  'La Réserve Genève': ['spa', 'dining', 'romantic', 'lake', 'business'],
+  'La Réserve Genève': ['spa', 'dining', 'romantic', 'lake'],
   'La Réserve Eden au Lac Zurich': ['business', 'romantic', 'lake', 'dining'],
   'Mont Cervin Palace': ['ski', 'dining', 'romantic'],
   'Monte Rosa Zermatt': ['ski', 'romantic'],
