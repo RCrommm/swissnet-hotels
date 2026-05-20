@@ -7,74 +7,29 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-const QUERY_SUGGESTIONS: Record<string, string[]> = {
-  'Zermatt': [
-    'best luxury hotel in Zermatt with Matterhorn view',
-    'most romantic hotel Zermatt Switzerland',
-    'best ski hotel Zermatt',
-    'luxury hotel Zermatt honeymoon',
-    'best 5 star hotel Zermatt',
-    'Zermatt hotel with spa and pool',
-  ],
-  'Geneva': [
-    'best luxury hotel Geneva lake view',
-    'top 5 star hotel Geneva Switzerland',
-    'best business hotel Geneva',
-    'romantic hotel Geneva Switzerland',
-    'luxury hotel Geneva for couples',
-  ],
-  'St. Moritz': [
-    'best luxury hotel St Moritz Switzerland',
-    'top ski hotel St Moritz',
-    'best 5 star hotel St Moritz',
-    'luxury winter hotel St Moritz',
-  ],
-  'Interlaken': [
-    'best luxury hotel Interlaken Jungfrau view',
-    'top wellness hotel Interlaken Switzerland',
-    'luxury spa hotel Interlaken',
-    'best hotel Interlaken mountains',
-  ],
-  'Zurich': [
-    'best luxury hotel Zurich Switzerland',
-    'top 5 star hotel Zurich city centre',
-    'best business hotel Zurich',
-    'luxury boutique hotel Zurich',
-  ],
-  'Gstaad': [
-    'best luxury hotel Gstaad Switzerland',
-    'top ski hotel Gstaad Alps',
-    'most exclusive hotel Gstaad',
-  ],
-  'Lucerne': [
-    'best luxury hotel Lucerne lake view',
-    'top 5 star hotel Lucerne Switzerland',
-    'romantic hotel Lucerne Switzerland',
-  ],
-  'Verbier': [
-    'best luxury ski hotel Verbier Switzerland',
-    'top hotel Verbier Alps',
-    'luxury chalet hotel Verbier',
-  ],
-  'default': [
-    'best luxury hotel Switzerland Alps',
-    'finest Swiss luxury hotel',
-    'best 5 star hotel Switzerland',
-    'top rated luxury hotel Switzerland',
-  ]
-}
+const PARTNER_REGIONS = ['Geneva', 'Zermatt', 'Zurich', 'Interlaken', 'Bern', 'Flims', 'Crans-Montana', 'Davos']
+
+const CATEGORIES = [
+  { key: 'spa', label: 'Spa & Wellness' },
+  { key: 'ski', label: 'Ski Resort' },
+  { key: 'dining', label: 'Fine Dining' },
+  { key: 'romantic', label: 'Romantic' },
+  { key: 'lake', label: 'Lake Hotel' },
+  { key: 'business', label: 'Business & City' },
+]
 
 export default function AIVisibilityQueries({ hotels }: { hotels: any[] }) {
-  const [selectedHotelId, setSelectedHotelId] = useState(hotels[0]?.id || '')
-  const [queries, setQueries] = useState<any[]>([])
-  const [newQuery, setNewQuery] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [selectedRegion, setSelectedRegion] = useState('Geneva')
+  const [regionQueries, setRegionQueries] = useState<any[]>([])
+  const [newRegionQuery, setNewRegionQuery] = useState('')
   const [running, setRunning] = useState(false)
   const [runResult, setRunResult] = useState<string | null>(null)
   const [msg, setMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null)
 
-  const hotel = hotels.find(h => h.id === selectedHotelId) || hotels[0]
-  const suggestions = QUERY_SUGGESTIONS[hotel?.region] || QUERY_SUGGESTIONS['default']
+  const [selectedCat, setSelectedCat] = useState('spa')
+  const [catQueries, setCatQueries] = useState<any[]>([])
+  const [catQuery, setCatQuery] = useState('')
+  const [catMsg, setCatMsg] = useState('')
 
   const gold = '#C9A84C'
   const border = 'rgba(201,169,110,0.2)'
@@ -82,82 +37,68 @@ export default function AIVisibilityQueries({ hotels }: { hotels: any[] }) {
   const textMuted = 'rgba(42,26,14,0.45)'
   const bg = '#F8F5EF'
 
-  const fetchQueries = useCallback(async () => {
-    if (!selectedHotelId) return
-    const { data } = await supabase
-      .from('ai_visibility_queries')
-      .select('*')
-      .eq('hotel_id', selectedHotelId)
-      .order('created_at', { ascending: true })
-    setQueries(data || [])
-  }, [selectedHotelId])
+  const inp: React.CSSProperties = {
+    background: '#fff', border: '1px solid ' + border, borderRadius: 6,
+    padding: '8px 12px', color: text, fontSize: 13, outline: 'none',
+    fontFamily: 'Montserrat, sans-serif', width: '100%', boxSizing: 'border-box',
+  }
 
-  useEffect(() => { fetchQueries() }, [fetchQueries])
+  const fetchRegionQueries = useCallback(async () => {
+    const { data } = await supabase
+      .from('region_queries')
+      .select('*')
+      .eq('region', selectedRegion)
+      .eq('is_active', true)
+      .order('created_at')
+    setRegionQueries(data || [])
+  }, [selectedRegion])
+
+  useEffect(() => { fetchRegionQueries() }, [fetchRegionQueries])
+
+  const fetchCatQueries = useCallback(async () => {
+    const { data } = await supabase
+      .from('category_queries')
+      .select('*')
+      .eq('category', selectedCat)
+      .order('created_at')
+    setCatQueries(data || [])
+  }, [selectedCat])
+
+  useEffect(() => { fetchCatQueries() }, [fetchCatQueries])
 
   const showMsg = (type: 'success' | 'error', text: string) => {
     setMsg({ type, text })
     setTimeout(() => setMsg(null), 3000)
   }
 
-  const addQuery = async (queryText: string) => {
-    const q = queryText.trim()
-    if (!q) return
-    if (queries.find(x => x.query === q)) return showMsg('error', 'Query already exists')
-    const { error } = await supabase.from('ai_visibility_queries').insert({
-      hotel_id: selectedHotelId,
-      hotel_name: hotel?.name,
-      query: q,
+  const addRegionQuery = async (q: string) => {
+    if (!q.trim()) return
+    const { error } = await supabase.from('region_queries').insert({
+      region: selectedRegion,
+      query: q.trim(),
       is_active: true,
     })
     if (error) showMsg('error', error.message)
-    else { showMsg('success', 'Query added!'); setNewQuery(''); fetchQueries() }
+    else { showMsg('success', 'Query added'); setNewRegionQuery(''); fetchRegionQueries() }
   }
 
-  const deleteQuery = async (id: string) => {
-    await supabase.from('ai_visibility_queries').delete().eq('id', id)
-    fetchQueries()
+  const deleteRegionQuery = async (id: string) => {
+    await supabase.from('region_queries').delete().eq('id', id)
+    fetchRegionQueries()
   }
 
-  const toggleQuery = async (id: string, current: boolean) => {
-    await supabase.from('ai_visibility_queries').update({ is_active: !current }).eq('id', id)
-    fetchQueries()
-  }
-
-  const runForHotel = async () => {
+  const runOverview = async () => {
     setRunning(true)
     setRunResult(null)
     try {
-      const res = await fetch('/api/cron/ai-visibility?hotel_id=' + selectedHotelId)
+      const res = await fetch(`/api/cron/ai-visibility?region=${selectedRegion}&force=true`)
       const data = await res.json()
-      setRunResult(`✓ Done — ${data.total_appearances || 0} appearances in ${data.queries_run || 0} queries`)
-      fetchQueries()
+      setRunResult(`✓ Done — ${data.total_appearances || 0} appearances · $${data.estimated_cost_usd || '0.000'}`)
     } catch {
-      setRunResult('✗ Error running queries')
+      setRunResult('✗ Error running overview')
     }
     setRunning(false)
   }
-const CATEGORIES = [
-    { key: 'spa', label: 'Spa & Wellness' },
-    { key: 'ski', label: 'Ski Resort' },
-    { key: 'dining', label: 'Fine Dining' },
-    { key: 'romantic', label: 'Romantic' },
-    { key: 'lake', label: 'Lake Hotel' },
-    { key: 'business', label: 'Business & City' },
-  ]
-
-  const [selectedCat, setSelectedCat] = useState('spa')
-  const [catQueries, setCatQueries] = useState<any[]>([])
-  const [catQuery, setCatQuery] = useState('')
-  const [catMsg, setCatMsg] = useState('')
-
-  useEffect(() => { fetchCatQueries() }, [selectedCat])
-
-  const fetchCatQueries = useCallback(async () => {
-    const { data } = await supabase.from('category_queries').select('*').eq('category', selectedCat).order('created_at')
-    setCatQueries(data || [])
-  }, [selectedCat])
-
-  useEffect(() => { fetchCatQueries() }, [fetchCatQueries])
 
   const addCatQuery = async () => {
     if (!catQuery.trim()) return
@@ -180,21 +121,14 @@ const CATEGORIES = [
     setRunning(true)
     setCatMsg('')
     try {
-      const url = category
-        ? `/api/cron/competitor-visibility?type=category&category=${category}&force=true`
-        : '/api/cron/competitor-visibility?type=category&force=true'
-      const res = await fetch(url)
+      const cat = category || selectedCat
+      const res = await fetch(`/api/cron/competitor-visibility?type=category&category=${cat}&region=${selectedRegion}&force=true`)
       const data = await res.json()
       setCatMsg(`✓ Done — ${data.total_appearances || 0} appearances · $${data.estimated_cost_usd || '0.000'}`)
     } catch {
       setCatMsg('✗ Error running category check')
     }
     setRunning(false)
-  }
-  const inp: React.CSSProperties = {
-    background: '#fff', border: '1px solid ' + border, borderRadius: 6,
-    padding: '8px 12px', color: text, fontSize: 13, outline: 'none',
-    fontFamily: 'Montserrat, sans-serif', width: '100%', boxSizing: 'border-box',
   }
 
   return (
@@ -207,155 +141,112 @@ const CATEGORIES = [
         </div>
       )}
 
-      {/* Hotel selector + run button */}
-      <div style={{ background: '#fff', border: '1px solid ' + border, borderRadius: 8, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
-          <span style={{ fontSize: 12, color: textMuted, fontWeight: 600, whiteSpace: 'nowrap' }}>Hotel:</span>
-          <select value={selectedHotelId} onChange={e => setSelectedHotelId(e.target.value)}
-            style={{ ...inp, width: 'auto', flex: 1, maxWidth: 320 }}>
-            {hotels.filter(h => h.is_partner).map(h => (
-              <option key={h.id} value={h.id}>{h.name}</option>
-            ))}
-          </select>
+      {/* ── OVERVIEW QUERIES ── */}
+      <div style={{ background: '#fff', border: '1px solid ' + border, borderRadius: 8, padding: '20px', marginBottom: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div>
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: text, margin: '0 0 4px' }}>Overview Queries</p>
+            <p style={{ fontSize: 11, color: textMuted, margin: 0 }}>General region queries · Powers Overview competitor tab</p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {runResult && <span style={{ fontSize: 12, color: '#16a34a' }}>{runResult}</span>}
+            <select value={selectedRegion} onChange={e => setSelectedRegion(e.target.value)}
+              style={{ ...inp, width: 'auto' }}>
+              {PARTNER_REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
+            <button onClick={runOverview} disabled={running}
+              style={{ background: running ? bg : gold, color: running ? textMuted : '#1a0e06', border: 'none', borderRadius: 6, padding: '8px 20px', fontSize: 12, fontWeight: 700, cursor: running ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}>
+              {running ? 'Running...' : `▶ Run ${selectedRegion} Overview`}
+            </button>
+          </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {runResult && <span style={{ fontSize: 12, color: '#16a34a' }}>{runResult}</span>}
-          <span style={{ fontSize: 12, color: textMuted }}>{queries.filter(q => q.is_active).length} active queries</span>
-          <button onClick={runForHotel} disabled={running || queries.filter(q => q.is_active).length === 0}
-            style={{ background: running ? bg : gold, color: running ? textMuted : '#1a0e06', border: 'none', borderRadius: 6, padding: '8px 20px', fontSize: 12, fontWeight: 700, cursor: running ? 'not-allowed' : 'pointer', opacity: queries.filter(q => q.is_active).length === 0 ? 0.5 : 1 }}>
-            {running ? 'Running...' : '▶ Run for ' + (hotel?.name?.split(' ')[0] || 'Hotel')}
+
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+          <input style={{ ...inp, flex: 1 }} value={newRegionQuery}
+            onChange={e => setNewRegionQuery(e.target.value)}
+            placeholder="Add a new overview query..."
+            onKeyDown={e => e.key === 'Enter' && addRegionQuery(newRegionQuery)} />
+          <button onClick={() => addRegionQuery(newRegionQuery)}
+            style={{ background: gold, color: '#1a0e06', border: 'none', borderRadius: 6, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            Add
           </button>
         </div>
-      </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-        {/* Current queries */}
-        <div style={{ background: '#fff', border: '1px solid ' + border, borderRadius: 8, padding: '20px' }}>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: text, margin: '0 0 16px' }}>
-            Queries for {hotel?.name}
-          </p>
-
-          {/* Add custom query */}
-          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-            <input style={{ ...inp, flex: 1 }} value={newQuery} onChange={e => setNewQuery(e.target.value)}
-              placeholder="Type a custom query..." onKeyDown={e => e.key === 'Enter' && addQuery(newQuery)} />
-            <button onClick={() => addQuery(newQuery)}
-              style={{ background: gold, color: '#1a0e06', border: 'none', borderRadius: 6, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-              Add
-            </button>
-          </div>
-
-          {queries.length === 0 ? (
-            <p style={{ fontSize: 13, color: textMuted, textAlign: 'center', padding: '20px 0' }}>
-              No queries yet — add from suggestions or type your own
-            </p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {queries.map(q => (
-                <div key={q.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: q.is_active ? 'rgba(201,169,110,0.06)' : bg, border: '1px solid ' + border, borderRadius: 6, opacity: q.is_active ? 1 : 0.5 }}>
-                  <input type="checkbox" checked={q.is_active} onChange={() => toggleQuery(q.id, q.is_active)}
-                    style={{ accentColor: gold, flexShrink: 0 }} />
-                  <span style={{ flex: 1, fontSize: 12, color: text, lineHeight: 1.4 }}>{q.query}</span>
-                  <button onClick={() => deleteQuery(q.id)}
-                    style={{ background: 'none', border: 'none', color: '#dc2626', fontSize: 11, cursor: 'pointer', padding: '2px 6px', flexShrink: 0 }}>
-                    ✕
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Suggestions */}
-        <div style={{ background: '#fff', border: '1px solid ' + border, borderRadius: 8, padding: '20px' }}>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: text, margin: '0 0 6px' }}>
-            Suggested Queries
-          </p>
-          <p style={{ fontSize: 11, color: textMuted, margin: '0 0 16px' }}>
-            Based on {hotel?.region} · {hotel?.category} — click to add
-          </p>
+        {regionQueries.length === 0 ? (
+          <p style={{ fontSize: 13, color: textMuted, textAlign: 'center', padding: '20px 0' }}>No queries for {selectedRegion}</p>
+        ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {suggestions.map(s => {
-              const already = queries.find(q => q.query === s)
-              return (
-                <div key={s} onClick={() => !already && addQuery(s)}
-                  style={{ padding: '8px 12px', border: '1px solid ' + (already ? 'rgba(22,163,74,0.3)' : border), borderRadius: 6, fontSize: 12, color: already ? '#16a34a' : text, cursor: already ? 'default' : 'pointer', background: already ? 'rgba(22,163,74,0.05)' : bg, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                  <span>{s}</span>
-                  {already
-                    ? <span style={{ fontSize: 10, color: '#16a34a', flexShrink: 0 }}>✓ Added</span>
-                    : <span style={{ fontSize: 10, color: gold, flexShrink: 0 }}>+ Add</span>
-                  }
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* ── CATEGORY VISIBILITY QUERIES ── */}
-      <div style={{ marginTop: 32 }}>
-        <div style={{ background: '#fff', border: '1px solid ' + border, borderRadius: 8, padding: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <div>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: text, margin: '0 0 4px' }}>Category Visibility Queries</p>
-              <p style={{ fontSize: 11, color: textMuted, margin: 0 }}>Queries run per category · Populate competitor dashboard tabs</p>
-            </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={() => runCategory(selectedCat)} disabled={running}
-                style={{ background: gold, color: '#1a0e06', border: 'none', borderRadius: 6, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer', opacity: running ? 0.7 : 1 }}>
-                {running ? 'Running...' : `▶ Run ${CATEGORIES.find(c => c.key === selectedCat)?.label}`}
-              </button>
-              <button onClick={() => runCategory()} disabled={running}
-                style={{ background: text, color: '#fff', border: 'none', borderRadius: 6, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer', opacity: running ? 0.7 : 1 }}>
-                {running ? 'Running...' : '▶ Run All'}
-              </button>
-            </div>
-          </div>
-
-          {/* Category tabs */}
-          <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
-            {CATEGORIES.map(c => (
-              <button key={c.key} onClick={() => setSelectedCat(c.key)}
-                style={{ fontSize: 11, fontWeight: 600, padding: '4px 12px', borderRadius: 4, cursor: 'pointer', border: '1px solid ' + (selectedCat === c.key ? text : border), background: selectedCat === c.key ? text : '#fff', color: selectedCat === c.key ? '#fff' : textMuted }}>
-                {c.label}
-              </button>
+            {regionQueries.map((q: any) => (
+              <div key={q.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'rgba(201,169,110,0.06)', border: '1px solid ' + border, borderRadius: 6 }}>
+                <span style={{ flex: 1, fontSize: 12, color: text }}>{q.query}</span>
+                <button onClick={() => deleteRegionQuery(q.id)}
+                  style={{ background: 'none', border: 'none', color: '#dc2626', fontSize: 11, cursor: 'pointer', padding: '2px 6px' }}>✕</button>
+              </div>
             ))}
           </div>
+        )}
+        <p style={{ fontSize: 11, color: textMuted, margin: '12px 0 0' }}>
+          {regionQueries.length} queries · ~${(regionQueries.length * 0.03).toFixed(2)}/run
+        </p>
+      </div>
 
-          {/* Add query */}
-          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-            <input value={catQuery} onChange={e => setCatQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && addCatQuery()}
-              placeholder={`e.g. best ${selectedCat} hotels in Switzerland`}
-              style={{ ...inp, flex: 1 }} />
-            <button onClick={addCatQuery}
-              style={{ background: gold, color: '#1a0e06', border: 'none', borderRadius: 6, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-              Add
+      {/* ── CATEGORY QUERIES ── */}
+      <div style={{ background: '#fff', border: '1px solid ' + border, borderRadius: 8, padding: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div>
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: text, margin: '0 0 4px' }}>Category Queries</p>
+            <p style={{ fontSize: 11, color: textMuted, margin: 0 }}>Generic queries · Region appended at runtime · Powers category tabs</p>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => runCategory(selectedCat)} disabled={running}
+              style={{ background: gold, color: '#1a0e06', border: 'none', borderRadius: 6, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer', opacity: running ? 0.7 : 1, whiteSpace: 'nowrap' }}>
+              {running ? 'Running...' : `▶ Run ${CATEGORIES.find(c => c.key === selectedCat)?.label} — ${selectedRegion}`}
             </button>
           </div>
-
-          {catMsg && (
-            <div style={{ padding: '8px 12px', borderRadius: 6, marginBottom: 12, fontSize: 12, background: catMsg.startsWith('✓') ? 'rgba(22,163,74,0.1)' : 'rgba(220,38,38,0.1)', color: catMsg.startsWith('✓') ? '#16a34a' : '#dc2626' }}>
-              {catMsg}
-            </div>
-          )}
-
-          {catQueries.length === 0 ? (
-            <p style={{ fontSize: 13, color: textMuted, textAlign: 'center', padding: '20px 0' }}>No queries yet for this category</p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {catQueries.map((q: any) => (
-                <div key={q.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: q.is_active ? 'rgba(201,169,110,0.06)' : bg, border: '1px solid ' + border, borderRadius: 6, opacity: q.is_active ? 1 : 0.5 }}>
-                  <input type="checkbox" checked={q.is_active} onChange={() => toggleCatQuery(q.id, q.is_active)} style={{ accentColor: gold, flexShrink: 0 }} />
-                  <span style={{ flex: 1, fontSize: 12, color: text }}>{q.query}</span>
-                  <button onClick={() => deleteCatQuery(q.id)} style={{ background: 'none', border: 'none', color: '#dc2626', fontSize: 11, cursor: 'pointer', padding: '2px 6px' }}>✕</button>
-                </div>
-              ))}
-            </div>
-          )}
-          <p style={{ fontSize: 11, color: textMuted, margin: '12px 0 0' }}>
-            {catQueries.filter((q: any) => q.is_active).length} active queries · ~${(catQueries.filter((q: any) => q.is_active).length * 0.011 * 2).toFixed(3)}/run
-          </p>
         </div>
+
+        <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
+          {CATEGORIES.map(c => (
+            <button key={c.key} onClick={() => setSelectedCat(c.key)}
+              style={{ fontSize: 11, fontWeight: 600, padding: '4px 12px', borderRadius: 4, cursor: 'pointer', border: '1px solid ' + (selectedCat === c.key ? text : border), background: selectedCat === c.key ? text : '#fff', color: selectedCat === c.key ? '#fff' : textMuted }}>
+              {c.label}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+          <input value={catQuery} onChange={e => setCatQuery(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addCatQuery()}
+            placeholder={`e.g. best ${selectedCat} hotel`}
+            style={{ ...inp, flex: 1 }} />
+          <button onClick={addCatQuery}
+            style={{ background: gold, color: '#1a0e06', border: 'none', borderRadius: 6, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            Add
+          </button>
+        </div>
+
+        {catMsg && (
+          <div style={{ padding: '8px 12px', borderRadius: 6, marginBottom: 12, fontSize: 12, background: catMsg.startsWith('✓') ? 'rgba(22,163,74,0.1)' : 'rgba(220,38,38,0.1)', color: catMsg.startsWith('✓') ? '#16a34a' : '#dc2626' }}>
+            {catMsg}
+          </div>
+        )}
+
+        {catQueries.length === 0 ? (
+          <p style={{ fontSize: 13, color: textMuted, textAlign: 'center', padding: '20px 0' }}>No queries for this category</p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {catQueries.map((q: any) => (
+              <div key={q.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: q.is_active ? 'rgba(201,169,110,0.06)' : bg, border: '1px solid ' + border, borderRadius: 6, opacity: q.is_active ? 1 : 0.5 }}>
+                <input type="checkbox" checked={q.is_active} onChange={() => toggleCatQuery(q.id, q.is_active)} style={{ accentColor: gold, flexShrink: 0 }} />
+                <span style={{ flex: 1, fontSize: 12, color: text }}>{q.query} <span style={{ color: textMuted }}>→ {q.query} {selectedRegion}</span></span>
+                <button onClick={() => deleteCatQuery(q.id)} style={{ background: 'none', border: 'none', color: '#dc2626', fontSize: 11, cursor: 'pointer', padding: '2px 6px' }}>✕</button>
+              </div>
+            ))}
+          </div>
+        )}
+        <p style={{ fontSize: 11, color: textMuted, margin: '12px 0 0' }}>
+          {catQueries.filter((q: any) => q.is_active).length} active · Preview: "{catQueries[0]?.query} {selectedRegion}"
+        </p>
       </div>
     </div>
   )
