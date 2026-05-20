@@ -125,14 +125,7 @@ export async function GET(request: Request) {
 
         const rows: any[] = []
         for (const hotel of regionHotels) {
-          const appearances = queries.filter(q => {
-            const response = responseCache[q] || ''
-            const appeared = checkAppeared(hotel.name, response)
-            if (hotel.name.includes('Réserve')) {
-              console.log(`[DEBUG] Query: "${q}" | Appeared: ${appeared} | Response snippet: ${response.slice(0, 200)}`)
-            }
-            return response && appeared
-          }).length
+          const appearances = queries.filter(q => responseCache[q] && checkAppeared(hotel.name, responseCache[q])).length
           const score = queries.length > 0 ? Math.round((appearances / queries.length) * 100) : 0
           if (appearances > 0) totalAppearances++
 
