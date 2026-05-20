@@ -11,7 +11,7 @@ async function queryPerplexity(query: string): Promise<string> {
     body: JSON.stringify({
       model: 'sonar-pro',
       messages: [{ role: 'user', content: `${query}. Please list all relevant hotels by name.` }],
-      max_tokens: 500,
+      max_tokens: 1000,
     }),
   })
   const data = await res.json()
@@ -27,7 +27,7 @@ async function queryChatGPT(query: string): Promise<string> {
     },
     body: JSON.stringify({
       model: 'gpt-4o-search-preview',
-      messages: [{ role: 'user', content: `${query}. Please recommend 3-5 specific hotels by name.` }],
+      messages: [{ role: 'user', content: `${query}. Please list all relevant hotels by name.` }],
       max_tokens: 500,
     }),
   })
