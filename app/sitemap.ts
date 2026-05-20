@@ -45,7 +45,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: hotel.is_partner ? 0.9 : 0.7,
   }))
 
-  const intents = ['honeymoon', 'wellness', 'skiing', 'families', 'business']
+  const intents = ['honeymoon', 'wellness', 'business', 'family']
   const partnerHotels = (hotels || []).filter((h: any) => h.is_partner)
   const intentPages: MetadataRoute.Sitemap = partnerHotels.flatMap((hotel: any) =>
     intents.map(intent => ({
@@ -55,7 +55,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     }))
   )
-  const subPages = ['rooms', 'dining', 'spa', 'experiences']
+  const subPages = ['rooms', 'dining', 'spa', 'experiences', 'events']
 const subPageUrls: MetadataRoute.Sitemap = partnerHotels.flatMap((hotel: any) =>
   subPages.map(page => ({
     url: `${baseUrl}/hotels/${hotel.slug || hotel.id}/${page}`,
@@ -65,8 +65,7 @@ const subPageUrls: MetadataRoute.Sitemap = partnerHotels.flatMap((hotel: any) =>
   }))
 )
 
-const partnerSlugs = partnerHotels.map((h: any) => h.slug)
-const allSlugs = (hotels || []).map((h: any) => h.slug)
+
 
 const comparePages: MetadataRoute.Sitemap = partnerHotels.flatMap((hotelA: any) =>
   (hotels || [])
