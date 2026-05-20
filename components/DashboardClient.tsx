@@ -1137,6 +1137,8 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
                 const cutoff = new Date(Date.now() - chartPeriod * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
                 const allDates = chartPlatform === 'overall'
                   ? runDates
+                  : chartPlatform === 'google_ai'
+                  ? ([...new Set((googleAiScores || []).map((r: any) => r.checked_at?.split('T')[0]).filter(Boolean))].sort() as string[])
                   : ([...new Set((overviewRunData || []).filter((r: any) => r.platform === chartPlatform).map((r: any) => r.checked_at?.split('T')[0]).filter(Boolean))].sort() as string[])
 
                 const realPoints = allDates.map((d: string) => {
