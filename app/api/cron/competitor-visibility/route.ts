@@ -84,7 +84,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'No category queries found' })
     }
 
-    // Get all active hotels in the region
     const { data: regionHotels } = await supabase
       .from('hotels')
       .select('id, name, region')
@@ -95,18 +94,16 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: `No hotels found in region: ${regionFilter}` })
     }
 
-    const hotelNames = regionHotels.map((h: any) => h.name)
-
     const categoriesMap: Record<string, string[]> = {}
     for (const q of categoryQueries) {
       if (!categoriesMap[q.category]) categoriesMap[q.category] = []
-      // Append region to make queries region-specific
       categoriesMap[q.category].push(`${q.query} ${regionFilter}`)
     }
 
     let catCost = 0
     let totalAppearances = 0
     const results: any[] = []
+    const debugResponses: any[] = []
 
     for (const [category, queries] of Object.entries(categoriesMap)) {
       for (const platform of PLATFORMS) {
@@ -115,6 +112,7 @@ export async function GET(request: Request) {
         for (const q of queries) {
           try {
             responseCache[q] = await platform.queryFn(q)
+            debugResponses.push({ platform: platform.id, query: q, response: responseCache[q].slice(0, 400) })
             catCost += platform.id === 'chatgpt' ? 0.002 : 0.001
             await new Promise(r => setTimeout(r, 300))
           } catch (err: any) {
@@ -176,6 +174,7 @@ export async function GET(request: Request) {
       estimated_cost_usd: Number(catCost.toFixed(4)),
       month: currentMonth,
       results,
+      debug_responses: debugResponses,
     })
   }
 
@@ -264,6 +263,7 @@ export async function GET(request: Request) {
       }
     }
   }
+
   await supabase.from('cron_costs').insert({
     hotels_checked: competitors.length,
     queries_run: results.length,
@@ -272,6 +272,7 @@ export async function GET(request: Request) {
     triggered_by: forceRun ? 'manual' : 'cron',
     run_at: new Date().toISOString(),
   })
+
   return NextResponse.json({
     success: true,
     regions_checked: regions.length,
