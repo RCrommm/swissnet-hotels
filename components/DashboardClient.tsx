@@ -893,15 +893,21 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
 
   // Competitor view helpers
   const hotelCategories = HOTEL_CATEGORIES[hotelName] || []
+  const categoryLabels: Record<string, string> = {
+    spa: 'Spa & Wellness',
+    ski: 'Ski Resort',
+    dining: 'Fine Dining',
+    romantic: 'Romantic',
+    lake: 'Lake Hotel',
+    business: 'Business & City',
+  }
+
   const competitorTabs = [
     { key: 'region', label: 'Overview' },
-    { key: 'spa', label: 'Spa & Wellness' },
-    { key: 'ski', label: 'Ski Resort' },
-    { key: 'dining', label: 'Fine Dining' },
-    { key: 'romantic', label: 'Romantic' },
-    { key: 'lake', label: 'Lake Hotel' },
-    { key: 'business', label: 'Business & City' },
+    ...hotelCategories.map(c => ({ key: c, label: categoryLabels[c] || c })),
   ]
+  
+
 
   const getCompetitorTableHotels = () => {
     if (competitorView === 'region') return allHotelsInRegion
