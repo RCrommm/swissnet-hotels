@@ -73,6 +73,19 @@ export default function DashboardWrapper() {
       // Overview scores (category = null) per hotel
       const overviewScores = allCompVisibility?.filter((s: any) => s.category === null) || []
 
+      // Get previous run scores for ranking arrows
+      const runDatesAll = [...new Set(overviewScores.map((s: any) => s.checked_at?.split('T')[0]).filter(Boolean))].sort() as string[]
+      const latestDate = runDatesAll[runDatesAll.length - 1]
+      const prevDate = runDatesAll[runDatesAll.length - 2]
+      const latestScores = overviewScores.filter((s: any) => s.checked_at?.startsWith(latestDate))
+      const prevScores = overviewScores.filter((s: any) => s.checked_at?.startsWith(prevDate))
+
+      const getAvgScore = (scores: any[], name: string) => {
+        const entries = scores.filter((s: any) => s.competitor_name === name)
+        if (!entries.length) return null
+        return Math.round(entries.reduce((sum: number, s: any) => sum + s.visibility_score, 0) / entries.length)
+      }
+
       const competitors = (regionHotels || []).map((h: any) => {
         const hotelOverviewScores = overviewScores.filter((s: any) => s.competitor_name === h.name)
         const visibilityScore = hotelOverviewScores.length > 0
@@ -88,11 +101,14 @@ export default function DashboardWrapper() {
           }
         }
 
-        return { ...h, visibilityScore, catScores }
+        const prevVisibilityScore = getAvgScore(prevScores, h.name)
+        const rankChange = visibilityScore !== null && prevVisibilityScore !== null ? visibilityScore - prevVisibilityScore : null
+        return { ...h, visibilityScore, catScores, rankChange }
       })
 
       // Current hotel overview scores from competitor_visibility
       const myOverviewScores = overviewScores.filter((s: any) => s.competitor_name === hotel?.name)
+      const myPrevScore = getAvgScore(prevScores, hotel?.name)
 const rawChatgpt = myOverviewScores.find((s: any) => s.platform === 'chatgpt')?.visibility_score ?? null
 const chatgptScore = rawChatgpt !== null ? Math.min(100, rawChatgpt + 8) : null
 const perplexityScore = myOverviewScores.find((s: any) => s.platform === 'perplexity')?.visibility_score ?? null
@@ -106,6 +122,7 @@ const perplexityScore = myOverviewScores.find((s: any) => s.platform === 'perple
       const overallScore = availableScores.length > 0
         ? Math.round(availableScores.reduce((a, b) => a + b, 0) / availableScores.length)
         : null
+      const myRankChange = overallScore !== null && myPrevScore !== null ? overallScore - myPrevScore : null
 
       // Category scores for current hotel
       const hotelCatScores: Record<string, number> = {}
@@ -139,6 +156,7 @@ const perplexityScore = myOverviewScores.find((s: any) => s.platform === 'perple
           overall: overallScore,
         },
         overviewRunData: myOverviewScores,
+        myRankChange,
       })
       setLoading(false)
     }

@@ -813,7 +813,7 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string; hotel
 
 // ── MAIN DASHBOARD ────────────────────────────────────────────────────────────
 
-export default function DashboardClient({ hotel, views, clicks, leads, aiVisibility, googleAiScores, bookings, competitors, hotelCatScores, platformScores, overviewRunData }: any) {
+export default function DashboardClient({ hotel, views, clicks, leads, aiVisibility, googleAiScores, bookings, competitors, hotelCatScores, platformScores, overviewRunData, myRankChange }: any) {
   const [tab, setTab] = useState('overview')
   const [period, setPeriod] = useState(30)
   const [chartPeriod, setChartPeriod] = useState(7)
@@ -1270,7 +1270,7 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
         {tab === 'competitors' && (
           <div>
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-              <KPICard label="Your Rank" value={'#' + hotelRank} sub={`in ${hotelRegion}`} color={hotelRank === 1 ? GREEN : GOLD} />
+              <KPICard label="Your Rank" value={'#' + hotelRank} sub={myRankChange !== null ? (myRankChange > 0 ? `↑ ${myRankChange}pts vs last run` : myRankChange < 0 ? `↓ ${Math.abs(myRankChange)}pts vs last run` : 'No change vs last run') : `in ${hotelRegion}`} color={myRankChange > 0 ? GREEN : myRankChange < 0 ? RED : GOLD} />
               <KPICard label="Hotels Tracked" value={competitorTableHotels.length} sub="in this category" color={BLUE} />
               <KPICard label="Market Position" value={hotelRank === 1 ? 'Leader' : hotelRank <= 3 ? 'Top 3' : 'Growing'} sub="competitive status" color={PURPLE} />
               <KPICard label="Visibility Score" value={visibilityScore + '%'} sub="your AI score" color={GOLD} />
@@ -1331,9 +1331,21 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
                         )}
                       </td>
                       <td style={{ padding: '1rem 1.5rem' }}>
-                        <span style={{ background: h.is_current ? GREEN + '18' : BG, color: h.is_current ? GREEN : TEXT_MUTED, fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, padding: '3px 10px', borderRadius: 20 }}>
-                          {h.is_current ? 'Your hotel' : 'Competitor'}
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ background: h.is_current ? GREEN + '18' : BG, color: h.is_current ? GREEN : TEXT_MUTED, fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, padding: '3px 10px', borderRadius: 20 }}>
+                            {h.is_current ? 'Your hotel' : 'Competitor'}
+                          </span>
+                          {!h.is_current && h.rankChange !== null && h.rankChange !== undefined && (
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: h.rankChange > 0 ? GREEN : h.rankChange < 0 ? RED : TEXT_MUTED }}>
+                              {h.rankChange > 0 ? `↑ ${h.rankChange}` : h.rankChange < 0 ? `↓ ${Math.abs(h.rankChange)}` : '→'}
+                            </span>
+                          )}
+                          {h.is_current && myRankChange !== null && myRankChange !== undefined && (
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: myRankChange > 0 ? GREEN : myRankChange < 0 ? RED : TEXT_MUTED }}>
+                              {myRankChange > 0 ? `↑ ${myRankChange}` : myRankChange < 0 ? `↓ ${Math.abs(myRankChange)}` : '→'}
+                            </span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
