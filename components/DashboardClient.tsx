@@ -1291,7 +1291,7 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: BG }}>
-                    {['Rank', 'Hotel', 'AI Visibility', 'Status'].map(h => (
+                    {['Rank', 'Hotel', 'AI Visibility', 'Change', 'Status'].map(h => (
                       <th key={h} style={{ textAlign: 'left', padding: '0.75rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, borderBottom: '1px solid ' + BORDER }}>{h}</th>
                     ))}
                   </tr>
@@ -1331,21 +1331,18 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
                         )}
                       </td>
                       <td style={{ padding: '1rem 1.5rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span style={{ background: h.is_current ? GREEN + '18' : BG, color: h.is_current ? GREEN : TEXT_MUTED, fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, padding: '3px 10px', borderRadius: 20 }}>
-                            {h.is_current ? 'Your hotel' : 'Competitor'}
-                          </span>
-                          {!h.is_current && h.rankChange !== null && h.rankChange !== undefined && (
-                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 700, color: '#fff', background: h.rankChange > 0 ? GREEN : h.rankChange < 0 ? RED : TEXT_MUTED, padding: '2px 7px', borderRadius: 20 }}>
-                              {h.rankChange > 0 ? `↑ ${h.rankChange}` : h.rankChange < 0 ? `↓ ${Math.abs(h.rankChange)}` : '→'}
-                            </span>
-                          )}
-                          {h.is_current && myRankChange !== null && myRankChange !== undefined && (
-                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 700, color: '#fff', background: myRankChange > 0 ? GREEN : myRankChange < 0 ? RED : TEXT_MUTED, padding: '2px 7px', borderRadius: 20 }}>
-                              {myRankChange > 0 ? `↑ ${myRankChange}` : myRankChange < 0 ? `↓ ${Math.abs(myRankChange)}` : '→'}
-                            </span>
-                          )}
-                        </div>
+                        {(() => {
+                          const change = h.is_current ? myRankChange : h.rankChange
+                          if (change === null || change === undefined) return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT_MUTED }}>—</span>
+                          if (change > 0) return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', fontWeight: 700, color: GREEN }}>↑ {change}</span>
+                          if (change < 0) return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', fontWeight: 700, color: RED }}>↓ {Math.abs(change)}</span>
+                          return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT_MUTED }}>—</span>
+                        })()}
+                      </td>
+                      <td style={{ padding: '1rem 1.5rem' }}>
+                        <span style={{ background: h.is_current ? GREEN + '18' : BG, color: h.is_current ? GREEN : TEXT_MUTED, fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, padding: '3px 10px', borderRadius: 20 }}>
+                          {h.is_current ? 'Your hotel' : 'Competitor'}
+                        </span>
                       </td>
                     </tr>
                   ))}
