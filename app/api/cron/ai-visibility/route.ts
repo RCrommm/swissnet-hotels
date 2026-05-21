@@ -203,15 +203,11 @@ export async function GET(request: Request) {
         }
       }
 
-      await supabase
-        .from('competitor_visibility')
-        .delete()
-        .eq('region', regionParam)
-        .is('category', null)
-        .eq('platform', platform.id)
-        .eq('month', currentMonth)
-
-      await supabase.from('competitor_visibility').insert(rows)
+      const today = new Date().toISOString().split('T')[0]
+      const rowsWithDate = rows.map((r: any) => ({ ...r, run_date: today }))
+      await supabase.from('competitor_visibility').upsert(rowsWithDate, {
+        onConflict: 'competitor_name,platform,run_date,category'
+      })
     }
 
     await supabase.from('cron_costs').insert({
