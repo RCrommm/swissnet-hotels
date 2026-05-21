@@ -116,9 +116,11 @@ const chatgptScore = rawChatgpt !== null ? Math.min(100, rawChatgpt + 20) : null
 const perplexityScore = myOverviewScores
         .filter((s: any) => s.platform === 'perplexity')
         .sort((a: any, b: any) => new Date(b.checked_at).getTime() - new Date(a.checked_at).getTime())[0]?.visibility_score ?? null
-      // Google AI score
-      const googleAppeared = googleAiScores?.filter((s: any) => s.appeared).length || 0
-      const googleTotal = googleAiScores?.length || 0
+      // Google AI score — latest batch only
+      const latestGoogleDate = googleAiScores?.[0]?.checked_at?.split('T')[0]
+      const latestGoogleScores = googleAiScores?.filter((s: any) => s.checked_at?.startsWith(latestGoogleDate)) || []
+      const googleAppeared = latestGoogleScores.filter((s: any) => s.appeared).length || 0
+      const googleTotal = latestGoogleScores.length || 0
       const googleScore = googleTotal > 0 ? Math.round((googleAppeared / googleTotal) * 100) : null
 
       // Overall = average of available platform scores
