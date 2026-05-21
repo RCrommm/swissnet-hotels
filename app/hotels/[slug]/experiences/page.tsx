@@ -192,7 +192,7 @@ export default async function ExperiencesPage({ params }: { params: Promise<{ sl
                   </div>
                   {exp.description && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted, lineHeight: 1.7, margin: '0 0 1.25rem', fontWeight: 300 }}>{exp.description}</p>}
                   <a href={trackingUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: gold, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0.6rem 1.5rem', textDecoration: 'none', borderRadius: 2 }}>
-                    Book Now →
+                    Official Website →
                   </a>
                 </div>
               </div>

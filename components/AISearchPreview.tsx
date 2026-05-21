@@ -188,7 +188,7 @@ export default function AISearchPreview() {
                       {/* Buttons */}
                       <div style={{ display: 'flex', gap: '0.4rem' }}>
                         <button style={{ flex: 1, background: '#fff', border: '1px solid #ddd', borderRadius: '7px', padding: '0.45rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: '#333', cursor: 'pointer', fontWeight: 500 }}>View Details</button>
-                        <button style={{ flex: 1, background: gold, border: 'none', borderRadius: '7px', padding: '0.45rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: '#fff', cursor: 'pointer', fontWeight: 700 }}>Book Now</button>
+                        <button style={{ flex: 1, background: gold, border: 'none', borderRadius: '7px', padding: '0.45rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: '#fff', cursor: 'pointer', fontWeight: 700 }}>Official Website</button>
                       </div>
                     </div>
                   </div>

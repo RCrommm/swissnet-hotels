@@ -154,7 +154,7 @@ export default async function SpaPage({ params }: { params: Promise<{ slug: stri
             </p>
           )}
           <a href={trackingUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: gold, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.875rem 2rem', textDecoration: 'none', borderRadius: 2 }}>
-            Book a Treatment →
+            Official Website →
           </a>
         </div>
       </div>
@@ -217,7 +217,7 @@ export default async function SpaPage({ params }: { params: Promise<{ slug: stri
                       </div>
                     )}
                     <a href={trackingUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: gold, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0.6rem 1.5rem', textDecoration: 'none', borderRadius: 2 }}>
-                      Book a Treatment →
+                      Official Website →
                     </a>
                   </div>
                 </div>

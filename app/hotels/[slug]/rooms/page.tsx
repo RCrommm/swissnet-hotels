@@ -212,7 +212,7 @@ export default async function RoomsPage({ params }: { params: Promise<{ slug: st
                       </div>
                     )}
                     <a href={trackingUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: gold, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0.6rem 1.5rem', textDecoration: 'none', borderRadius: 2 }}>
-                      Book This Room →
+                      Official Website →
                     </a>
                   </div>
                 </div>

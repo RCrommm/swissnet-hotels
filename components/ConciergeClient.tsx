@@ -177,7 +177,7 @@ export default function ConciergeClient() {
                                   View Details
                                 </Link>
                                 <a href={hotel.direct_booking_url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, color: DARK, background: GOLD, padding: '0.35rem 0.75rem', borderRadius: 4, textDecoration: 'none', textAlign: 'center' }}>
-                                  Book Now
+                                  Official Website
                                 </a>
                               </div>
                             </div>
