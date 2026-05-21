@@ -1336,12 +1336,12 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
                             {h.is_current ? 'Your hotel' : 'Competitor'}
                           </span>
                           {!h.is_current && h.rankChange !== null && h.rankChange !== undefined && (
-                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: h.rankChange > 0 ? GREEN : h.rankChange < 0 ? RED : TEXT_MUTED }}>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 700, color: '#fff', background: h.rankChange > 0 ? GREEN : h.rankChange < 0 ? RED : TEXT_MUTED, padding: '2px 7px', borderRadius: 20 }}>
                               {h.rankChange > 0 ? `↑ ${h.rankChange}` : h.rankChange < 0 ? `↓ ${Math.abs(h.rankChange)}` : '→'}
                             </span>
                           )}
                           {h.is_current && myRankChange !== null && myRankChange !== undefined && (
-                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: myRankChange > 0 ? GREEN : myRankChange < 0 ? RED : TEXT_MUTED }}>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 700, color: '#fff', background: myRankChange > 0 ? GREEN : myRankChange < 0 ? RED : TEXT_MUTED, padding: '2px 7px', borderRadius: 20 }}>
                               {myRankChange > 0 ? `↑ ${myRankChange}` : myRankChange < 0 ? `↓ ${Math.abs(myRankChange)}` : '→'}
                             </span>
                           )}

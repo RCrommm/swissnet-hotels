@@ -40,13 +40,11 @@ export default function DashboardWrapper() {
 
       const region = hotel?.region || 'Geneva'
 
-      // Fetch all competitor_visibility for this region (overview + categories)
       const { data: allCompVisibility } = await supabase
         .from('competitor_visibility')
         .select('competitor_name, category, platform, visibility_score, checked_at')
         .eq('region', region)
 
-      // Google AI scores for this hotel specifically
       const { data: googleAiScores } = await supabase
         .from('ai_visibility_scores')
         .select('query, appeared, checked_at')
@@ -54,7 +52,6 @@ export default function DashboardWrapper() {
         .eq('platform', 'google_ai')
         .order('checked_at', { ascending: false })
 
-      // Per-hotel specific AI visibility scores (for "Where You Appear" and "Queries to Improve")
       const { data: hotelSpecificScores } = await supabase
         .from('ai_visibility_scores')
         .select('*')
@@ -62,7 +59,6 @@ export default function DashboardWrapper() {
         .neq('platform', 'google_ai')
         .order('checked_at', { ascending: false })
 
-      // Build competitor list with overview scores
       const { data: regionHotels } = await supabase
         .from('hotels')
         .select('id, name, rating, nightly_rate_chf, region, category')
@@ -70,10 +66,8 @@ export default function DashboardWrapper() {
         .eq('region', region)
         .neq('id', hotelId)
 
-      // Overview scores (category = null) per hotel
       const overviewScores = allCompVisibility?.filter((s: any) => s.category === null) || []
 
-      // Get previous run scores for ranking arrows
       const runDatesAll = [...new Set(overviewScores.map((s: any) => s.checked_at?.split('T')[0]).filter(Boolean))].sort() as string[]
       const latestDate = runDatesAll[runDatesAll.length - 1]
       const prevDate = runDatesAll[runDatesAll.length - 2]
@@ -86,13 +80,24 @@ export default function DashboardWrapper() {
         return Math.round(entries.reduce((sum: number, s: any) => sum + s.visibility_score, 0) / entries.length)
       }
 
+      const allHotelNames = [hotel?.name, ...(regionHotels || []).map((h: any) => h.name)].filter(Boolean)
+
+      const latestRanking = allHotelNames
+        .map(name => ({ name, score: getAvgScore(latestScores, name) ?? -1 }))
+        .sort((a, b) => b.score - a.score)
+      const prevRanking = allHotelNames
+        .map(name => ({ name, score: getAvgScore(prevScores, name) ?? -1 }))
+        .sort((a, b) => b.score - a.score)
+
+      const getLatestRank = (name: string) => latestRanking.findIndex(h => h.name === name) + 1
+      const getPrevRank = (name: string) => prevRanking.findIndex(h => h.name === name) + 1
+
       const competitors = (regionHotels || []).map((h: any) => {
         const hotelOverviewScores = overviewScores.filter((s: any) => s.competitor_name === h.name)
         const visibilityScore = hotelOverviewScores.length > 0
           ? Math.round(hotelOverviewScores.reduce((sum: number, s: any) => sum + s.visibility_score, 0) / hotelOverviewScores.length)
           : null
 
-        // Category scores
         const catScores: Record<string, number> = {}
         for (const cat of ['spa', 'ski', 'dining', 'romantic', 'lake', 'business']) {
           const catEntries = allCompVisibility?.filter((s: any) => s.competitor_name === h.name && s.category === cat) || []
@@ -101,36 +106,36 @@ export default function DashboardWrapper() {
           }
         }
 
-        const prevVisibilityScore = getAvgScore(prevScores, h.name)
-        const rankChange = visibilityScore !== null && prevVisibilityScore !== null ? visibilityScore - prevVisibilityScore : null
+        const latestRank = getLatestRank(h.name)
+        const prevRank = getPrevRank(h.name)
+        const rankChange = prevScores.length > 0 && latestRank > 0 && prevRank > 0 ? prevRank - latestRank : null
         return { ...h, visibilityScore, catScores, rankChange }
       })
 
-      // Current hotel overview scores from competitor_visibility
       const myOverviewScores = overviewScores.filter((s: any) => s.competitor_name === hotel?.name)
-      const myPrevScore = getAvgScore(prevScores, hotel?.name)
-const rawChatgpt = myOverviewScores
+      const myLatestRank = getLatestRank(hotel?.name)
+      const myPrevRank = getPrevRank(hotel?.name)
+      const myRankChange = prevScores.length > 0 && myLatestRank > 0 && myPrevRank > 0 ? myPrevRank - myLatestRank : null
+
+      const rawChatgpt = myOverviewScores
         .filter((s: any) => s.platform === 'chatgpt')
         .sort((a: any, b: any) => new Date(b.checked_at).getTime() - new Date(a.checked_at).getTime())[0]?.visibility_score ?? null
-const chatgptScore = rawChatgpt !== null ? Math.min(100, rawChatgpt + 20) : null
-const perplexityScore = myOverviewScores
+      const chatgptScore = rawChatgpt !== null ? Math.min(100, rawChatgpt + 20) : null
+      const perplexityScore = myOverviewScores
         .filter((s: any) => s.platform === 'perplexity')
         .sort((a: any, b: any) => new Date(b.checked_at).getTime() - new Date(a.checked_at).getTime())[0]?.visibility_score ?? null
-      // Google AI score — latest batch only
+
       const latestGoogleDate = googleAiScores?.[0]?.checked_at?.split('T')[0]
       const latestGoogleScores = googleAiScores?.filter((s: any) => s.checked_at?.startsWith(latestGoogleDate)) || []
       const googleAppeared = latestGoogleScores.filter((s: any) => s.appeared).length || 0
       const googleTotal = latestGoogleScores.length || 0
       const googleScore = googleTotal > 0 ? Math.round((googleAppeared / googleTotal) * 100) : null
 
-      // Overall = average of available platform scores
       const availableScores = [chatgptScore, perplexityScore, googleScore].filter((s): s is number => s !== null)
       const overallScore = availableScores.length > 0
         ? Math.round(availableScores.reduce((a, b) => a + b, 0) / availableScores.length)
         : null
-      const myRankChange = overallScore !== null && myPrevScore !== null ? overallScore - myPrevScore : null
 
-      // Category scores for current hotel
       const hotelCatScores: Record<string, number> = {}
       for (const cat of ['spa', 'ski', 'dining', 'romantic', 'lake', 'business']) {
         const catEntries = allCompVisibility?.filter((s: any) => s.competitor_name === hotel?.name && s.category === cat) || []
@@ -138,12 +143,6 @@ const perplexityScore = myOverviewScores
           hotelCatScores[cat] = Math.round(catEntries.reduce((sum: number, s: any) => sum + s.visibility_score, 0) / catEntries.length)
         }
       }
-
-      // Run dates for chart — from competitor_visibility overview scores for this hotel
-      const myRunDates = [...new Set([
-        ...myOverviewScores.map((s: any) => s.checked_at?.split('T')[0]),
-        ...(googleAiScores || []).map((s: any) => s.checked_at?.split('T')[0])
-      ].filter(Boolean))].sort() as string[]
 
       setData({
         hotel,
@@ -163,6 +162,7 @@ const perplexityScore = myOverviewScores
         },
         overviewRunData: myOverviewScores,
         myRankChange,
+        myLatestRank,
       })
       setLoading(false)
     }
