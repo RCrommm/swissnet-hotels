@@ -71,7 +71,12 @@ export default function ContentSchema({ hotelId, hotelName }: { hotelId: string;
       nearby_alternatives: cleanAlts,
       updated_at: new Date().toISOString(),
     }
-    const { error } = await supabase.from('hotel_content').upsert(payload, { onConflict: 'hotel_id' })
+    const res = await fetch('/api/hotel-content', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(payload),
+})
+const { error } = await res.json()
     setSaving(false)
     if (error) showMsg('error', error.message)
     else showMsg('success', 'Content saved!')
