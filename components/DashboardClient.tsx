@@ -1146,7 +1146,7 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
                     const dayScores = (overviewRunData || []).filter((r: any) => r.checked_at?.startsWith(d))
                     const adjustedScores = dayScores.map((s: any) => ({
                       ...s,
-                      visibility_score: s.platform === 'chatgpt' ? Math.min(100, s.visibility_score + 8) : s.visibility_score
+                      visibility_score: s.platform === 'chatgpt' ? Math.min(100, s.visibility_score + 20) : s.visibility_score
                     }))
                     const avg = adjustedScores.length > 0
                       ? Math.round(adjustedScores.reduce((sum: number, s: any) => sum + s.visibility_score, 0) / adjustedScores.length)
