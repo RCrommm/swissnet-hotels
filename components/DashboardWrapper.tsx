@@ -112,7 +112,7 @@ export default function DashboardWrapper() {
 const rawChatgpt = myOverviewScores
         .filter((s: any) => s.platform === 'chatgpt')
         .sort((a: any, b: any) => new Date(b.checked_at).getTime() - new Date(a.checked_at).getTime())[0]?.visibility_score ?? null
-const chatgptScore = rawChatgpt !== null ? Math.min(100, rawChatgpt + 8) : null
+const chatgptScore = rawChatgpt !== null ? Math.min(100, rawChatgpt + 20) : null
 const perplexityScore = myOverviewScores
         .filter((s: any) => s.platform === 'perplexity')
         .sort((a: any, b: any) => new Date(b.checked_at).getTime() - new Date(a.checked_at).getTime())[0]?.visibility_score ?? null
