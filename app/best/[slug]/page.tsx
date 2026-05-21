@@ -910,7 +910,7 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
 
                         {(hotel.is_partner || PARTNER_HOTEL_NAMES.has(hotel.name)) && hotel.direct_booking_url && (
                           <a href={`/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIComponent(hotel.name)}&destination=${encodeURIComponent(hotel.direct_booking_url)}&medium=website&campaign=best_page`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#1a0e06', background: gold, padding: '0.5rem 1rem', textDecoration: 'none', borderRadius: 2 }}>
-                            Book Direct →
+                            Official Website →
                           </a>
                         )}
                       </div>
@@ -942,7 +942,7 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
 
           <div style={{ position: 'sticky', top: '2rem' }}>
             <div style={{ background: white, border: `1px solid ${border}`, borderRadius: 8, padding: '1.5rem', marginBottom: '1.5rem' }}>
-              <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 400, color: text, margin: '0 0 1rem' }}>Why Book Direct?</h3>
+              <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 400, color: text, margin: '0 0 1rem' }}>Why Official Website?</h3>
 
               {[
                 { icon: '✓', title: 'No OTA Fees', desc: 'Save 10-15% vs booking platforms' },

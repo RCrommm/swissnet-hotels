@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: `${hotelMeta.name} — Rooms & Suites | SwissNet Hotels`,
     description: hotelMeta.nightly_rate_chf
       ? `Explore all rooms and suites at ${hotelMeta.name} in ${hotelMeta.location}, Switzerland. View sizes, bed types, views and rates from CHF ${hotelMeta.nightly_rate_chf}/night. Book direct for the best rate.`
-      : `Explore all rooms and suites at ${hotelMeta.name} in ${hotelMeta.location}, Switzerland. View sizes, bed types, views and book direct for the best available rate.`,
+      : `Explore all rooms and suites at ${hotelMeta.name} in ${hotelMeta.location}, Switzerland. View sizes, bed types, views and official website for the best available rate.`,
     alternates: {
       canonical: `https://swissnethotels.com/hotels/${hotelMeta.slug || slug}/rooms`,
     },
@@ -146,7 +146,7 @@ export default async function RoomsPage({ params }: { params: Promise<{ slug: st
             All rooms at {hotel.name} in {hotel.location}, Switzerland are bookable direct at the best available rate.
           </p>
           <a href={trackingUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: gold, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.875rem 2rem', textDecoration: 'none', borderRadius: 2 }}>
-            Book Direct →
+            Official Website →
           </a>
         </div>
       </div>

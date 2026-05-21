@@ -197,7 +197,7 @@ export default function AISearchPreview() {
 
               {/* Disclaimer */}
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: '#aaa', margin: 0, lineHeight: 1.5, fontStyle: 'italic' }}>
-                Prices are indicative and may vary depending on dates and availability. Always book directly through the hotel for the best rate and benefits.
+                Prices are indicative and may vary depending on dates and availability. Always official websitely through the hotel for the best rate and benefits.
               </p>
             </div>
           </div>

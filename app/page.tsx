@@ -99,7 +99,7 @@ export default async function HomePage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem' }}>
             {[
               { icon: '✦', title: 'AI Visibility', desc: 'Your hotel appears when travellers ask ChatGPT, Claude or Perplexity for recommendations. We optimise your presence across all major AI platforms.' },
-{ icon: '◆', title: 'Direct Bookings', desc: 'Increase direct bookings while reducing reliance on high OTA commissions. Guests book directly with you, not through intermediaries.' },
+{ icon: '◆', title: 'Direct Bookings', desc: 'Increase direct bookings while reducing reliance on high OTA commissions. Guests official websitely with you, not through intermediaries.' },
               { icon: '▲', title: 'Live Analytics', desc: 'See exactly how many times your hotel appeared in AI search, how many clicks you received, and how much revenue SwissNet drove.' },
             ].map(f => (
               <div key={f.title} style={{ textAlign: 'center', padding: '2.5rem 2rem', border: '1px solid ' + border, background: '#FFFFFF' }}>

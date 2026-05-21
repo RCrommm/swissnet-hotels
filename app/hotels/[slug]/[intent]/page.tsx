@@ -215,7 +215,7 @@ export default async function IntentPage({ params }: { params: Promise<{ slug: s
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.5rem', fontWeight: 400, color: text, margin: 0 }}>CHF {hotelData.nightly_rate_chf?.toLocaleString()}</p>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: '0.25rem 0 0' }}>per night</p>
             </div>
-            <a href={trackingUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '1rem', textAlign: 'center', textDecoration: 'none', marginBottom: '0.75rem' }}>Book Direct →</a>
+            <a href={trackingUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '1rem', textAlign: 'center', textDecoration: 'none', marginBottom: '0.75rem' }}>Official Website →</a>
             <div style={{ textAlign: 'center' }}>
               <Link href={`/hotels/${hotelUrl}`} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: gold, textDecoration: 'none' }}>View full profile →</Link>
             </div>
