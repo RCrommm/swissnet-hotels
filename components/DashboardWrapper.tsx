@@ -107,15 +107,19 @@ export default function DashboardWrapper() {
         }
 
         const latestRank = getLatestRank(h.name)
-        const prevRank = getPrevRank(h.name)
-        const rankChange = prevScores.length > 0 && latestRank > 0 && prevRank > 0 ? prevRank - latestRank : null
+const prevRank = getPrevRank(h.name)
+const hasLatest = getAvgScore(latestScores, h.name) !== null
+const hasPrev = getAvgScore(prevScores, h.name) !== null
+const rankChange = hasLatest && hasPrev && latestRank > 0 && prevRank > 0 ? prevRank - latestRank : null
         return { ...h, visibilityScore, catScores, rankChange }
       })
 
       const myOverviewScores = overviewScores.filter((s: any) => s.competitor_name === hotel?.name)
       const myLatestRank = getLatestRank(hotel?.name)
       const myPrevRank = getPrevRank(hotel?.name)
-      const myRankChange = prevScores.length > 0 && myLatestRank > 0 && myPrevRank > 0 ? myPrevRank - myLatestRank : null
+      const myHasLatest = getAvgScore(latestScores, hotel?.name) !== null
+const myHasPrev = getAvgScore(prevScores, hotel?.name) !== null
+const myRankChange = myHasLatest && myHasPrev && myLatestRank > 0 && myPrevRank > 0 ? myPrevRank - myLatestRank : null
 
       const rawChatgpt = myOverviewScores
         .filter((s: any) => s.platform === 'chatgpt')
