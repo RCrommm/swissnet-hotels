@@ -903,7 +903,7 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
   }
 
   const competitorTabs = [
-    { key: 'region', label: 'Overview' },
+    { key: 'region', label: 'General' },
     ...hotelCategories.map(c => ({ key: c, label: categoryLabels[c] || c })),
   ]
   
@@ -930,7 +930,7 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
 
   const competitorTableHotels = getCompetitorTableHotels()
   const competitorTableLabel = competitorView === 'region' 
-    ? `Overview — ${hotelRegion}` 
+    ? `General — ${hotelRegion}` 
     : `${competitorTabs.find(t => t.key === competitorView)?.label || ''} — ${hotelRegion}`
 
   const navItems = [
