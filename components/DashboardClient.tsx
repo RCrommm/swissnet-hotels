@@ -1440,7 +1440,7 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
               </div>
             </div>
             {[
-              { title: 'Subscription', desc: 'AI Visibility Growth Programme · CHF 699/month', badge: 'Active' },
+              { title: 'Subscription', desc: 'AI Visibility Growth Programme · CHF 699/month · No commission', badge: 'Active' },
               { title: 'Monthly Reports', desc: 'Automated performance reports sent each month' },
               { title: 'Integrations', desc: 'Connect your booking system for live rate sync', badge: 'Coming Soon' },
             ].map(s => (
