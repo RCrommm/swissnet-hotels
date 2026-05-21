@@ -1332,7 +1332,7 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
                       </td>
                       <td style={{ padding: '1rem 1.5rem' }}>
                         {(() => {
-                          const change = h.is_current ? myRankChange : h.rankChange
+                          const change = competitorView === 'region' ? (h.is_current ? myRankChange : h.rankChange) : null
                           if (change === null || change === undefined) return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT_MUTED }}>—</span>
                           if (change > 0) return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', fontWeight: 700, color: GREEN }}>↑ {change}</span>
                           if (change < 0) return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', fontWeight: 700, color: RED }}>↓ {Math.abs(change)}</span>
