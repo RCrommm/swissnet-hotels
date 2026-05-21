@@ -80,7 +80,12 @@ export default async function AdminPage({
     .order('checked_at', { ascending: false })
     .limit(500)
 
-  const { data: cronCosts } = await supabase
+  const { data: cronCostsAll } = await supabase
+  .from('cron_costs')
+  .select('estimated_cost_usd, run_at, triggered_by')
+  .order('run_at', { ascending: false })
+
+const { data: cronCosts } = await supabase
   .from('cron_costs')
   .select('*')
   .order('run_at', { ascending: false })
@@ -415,7 +420,7 @@ export default async function AdminPage({
     {[
       {
         label: 'Total Spent',
-        value: '$' + ((cronCosts || []).reduce((sum: number, r: any) => sum + Number(r.estimated_cost_usd || 0), 0)).toFixed(3),
+        value: '$' + ((cronCostsAll || []).reduce((sum: number, r: any) => sum + Number(r.estimated_cost_usd || 0), 0)).toFixed(3),
         color: '#C9A84C',
       },
       {
