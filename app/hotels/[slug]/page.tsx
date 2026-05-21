@@ -596,10 +596,9 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
           { label: `Best luxury hotels in Switzerland`, href: `/best/luxury-hotels-switzerland` },
           hotel.category === 'Ski Resort' && { label: `Best ski hotels in Switzerland`, href: `/best/ski-hotels-switzerland` },
           hotel.category === 'Wellness Retreat' && { label: `Best wellness hotels in Switzerland`, href: `/best/wellness-hotels-switzerland` },
-          { label: `${hotel.name} Events & Offers`, href: `/hotels/${hotelUrl}/events` },
-          { label: `${hotel.name} for Honeymoon`, href: `/hotels/${hotelUrl}/honeymoon` },
-          { label: `${hotel.name} for Wellness`, href: `/hotels/${hotelUrl}/wellness` },
-          { label: `${hotel.name} for Business`, href: `/hotels/${hotelUrl}/business` },
+          { label: `Best spa hotels in ${hotel.region}`, href: `/best/spa-hotels-${hotel.region?.toLowerCase().replace(/\s+/g, '-')}` },
+          { label: `Best romantic hotels in ${hotel.region}`, href: `/best/romantic-hotels-${hotel.region?.toLowerCase().replace(/\s+/g, '-')}` },
+          { label: `Best hotels in Switzerland`, href: `/best/luxury-hotels-switzerland` },
         ].filter(Boolean).map((link: any) => (
           <Link key={link.label} href={link.href} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.875rem 1.25rem', background: white, border: `1px solid ${border}`, borderRadius: 4, textDecoration: 'none' }}>
             <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text }}>{link.label}</span>
