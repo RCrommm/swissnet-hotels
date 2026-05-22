@@ -157,11 +157,9 @@ export default function HotelsClient({ hotels, initialRegion, initialCategory, i
                         <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.45rem', fontWeight: 400, color: '#3D2B1F', margin: 0 }}>CHF {hotel.nightly_rate_chf.toLocaleString()}<span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: 'rgba(61,43,31,0.4)', fontWeight: 300 }}> /night</span></p>
                       </div>
                       <div style={{ display: 'flex', gap: '0.5rem', position: 'relative', zIndex: 2 }}>
-                        {hotel.is_partner && (
-                          <>
-                          <a href={bookUrl} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: '#1a0e06', background: gold, borderRadius: 8, padding: '0.6rem 0.875rem', textDecoration: 'none' }}>Official Website</a>
-                          </>
-                        )}
+                        {(hotel.is_partner || hotel.direct_booking_url) && (
+  <a href={hotel.is_partner ? bookUrl : hotel.direct_booking_url!} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: '#1a0e06', background: gold, borderRadius: 8, padding: '0.6rem 0.875rem', textDecoration: 'none' }}>Official Website</a>
+)}
                       </div>
                     </div>
                   </div>
