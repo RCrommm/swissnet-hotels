@@ -366,7 +366,25 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
             {/* OVERVIEW */}
             <section style={{ marginBottom: '4rem' }}>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1rem' }}>Overview</p>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 300, color: text, lineHeight: 1.6, margin: '0 0 1.5rem', maxWidth: 600 }}>{hotel.description}</p>
+
+{/* AI Fact Box */}
+<div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.5rem' }}>
+  {[
+    { label: 'Location', value: `${hotel.location}, Switzerland` },
+    { label: 'Stars', value: '★'.repeat(hotel.star_classification || 5) },
+    { label: 'From', value: `CHF ${hotel.nightly_rate_chf?.toLocaleString()}/night` },
+    hotel.category && { label: 'Type', value: hotel.category },
+    hotel.has_spa && { label: 'Spa', value: 'Yes' },
+    hotel.has_michelin_restaurant && { label: 'Michelin', value: 'Yes' },
+  ].filter(Boolean).map((item: any) => (
+    <div key={item.label} style={{ background: white, border: `1px solid ${border}`, borderRadius: 4, padding: '0.4rem 0.875rem', display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, color: textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{item.label}</span>
+      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: text, fontWeight: 600 }}>{item.value}</span>
+    </div>
+  ))}
+</div>
+
+<p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 300, color: text, lineHeight: 1.6, margin: '0 0 1.5rem', maxWidth: 600 }}>{hotel.description}</p>
 
               {/* Why stay here */}
               {hotel.amenities?.length > 0 && (
@@ -399,7 +417,7 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
             {awards && awards.length > 0 && (
               <>
                 <section style={{ marginBottom: '4rem' }}>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>Awards & Recognition</p>
+                  <h2 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>Awards & Recognition</h2>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                     {awards.map((award: any) => (
                       <div key={award.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: award.is_featured ? `rgba(201,169,76,0.1)` : 'rgba(0,0,0,0.03)', border: `1px solid ${award.is_featured ? 'rgba(201,169,76,0.4)' : border}`, borderRadius: 20, padding: '0.35rem 0.875rem' }}>
