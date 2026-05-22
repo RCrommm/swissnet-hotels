@@ -1154,7 +1154,9 @@ const platformAvg = adjustedScores.length > 0
 // Include Google AI score for that date if available
 const googleForDate = (googleAiScores || []).filter((r: any) => r.checked_at?.startsWith(d))
 const googleScore = googleForDate.length > 0 ? Math.round((googleForDate.filter((r: any) => r.appeared).length / googleForDate.length) * 100) : null
-const allScores = [platformAvg, googleScore].filter((s): s is number => s !== null)
+const chatgptForDate = adjustedScores.find((s: any) => s.platform === 'chatgpt')?.visibility_score ?? null
+const perplexityForDate = adjustedScores.find((s: any) => s.platform === 'perplexity')?.visibility_score ?? null
+const allScores = [chatgptForDate, perplexityForDate, googleScore].filter((s): s is number => s !== null)
 const avg = allScores.length > 0 ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length) : null
 return { date: d, score: avg }
                   }
