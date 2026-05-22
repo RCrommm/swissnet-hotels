@@ -1143,7 +1143,12 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
 
                 const realPoints = allDates.map((d: string) => {
                   if (chartPlatform === 'overall') {
-                    const dayScores = (overviewRunData || []).filter((r: any) => r.checked_at?.startsWith(d))
+                    const dayScoresAll = (overviewRunData || []).filter((r: any) => r.checked_at?.startsWith(d))
+// Take only latest score per platform
+const dayScores = ['chatgpt', 'perplexity'].map(platform => 
+  dayScoresAll.filter((s: any) => s.platform === platform)
+    .sort((a: any, b: any) => new Date(b.checked_at).getTime() - new Date(a.checked_at).getTime())[0]
+).filter(Boolean)
                     const adjustedScores = dayScores.map((s: any) => ({
   ...s,
   visibility_score: s.platform === 'chatgpt' ? Math.min(100, s.visibility_score + 20) : s.visibility_score
