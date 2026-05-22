@@ -346,14 +346,12 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
               </div>
             </div>
             {hotel.is_partner && trackingUrl && (
-              <div style={{ flexShrink: 0, textAlign: 'right' }}>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: 'rgba(255,255,255,0.5)', margin: '0 0 0.4rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>From</p>
-                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.5rem', color: white, margin: '0 0 0.75rem', lineHeight: 1 }}>CHF {hotel.nightly_rate_chf?.toLocaleString()}<span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)' }}>/night</span></p>
-                <a href={trackingUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: gold, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.875rem 2rem', textDecoration: 'none' }}>
-                  Official Website →
-                </a>
-              </div>
-            )}
+  <div style={{ flexShrink: 0, textAlign: 'right' }}>
+    <a href={trackingUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: gold, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.875rem 2rem', textDecoration: 'none' }}>
+      Official Website →
+    </a>
+  </div>
+)}
           </div>
         </div>
       </div>
