@@ -289,7 +289,7 @@ export default function ConciergeClient() {
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '1rem', borderTop: '1px solid rgba(201,169,110,0.25)' }}>
       <div>
         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: 'rgba(61,43,31,0.5)', letterSpacing: '0.1em', textTransform: 'uppercase' as const, margin: '0 0 0.2rem' }}>From</p>
-        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 400, color: '#3D2B1F', margin: 0 }}>
+        <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '1.5rem', fontWeight: 400, color: '#3D2B1F', margin: 0 }}>
           CHF {hotel.nightly_rate_chf?.toLocaleString()}
           <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: 'rgba(61,43,31,0.5)', fontWeight: 300 }}> /night</span>
         </p>
