@@ -6,7 +6,7 @@ export async function POST(request: Request) {
 
   const { data: hotels } = await supabase
     .from('hotels')
-    .select('id, name, slug, location, region, category, description, nightly_rate_chf, rating, images, direct_booking_url, has_spa, has_michelin_restaurant, ski_in_ski_out, lake_view, mountain_view, family_friendly, pet_friendly, exclusive_offer, amenities, best_for, is_partner')
+    .select('id, name, slug, location, region, category, nightly_rate_chf, rating, images, direct_booking_url, has_spa, has_michelin_restaurant, ski_in_ski_out, lake_view, mountain_view, family_friendly, pet_friendly, exclusive_offer, amenities, best_for, is_partner')
     .eq('is_active', true)
     .order('is_partner', { ascending: false })
     .order('rating', { ascending: false })
@@ -14,20 +14,17 @@ export async function POST(request: Request) {
 
   const hotelList = (hotels || []).map(h => ({
     name: h.name,
-    location: h.location,
     region: h.region,
     category: h.category,
-    rating: h.rating,
     price: h.nightly_rate_chf,
-    has_spa: h.has_spa,
-    ski_in_ski_out: h.ski_in_ski_out,
-    lake_view: h.lake_view,
-    mountain_view: h.mountain_view,
-    family_friendly: h.family_friendly,
-    has_michelin: h.has_michelin_restaurant,
-    is_partner: h.is_partner,
-    best_for: h.best_for,
-    description: h.description?.slice(0, 100),
+    spa: h.has_spa,
+    ski: h.ski_in_ski_out,
+    lake: h.lake_view,
+    mountain: h.mountain_view,
+    family: h.family_friendly,
+    michelin: h.has_michelin_restaurant,
+    partner: h.is_partner,
+    for: h.best_for?.slice(0, 3),
   }))
 
   let aiMessage = ''
@@ -43,44 +40,43 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 500,
+        max_tokens: 800,
         messages: [
           {
             role: 'user',
-            content: `You are a luxury Swiss hotel concierge. The guest may write in any language — detect their language and respond in the same language.
+            content: `You are a luxury Swiss hotel concierge. Respond in the same language as the guest.
 
-Guest request: "${message}"
+Guest: "${message}"
 
-Hotels available:
+Hotels (JSON):
 ${JSON.stringify(hotelList)}
 
-Instructions:
-- Pick the best matching hotels for this guest (up to 10)
-- Always put is_partner:true hotels first if they match
-- Match by region, category, features (spa, ski, lake, romantic, family etc)
-- Respond in the SAME language as the guest request
-- Return ONLY raw JSON, no markdown, no explanation, no backticks
-
-{"message":"one warm welcoming sentence in guest language, max 20 words","hotels":["ExactHotelName1","ExactHotelName2","ExactHotelName3"]}`,
+Pick up to 6 best matches. Partner hotels first if relevant. Return ONLY this JSON with no other text:
+{"message":"warm sentence max 15 words in guest language","hotels":["ExactName1","ExactName2","ExactName3"]}`,
           }
         ],
       }),
     })
+
     const aiData = await aiResponse.json()
-    const rawText = aiData.content?.[0]?.text || '{}'
-const jsonMatch = rawText.match(/\{[\s\S]*\}/)
-const raw = jsonMatch ? jsonMatch[0] : '{}'
-const parsed = JSON.parse(raw)
-    aiMessage = parsed.message || ''
-    recommendedNames = parsed.hotels || []
+    const rawText = aiData.content?.[0]?.text || ''
+    console.log('Claude raw:', rawText)
+
+    const jsonMatch = rawText.match(/\{[\s\S]*\}/)
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0])
+      aiMessage = parsed.message || ''
+      recommendedNames = parsed.hotels || []
+    }
   } catch (e) {
-    recommendedNames = (hotels || []).slice(0, 10).map(h => h.name)
+    console.error('Concierge error:', e)
+    recommendedNames = (hotels || []).slice(0, 6).map(h => h.name)
   }
 
   const results = recommendedNames
     .map(name => (hotels || []).find(h => h.name === name))
     .filter(Boolean)
-    .slice(0, 10)
+    .slice(0, 6)
     .map((h: any) => ({
       hotel_name: h.name,
       location: `${h.location}, Switzerland`,
@@ -95,12 +91,11 @@ const parsed = JSON.parse(raw)
         h.lake_view && 'Lake View',
         h.mountain_view && 'Mountain View',
         h.family_friendly && 'Family Friendly',
-        h.pet_friendly && 'Pet Friendly',
       ].filter(Boolean),
       exclusive_offer: h.exclusive_offer || null,
-      reason_recommended: h.description?.slice(0, 120) + '...' || '',
+      reason_recommended: '',
       profile_url: `/hotels/${h.slug || h.id}`,
-      direct_booking_url: `/api/track?hotel_id=${h.id}&hotel_name=${encodeURIComponent(h.name)}&destination=${encodeURIComponent(h.direct_booking_url)}&medium=concierge&campaign=ai_concierge`,
+      direct_booking_url: `/api/track?hotel_id=${h.id}&hotel_name=${encodeURIComponent(h.name)}&destination=${encodeURIComponent(h.direct_booking_url || '')}&medium=concierge&campaign=ai_concierge`,
     }))
 
   return NextResponse.json({
