@@ -1,9 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
+  return NextResponse.json({
+    ok: true,
+    message: 'IndexNow endpoint active. Use POST to submit URLs.',
+  })
+}
+
+export async function POST(request: NextRequest) {
+  const secret = request.headers.get('x-indexnow-secret')
+
+  if (secret !== process.env.INDEXNOW_SECRET) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const key = process.env.INDEXNOW_KEY
-  if (!key) return NextResponse.json({ error: 'No key' }, { status: 500 })
+
+  if (!key) {
+    return NextResponse.json({ error: 'Missing INDEXNOW_KEY' }, { status: 500 })
+  }
 
   const { data: hotels } = await supabase
     .from('hotels')
@@ -11,6 +27,7 @@ export async function GET(request: NextRequest) {
     .eq('is_active', true)
 
   const base = 'https://swissnethotels.com'
+
   const staticUrls = [
     base,
     `${base}/hotels`,
@@ -19,33 +36,64 @@ export async function GET(request: NextRequest) {
 
   const hotelUrls = (hotels || []).flatMap((h: any) => {
     const slug = h.slug || h.id
-    const base_url = `${base}/hotels/${slug}`
-    if (h.is_partner) {
-      return [
-        base_url,
-        `${base_url}/rooms`,
-        `${base_url}/dining`,
-        `${base_url}/spa`,
-        `${base_url}/experiences`,
-        `${base_url}/events`,
-      ]
-    }
-    return [base_url]
+    const hotelBase = `${base}/hotels/${slug}`
+
+    if (!h.is_partner) return [hotelBase]
+
+    return [
+      hotelBase,
+      `${hotelBase}/rooms`,
+      `${hotelBase}/dining`,
+      `${hotelBase}/spa`,
+      `${hotelBase}/experiences`,
+      `${hotelBase}/events`,
+    ]
   })
 
-  const destinationSlugs = ['zermatt','geneva','st-moritz','interlaken','zurich','gstaad','lucerne','verbier','davos','crans-montana','flims','bern','basel','lugano','ascona','andermatt','montreux']
-const bestSlugs = ['luxury-hotels-zermatt','ski-hotels-zermatt','luxury-hotels-geneva','luxury-hotels-zurich','luxury-hotels-interlaken','luxury-hotels-bern','ski-hotels-switzerland','lake-hotels-switzerland','romantic-hotels-switzerland','luxury-hotels-switzerland','business-hotels-switzerland','wellness-hotels-flims','ski-hotels-crans-montana','ski-hotels-davos','luxury-hotels-davos','luxury-hotels-gstaad','luxury-hotels-lugano','luxury-hotels-basel','luxury-hotels-lucerne','luxury-hotels-verbier','ski-hotels-verbier','family-hotels-switzerland','spa-hotels-switzerland','luxury-hotels-ascona','luxury-hotels-andermatt','luxury-hotels-crans-montana','luxury-hotels-flims','luxury-hotels-montreux','business-city-hotels-switzerland']
-const destinationUrls = destinationSlugs.map(s => `${base}/destinations/${s}`)
-const bestUrls = bestSlugs.map(s => `${base}/best/${s}`)
-const partnerCategoryUrls = (hotels || []).filter((h: any) => h.is_partner).flatMap((h: any) => {
-  const slug = h.slug || h.id
-  return ['honeymoon','wellness','business','family'].map(c => `${base}/hotels/${slug}/${c}`)
-})
-const urls = [...staticUrls, ...hotelUrls, ...destinationUrls, ...bestUrls, ...partnerCategoryUrls]
+  const destinationSlugs = [
+    'zermatt',
+    'geneva',
+    'interlaken',
+    'zurich',
+    'davos',
+    'crans-montana',
+    'flims',
+    'bern',
+  ]
+
+  const bestSlugs = [
+    'luxury-hotels-switzerland',
+    'luxury-hotels-geneva',
+    'luxury-hotels-zermatt',
+    'luxury-hotels-zurich',
+    'luxury-hotels-interlaken',
+    'luxury-hotels-bern',
+    'ski-hotels-switzerland',
+    'ski-hotels-zermatt',
+    'ski-hotels-davos',
+    'ski-hotels-crans-montana',
+    'spa-hotels-switzerland',
+    'wellness-hotels-flims',
+    'romantic-hotels-switzerland',
+    'business-city-hotels-switzerland',
+    'family-hotels-switzerland',
+  ]
+
+  const destinationUrls = destinationSlugs.map(slug => `${base}/destinations/${slug}`)
+  const bestUrls = bestSlugs.map(slug => `${base}/best/${slug}`)
+
+  const urls = Array.from(new Set([
+    ...staticUrls,
+    ...hotelUrls,
+    ...destinationUrls,
+    ...bestUrls,
+  ]))
 
   const response = await fetch('https://api.indexnow.org/indexnow', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+    },
     body: JSON.stringify({
       host: 'swissnethotels.com',
       key,
@@ -54,5 +102,8 @@ const urls = [...staticUrls, ...hotelUrls, ...destinationUrls, ...bestUrls, ...p
     }),
   })
 
-  return NextResponse.json({ submitted: urls.length, status: response.status })
+  return NextResponse.json({
+    submitted: urls.length,
+    status: response.status,
+  })
 }
