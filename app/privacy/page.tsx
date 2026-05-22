@@ -1,7 +1,14 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Privacy Policy | SwissNet Hotels',
+  description: 'How SwissNet Hotels collects, uses and protects your data.',
+}
 export default function PrivacyPage() {
   const text = '#1a1a1a'
   const muted = 'rgba(26,26,26,0.6)'
   const gold = '#C9A84C'
+  
 
   return (
     <div style={{ background: '#FAFAF8', minHeight: '100vh', padding: '6rem 2rem' }}>

@@ -8,7 +8,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const dest = DESTINATIONS[slug]
   if (!dest) return {}
   return {
-    title: `Best Luxury Hotels in ${dest.name}, Switzerland 2026 | SwissNet Hotels`,
+    title: `Best Hotels in ${dest.name}, Switzerland | SwissNet`,
+
     description: `Discover the best luxury hotels in ${dest.name}, Switzerland. ${dest.tagline}. Expert guide with hotel comparisons, seasonal tips and direct booking.`,
     alternates: { canonical: `https://swissnethotels.com/destinations/${slug}` },
     openGraph: {
