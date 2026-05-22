@@ -266,6 +266,15 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
   const featuredAward = awards?.find((a: any) => a.is_featured)
   const faqs = content?.faqs || []
   const verdict = content?.verdict || null
+  const isBadDescription = hotel.description && (
+  hotel.description.toLowerCase().includes('unable to') ||
+  hotel.description.toLowerCase().includes('cannot provide') ||
+  hotel.description.toLowerCase().includes('i cannot') ||
+  hotel.description.toLowerCase().includes('404 error') ||
+  hotel.description.toLowerCase().includes('website content') ||
+  hotel.description.toLowerCase().includes('provided content')
+)
+if (isBadDescription) hotel.description = 'Profile currently being curated by SwissNet Hotels.'
   const bestForExtended = content?.best_for_extended || []
   const alternatives = content?.nearby_alternatives || []
 
