@@ -24,10 +24,10 @@ const SUGGESTIONS = [
 ]
 
 const DESTINATIONS = [
-  { name: 'Zermatt', tagline: 'Matterhorn & Alpine luxury', img: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=800&q=80', href: '/destinations/zermatt' },
-  { name: 'Geneva', tagline: 'Lakeside sophistication', img: 'https://images.unsplash.com/photo-1573108724029-4c46571d6490?w=800&q=80', href: '/destinations/geneva' },
-  { name: 'Gstaad', tagline: 'Discreet alpine exclusivity', img: 'https://images.unsplash.com/photo-1548777123-e216912df7d8?w=800&q=80', href: '/destinations/gstaad' },
-  { name: 'St. Moritz', tagline: 'The birthplace of winter', img: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=800&q=80', href: '/destinations/st-moritz' },
+  { name: 'Zermatt', tagline: 'Matterhorn & Alpine luxury', img: 'https://images.unsplash.com/photo-1605540436563-5bca919ae766?w=800&q=80', href: '/destinations/zermatt' },
+  { name: 'Geneva', tagline: 'Lakeside sophistication', img: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=800&q=80', href: '/destinations/geneva' },
+  { name: 'Gstaad', tagline: 'Discreet alpine exclusivity', img: 'https://images.unsplash.com/photo-1516496636080-14fb876e029d?w=800&q=80', href: '/destinations/gstaad' },
+  { name: 'St. Moritz', tagline: 'The birthplace of winter', img: 'https://images.unsplash.com/photo-1483921020237-2ff51e8e4b22?w=800&q=80', href: '/destinations/st-moritz' },
 ]
 
 interface Hotel {
@@ -112,7 +112,7 @@ export default function ConciergeClient() {
       `}</style>
 
       {/* ── HERO ── */}
-      <div style={{ position: 'relative', background: DARK, minHeight: hasMessages ? '220px' : '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', transition: 'min-height 0.6s ease' }}>
+      <div style={{ position: 'relative', background: DARK, minHeight: hasMessages ? '160px' : '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', transition: 'min-height 0.6s ease' }}>
 
         {/* Background imagery */}
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'url(https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&q=60)', backgroundSize: 'cover', backgroundPosition: 'center 30%', opacity: 0.18 }} />
@@ -153,37 +153,37 @@ export default function ConciergeClient() {
             </h2>
           )}
 
-          {/* ── INPUT ── */}
-          <div className="input-glow" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(20px)', border: '1px solid rgba(201,169,76,0.45)', borderRadius: 16, padding: '0.875rem 1rem 0.875rem 1.25rem', display: 'flex', gap: '0.75rem', alignItems: 'flex-end', boxShadow: '0 4px 40px rgba(0,0,0,0.3)', transition: 'box-shadow 0.3s ease', maxWidth: 620, margin: '0 auto' }}>
-            <span style={{ color: GOLD, fontSize: '1rem', flexShrink: 0, marginBottom: '0.1rem', opacity: 0.8 }}>✦</span>
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input) } }}
-              onFocus={() => setFocused(true)}
-              onBlur={() => setFocused(false)}
-              placeholder="Describe your perfect Swiss stay..."
-              rows={1}
-              style={{ flex: 1, fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: WHITE, border: 'none', outline: 'none', resize: 'none', background: 'transparent', lineHeight: 1.6, caretColor: GOLD }}
-            />
-            <button
-              onClick={() => sendMessage(input)}
-              disabled={loading || !input.trim()}
-              style={{ background: input.trim() ? GOLD : 'rgba(201,169,76,0.2)', color: input.trim() ? DARK : 'rgba(201,169,76,0.4)', border: 'none', borderRadius: 10, padding: '0.6rem 1.25rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.08em', cursor: input.trim() ? 'pointer' : 'not-allowed', transition: 'all 0.25s', whiteSpace: 'nowrap', flexShrink: 0 }}>
-              {loading ? '...' : 'Send →'}
-            </button>
-          </div>
-
-          {/* Suggestion chips */}
+          {/* ── INPUT (hero, only shown before conversation) ── */}
           {!hasMessages && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center', marginTop: '1.5rem' }}>
-              {SUGGESTIONS.map(s => (
-                <button key={s} className="suggestion-chip" onClick={() => sendMessage(s)} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.8)', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.22)', padding: '0.4rem 0.875rem', borderRadius: 20, cursor: 'pointer', transition: 'all 0.2s', letterSpacing: '0.02em' }}>
-                  {s}
+            <>
+              <div className="input-glow" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(20px)', border: '1px solid rgba(201,169,76,0.45)', borderRadius: 16, padding: '0.875rem 1rem 0.875rem 1.25rem', display: 'flex', gap: '0.75rem', alignItems: 'flex-end', boxShadow: '0 4px 40px rgba(0,0,0,0.3)', transition: 'box-shadow 0.3s ease', maxWidth: 620, margin: '0 auto' }}>
+                <span style={{ color: GOLD, fontSize: '1rem', flexShrink: 0, marginBottom: '0.1rem', opacity: 0.8 }}>✦</span>
+                <textarea
+                  ref={inputRef}
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input) } }}
+                  onFocus={() => setFocused(true)}
+                  onBlur={() => setFocused(false)}
+                  placeholder="Describe your perfect Swiss stay..."
+                  rows={1}
+                  style={{ flex: 1, fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: WHITE, border: 'none', outline: 'none', resize: 'none', background: 'transparent', lineHeight: 1.6, caretColor: GOLD }}
+                />
+                <button
+                  onClick={() => sendMessage(input)}
+                  disabled={loading || !input.trim()}
+                  style={{ background: input.trim() ? GOLD : 'rgba(201,169,76,0.2)', color: input.trim() ? DARK : 'rgba(201,169,76,0.4)', border: 'none', borderRadius: 10, padding: '0.6rem 1.25rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.08em', cursor: input.trim() ? 'pointer' : 'not-allowed', transition: 'all 0.25s', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                  {loading ? '...' : 'Send →'}
                 </button>
-              ))}
-            </div>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center', marginTop: '1.5rem' }}>
+                {SUGGESTIONS.map(s => (
+                  <button key={s} className="suggestion-chip" onClick={() => sendMessage(s)} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.8)', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.22)', padding: '0.4rem 0.875rem', borderRadius: 20, cursor: 'pointer', transition: 'all 0.2s', letterSpacing: '0.02em' }}>
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </>
           )}
         </div>
 
@@ -193,7 +193,7 @@ export default function ConciergeClient() {
 
       {/* ── CONVERSATION ── */}
       {hasMessages && (
-        <div style={{ maxWidth: 900, width: '100%', margin: '0 auto', padding: '2rem 2rem 6rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <div style={{ maxWidth: 900, width: '100%', margin: '0 auto', padding: '2rem 2rem 10rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           {messages.map((msg, i) => (
             <div key={i} style={{ animation: 'fadeUp 0.35s ease forwards' }}>
               {msg.role === 'user' ? (
@@ -330,6 +330,29 @@ export default function ConciergeClient() {
             </p>
             <button onClick={() => inputRef.current?.focus()} style={{ background: GOLD, color: DARK, border: 'none', borderRadius: 8, padding: '0.875rem 2.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', cursor: 'pointer', position: 'relative' }}>
               Start Conversation →
+            </button>
+          </div>
+        </div>
+      )}
+    {/* ── STICKY INPUT BAR (shown after conversation starts) ── */}
+      {hasMessages && (
+        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50, background: 'rgba(248,245,239,0.95)', backdropFilter: 'blur(16px)', borderTop: `1px solid ${BORDER}`, padding: '0.875rem 1.5rem', boxShadow: '0 -4px 24px rgba(42,26,14,0.08)' }}>
+          <div className="input-glow" style={{ maxWidth: 820, margin: '0 auto', background: WHITE, border: `1px solid rgba(201,169,76,0.4)`, borderRadius: 14, padding: '0.75rem 1rem 0.75rem 1.25rem', display: 'flex', gap: '0.75rem', alignItems: 'flex-end', boxShadow: '0 2px 16px rgba(201,169,76,0.08)', transition: 'box-shadow 0.3s ease' }}>
+            <span style={{ color: GOLD, fontSize: '1rem', flexShrink: 0, marginBottom: '0.1rem', opacity: 0.8 }}>✦</span>
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input) } }}
+              placeholder="Ask anything else..."
+              rows={1}
+              style={{ flex: 1, fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: TEXT, border: 'none', outline: 'none', resize: 'none', background: 'transparent', lineHeight: 1.6, caretColor: GOLD }}
+            />
+            <button
+              onClick={() => sendMessage(input)}
+              disabled={loading || !input.trim()}
+              style={{ background: input.trim() ? GOLD : 'rgba(201,169,76,0.15)', color: input.trim() ? DARK : 'rgba(201,169,76,0.4)', border: 'none', borderRadius: 10, padding: '0.6rem 1.25rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.08em', cursor: input.trim() ? 'pointer' : 'not-allowed', transition: 'all 0.25s', whiteSpace: 'nowrap', flexShrink: 0 }}>
+              {loading ? '...' : 'Send →'}
             </button>
           </div>
         </div>

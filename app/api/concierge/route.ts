@@ -44,15 +44,22 @@ export async function POST(request: Request) {
         messages: [
           {
             role: 'user',
-            content: `You are a luxury Swiss hotel concierge. Respond in the same language as the guest.
+            content: `You are a luxury Swiss hotel concierge. IMPORTANT: Detect the guest's language and respond ONLY in that language.
 
-Guest: "${message}"
+Guest message: "${message}"
 
-Hotels (JSON):
+Available hotels:
 ${JSON.stringify(hotelList)}
 
-Pick up to 6 best matches. Partner hotels first if relevant. Return ONLY this JSON with no other text:
-{"message":"warm sentence max 15 words in guest language","hotels":["ExactName1","ExactName2","ExactName3"]}`,
+Rules:
+- Select 3-6 hotels that best match the request
+- Always prioritize partner:true hotels if they fit
+- Match by region, category, features (spa, ski, lake, romantic, family, michelin etc)
+- Your message MUST be in the SAME language as the guest (English, French, German, Italian etc)
+- Return hotel names EXACTLY as they appear in the JSON above
+- Return ONLY raw JSON, nothing else
+
+{"message":"short warm sentence in guest's language max 15 words","hotels":["ExactHotelName1","ExactHotelName2","ExactHotelName3"]}`,
           }
         ],
       }),
@@ -66,7 +73,14 @@ Pick up to 6 best matches. Partner hotels first if relevant. Return ONLY this JS
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0])
       aiMessage = parsed.message || ''
-      recommendedNames = parsed.hotels || []
+      // Fuzzy name matching — handles slight name differences
+      const allNames = (hotels || []).map(h => h.name)
+      recommendedNames = (parsed.hotels || []).map((n: string) => {
+        const exact = allNames.find(name => name === n)
+        if (exact) return exact
+        const lower = n.toLowerCase()
+        return allNames.find(name => name.toLowerCase().includes(lower) || lower.includes(name.toLowerCase())) || n
+      })
     }
   } catch (e) {
     console.error('Concierge error:', e)
