@@ -544,6 +544,14 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
               </>
             )}
 
+            {hotel.direct_booking_url && (
+  <a href={hotel.direct_booking_url} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: text, color: bg, fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0.75rem 1.75rem', textDecoration: 'none', marginBottom: '1rem' }}>Official Website →</a>
+)}
+{!hotel.direct_booking_url && (
+  <a href={`https://www.google.com/search?q=${encodeURIComponent(hotel.name + ' official website')}`} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: text, color: bg, fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0.75rem 1.75rem', textDecoration: 'none', marginBottom: '1rem' }}>Find Official Website →</a>
+)}
+<br />
+
             {/* NON-PARTNER PLACEHOLDER */}
 {!hotel.is_partner && (
   <section style={{ marginBottom: '4rem', padding: '2.5rem', border: '1px solid rgba(201,169,76,0.2)', borderRadius: 4, background: 'rgba(201,169,76,0.03)' }}>
