@@ -149,14 +149,16 @@ const bookTrackingUrl = `/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIC
           </div>
           <div style={{ display: 'flex', gap: '0.5rem', position: 'relative', zIndex: 2 }}>
             
-            <a href={hotel.is_partner ? bookTrackingUrl : (hotel.direct_booking_url || '#')} target="_blank" rel="noopener noreferrer" style={{
-              fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600,
-              letterSpacing: '0.15em', textTransform: 'uppercase',
-              color: '#fff', background: gold,
-              padding: '0.6rem 1rem', textDecoration: 'none',
-            }}>
-              Official Website
-            </a>
+            {(hotel.is_partner || hotel.direct_booking_url) && (
+              <a href={hotel.is_partner ? bookTrackingUrl : hotel.direct_booking_url!} target="_blank" rel="noopener noreferrer" style={{
+                fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600,
+                letterSpacing: '0.15em', textTransform: 'uppercase',
+                color: '#fff', background: gold,
+                padding: '0.6rem 1rem', textDecoration: 'none',
+              }}>
+                Official Website
+              </a>
+            )}
           </div>
         </div>
       </div>
