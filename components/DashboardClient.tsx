@@ -1073,7 +1073,7 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 1rem' }}>Where You Appear</p>
                 {appearedQueries === 0 ? <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>No appearances yet — indexing in progress.</p> : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    {aiVisibility?.filter((r: any) => r.appeared).slice(0, 5).map((row: any, i: number) => (
+                    {[...new Map(aiVisibility?.filter((r: any) => r.appeared).map((r: any) => [r.query, r])).values()].slice(0, 5).map((row: any, i: number) => (
                       <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0', borderBottom: '1px solid ' + BORDER }}>
                         <div style={{ width: 6, height: 6, borderRadius: '50%', background: GREEN, flexShrink: 0 }} />
                         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT, margin: 0 }}>{row.query}</p>
@@ -1087,7 +1087,7 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
                 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: '0 0 1rem' }}>Searches where your hotel did not appear</p>
                 {aiVisibility?.filter((r: any) => !r.appeared).slice(0, 6).length === 0
                   ? <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>No missed queries — excellent coverage.</p>
-                  : aiVisibility?.filter((r: any) => !r.appeared).slice(0, 6).map((row: any, i: number) => (
+                  : [...new Map(aiVisibility?.filter((r: any) => !r.appeared).map((r: any) => [r.query, r])).values()].slice(0, 6).map((row: any, i: number) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0', borderBottom: '1px solid ' + BORDER }}>
                       <div style={{ width: 6, height: 6, borderRadius: '50%', background: RED, flexShrink: 0 }} />
                       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, margin: 0, flex: 1 }}>{row.query}</p>
