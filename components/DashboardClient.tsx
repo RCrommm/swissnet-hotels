@@ -899,7 +899,7 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
     dining: 'Fine Dining',
     romantic: 'Romantic',
     lake: 'Lake Hotel',
-    business: 'Business & City',
+    business: 'Business',
   }
 
   const competitorTabs = [
@@ -1294,7 +1294,7 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
     {competitorView === 'dining' && 'Tracks visibility for fine dining, Michelin and gourmet restaurant searches'}
     {competitorView === 'romantic' && 'Tracks visibility for romantic getaway, honeymoon and couples hotel searches'}
     {competitorView === 'lake' && 'Tracks visibility for lakeside hotel and lake view accommodation searches'}
-    {competitorView === 'business' && 'Tracks visibility for business hotel, congress and city luxury searches'}
+    {competitorView === 'business' && 'Tracks visibility for business travel, corporate stays and congress hotel searches'}
     {competitorView === 'ski' && 'Tracks visibility for ski hotel, ski resort and alpine winter sports searches'}
   </p>
 </div>
