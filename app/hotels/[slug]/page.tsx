@@ -544,9 +544,7 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
               </>
             )}
 
-            {hotel.direct_booking_url && (
-  <a href={hotel.direct_booking_url} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: text, color: bg, fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0.75rem 1.75rem', textDecoration: 'none', marginBottom: '1rem' }}>Official Website →</a>
-)}
+            
 
 
             {/* NON-PARTNER PLACEHOLDER */}
