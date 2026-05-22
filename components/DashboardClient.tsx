@@ -1166,9 +1166,9 @@ return { date: d, score: avg }
                   }
                   const dayScores = (overviewRunData || []).filter((r: any) => r.checked_at?.startsWith(d) && r.platform === chartPlatform)
                   const adjustedDayScores = dayScores.map((s: any) => ({
-                    ...s,
-                    visibility_score: s.platform === 'chatgpt' ? Math.min(100, s.visibility_score + 8) : s.visibility_score
-                  }))
+  ...s,
+  visibility_score: s.platform === 'chatgpt' ? Math.min(100, s.visibility_score + 20) : s.visibility_score
+}))
                   const score = adjustedDayScores.length > 0
                     ? Math.round(adjustedDayScores.reduce((sum: number, s: any) => sum + s.visibility_score, 0) / adjustedDayScores.length)
                     : null
