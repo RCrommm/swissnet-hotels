@@ -736,7 +736,7 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
                 </>
               ) : hotel.direct_booking_url ? (
                 <>
-                  <a href={hotel.direct_booking_url} target="_blank" rel="noopener noreferrer" style={{ display: 'block', background: text, color: white, fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '1rem', textAlign: 'center', textDecoration: 'none', marginBottom: '0.75rem' }}>
+                  <a href={hotel.direct_booking_url} target="_blank" rel="noopener noreferrer" style={{ display: 'block', background: gold, color: '#1a0e06',fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '1rem', textAlign: 'center', textDecoration: 'none', marginBottom: '0.75rem' }}>
                     Official Website →
                   </a>
                 </>
