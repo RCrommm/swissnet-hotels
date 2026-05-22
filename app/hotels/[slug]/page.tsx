@@ -343,7 +343,6 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
                   ))}
                 </div>
                 <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.6)' }}>📍 {hotel.location}, Switzerland</span>
-                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.6)' }}>★ {hotel.rating} / 5</span>
               </div>
             </div>
             {hotel.is_partner && trackingUrl && (

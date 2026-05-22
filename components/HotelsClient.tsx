@@ -143,7 +143,6 @@ export default function HotelsClient({ hotels, initialRegion, initialCategory, i
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: 'rgba(201,169,110,0.1)', border: '1px solid rgba(201,169,110,0.2)', borderRadius: 20, padding: '0.2rem 0.625rem' }}>
                         <span style={{ color: gold, fontSize: '0.65rem' }}>★</span>
-                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: '#3D2B1F', fontWeight: 600 }}>{hotel.rating}</span>
                         <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: 'rgba(61,43,31,0.4)' }}>/ 5</span>
                       </div>
                     </div>

@@ -103,7 +103,6 @@ const bookTrackingUrl = `/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIC
           </span>
           <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
             <span style={{ color: gold, fontSize: '0.7rem' }}>★</span>
-            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, fontWeight: 500 }}>{hotel.rating}</span>
           </span>
         </div>
 
