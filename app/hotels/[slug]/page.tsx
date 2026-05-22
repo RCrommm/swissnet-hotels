@@ -739,9 +739,15 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: textMuted, margin: 0, fontStyle: 'italic' }}>OTA range is an estimate based on typical commission rates</p>
                   </div>
                 </>
+              ) : hotel.direct_booking_url ? (
+                <>
+                  <a href={hotel.direct_booking_url} target="_blank" rel="noopener noreferrer" style={{ display: 'block', background: text, color: white, fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '1rem', textAlign: 'center', textDecoration: 'none', marginBottom: '0.75rem' }}>
+                    Official Website →
+                  </a>
+                </>
               ) : (
                 <div style={{ paddingTop: '1rem', borderTop: `1px solid ${border}` }}>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: 0 }}>Direct booking available for SwissNet partner hotels.</p>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: 0 }}>Visit the hotel's official website for reservations.</p>
                 </div>
               )}
             </div>
