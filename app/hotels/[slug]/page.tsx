@@ -544,6 +544,16 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
               </>
             )}
 
+            {/* NON-PARTNER PLACEHOLDER */}
+{!hotel.is_partner && (
+  <section style={{ marginBottom: '4rem', padding: '2.5rem', border: '1px solid rgba(201,169,76,0.2)', borderRadius: 4, background: 'rgba(201,169,76,0.03)' }}>
+    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 0.75rem' }}>Enhanced Profile</p>
+    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 300, color: text, margin: '0 0 0.75rem' }}>Rooms, spa, dining and experiences available for SwissNet partner hotels.</p>
+    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted, margin: '0 0 1.5rem', lineHeight: 1.7 }}>Partner hotels receive a fully curated profile with direct booking integration, AI visibility optimisation, and a live performance dashboard.</p>
+    <a href="mailto:contact@swissnethotels.com?subject=Partnership Enquiry — {hotel.name}" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 600, color: gold, textDecoration: 'none', letterSpacing: '0.1em' }}>Enquire about partnership →</a>
+  </section>
+)}
+
             {/* EXPERIENCES LINKS */}
 {hotel.is_partner && (
   <>
