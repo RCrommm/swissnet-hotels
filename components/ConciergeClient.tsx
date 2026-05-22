@@ -24,10 +24,10 @@ const SUGGESTIONS = [
 ]
 
 const DESTINATIONS = [
-  { name: 'Zermatt', tagline: 'Matterhorn & Alpine luxury', img: 'https://images.unsplash.com/photo-1605540436563-5bca919ae766?w=800&q=80', href: '/destinations/zermatt' },
-  { name: 'Geneva', tagline: 'Lakeside sophistication', img: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=800&q=80', href: '/destinations/geneva' },
-  { name: 'Gstaad', tagline: 'Discreet alpine exclusivity', img: 'https://images.unsplash.com/photo-1516496636080-14fb876e029d?w=800&q=80', href: '/destinations/gstaad' },
-  { name: 'St. Moritz', tagline: 'The birthplace of winter', img: 'https://images.unsplash.com/photo-1483921020237-2ff51e8e4b22?w=800&q=80', href: '/destinations/st-moritz' },
+  { name: 'Zermatt', tagline: 'Matterhorn & Alpine luxury', img: 'https://images.unsplash.com/photo-1508193638397-1c4234db14d8?w=800&q=80', href: '/destinations/zermatt' },
+  { name: 'Geneva', tagline: 'Lakeside sophistication', img: 'https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?w=800&q=80', href: '/destinations/geneva' },
+  { name: 'Gstaad', tagline: 'Discreet alpine exclusivity', img: 'https://images.unsplash.com/photo-1547393429-2e4e0b80c3c3?w=800&q=80', href: '/destinations/gstaad' },
+  { name: 'St. Moritz', tagline: 'The birthplace of winter', img: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&q=80', href: '/destinations/st-moritz' },
 ]
 
 interface Hotel {
@@ -219,50 +219,52 @@ export default function ConciergeClient() {
                   {msg.hotels && msg.hotels.length > 0 && (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: '1rem', paddingLeft: '2.375rem' }}>
                       {msg.hotels.map((hotel, j) => (
-                        <div key={j} className="hotel-card" style={{ animationDelay: `${j * 0.07}s`, background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 12, overflow: 'hidden', boxShadow: '0 2px 16px rgba(42,26,14,0.06)' }}>
-                          <div style={{ height: 170, overflow: 'hidden', position: 'relative' }}>
-                            {hotel.image ? (
-                              <img src={hotel.image} alt={hotel.hotel_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            ) : (
-                              <div style={{ height: '100%', background: `linear-gradient(135deg, ${DARK} 0%, ${DARK2} 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', color: GOLD, opacity: 0.6 }}>SwissNet Hotels</span>
-                              </div>
-                            )}
-                            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(28,16,8,0.5) 0%, transparent 50%)' }} />
-                          </div>
-                          <div style={{ padding: '1.125rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.3rem' }}>
-                              <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', fontWeight: 400, color: TEXT, margin: 0, lineHeight: 1.2, flex: 1, paddingRight: '0.5rem' }}>{hotel.hotel_name}</h3>
-                              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', color: GOLD, fontWeight: 700, background: GOLD_DIM, padding: '2px 7px', borderRadius: 10, flexShrink: 0 }}>★ {hotel.rating}</span>
-                            </div>
-                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: '0 0 0.625rem', letterSpacing: '0.04em' }}>{hotel.location}</p>
-                            {hotel.amenities?.length > 0 && (
-                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginBottom: '0.75rem' }}>
-                                {hotel.amenities.slice(0, 3).map((a: string) => (
-                                  <span key={a} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', color: TEXT_MUTED, background: BG, border: `1px solid ${BORDER}`, padding: '2px 7px', borderRadius: 8 }}>{a}</span>
-                                ))}
-                              </div>
-                            )}
-                            {hotel.exclusive_offer && (
-                              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: GOLD, margin: '0 0 0.625rem', fontWeight: 600 }}>✦ {hotel.exclusive_offer}</p>
-                            )}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid ${BORDER}`, paddingTop: '0.75rem', marginTop: '0.25rem' }}>
-                              <div>
-                                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.48rem', color: TEXT_MUTED, margin: '0 0 0.1rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>From</p>
-                                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', color: GOLD, margin: 0, lineHeight: 1 }}>CHF {hotel.nightly_rate_chf?.toLocaleString()}</p>
-                                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.45rem', color: TEXT_MUTED, margin: 0 }}>/night</p>
-                              </div>
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                                <Link href={hotel.profile_url} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 600, color: TEXT, background: BG, border: `1px solid ${BORDER}`, padding: '0.35rem 0.75rem', borderRadius: 6, textDecoration: 'none', textAlign: 'center' }}>
-                                  View Profile
-                                </Link>
-                                <a href={hotel.direct_booking_url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, color: DARK, background: GOLD, padding: '0.35rem 0.75rem', borderRadius: 6, textDecoration: 'none', textAlign: 'center' }}>
-                                  Official Website
-                                </a>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                        <div key={j} className="hotel-card" style={{ animationDelay: `${j * 0.07}s`, background: WHITE, border: `1px solid rgba(201,169,110,0.2)`, borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 16px rgba(0,0,0,0.08)', position: 'relative', transition: 'all 0.35s ease' }}>
+  <div style={{ position: 'relative', height: 200, overflow: 'hidden' }}>
+    {hotel.image ? (
+      <img src={hotel.image} alt={hotel.hotel_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+    ) : (
+      <div style={{ height: '100%', background: `linear-gradient(135deg, ${DARK} 0%, ${DARK2} 100%)` }} />
+    )}
+    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.15) 55%, transparent 100%)' }} />
+    <div style={{ position: 'absolute', bottom: '1rem', left: '1.25rem', right: '1.25rem' }}>
+      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', letterSpacing: '0.2em', textTransform: 'uppercase' as const, color: GOLD, margin: '0 0 0.3rem' }}>{hotel.category}</p>
+      <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', fontWeight: 300, color: WHITE, margin: 0, lineHeight: 1.2 }}>{hotel.hotel_name}</h3>
+    </div>
+  </div>
+  <div style={{ padding: '1.25rem 1.375rem' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.75rem' }}>
+      <svg width="11" height="11" fill="none" stroke={GOLD} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>{hotel.location}</span>
+    </div>
+    {hotel.amenities?.length > 0 && (
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginBottom: '0.875rem' }}>
+        {hotel.amenities.slice(0, 3).map((a: string) => (
+          <span key={a} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', color: TEXT_MUTED, background: BG, border: `1px solid ${BORDER}`, padding: '2px 7px', borderRadius: 8 }}>{a}</span>
+        ))}
+      </div>
+    )}
+    {hotel.exclusive_offer && (
+      <div style={{ background: 'rgba(201,169,110,0.07)', borderLeft: `2px solid ${GOLD}`, borderRadius: '0 6px 6px 0', padding: '0.5rem 0.75rem', marginBottom: '0.875rem' }}>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: GOLD, margin: 0 }}>✦ {hotel.exclusive_offer}</p>
+      </div>
+    )}
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '0.875rem', borderTop: `1px solid rgba(201,169,110,0.15)` }}>
+      <div>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', color: TEXT_MUTED, letterSpacing: '0.12em', textTransform: 'uppercase' as const, margin: '0 0 0.15rem' }}>From</p>
+        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.45rem', fontWeight: 400, color: TEXT, margin: 0 }}>CHF {hotel.nightly_rate_chf?.toLocaleString()}<span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, fontWeight: 300 }}> /night</span></p>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', position: 'relative', zIndex: 2 }}>
+        <Link href={hotel.profile_url} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 600, color: TEXT, background: BG, border: `1px solid ${BORDER}`, padding: '0.4rem 0.875rem', borderRadius: 8, textDecoration: 'none', textAlign: 'center' as const }}>
+          View Profile
+        </Link>
+        <a href={hotel.direct_booking_url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, color: '#1a0e06', background: GOLD, padding: '0.4rem 0.875rem', borderRadius: 8, textDecoration: 'none', textAlign: 'center' as const }}>
+          Official Website
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
                       ))}
                     </div>
                   )}
