@@ -114,7 +114,7 @@ const rankChange = hasLatest && hasPrev && latestRank > 0 && prevRank > 0 ? prev
         return { ...h, visibilityScore, catScores, rankChange }
       })
 
-      const myOverviewScores = overviewScores.filter((s: any) => s.competitor_name === hotel?.name)
+      const myOverviewScores = overviewScores.filter((s: any) => s.competitor_name === hotel?.name && s.checked_at !== null)
       const myLatestRank = getLatestRank(hotel?.name)
       const myPrevRank = getPrevRank(hotel?.name)
       const myHasLatest = getAvgScore(latestScores, hotel?.name) !== null
