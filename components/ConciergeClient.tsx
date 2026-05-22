@@ -3,20 +3,31 @@ import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 
 const GOLD = '#C9A84C'
-const DARK = '#2A1A0E'
+const GOLD_DIM = 'rgba(201,169,76,0.15)'
+const DARK = '#1C1008'
+const DARK2 = '#2A1A0E'
 const BG = '#F8F5EF'
 const WHITE = '#FFFFFF'
 const TEXT = '#2A1A0E'
 const TEXT_MUTED = 'rgba(42,26,14,0.5)'
-const BORDER = 'rgba(201,169,76,0.15)'
+const BORDER = 'rgba(201,169,76,0.18)'
 
 const SUGGESTIONS = [
-  'Best romantic spa hotel in Geneva with lake view',
-  'Luxury ski hotel in Zermatt with Matterhorn view',
-  'Family-friendly 5-star hotel in Interlaken',
-  'Michelin-starred dining hotel in Switzerland',
-  'Wellness retreat in the Swiss Alps under CHF 800',
-  'Pet-friendly luxury hotel in Davos',
+  'Romantic lake escape',
+  'Michelin dining retreat',
+  'Ski-in ski-out luxury',
+  'Wellness sanctuary',
+  'Alpine spa retreat',
+  'Mountain hideaway',
+  'Design hotel Zurich',
+  'Honeymoon in Zermatt',
+]
+
+const DESTINATIONS = [
+  { name: 'Zermatt', tagline: 'Matterhorn & Alpine luxury', img: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80', href: '/destinations/zermatt' },
+  { name: 'Geneva', tagline: 'Lakeside sophistication', img: 'https://images.unsplash.com/photo-1515488764276-beab7607c1e6?w=800&q=80', href: '/destinations/geneva' },
+  { name: 'Gstaad', tagline: 'Discreet alpine exclusivity', img: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&q=80', href: '/destinations/gstaad' },
+  { name: 'St. Moritz', tagline: 'The birthplace of winter', img: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&q=80', href: '/destinations/st-moritz' },
 ]
 
 interface Hotel {
@@ -29,7 +40,6 @@ interface Hotel {
   direct_booking_url: string
   profile_url: string
   amenities: string[]
-  best_for: string[]
   exclusive_offer?: string
   image?: string
 }
@@ -44,7 +54,10 @@ export default function ConciergeClient() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [focused, setFocused] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
+  const hasMessages = messages.length > 0
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -56,7 +69,6 @@ export default function ConciergeClient() {
     setMessages(prev => [...prev, userMessage])
     setInput('')
     setLoading(true)
-
     try {
       const response = await fetch('/api/concierge', {
         method: 'POST',
@@ -64,119 +76,187 @@ export default function ConciergeClient() {
         body: JSON.stringify({ message: text, history: messages }),
       })
       const data = await response.json()
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: data.message,
-        hotels: data.hotels,
-      }])
-    } catch (e) {
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: 'I apologise — something went wrong. Please try again.',
-      }])
+      setMessages(prev => [...prev, { role: 'assistant', content: data.message, hotels: data.hotels }])
+    } catch {
+      setMessages(prev => [...prev, { role: 'assistant', content: 'I apologise — something went wrong. Please try again.' }])
     }
     setLoading(false)
   }
 
-  const hasMessages = messages.length > 0
-
   return (
-    <div style={{ minHeight: '100vh', background: BG, display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', background: BG, display: 'flex', flexDirection: 'column', fontFamily: 'Montserrat, sans-serif' }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Montserrat:wght@300;400;500;600;700&display=swap');
+        @keyframes pulse { 0%,100%{opacity:.3;transform:scale(.85)} 50%{opacity:1;transform:scale(1)} }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes shimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
+        @keyframes breathe { 0%,100%{opacity:.4} 50%{opacity:.8} }
+        @keyframes grain {
+          0%,100%{transform:translate(0,0)}
+          10%{transform:translate(-2%,-3%)}
+          20%{transform:translate(3%,1%)}
+          30%{transform:translate(-1%,4%)}
+          40%{transform:translate(4%,-2%)}
+          50%{transform:translate(-3%,3%)}
+          60%{transform:translate(2%,-4%)}
+          70%{transform:translate(-4%,1%)}
+          80%{transform:translate(1%,3%)}
+          90%{transform:translate(3%,-1%)}
+        }
+        .suggestion-chip:hover { background: rgba(201,169,76,0.12) !important; border-color: rgba(201,169,76,0.5) !important; color: #C9A84C !important; transform: translateY(-1px); }
+        .dest-card:hover .dest-overlay { opacity: 1 !important; }
+        .dest-card:hover img { transform: scale(1.04); }
+        .dest-card img { transition: transform 0.6s ease; }
+        .hotel-card { animation: fadeUp 0.4s ease forwards; opacity: 0; }
+        .input-glow:focus-within { box-shadow: 0 0 0 1px rgba(201,169,76,0.4), 0 8px 40px rgba(201,169,76,0.12) !important; }
+      `}</style>
 
-      {/* Header */}
-      <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, padding: '5rem 2rem 3rem', textAlign: 'center' }}>
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0 0 1rem' }}>SwissNet Hotels</p>
-        <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 300, color: WHITE, margin: '0 0 1rem', lineHeight: 1.1 }}>
-          AI Concierge
-        </h1>
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', margin: '0 auto', maxWidth: 480, lineHeight: 1.8, fontWeight: 300 }}>
-          Describe your perfect Swiss hotel stay and I'll find the finest options for you — instantly.
-        </p>
-      </div>
+      {/* ── HERO ── */}
+      <div style={{ position: 'relative', background: DARK, minHeight: hasMessages ? '220px' : '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', transition: 'min-height 0.6s ease' }}>
 
-      {/* Main */}
-      <div style={{ flex: 1, maxWidth: 900, width: '100%', margin: '0 auto', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        {/* Background imagery */}
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'url(https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&q=60)', backgroundSize: 'cover', backgroundPosition: 'center 30%', opacity: 0.18 }} />
 
-        {/* Empty state */}
-        {!hasMessages && (
-          <div style={{ textAlign: 'center', padding: '2rem 0' }}>
-            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 300, color: TEXT, margin: '0 0 0.5rem' }}>How can I help you today?</p>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: '0 0 2rem' }}>Try one of these searches or describe exactly what you're looking for</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center' }}>
+        {/* Grain texture */}
+        <div style={{ position: 'absolute', inset: '-50%', width: '200%', height: '200%', opacity: 0.045, backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`, animation: 'grain 8s steps(1) infinite' }} />
+
+        {/* Radial glow */}
+        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 700, height: 700, background: 'radial-gradient(circle, rgba(201,169,76,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+        {/* Gradient overlay */}
+        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom, ${DARK} 0%, rgba(28,16,8,0.7) 40%, rgba(28,16,8,0.85) 75%, ${DARK} 100%)` }} />
+
+        {/* Content */}
+        <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', padding: '0 2rem', maxWidth: 680, animation: 'fadeUp 0.8s ease forwards' }}>
+
+          {/* Online indicator */}
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(201,169,76,0.1)', border: '1px solid rgba(201,169,76,0.25)', borderRadius: 20, padding: '0.3rem 0.875rem', marginBottom: '2rem' }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ade80', animation: 'breathe 2s ease infinite' }} />
+            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.8)' }}>Concierge available</span>
+          </div>
+
+          {!hasMessages && (
+            <>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, letterSpacing: '0.35em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.6)', margin: '0 0 1.25rem' }}>SwissNet Hotels</p>
+              <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(2.5rem, 6vw, 5rem)', fontWeight: 300, color: WHITE, margin: '0 0 1rem', lineHeight: 1.05, letterSpacing: '-0.02em' }}>
+                Luxury travel,<br /><em style={{ fontStyle: 'italic', color: GOLD }}>tailored</em> intelligently.
+              </h1>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)', margin: '0 auto 3rem', lineHeight: 1.8, fontWeight: 300, maxWidth: 400 }}>
+                Tell me what matters most. I'll find the finest Swiss hotel for your stay.
+              </p>
+            </>
+          )}
+
+          {hasMessages && (
+            <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 300, color: WHITE, margin: '0 0 1.5rem', lineHeight: 1.2 }}>
+              <em style={{ color: GOLD }}>SwissNet</em> Concierge
+            </h2>
+          )}
+
+          {/* ── INPUT ── */}
+          <div className="input-glow" style={{ background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(20px)', border: '1px solid rgba(201,169,76,0.25)', borderRadius: 16, padding: '0.875rem 1rem 0.875rem 1.25rem', display: 'flex', gap: '0.75rem', alignItems: 'flex-end', boxShadow: '0 4px 40px rgba(0,0,0,0.3)', transition: 'box-shadow 0.3s ease', maxWidth: 620, margin: '0 auto' }}>
+            <span style={{ color: GOLD, fontSize: '1rem', flexShrink: 0, marginBottom: '0.1rem', opacity: 0.8 }}>✦</span>
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input) } }}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              placeholder="Describe your perfect Swiss stay..."
+              rows={1}
+              style={{ flex: 1, fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: WHITE, border: 'none', outline: 'none', resize: 'none', background: 'transparent', lineHeight: 1.6, caretColor: GOLD }}
+            />
+            <button
+              onClick={() => sendMessage(input)}
+              disabled={loading || !input.trim()}
+              style={{ background: input.trim() ? GOLD : 'rgba(201,169,76,0.2)', color: input.trim() ? DARK : 'rgba(201,169,76,0.4)', border: 'none', borderRadius: 10, padding: '0.6rem 1.25rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.08em', cursor: input.trim() ? 'pointer' : 'not-allowed', transition: 'all 0.25s', whiteSpace: 'nowrap', flexShrink: 0 }}>
+              {loading ? '...' : 'Send →'}
+            </button>
+          </div>
+
+          {/* Suggestion chips */}
+          {!hasMessages && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center', marginTop: '1.5rem' }}>
               {SUGGESTIONS.map(s => (
-                <button key={s} onClick={() => sendMessage(s)} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, background: WHITE, border: '1px solid ' + BORDER, padding: '0.5rem 1rem', borderRadius: 20, cursor: 'pointer', transition: 'all 0.2s' }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = GOLD; e.currentTarget.style.color = GOLD }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = BORDER; e.currentTarget.style.color = TEXT }}>
+                <button key={s} className="suggestion-chip" onClick={() => sendMessage(s)} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.55)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', padding: '0.4rem 0.875rem', borderRadius: 20, cursor: 'pointer', transition: 'all 0.2s', letterSpacing: '0.02em' }}>
                   {s}
                 </button>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        {/* Messages */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        {/* Bottom fade */}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 80, background: `linear-gradient(to bottom, transparent, ${BG})` }} />
+      </div>
+
+      {/* ── CONVERSATION ── */}
+      {hasMessages && (
+        <div style={{ maxWidth: 900, width: '100%', margin: '0 auto', padding: '2rem 2rem 6rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           {messages.map((msg, i) => (
-            <div key={i}>
+            <div key={i} style={{ animation: 'fadeUp 0.35s ease forwards' }}>
               {msg.role === 'user' ? (
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <div style={{ background: DARK, color: WHITE, fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', padding: '0.75rem 1.25rem', borderRadius: '12px 12px 2px 12px', maxWidth: '70%', lineHeight: 1.6 }}>
+                  <div style={{ background: DARK2, color: WHITE, fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', padding: '0.875rem 1.25rem', borderRadius: '14px 14px 3px 14px', maxWidth: '65%', lineHeight: 1.7 }}>
                     {msg.content}
                   </div>
                 </div>
               ) : (
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: GOLD, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <span style={{ color: DARK, fontSize: '0.65rem', fontWeight: 700 }}>SN</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
+                    <div style={{ width: 30, height: 30, borderRadius: '50%', background: `linear-gradient(135deg, ${GOLD}, #a8821e)`, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(201,169,76,0.3)' }}>
+                      <span style={{ color: DARK, fontSize: '0.6rem', fontWeight: 700 }}>SN</span>
                     </div>
-                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: GOLD, letterSpacing: '0.1em', textTransform: 'uppercase' }}>SwissNet Concierge</span>
+                    <div>
+                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: GOLD, letterSpacing: '0.12em', textTransform: 'uppercase' }}>SwissNet Concierge</span>
+                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', color: TEXT_MUTED, marginLeft: '0.5rem' }}>· Powered by SwissNet Intelligence</span>
+                    </div>
                   </div>
                   {msg.content && (
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT, lineHeight: 1.8, margin: '0 0 1rem', paddingLeft: '2.25rem' }}>{msg.content}</p>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT, lineHeight: 1.85, margin: '0 0 1.25rem', paddingLeft: '2.375rem', fontWeight: 300 }}>{msg.content}</p>
                   )}
                   {msg.hotels && msg.hotels.length > 0 && (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1rem', paddingLeft: '2.25rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: '1rem', paddingLeft: '2.375rem' }}>
                       {msg.hotels.map((hotel, j) => (
-                        <div key={j} style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, overflow: 'hidden', boxShadow: '0 2px 12px rgba(42,26,14,0.06)' }}>
-                          {hotel.image && (
-                            <div style={{ height: 160, overflow: 'hidden' }}>
+                        <div key={j} className="hotel-card" style={{ animationDelay: `${j * 0.07}s`, background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 12, overflow: 'hidden', boxShadow: '0 2px 16px rgba(42,26,14,0.06)' }}>
+                          <div style={{ height: 170, overflow: 'hidden', position: 'relative' }}>
+                            {hotel.image ? (
                               <img src={hotel.image} alt={hotel.hotel_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                              <div style={{ height: '100%', background: `linear-gradient(135deg, ${DARK} 0%, ${DARK2} 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', color: GOLD, opacity: 0.6 }}>SwissNet Hotels</span>
+                              </div>
+                            )}
+                            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(28,16,8,0.5) 0%, transparent 50%)' }} />
+                          </div>
+                          <div style={{ padding: '1.125rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.3rem' }}>
+                              <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', fontWeight: 400, color: TEXT, margin: 0, lineHeight: 1.2, flex: 1, paddingRight: '0.5rem' }}>{hotel.hotel_name}</h3>
+                              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', color: GOLD, fontWeight: 700, background: GOLD_DIM, padding: '2px 7px', borderRadius: 10, flexShrink: 0 }}>★ {hotel.rating}</span>
                             </div>
-                          )}
-                          {!hotel.image && (
-                            <div style={{ height: 100, background: `linear-gradient(135deg, #2A1A0E, #3D2810)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: GOLD }}>SwissNet Hotels</span>
-                            </div>
-                          )}
-                          <div style={{ padding: '1rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem' }}>
-                              <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: 0, lineHeight: 1.2 }}>{hotel.hotel_name}</h3>
-                              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: GOLD, fontWeight: 700, background: GOLD + '15', padding: '2px 6px', borderRadius: 10, flexShrink: 0, marginLeft: '0.5rem' }}>★ {hotel.rating}</span>
-                            </div>
-                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: '0 0 0.5rem' }}>{hotel.location}</p>
+                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: '0 0 0.625rem', letterSpacing: '0.04em' }}>{hotel.location}</p>
                             {hotel.amenities?.length > 0 && (
                               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginBottom: '0.75rem' }}>
                                 {hotel.amenities.slice(0, 3).map((a: string) => (
-                                  <span key={a} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, padding: '2px 6px', borderRadius: 8 }}>{a}</span>
+                                  <span key={a} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', color: TEXT_MUTED, background: BG, border: `1px solid ${BORDER}`, padding: '2px 7px', borderRadius: 8 }}>{a}</span>
                                 ))}
                               </div>
                             )}
-                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED, margin: '0 0 0.75rem', lineHeight: 1.5 }}>{hotel.reason_recommended}</p>
                             {hotel.exclusive_offer && (
-                              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: GOLD, margin: '0 0 0.75rem', fontWeight: 600 }}>✦ {hotel.exclusive_offer}</p>
+                              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: GOLD, margin: '0 0 0.625rem', fontWeight: 600 }}>✦ {hotel.exclusive_offer}</p>
                             )}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid ' + BORDER, paddingTop: '0.75rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid ${BORDER}`, paddingTop: '0.75rem', marginTop: '0.25rem' }}>
                               <div>
-                                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', color: TEXT_MUTED, margin: '0 0 0.1rem' }}>From</p>
-                                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: GOLD, margin: 0, lineHeight: 1 }}>CHF {hotel.nightly_rate_chf?.toLocaleString()}</p>
-                                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.45rem', color: TEXT_MUTED, margin: 0 }}>per night</p>
+                                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.48rem', color: TEXT_MUTED, margin: '0 0 0.1rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>From</p>
+                                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', color: GOLD, margin: 0, lineHeight: 1 }}>CHF {hotel.nightly_rate_chf?.toLocaleString()}</p>
+                                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.45rem', color: TEXT_MUTED, margin: 0 }}>/night</p>
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                                <Link href={hotel.profile_url} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, color: TEXT, background: BG, border: '1px solid ' + BORDER, padding: '0.35rem 0.75rem', borderRadius: 4, textDecoration: 'none', textAlign: 'center' }}>
-                                  View Details
+                                <Link href={hotel.profile_url} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 600, color: TEXT, background: BG, border: `1px solid ${BORDER}`, padding: '0.35rem 0.75rem', borderRadius: 6, textDecoration: 'none', textAlign: 'center' }}>
+                                  View Profile
                                 </Link>
-                                <a href={hotel.direct_booking_url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, color: DARK, background: GOLD, padding: '0.35rem 0.75rem', borderRadius: 4, textDecoration: 'none', textAlign: 'center' }}>
+                                <a href={hotel.direct_booking_url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, color: DARK, background: GOLD, padding: '0.35rem 0.75rem', borderRadius: 6, textDecoration: 'none', textAlign: 'center' }}>
                                   Official Website
                                 </a>
                               </div>
@@ -192,45 +272,68 @@ export default function ConciergeClient() {
           ))}
 
           {loading && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <div style={{ width: 28, height: 28, borderRadius: '50%', background: GOLD, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ color: DARK, fontSize: '0.65rem', fontWeight: 700 }}>SN</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', animation: 'fadeUp 0.3s ease forwards' }}>
+              <div style={{ width: 30, height: 30, borderRadius: '50%', background: `linear-gradient(135deg, ${GOLD}, #a8821e)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ color: DARK, fontSize: '0.6rem', fontWeight: 700 }}>SN</span>
               </div>
-              <div style={{ display: 'flex', gap: '0.3rem' }}>
+              <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
                 {[0, 1, 2].map(i => (
-                  <div key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: GOLD, opacity: 0.6, animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />
+                  <div key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: GOLD, animation: `pulse 1.3s ease-in-out ${i * 0.18}s infinite` }} />
                 ))}
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, marginLeft: '0.5rem', fontStyle: 'italic' }}>Finding your perfect stay…</span>
               </div>
             </div>
           )}
           <div ref={bottomRef} />
         </div>
+      )}
 
-        {/* Input */}
-        <div style={{ position: 'sticky', bottom: '1.5rem', background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '0.75rem 1rem', display: 'flex', gap: '0.75rem', alignItems: 'flex-end', boxShadow: '0 4px 24px rgba(42,26,14,0.08)' }}>
-          <textarea
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input) } }}
-            placeholder="Describe your perfect Swiss hotel stay..."
-            rows={1}
-            style={{ flex: 1, fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT, border: 'none', outline: 'none', resize: 'none', background: 'transparent', lineHeight: 1.6 }}
-          />
-          <button
-            onClick={() => sendMessage(input)}
-            disabled={loading || !input.trim()}
-            style={{ background: input.trim() ? GOLD : BORDER, color: input.trim() ? DARK : TEXT_MUTED, border: 'none', borderRadius: 8, padding: '0.6rem 1.25rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, cursor: input.trim() ? 'pointer' : 'not-allowed', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
-            Send →
-          </button>
+      {/* ── DESTINATIONS (only shown before conversation) ── */}
+      {!hasMessages && (
+        <div style={{ maxWidth: 1100, width: '100%', margin: '0 auto', padding: '5rem 2rem 6rem' }}>
+
+          {/* Section header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '2rem' }}>
+            <div>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.3em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.5rem' }}>Curated by SwissNet</p>
+              <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: TEXT, margin: 0 }}>Iconic Swiss Destinations</h2>
+            </div>
+            <Link href="/hotels" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED, textDecoration: 'none', letterSpacing: '0.05em' }}>All hotels →</Link>
+          </div>
+
+          {/* Destination cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '5rem' }}>
+            {DESTINATIONS.map((dest, i) => (
+              <Link key={dest.name} href={dest.href} style={{ textDecoration: 'none' }}>
+                <div className="dest-card" style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', aspectRatio: i === 0 ? '3/4' : '3/4', cursor: 'pointer' }}>
+                  <img src={dest.img} alt={dest.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(28,16,8,0.75) 0%, transparent 55%)' }} />
+                  <div className="dest-overlay" style={{ position: 'absolute', inset: 0, background: 'rgba(201,169,76,0.1)', opacity: 0, transition: 'opacity 0.3s ease' }} />
+                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '1.25rem' }}>
+                    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 300, color: WHITE, margin: '0 0 0.25rem', lineHeight: 1.1 }}>{dest.name}</p>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: 'rgba(255,255,255,0.55)', margin: 0, letterSpacing: '0.04em' }}>{dest.tagline}</p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {/* Bottom CTA */}
+          <div style={{ textAlign: 'center', padding: '3rem 2rem', background: `linear-gradient(135deg, ${DARK} 0%, ${DARK2} 100%)`, borderRadius: 16, position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 500, height: 300, background: 'radial-gradient(ellipse, rgba(201,169,76,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.6)', margin: '0 0 0.875rem', position: 'relative' }}>SwissNet Concierge</p>
+            <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(1.5rem, 3vw, 2.5rem)', fontWeight: 300, color: WHITE, margin: '0 0 0.75rem', position: 'relative' }}>
+              Your perfect stay,<br /><em style={{ color: GOLD }}>one conversation away.</em>
+            </h3>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', margin: '0 auto 2rem', maxWidth: 380, lineHeight: 1.8, fontWeight: 300, position: 'relative' }}>
+              Tell the concierge your dates, preferences and budget. We'll find the finest match across 130+ Swiss luxury hotels.
+            </p>
+            <button onClick={() => inputRef.current?.focus()} style={{ background: GOLD, color: DARK, border: 'none', borderRadius: 8, padding: '0.875rem 2.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', cursor: 'pointer', position: 'relative' }}>
+              Start Conversation →
+            </button>
+          </div>
         </div>
-
-        <style>{`
-          @keyframes pulse {
-            0%, 100% { opacity: 0.3; transform: scale(0.8); }
-            50% { opacity: 1; transform: scale(1); }
-          }
-        `}</style>
-      </div>
+      )}
     </div>
   )
 }
