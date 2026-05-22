@@ -1286,7 +1286,18 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
             {/* Competitor table */}
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, overflow: 'hidden', marginBottom: '1.5rem' }}>
               <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid ' + BORDER }}>
-                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: 0 }}>{competitorTableLabel}</p>
+                <div>
+  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 0.2rem' }}>{competitorTableLabel}</p>
+  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0, fontStyle: 'italic' }}>
+    {competitorView === 'region' && 'Tracks overall AI visibility across general luxury hotel searches in this region'}
+    {competitorView === 'spa' && 'Tracks visibility for spa, wellness and thermal retreat searches in Switzerland'}
+    {competitorView === 'dining' && 'Tracks visibility for fine dining, Michelin and gourmet restaurant searches'}
+    {competitorView === 'romantic' && 'Tracks visibility for romantic getaway, honeymoon and couples hotel searches'}
+    {competitorView === 'lake' && 'Tracks visibility for lakeside hotel and lake view accommodation searches'}
+    {competitorView === 'business' && 'Tracks visibility for business hotel, congress and city luxury searches'}
+    {competitorView === 'ski' && 'Tracks visibility for ski hotel, ski resort and alpine winter sports searches'}
+  </p>
+</div>
               </div>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
