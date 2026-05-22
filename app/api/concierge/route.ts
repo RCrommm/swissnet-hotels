@@ -47,20 +47,30 @@ export async function POST(request: Request) {
         messages: [
           {
             role: 'user',
-            content: `You are a luxury Swiss hotel concierge. Guest request: "${message}"
+            content: `You are a luxury Swiss hotel concierge. The guest may write in any language — detect their language and respond in the same language.
+
+Guest request: "${message}"
 
 Hotels available:
 ${JSON.stringify(hotelList)}
 
-Pick the 10 best hotels for this guest. Always put is_partner:true hotels first. Return JSON only:
-{"message":"one warm sentence max 15 words","hotels":["Name1","Name2","Name3","Name4","Name5","Name6","Name7","Name8","Name9","Name10"]}`,
+Instructions:
+- Pick the best matching hotels for this guest (up to 10)
+- Always put is_partner:true hotels first if they match
+- Match by region, category, features (spa, ski, lake, romantic, family etc)
+- Respond in the SAME language as the guest request
+- Return ONLY raw JSON, no markdown, no explanation, no backticks
+
+{"message":"one warm welcoming sentence in guest language, max 20 words","hotels":["ExactHotelName1","ExactHotelName2","ExactHotelName3"]}`,
           }
         ],
       }),
     })
     const aiData = await aiResponse.json()
-    const raw = aiData.content?.[0]?.text?.replace(/```json|```/g, '').trim() || '{}'
-    const parsed = JSON.parse(raw)
+    const rawText = aiData.content?.[0]?.text || '{}'
+const jsonMatch = rawText.match(/\{[\s\S]*\}/)
+const raw = jsonMatch ? jsonMatch[0] : '{}'
+const parsed = JSON.parse(raw)
     aiMessage = parsed.message || ''
     recommendedNames = parsed.hotels || []
   } catch (e) {
