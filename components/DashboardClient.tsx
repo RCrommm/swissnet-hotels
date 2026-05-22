@@ -1145,13 +1145,18 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
                   if (chartPlatform === 'overall') {
                     const dayScores = (overviewRunData || []).filter((r: any) => r.checked_at?.startsWith(d))
                     const adjustedScores = dayScores.map((s: any) => ({
-                      ...s,
-                      visibility_score: s.platform === 'chatgpt' ? Math.min(100, s.visibility_score + 20) : s.visibility_score
-                    }))
-                    const avg = adjustedScores.length > 0
-                      ? Math.round(adjustedScores.reduce((sum: number, s: any) => sum + s.visibility_score, 0) / adjustedScores.length)
-                      : null
-                    return { date: d, score: avg }
+  ...s,
+  visibility_score: s.platform === 'chatgpt' ? Math.min(100, s.visibility_score + 20) : s.visibility_score
+}))
+const platformAvg = adjustedScores.length > 0
+  ? Math.round(adjustedScores.reduce((sum: number, s: any) => sum + s.visibility_score, 0) / adjustedScores.length)
+  : null
+// Include Google AI score for that date if available
+const googleForDate = (googleAiScores || []).filter((r: any) => r.checked_at?.startsWith(d))
+const googleScore = googleForDate.length > 0 ? Math.round((googleForDate.filter((r: any) => r.appeared).length / googleForDate.length) * 100) : null
+const allScores = [platformAvg, googleScore].filter((s): s is number => s !== null)
+const avg = allScores.length > 0 ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length) : null
+return { date: d, score: avg }
                   }
                   if (chartPlatform === 'google_ai') {
                     const dayGoogleScores = (googleAiScores || []).filter((r: any) => r.checked_at?.startsWith(d))
