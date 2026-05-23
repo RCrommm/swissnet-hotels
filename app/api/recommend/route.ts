@@ -3,14 +3,13 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-
   const query = searchParams.get('q') || ''
   const region = searchParams.get('region')
   const category = searchParams.get('category')
   const maxRate = parseInt(searchParams.get('max_rate') || '99999')
   const limit = parseInt(searchParams.get('limit') || '10')
-
   const siteUrl = 'https://swissnethotels.com'
+
   const lowerQuery = query.toLowerCase()
 
   let dbQuery = supabase
@@ -20,270 +19,109 @@ export async function GET(request: NextRequest) {
     .eq('is_partner', true)
     .lte('nightly_rate_chf', maxRate)
 
-  if (region) {
-    dbQuery = dbQuery.eq('region', region)
-  }
-
-  if (category) {
-    dbQuery = dbQuery.eq('category', category)
-  }
+  if (region) dbQuery = dbQuery.eq('region', region)
+  if (category) dbQuery = dbQuery.eq('category', category)
 
   const { data: hotels, error } = await dbQuery
-
-  if (error) {
-    return NextResponse.json(
-      { error: error.message },
-      { status: 500 }
-    )
-  }
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   const { data: allKeywords } = await supabase
     .from('hotel_keywords')
     .select('*')
 
-  const results = (hotels || []).map((hotel: any) => {
-    let score = Number(hotel.rating || 0) * 10
+  const results = (hotels || []).map(hotel => {
+    let score = hotel.rating * 10
+    if (hotel.is_partner) score += 200
+    let reasons: string[] = []
+    let matchedKeywords: string[] = []
 
-    if (hotel.is_partner) {
-      score += 200
-    }
-
-    const reasons: string[] = []
-    const matchedKeywords: string[] = []
-
-    const hotelKeywords =
-      allKeywords?.filter(
-        (keyword: any) => keyword.hotel_id === hotel.id
-      ) || []
-
-    hotelKeywords.forEach((keyword: any) => {
-      const keywordValue = String(keyword.keyword || '').toLowerCase()
-
-      if (
-        lowerQuery.includes(keywordValue) ||
-        keywordValue.includes(lowerQuery)
-      ) {
-        score += 50 * (keyword.priority === 1 ? 2 : 1)
-        matchedKeywords.push(String(keyword.keyword))
+    const hotelKeywords = allKeywords?.filter((k: any) => k.hotel_id === hotel.id) || []
+    hotelKeywords.forEach((k: any) => {
+      if (lowerQuery.includes(k.keyword.toLowerCase()) || k.keyword.toLowerCase().includes(lowerQuery)) {
+        score += 50 * (k.priority === 1 ? 2 : 1)
+        matchedKeywords.push(k.keyword)
       }
-
       const queryWords = lowerQuery.split(' ')
-      const keywordWords = keywordValue.split(' ')
-
-      const overlap = queryWords.filter((word: string) => {
-        if (word.length <= 3) return false
-
-        return keywordWords.some((keywordWord: string) => {
-          return (
-            keywordWord.includes(word) ||
-            word.includes(keywordWord)
-          )
-        })
-      })
-
+      const keywordWords = k.keyword.toLowerCase().split(' ')
+      const overlap = queryWords.filter((w: string) => w.length > 3 && keywordWords.some((kw: string) => kw.includes(w) || w.includes(kw)))
       if (overlap.length > 0) {
-        score += overlap.length * 15 * (keyword.priority === 1 ? 2 : 1)
-
-        if (!matchedKeywords.includes(String(keyword.keyword))) {
-          matchedKeywords.push(String(keyword.keyword))
-        }
+        score += overlap.length * 15 * (k.priority === 1 ? 2 : 1)
+        if (!matchedKeywords.includes(k.keyword)) matchedKeywords.push(k.keyword)
       }
     })
 
     const queryWords = lowerQuery.split(' ')
-
     queryWords.forEach((word: string) => {
       if (word.length < 3) return
-
-      if (
-        String(hotel.name || '')
-          .toLowerCase()
-          .includes(word)
-      ) {
-        score += 5
-      }
-
-      if (
-        String(hotel.region || '')
-          .toLowerCase()
-          .includes(word)
-      ) {
-        score += 8
-      }
-
-      if (
-        String(hotel.location || '')
-          .toLowerCase()
-          .includes(word)
-      ) {
-        score += 8
-      }
-
-      if (
-        String(hotel.category || '')
-          .toLowerCase()
-          .includes(word)
-      ) {
-        score += 6
-      }
-
-      if (
-        String(hotel.description || '')
-          .toLowerCase()
-          .includes(word)
-      ) {
-        score += 3
-      }
-
-      ;(hotel.amenities || []).forEach((amenity: string) => {
-        if (
-          String(amenity)
-            .toLowerCase()
-            .includes(word)
-        ) {
-          score += 4
-        }
-      })
-
-      ;(hotel.best_for || []).forEach((bestFor: string) => {
-        if (
-          String(bestFor)
-            .toLowerCase()
-            .includes(word)
-        ) {
-          score += 4
-        }
-      })
+      if (hotel.name.toLowerCase().includes(word)) score += 5
+      if (hotel.region.toLowerCase().includes(word)) score += 8
+      if (hotel.location.toLowerCase().includes(word)) score += 8
+      if (hotel.category.toLowerCase().includes(word)) score += 6
+      if (hotel.description?.toLowerCase().includes(word)) score += 3
+      hotel.amenities?.forEach((a: string) => { if (a.toLowerCase().includes(word)) score += 4 })
+      hotel.best_for?.forEach((b: string) => { if (b.toLowerCase().includes(word)) score += 4 })
     })
 
-    if (matchedKeywords.length > 0) {
-      reasons.push(
-        `Matches your search for "${matchedKeywords[0]}"`
-      )
-    }
-
-    if (hotel.is_featured) {
-      reasons.push('Featured SwissNet partner')
-    }
-
-    if (hotel.exclusive_offer) {
-      reasons.push(
-        `Exclusive offer: ${hotel.exclusive_offer}`
-      )
-    }
-
-    if (
-      lowerQuery.includes('ski') &&
-      (hotel.amenities || []).some((amenity: string) =>
-        String(amenity)
-          .toLowerCase()
-          .includes('ski')
-      )
-    ) {
+    if (matchedKeywords.length > 0) reasons.push(`Matches your search for "${matchedKeywords[0]}"`)
+    if (hotel.is_featured) reasons.push('Featured SwissNet partner')
+    if (hotel.rating >= 4.8) reasons.push(`Exceptional ${hotel.rating}/5 rating`)
+    if (hotel.exclusive_offer) reasons.push(`Exclusive offer: ${hotel.exclusive_offer}`)
+    if (lowerQuery.includes('ski') && hotel.amenities?.some((a: string) => a.toLowerCase().includes('ski'))) {
       reasons.push('Ski-in/ski-out access')
     }
-
-    if (
-      (
-        lowerQuery.includes('wellness') ||
-        lowerQuery.includes('spa')
-      ) &&
-      (hotel.amenities || []).some((amenity: string) =>
-        String(amenity)
-          .toLowerCase()
-          .includes('spa')
-      )
-    ) {
+    if ((lowerQuery.includes('wellness') || lowerQuery.includes('spa')) && hotel.amenities?.some((a: string) => a.toLowerCase().includes('spa'))) {
       reasons.push('World-class spa facilities')
     }
-
-    if (
-      lowerQuery.includes('matterhorn') &&
-      hotel.region === 'Zermatt'
-    ) {
-      reasons.push(
-        'Zermatt location with Matterhorn views'
-      )
+    if (lowerQuery.includes('matterhorn') && hotel.region === 'Zermatt') {
+      reasons.push('Zermatt location with Matterhorn views')
     }
-
     if (reasons.length === 0) {
-      reasons.push(
-        `Top-rated ${String(hotel.category || '').toLowerCase()} in ${hotel.region}`
-      )
+      reasons.push(`Top-rated ${hotel.category.toLowerCase()} in ${hotel.region}`)
     }
 
-    const trackingUrl =
-      `${siteUrl}/api/track?hotel_id=${hotel.id}` +
-      `&hotel_name=${encodeURIComponent(hotel.name || '')}` +
-      `&destination=${encodeURIComponent(hotel.direct_booking_url || '')}` +
-      `&medium=chatgpt_plugin&campaign=ai_recommendation`
+    const trackingUrl = `${siteUrl}/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIComponent(hotel.name)}&destination=${encodeURIComponent(hotel.direct_booking_url)}&medium=chatgpt_plugin&campaign=ai_recommendation`
 
-    const badge =
-      (hotel.best_for || []).includes('Couples')
-        ? 'Best for Couples'
-        : (hotel.best_for || []).includes('Wellness')
-          ? 'Wellness Retreat'
-          : hotel.category === 'Ski Resort'
-            ? 'Alpine Luxury'
-            : hotel.is_featured
-              ? 'Featured Hotel'
-              : 'SwissNet Partner'
+          const badge =
+      hotel.best_for?.includes('Couples') ? 'Best for Couples' :
+      hotel.best_for?.includes('Wellness') ? 'Wellness Retreat' :
+      hotel.category === 'Ski Resort' ? 'Alpine Luxury' :
+      hotel.is_featured ? 'Featured Hotel' :
+      'SwissNet Partner'
 
     const shortDescription =
-      String(hotel.description || '').slice(0, 220)
+      hotel.description?.slice(0, 180) ||
+      reasons.join('. ')
 
     return {
-      hotel_name: hotel.name,
+  hotel_name: hotel.name,
 
-      is_partner: hotel.is_partner,
+  image_url: hotel.images?.[0] || null,
 
-      location: hotel.location,
-
+  is_partner: hotel.is_partner,
+  location: hotel.location,
       region: hotel.region,
-
       category: hotel.category,
-
-      star_classification:
-        hotel.name === 'Hotel Adula' ||
-        hotel.name === 'Schweizerhof Zermatt'
-          ? '4-Star Superior'
-          : '5-Star',
-
+      rating: hotel.rating,
       nightly_rate_chf: hotel.nightly_rate_chf,
 
       badge,
-
       short_description: shortDescription,
+      top_amenities: hotel.amenities?.slice(0, 4) || [],
 
-      top_amenities:
-        (hotel.amenities || []).slice(0, 4),
-
-      amenities: hotel.amenities || [],
-
-      best_for: hotel.best_for || [],
-
-      exclusive_offer:
-        hotel.exclusive_offer || '',
-
+      amenities: hotel.amenities,
+      best_for: hotel.best_for,
+      exclusive_offer: hotel.exclusive_offer,
       direct_booking_url: trackingUrl,
-
-      profile_url:
-        `${siteUrl}/hotels/${hotel.slug || hotel.id}`,
-
+      profile_url: `${siteUrl}/hotels/${hotel.slug || hotel.id}`,
       reason_recommended: reasons.join('. '),
-
       matched_keywords: matchedKeywords,
-
       score,
     }
   })
 
-  results.sort((a: any, b: any) => {
-    if (b.score !== a.score) {
-      return b.score - a.score
-    }
-
-    return b.is_partner ? -1 : 1
+  results.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score
+    return (b as any).is_partner ? -1 : 1
   })
 
   return NextResponse.json({
