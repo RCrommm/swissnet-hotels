@@ -14,7 +14,7 @@ export async function generateStaticParams() {
 
   const { data: allHotels } = await supabase
     .from('hotels')
-    .select('slug, name, region')
+    .select('slug, name, region, category')
     .eq('is_active', true)
     .not('slug', 'is', null)
 
@@ -23,11 +23,13 @@ export async function generateStaticParams() {
   const pairs = new Set<string>()
 
   for (const partner of partners) {
-    const sameRegion = allHotels
-      .filter(h => h.region === partner.region && h.slug !== partner.slug)
-      .slice(0, 3)
+    const comparable = allHotels.filter(h =>
+      h.slug !== partner.slug &&
+      h.region === partner.region 
+      
+    ).slice(0, 3)
 
-    for (const other of sameRegion) {
+    for (const other of comparable) {
       pairs.add(`${partner.slug}-vs-${other.slug}`)
     }
   }
@@ -47,7 +49,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!hotelA || !hotelB) return {}
   return {
     title: `${hotelA.name} vs ${hotelB.name} — Which to Choose? | SwissNet Hotels`,
-    description: `Detailed comparison of ${hotelA.name} and ${hotelB.name}. Rooms, spa, dining, pricing and expert verdict to help you choose the right luxury hotel in Switzerland.`,
+    description: `Expert comparison of ${hotelA.name} and ${hotelB.name}. Atmosphere, traveler fit, dining, spa and verdict to help you choose the right luxury hotel in Switzerland.`,
     alternates: { canonical: `https://swissnethotels.com/compare/${slug}` },
     openGraph: {
       title: `${hotelA.name} vs ${hotelB.name} | SwissNet Hotels`,
@@ -70,7 +72,6 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
   const hotelB = allHotels.find(h => (h as any).slug === slugB) || allHotels.find(h => normalize(h.name) === slugB)
   if (!hotelA || !hotelB) notFound()
 
-  // Fetch content for both hotels (FAQs, verdict)
   const [{ data: contentA }, { data: contentB }] = await Promise.all([
     supabase.from('hotel_content').select('verdict, faqs').eq('hotel_id', hotelA.id).single(),
     supabase.from('hotel_content').select('verdict, faqs').eq('hotel_id', hotelB.id).single(),
@@ -82,18 +83,8 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
   const textMuted = 'rgba(61,43,31,0.5)'
   const bg = '#F8F5EF'
   const white = '#FFFFFF'
-
   const pageUrl = `https://swissnethotels.com/compare/${slug}`
   const regionSlug = hotelA.region?.toLowerCase().replace(/\s+/g, '-')
-
-  const criteria = [
-    { label: 'Location', a: hotelA.location, b: hotelB.location },
-    { label: 'Category', a: hotelA.category, b: hotelB.category },
-    { label: 'Stars', a: '★'.repeat(hotelA.star_classification || 5), b: '★'.repeat(hotelB.star_classification || 5) },
-    { label: 'From', a: `CHF ${hotelA.nightly_rate_chf?.toLocaleString()}/night`, b: `CHF ${hotelB.nightly_rate_chf?.toLocaleString()}/night` },
-    { label: 'Best For', a: hotelA.best_for?.join(', ') || '—', b: hotelB.best_for?.join(', ') || '—' },
-    { label: 'Top Amenities', a: hotelA.amenities?.slice(0, 3).join(', ') || '—', b: hotelB.amenities?.slice(0, 3).join(', ') || '—' },
-  ]
 
   const trackingUrlA = hotelA.is_partner && hotelA.direct_booking_url
     ? `/api/track?hotel_id=${hotelA.id}&hotel_name=${encodeURIComponent(hotelA.name)}&destination=${encodeURIComponent(hotelA.direct_booking_url)}&medium=website&campaign=compare`
@@ -102,8 +93,133 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
     ? `/api/track?hotel_id=${hotelB.id}&hotel_name=${encodeURIComponent(hotelB.name)}&destination=${encodeURIComponent(hotelB.direct_booking_url)}&medium=website&campaign=compare`
     : hotelB.direct_booking_url
 
-  // Related comparisons — same region hotels
-  const relatedHotels = allHotels.filter(h => h.id !== hotelA.id && h.id !== hotelB.id && h.region === hotelA.region).slice(0, 4)
+  // Related — same region, same luxury tier, not these two hotels, max 3
+  const relatedHotels = allHotels
+  .filter(h =>
+    h.id !== hotelA.id &&
+    h.id !== hotelB.id &&
+    h.region === hotelA.region
+  )
+  .slice(0, 3)
+
+  // ── EDITORIAL LOGIC ───────────────────────────────────────────────────────
+
+  const getAtmosphere = (h: any): string => {
+    const cat = (h.category || '').toLowerCase()
+    if (cat.includes('wellness')) return 'wellness retreat'
+    if (cat.includes('boutique')) return 'boutique mountain lodge'
+    if (cat.includes('grand')) return 'classic grand hotel'
+    if (cat.includes('city')) return h.business_hotel ? 'city business hotel' : 'city luxury hotel'
+    if (cat.includes('ski')) return h.wellness_focus ? 'ski and wellness resort' : 'ski resort'
+    return h.category || 'luxury hotel'
+  }
+
+  const getTravelerFit = (h: any): string[] => {
+    if (h.best_for?.length > 0) return (h.best_for as string[]).slice(0, 3)
+    const fits: string[] = []
+    if (h.romantic) fits.push('Couples')
+    if (h.family_friendly) fits.push('Families')
+    if (h.business_hotel) fits.push('Business travelers')
+    if (h.wellness_focus) fits.push('Wellness seekers')
+    if (h.ski_in_ski_out) fits.push('Ski lovers')
+    return fits.length ? fits.slice(0, 3) : ['Discerning luxury travelers']
+  }
+
+  const atmA = getAtmosphere(hotelA)
+  const atmB = getAtmosphere(hotelB)
+  const fitsA = getTravelerFit(hotelA)
+  const fitsB = getTravelerFit(hotelB)
+
+  // Vary opening based on hotel type combination
+  const getBothCat = () => {
+    const a = (hotelA.category || '').toLowerCase()
+    const b = (hotelB.category || '').toLowerCase()
+    if (a.includes('boutique') && b.includes('grand')) return 'boutique_vs_grand'
+    if (a.includes('grand') && b.includes('boutique')) return 'grand_vs_boutique'
+    if (a.includes('wellness') && b.includes('ski')) return 'wellness_vs_ski'
+    if (a.includes('ski') && b.includes('wellness')) return 'ski_vs_wellness'
+    if (a.includes('city') && b.includes('city')) return 'city_vs_city'
+    if ((a.includes('ski') || a.includes('boutique')) && b.includes('city')) return 'mountain_vs_city'
+    return 'default'
+  }
+
+  const openingVariants: Record<string, string> = {
+    boutique_vs_grand: `${hotelA.name} and ${hotelB.name} represent two distinct interpretations of luxury in ${hotelA.region}. ${hotelA.name} operates at boutique scale — private, design-led, and oriented toward ${fitsA.slice(0, 2).join(' and ').toLowerCase()}. ${hotelB.name} brings the full grand hotel experience: larger facilities, a broader guest profile, and a more traditional Alpine luxury atmosphere. The choice is less about quality than about what kind of stay you want.`,
+    grand_vs_boutique: `${hotelA.name} and ${hotelB.name} offer contrasting takes on ${hotelA.region} luxury. ${hotelA.name} is a classic grand hotel — expansive, traditionally elegant, suited to ${fitsA.slice(0, 2).join(' and ').toLowerCase()}. ${hotelB.name} takes a more intimate approach: smaller in scale, more design-forward, and better suited to travelers who prefer ${fitsB.slice(0, 2).join(' and ').toLowerCase()}.`,
+    wellness_vs_ski: `In ${hotelA.region}, ${hotelA.name} and ${hotelB.name} serve different sides of the mountain experience. ${hotelA.name} leads with wellness — the spa, the treatments, and the recovery ritual are the core of what it offers. ${hotelB.name} is more ski-first, with the mountain and slopes at the center of its appeal. Travelers who want to come off the mountain and disappear into a spa will find ${hotelA.name} the stronger fit; those who want to ski hard and stay close to the action will prefer ${hotelB.name}.`,
+    ski_vs_wellness: `${hotelA.name} and ${hotelB.name} both sit in ${hotelA.region} but appeal to different types of mountain traveler. ${hotelA.name} is ski-first — the slopes, the access, and the alpine energy are its primary draw. ${hotelB.name} prioritises wellness, with the spa and recovery experience taking center stage. The better choice depends on whether you're coming to ski or to restore.`,
+    city_vs_city: `Both ${hotelA.name} and ${hotelB.name} operate at the top of the ${hotelA.region} luxury market, but they position themselves differently. ${hotelA.name} is the more ${atmA} option, drawing ${fitsA.slice(0, 2).join(' and ').toLowerCase()}. ${hotelB.name} has a more ${atmB} character, better suited to ${fitsB.slice(0, 2).join(' and ').toLowerCase()}. At this level, the decision comes down to atmosphere and personal fit rather than quality.`,
+    default: `${hotelA.name} and ${hotelB.name} are both strong options in ${hotelA.region}, but they occupy different positions in the market. ${hotelA.name} is a ${atmA}, oriented toward ${fitsA.slice(0, 2).join(' and ').toLowerCase()}. ${hotelB.name} takes a ${atmB} approach, appealing more to ${fitsB.slice(0, 2).join(' and ').toLowerCase()}.`,
+  }
+
+  const opening = openingVariants[getBothCat()] || openingVariants.default
+
+  // Key differentiators — only when explicitly true
+  const differentiators: string[] = []
+  if (hotelA.has_spa === true && hotelB.has_spa !== true) differentiators.push(`${hotelA.name} has an on-site spa; ${hotelB.name} does not`)
+  if (hotelB.has_spa === true && hotelA.has_spa !== true) differentiators.push(`${hotelB.name} has an on-site spa; ${hotelA.name} does not`)
+  if (hotelA.has_michelin_restaurant === true && hotelB.has_michelin_restaurant !== true) differentiators.push(`${hotelA.name} has Michelin-recognised dining`)
+  if (hotelB.has_michelin_restaurant === true && hotelA.has_michelin_restaurant !== true) differentiators.push(`${hotelB.name} has Michelin-recognised dining`)
+  if (hotelA.ski_in_ski_out === true && hotelB.ski_in_ski_out !== true) differentiators.push(`${hotelA.name} has ski-in ski-out access`)
+  if (hotelB.ski_in_ski_out === true && hotelA.ski_in_ski_out !== true) differentiators.push(`${hotelB.name} has ski-in ski-out access`)
+  if (hotelA.lakefront === true && hotelB.lakefront !== true) differentiators.push(`${hotelA.name} sits directly on the lake`)
+  if (hotelB.lakefront === true && hotelA.lakefront !== true) differentiators.push(`${hotelB.name} sits directly on the lake`)
+  if (hotelA.wellness_focus === true && hotelB.wellness_focus !== true) differentiators.push(`${hotelA.name} has a dedicated wellness programme`)
+  if (hotelB.wellness_focus === true && hotelA.wellness_focus !== true) differentiators.push(`${hotelB.name} has a dedicated wellness programme`)
+
+  const verdict = `${hotelA.name} suits travelers who prioritise ${fitsA[0]?.toLowerCase() || 'the grand hotel experience'}. ${hotelB.name} is the stronger choice for those wanting ${fitsB[0]?.toLowerCase() || 'a different atmosphere'}. Both are among the finest options in ${hotelA.region}.`
+
+  // FAQs — opinionated, varied by hotel type
+  const faqs = [
+    {
+      q: `What is the main difference between ${hotelA.name} and ${hotelB.name}?`,
+      a: `${opening} ${verdict}`
+    },
+    ...(hotelA.nightly_rate_chf && hotelB.nightly_rate_chf ? [{
+      q: `Is ${hotelA.name} or ${hotelB.name} better value?`,
+      a: (() => {
+        const diff = Math.abs(hotelA.nightly_rate_chf - hotelB.nightly_rate_chf)
+        const pricier = hotelA.nightly_rate_chf > hotelB.nightly_rate_chf ? hotelA : hotelB
+        const cheaper = hotelA.nightly_rate_chf > hotelB.nightly_rate_chf ? hotelB : hotelA
+        return diff > 150
+          ? `${pricier.name} carries a higher entry price at CHF ${pricier.nightly_rate_chf.toLocaleString()}/night versus ${cheaper.name} from CHF ${cheaper.nightly_rate_chf.toLocaleString()}/night. Whether the premium is justified depends on your priorities — ${pricier.name} offers ${getTravelerFit(pricier)[0]?.toLowerCase() || 'a more complete experience'} that may make the difference meaningful for the right traveler.`
+          : `Both hotels are comparably priced at this level. The choice between them is better guided by atmosphere and traveler fit than by budget.`
+      })()
+    }] : []),
+    {
+      q: hotelA.romantic && hotelB.romantic
+        ? `Which is better for a romantic stay — ${hotelA.name} or ${hotelB.name}?`
+        : hotelA.ski_in_ski_out || hotelB.ski_in_ski_out
+        ? `Which hotel has better ski access?`
+        : `Which is better for a first visit to ${hotelA.region}?`,
+      a: (() => {
+        if (hotelA.romantic && hotelB.romantic) {
+          return `Both hotels suit couples well. ${hotelA.name} offers a more ${atmA} atmosphere — better for ${fitsA[0]?.toLowerCase() || 'couples seeking privacy'}. ${hotelB.name} takes a more ${atmB} approach, appealing to couples who want ${fitsB[0]?.toLowerCase() || 'a different setting'}. Neither is a wrong choice; the decision comes down to which atmosphere fits your travel style.`
+        }
+        if (hotelA.ski_in_ski_out === true && hotelB.ski_in_ski_out !== true) {
+          return `${hotelA.name} offers ski-in ski-out access — the clearer choice for ski-first travelers who want to step directly onto the slopes. ${hotelB.name} is well positioned in the resort but requires a short walk or transfer to the lifts. If ski convenience is the priority, ${hotelA.name} is the stronger option.`
+        }
+        if (hotelB.ski_in_ski_out === true && hotelA.ski_in_ski_out !== true) {
+          return `${hotelB.name} has ski-in ski-out access — the stronger choice for guests whose stay revolves around the mountain. ${hotelA.name} is an excellent hotel but does not offer direct slope access. For ski-first travelers, ${hotelB.name} is the clearer fit.`
+        }
+        return `For a first visit to ${hotelA.region}, ${hotelA.name} offers ${atmA} atmosphere with strong appeal for ${fitsA[0]?.toLowerCase() || 'luxury travelers'}. ${hotelB.name} suits ${fitsB[0]?.toLowerCase() || 'a more specific traveler profile'} better. First-time visitors wanting a comprehensive introduction to the destination tend to find ${hotelA.category?.toLowerCase().includes('grand') ? hotelA.name : hotelB.category?.toLowerCase().includes('grand') ? hotelB.name : hotelA.name} the more complete starting point.`
+      })()
+    }
+  ]
+
+  // Comparison table — only rows with real data
+  const criteria = [
+    { label: 'Location', a: hotelA.location, b: hotelB.location },
+    { label: 'Style', a: hotelA.category, b: hotelB.category },
+    { label: 'Stars', a: '★'.repeat(hotelA.star_classification || 5), b: '★'.repeat(hotelB.star_classification || 5) },
+    { label: 'From', a: hotelA.nightly_rate_chf ? `CHF ${hotelA.nightly_rate_chf.toLocaleString()}/night` : null, b: hotelB.nightly_rate_chf ? `CHF ${hotelB.nightly_rate_chf.toLocaleString()}/night` : null },
+    { label: 'Spa', a: hotelA.has_spa === true ? 'Yes' : hotelA.has_spa === false ? 'No' : null, b: hotelB.has_spa === true ? 'Yes' : hotelB.has_spa === false ? 'No' : null },
+    { label: 'Michelin Dining', a: hotelA.has_michelin_restaurant === true ? 'Yes' : hotelA.has_michelin_restaurant === false ? 'No' : null, b: hotelB.has_michelin_restaurant === true ? 'Yes' : hotelB.has_michelin_restaurant === false ? 'No' : null },
+    { label: 'Ski Access', a: hotelA.ski_in_ski_out === true ? 'Ski-in ski-out' : hotelA.near_ski_lifts === true ? 'Near lifts' : null, b: hotelB.ski_in_ski_out === true ? 'Ski-in ski-out' : hotelB.near_ski_lifts === true ? 'Near lifts' : null },
+    { label: 'Lakefront', a: hotelA.lakefront === true ? 'Yes' : hotelA.lake_view === true ? 'Lake view' : null, b: hotelB.lakefront === true ? 'Yes' : hotelB.lake_view === true ? 'Lake view' : null },
+    { label: 'Wellness', a: hotelA.wellness_focus === true ? 'Wellness focus' : hotelA.has_spa === true ? 'Spa' : null, b: hotelB.wellness_focus === true ? 'Wellness focus' : hotelB.has_spa === true ? 'Spa' : null },
+    { label: 'Best For', a: (hotelA.best_for as string[])?.slice(0, 2).join(', ') || null, b: (hotelB.best_for as string[])?.slice(0, 2).join(', ') || null },
+  ].filter(row => row.a !== null || row.b !== null)
 
   const schema = {
     '@context': 'https://schema.org',
@@ -113,7 +229,7 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
         '@id': `${pageUrl}#webpage`,
         url: pageUrl,
         name: `${hotelA.name} vs ${hotelB.name} | SwissNet Hotels`,
-        description: `Detailed comparison of ${hotelA.name} and ${hotelB.name}, two of Switzerland's finest luxury hotels.`,
+        description: opening,
         isPartOf: { '@id': 'https://swissnethotels.com#website' },
         breadcrumb: { '@id': `${pageUrl}#breadcrumb` },
       },
@@ -128,21 +244,12 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
         ]
       },
       {
-        '@type': 'ItemList',
-        name: `${hotelA.name} vs ${hotelB.name} — Comparison`,
-        description: `Detailed comparison of ${hotelA.name} and ${hotelB.name}.`,
-        itemListElement: [
-          { '@type': 'ListItem', position: 1, item: { '@type': 'Hotel', '@id': `https://swissnethotels.com/hotels/${hotelA.slug || hotelA.id}#hotel`, name: hotelA.name, url: `https://swissnethotels.com/hotels/${hotelA.slug || hotelA.id}`, priceRange: `CHF ${hotelA.nightly_rate_chf}+`, starRating: { '@type': 'Rating', ratingValue: hotelA.star_classification || 5 }, address: { '@type': 'PostalAddress', addressLocality: hotelA.location, addressCountry: 'CH' } } },
-          { '@type': 'ListItem', position: 2, item: { '@type': 'Hotel', '@id': `https://swissnethotels.com/hotels/${hotelB.slug || hotelB.id}#hotel`, name: hotelB.name, url: `https://swissnethotels.com/hotels/${hotelB.slug || hotelB.id}`, priceRange: `CHF ${hotelB.nightly_rate_chf}+`, starRating: { '@type': 'Rating', ratingValue: hotelB.star_classification || 5 }, address: { '@type': 'PostalAddress', addressLocality: hotelB.location, addressCountry: 'CH' } } },
-        ]
-      },
-      {
         '@type': 'FAQPage',
-        mainEntity: [
-          { '@type': 'Question', name: `What is the difference between ${hotelA.name} and ${hotelB.name}?`, acceptedAnswer: { '@type': 'Answer', text: `${hotelA.name} is a ${hotelA.star_classification || 5}-star hotel in ${hotelA.location} from CHF ${hotelA.nightly_rate_chf}/night, best for ${hotelA.best_for?.join(', ') || 'luxury travelers'}. ${hotelB.name} is a ${hotelB.star_classification || 5}-star hotel in ${hotelB.location} from CHF ${hotelB.nightly_rate_chf}/night, best for ${hotelB.best_for?.join(', ') || 'luxury travelers'}.` } },
-          { '@type': 'Question', name: `Which is more expensive, ${hotelA.name} or ${hotelB.name}?`, acceptedAnswer: { '@type': 'Answer', text: `${hotelA.name} starts from CHF ${hotelA.nightly_rate_chf}/night. ${hotelB.name} starts from CHF ${hotelB.nightly_rate_chf}/night. Prices vary by season, room type and dates.` } },
-          { '@type': 'Question', name: `Which hotel is better for couples — ${hotelA.name} or ${hotelB.name}?`, acceptedAnswer: { '@type': 'Answer', text: `Both are strong choices for couples. ${hotelA.name} offers ${hotelA.amenities?.slice(0, 2).join(' and ') || 'luxury amenities'} while ${hotelB.name} offers ${hotelB.amenities?.slice(0, 2).join(' and ') || 'luxury amenities'}. The best choice depends on your preferred setting and travel style.` } },
-        ]
+        mainEntity: faqs.map(f => ({
+          '@type': 'Question',
+          name: f.q,
+          acceptedAnswer: { '@type': 'Answer', text: f.a }
+        }))
       }
     ]
   }
@@ -162,11 +269,11 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
             <span style={{ color: gold }}>Compare</span>
           </div>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: gold, marginBottom: '1rem' }}>Hotel Comparison · {hotelA.region}</p>
-          <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(1.8rem, 4vw, 3rem)', fontWeight: 300, color: '#fff', margin: '0 0 0.75rem', lineHeight: 1.2 }}>
+          <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(1.8rem, 4vw, 3rem)', fontWeight: 300, color: '#fff', margin: '0 0 1rem', lineHeight: 1.2 }}>
             {hotelA.name} <span style={{ color: gold }}>vs</span> {hotelB.name}
           </h1>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', margin: 0 }}>
-            {hotelA.location} · {hotelA.category} · CHF {hotelA.nightly_rate_chf?.toLocaleString()}/night &nbsp;|&nbsp; {hotelB.location} · {hotelB.category} · CHF {hotelB.nightly_rate_chf?.toLocaleString()}/night
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: 'rgba(255,255,255,0.6)', margin: 0, maxWidth: 680, lineHeight: 1.8 }}>
+            {opening}
           </p>
         </div>
       </div>
@@ -175,18 +282,13 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '3rem', alignItems: 'start' }}>
           <div>
 
-            {/* Side by side cards */}
+            {/* Hotel cards */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '3rem' }}>
               {[hotelA, hotelB].map((hotel, i) => (
                 <div key={hotel.id} style={{ background: white, border: hotel.is_partner ? `2px solid ${gold}` : `1px solid ${border}`, borderRadius: 8, overflow: 'hidden' }}>
                   <div style={{ position: 'relative', height: 200, overflow: 'hidden' }}>
                     <img src={hotel.images?.[0] || 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800'} alt={hotel.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%)' }} />
-                    <div style={{ position: 'absolute', top: 12, left: 12 }}>
-                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, fontWeight: 700, background: i === 0 ? gold : '#3D2B1F', color: '#fff', padding: '3px 10px', borderRadius: 20 }}>
-                        {i === 0 ? 'Hotel A' : 'Hotel B'}
-                      </span>
-                    </div>
                     {hotel.is_partner && (
                       <div style={{ position: 'absolute', top: 12, right: 12 }}>
                         <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, fontWeight: 700, background: gold, color: '#1a0e06', padding: '3px 10px', borderRadius: 20 }}>✦ Partner</span>
@@ -202,11 +304,8 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
                     </div>
                   </div>
                   <div style={{ padding: '1.25rem' }}>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted, lineHeight: 1.7, margin: '0 0 0.75rem', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: textMuted, lineHeight: 1.7, margin: '0 0 1rem', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties}>
                       {i === 0 ? (contentA?.verdict || hotel.description) : (contentB?.verdict || hotel.description)}
-                    </p>
-                    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: gold, margin: '0 0 1rem' }}>
-                      From CHF {hotel.nightly_rate_chf?.toLocaleString()}<span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted }}>/night</span>
                     </p>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <Link href={`/hotels/${hotel.slug || hotel.id}`} style={{ flex: 1, display: 'block', textAlign: 'center', border: `1px solid ${border}`, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: text, padding: '0.6rem', textDecoration: 'none', borderRadius: 4 }}>
@@ -223,16 +322,36 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
               ))}
             </div>
 
+            {/* Editorial comparison */}
+            <section style={{ background: white, border: `1px solid ${border}`, borderRadius: 8, padding: '2rem', marginBottom: '3rem' }}>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: gold, margin: '0 0 0.75rem' }}>Editorial Comparison</p>
+              <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 300, color: text, margin: '0 0 1.25rem' }}>Atmosphere & Traveler Fit</h2>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: text, lineHeight: 1.85, margin: '0 0 1.25rem', fontWeight: 300 }}>
+                {opening}
+              </p>
+              {differentiators.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', margin: '1.25rem 0', padding: '1rem 1.25rem', background: bg, borderRadius: 6 }}>
+                  {differentiators.map((d, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+                      <span style={{ color: gold, flexShrink: 0, fontSize: '0.65rem', marginTop: '0.1rem' }}>✦</span>
+                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: textMuted, lineHeight: 1.6 }}>{d}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: text, lineHeight: 1.85, margin: 0, fontWeight: 300 }}>
+                {verdict}
+              </p>
+            </section>
+
             {/* Comparison table */}
             <section style={{ marginBottom: '3rem' }}>
-              <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: text, marginBottom: '1.5rem' }}>
-                Side by Side Comparison
-              </h2>
+              <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 300, color: text, marginBottom: '1.5rem' }}>Side by Side</h2>
               <div style={{ background: white, border: `1px solid ${border}`, borderRadius: 8, overflow: 'hidden' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ background: '#F2EAE0' }}>
-                      <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: textMuted, width: '25%' }}>Criteria</th>
+                      <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: textMuted, width: '22%' }}></th>
                       <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', color: gold }}>{hotelA.name}</th>
                       <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', color: text }}>{hotelB.name}</th>
                     </tr>
@@ -240,9 +359,9 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
                   <tbody>
                     {criteria.map((row, i) => (
                       <tr key={row.label} style={{ background: i % 2 === 0 ? white : bg, borderTop: `1px solid ${border}` }}>
-                        <td style={{ padding: '1rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, color: textMuted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{row.label}</td>
-                        <td style={{ padding: '1rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: text }}>{row.a}</td>
-                        <td style={{ padding: '1rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: text }}>{row.b}</td>
+                        <td style={{ padding: '0.875rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, color: textMuted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{row.label}</td>
+                        <td style={{ padding: '0.875rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: text }}>{row.a || '—'}</td>
+                        <td style={{ padding: '0.875rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: text }}>{row.b || '—'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -252,79 +371,65 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
 
             {/* Who should choose which */}
             <section style={{ marginBottom: '3rem' }}>
-              <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: text, marginBottom: '1.5rem' }}>
-                Which Hotel is Right for You?
-              </h2>
+              <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 300, color: text, marginBottom: '1.5rem' }}>Who Should Choose Which</h2>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                {[hotelA, hotelB].map((hotel, i) => (
-                  <div key={hotel.id} style={{ background: white, border: `1px solid ${border}`, borderRadius: 8, padding: '1.5rem' }}>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: gold, margin: '0 0 0.75rem' }}>Choose {hotel.name} if…</p>
-<div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-  {(hotel.best_for || []).slice(0, 3).map((b: string) => (
-    <div key={b} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
-      <span style={{ color: gold, flexShrink: 0, marginTop: '0.1rem' }}>✦</span>
-      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text, lineHeight: 1.5 }}>{b} is your priority</span>
-    </div>
-  ))}
-  {hotel.has_spa && (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
-      <span style={{ color: gold, flexShrink: 0, marginTop: '0.1rem' }}>✦</span>
-      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text, lineHeight: 1.5 }}>An on-site spa is important to you</span>
-    </div>
-  )}
-  {hotel.has_michelin_restaurant && (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
-      <span style={{ color: gold, flexShrink: 0, marginTop: '0.1rem' }}>✦</span>
-      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text, lineHeight: 1.5 }}>Michelin-starred dining is on your list</span>
-    </div>
-  )}
-  {hotel.ski_in_ski_out && (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
-      <span style={{ color: gold, flexShrink: 0, marginTop: '0.1rem' }}>✦</span>
-      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text, lineHeight: 1.5 }}>Ski-in ski-out access is a requirement</span>
-    </div>
-  )}
-  {hotel.is_partner && (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
-      <span style={{ color: gold, flexShrink: 0, marginTop: '0.1rem' }}>✦</span>
-      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text, lineHeight: 1.5 }}>You want to book direct with the best available rate</span>
-    </div>
-  )}
-  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
-    <span style={{ color: gold, flexShrink: 0, marginTop: '0.1rem' }}>✦</span>
-    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text, lineHeight: 1.5 }}>You prefer {hotel.category?.toLowerCase() || 'this style of hotel'} over the alternative</span>
-  </div>
-</div>
-                  </div>
-                ))}
+                {[hotelA, hotelB].map((hotel) => {
+                  const fits = getTravelerFit(hotel)
+                  const atm = getAtmosphere(hotel)
+                  return (
+                    <div key={hotel.id} style={{ background: white, border: `1px solid ${border}`, borderRadius: 8, padding: '1.5rem' }}>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: gold, margin: '0 0 0.5rem' }}>Choose {hotel.name}</p>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: textMuted, margin: '0 0 1rem', lineHeight: 1.6 }}>
+                        The {atm} option in {hotel.region} — suited to {fits.slice(0, 2).map((f: string) => f.toLowerCase()).join(' and ')}.
+                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        {fits.map((f: string) => (
+                          <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+                            <span style={{ color: gold, flexShrink: 0, marginTop: '0.15rem' }}>✦</span>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: text, lineHeight: 1.5 }}>{f}</span>
+                          </div>
+                        ))}
+                        {hotel.has_michelin_restaurant === true && (
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+                            <span style={{ color: gold, flexShrink: 0, marginTop: '0.15rem' }}>✦</span>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: text, lineHeight: 1.5 }}>Michelin-starred dining on-site</span>
+                          </div>
+                        )}
+                        {hotel.ski_in_ski_out === true && (
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+                            <span style={{ color: gold, flexShrink: 0, marginTop: '0.15rem' }}>✦</span>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: text, lineHeight: 1.5 }}>Ski-in ski-out access</span>
+                          </div>
+                        )}
+                        {hotel.lakefront === true && (
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+                            <span style={{ color: gold, flexShrink: 0, marginTop: '0.15rem' }}>✦</span>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: text, lineHeight: 1.5 }}>Direct lakefront position</span>
+                          </div>
+                        )}
+                        {hotel.wellness_focus === true && (
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+                            <span style={{ color: gold, flexShrink: 0, marginTop: '0.15rem' }}>✦</span>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: text, lineHeight: 1.5 }}>Dedicated wellness programme</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </section>
 
-            {/* FAQ */}
+            {/* FAQs */}
             <section style={{ marginBottom: '3rem' }}>
-              <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 300, color: text, marginBottom: '1.5rem' }}>
-                Frequently Asked Questions
-              </h2>
+              <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 300, color: text, marginBottom: '1.5rem' }}>Frequently Asked Questions</h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {[
-                  {
-  q: `What is the difference between ${hotelA.name} and ${hotelB.name}?`,
-  a: `${hotelA.name} is a ${hotelA.star_classification || 5}-star ${hotelA.category?.toLowerCase() || 'luxury hotel'} in ${hotelA.location}, from CHF ${hotelA.nightly_rate_chf?.toLocaleString()}/night. ${hotelB.name} is a ${hotelB.star_classification || 5}-star ${hotelB.category?.toLowerCase() || 'luxury hotel'} in ${hotelB.location}, from CHF ${hotelB.nightly_rate_chf?.toLocaleString()}/night. The key difference is in positioning: ${hotelA.name} is best suited for ${hotelA.best_for?.slice(0,2).join(' and ') || 'discerning luxury travelers'}, while ${hotelB.name} appeals more to ${hotelB.best_for?.slice(0,2).join(' and ') || 'luxury travelers seeking a different experience'}. Both are among the finest hotels in ${hotelA.region}.`
-},
-{
-  q: `Which is more expensive — ${hotelA.name} or ${hotelB.name}?`,
-  a: `${hotelA.name} starts from CHF ${hotelA.nightly_rate_chf?.toLocaleString()}/night and ${hotelB.name} from CHF ${hotelB.nightly_rate_chf?.toLocaleString()}/night. ${hotelA.nightly_rate_chf > hotelB.nightly_rate_chf ? `${hotelA.name} is the higher-priced option` : hotelB.nightly_rate_chf > hotelA.nightly_rate_chf ? `${hotelB.name} is the higher-priced option` : `Both hotels are similarly priced`} at the entry level, though rates vary significantly by season, room category, and booking dates. Direct booking through each hotel's official website typically offers the best available rate.`
-},
-{
-  q: `Is ${hotelA.name} or ${hotelB.name} better for a honeymoon or romantic stay?`,
-  a: `${hotelA.romantic ? `${hotelA.name} is specifically positioned for romantic stays` : `${hotelA.name} suits couples who prioritise ${hotelA.best_for?.slice(0,1).join('') || 'luxury and quality'}`}. ${hotelB.romantic ? `${hotelB.name} is also well suited to romantic travel` : `${hotelB.name} appeals to couples who prefer ${hotelB.best_for?.slice(0,1).join('') || 'a different atmosphere'}`}. The stronger romantic choice depends on whether you prefer ${hotelA.category?.toLowerCase() || 'the first hotel\'s style'} or ${hotelB.category?.toLowerCase() || 'the second hotel\'s approach'} — both are in ${hotelA.region}, one of Switzerland's most scenic destinations.`
-},
-                ].map((faq, i) => (
+                {faqs.map((faq, i) => (
                   <div key={i} style={{ background: white, border: `1px solid ${border}`, padding: '1.25rem 1.5rem', borderRadius: 8 }}>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', fontWeight: 600, color: text, margin: '0 0 0.5rem' }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.73rem', fontWeight: 600, color: text, margin: '0 0 0.5rem' }}>
                       <span style={{ color: gold, marginRight: '0.5rem' }}>Q.</span>{faq.q}
                     </p>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted, lineHeight: 1.8, margin: 0, fontWeight: 300 }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: textMuted, lineHeight: 1.85, margin: 0, fontWeight: 300 }}>
                       <span style={{ color: gold, marginRight: '0.5rem' }}>A.</span>{faq.a}
                     </p>
                   </div>
@@ -332,19 +437,22 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
               </div>
             </section>
 
-            {/* Other comparisons in same region */}
+            {/* Related comparisons — same region, same tier only */}
             {relatedHotels.length > 0 && (
               <section style={{ marginBottom: '2rem' }}>
-                <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 300, color: text, marginBottom: '1rem' }}>
+                <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.35rem', fontWeight: 300, color: text, marginBottom: '1rem' }}>
                   More {hotelA.region} Comparisons
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {relatedHotels.map(h => (
-                    <Link key={h.id} href={`/compare/${normalize(hotelA.name)}-vs-${normalize(h.name)}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.875rem 1.25rem', background: white, border: `1px solid ${border}`, borderRadius: 4, textDecoration: 'none' }}>
-                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text }}>{hotelA.name} vs {h.name}</span>
-                      <span style={{ color: gold }}>→</span>
-                    </Link>
-                  ))}
+                  {relatedHotels.map(h => {
+                    const compareSlug = `${hotelA.slug || normalize(hotelA.name)}-vs-${h.slug || normalize(h.name)}`
+                    return (
+                      <Link key={h.id} href={`/compare/${compareSlug}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.875rem 1.25rem', background: white, border: `1px solid ${border}`, borderRadius: 4, textDecoration: 'none' }}>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text }}>{hotelA.name} vs {h.name}</span>
+                        <span style={{ color: gold }}>→</span>
+                      </Link>
+                    )
+                  })}
                 </div>
               </section>
             )}
@@ -356,66 +464,55 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
 
           {/* Sidebar */}
           <div style={{ position: 'sticky', top: '2rem' }}>
-
-            {/* Quick verdict */}
             <div style={{ background: white, border: `1px solid ${border}`, borderRadius: 8, padding: '1.5rem', marginBottom: '1.5rem' }}>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: gold, margin: '0 0 1rem' }}>Quick Verdict</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: gold, margin: '0 0 1rem' }}>Quick Verdict</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 600, color: text, margin: '0 0 0.3rem' }}>{hotelA.name}</p>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: '0 0 0.25rem', lineHeight: 1.5 }}>
-                    {hotelA.star_classification || 5}★ · {hotelA.category} · {hotelA.location}
-                  </p>
-                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: gold, margin: 0 }}>CHF {hotelA.nightly_rate_chf?.toLocaleString()}<span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted }}>/night</span></p>
-                </div>
-                <div style={{ height: 1, background: border }} />
-                <div>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 600, color: text, margin: '0 0 0.3rem' }}>{hotelB.name}</p>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: '0 0 0.25rem', lineHeight: 1.5 }}>
-                    {hotelB.star_classification || 5}★ · {hotelB.category} · {hotelB.location}
-                  </p>
-                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: gold, margin: 0 }}>CHF {hotelB.nightly_rate_chf?.toLocaleString()}<span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted }}>/night</span></p>
-                </div>
+                {[hotelA, hotelB].map((hotel, i) => (
+                  <div key={hotel.id}>
+                    {i === 1 && <div style={{ height: 1, background: border, marginBottom: '1rem' }} />}
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, color: text, margin: '0 0 0.2rem' }}>{hotel.name}</p>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, margin: '0 0 0.25rem', lineHeight: 1.5 }}>{getAtmosphere(hotel)} · {hotel.location}</p>
+                    {hotel.nightly_rate_chf && <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: gold, margin: 0 }}>CHF {hotel.nightly_rate_chf.toLocaleString()}<span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: textMuted }}>/night</span></p>}
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Book direct */}
             <div style={{ background: white, border: `1px solid ${border}`, borderRadius: 8, padding: '1.5rem', marginBottom: '1.5rem' }}>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: gold, margin: '0 0 1rem' }}>Book Direct</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: gold, margin: '0 0 1rem' }}>Book Direct</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {trackingUrlA && (
-                  <a href={trackingUrlA} target="_blank" rel="noopener noreferrer" style={{ display: 'block', textAlign: 'center', background: gold, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.75rem', textDecoration: 'none', borderRadius: 4 }}>
-                    {hotelA.name.split(' ').slice(0, 2).join(' ')} — Official Website →
+                  <a href={trackingUrlA} target="_blank" rel="noopener noreferrer" style={{ display: 'block', textAlign: 'center', background: gold, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.75rem', textDecoration: 'none', borderRadius: 4 }}>
+                    {hotelA.name.split(' ').slice(0, 2).join(' ')} →
                   </a>
                 )}
                 {trackingUrlB && (
-                  <a href={trackingUrlB} target="_blank" rel="noopener noreferrer" style={{ display: 'block', textAlign: 'center', background: text, color: white, fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.75rem', textDecoration: 'none', borderRadius: 4 }}>
-                    {hotelB.name.split(' ').slice(0, 2).join(' ')} — Official Website →
+                  <a href={trackingUrlB} target="_blank" rel="noopener noreferrer" style={{ display: 'block', textAlign: 'center', background: text, color: white, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.75rem', textDecoration: 'none', borderRadius: 4 }}>
+                    {hotelB.name.split(' ').slice(0, 2).join(' ')} →
                   </a>
                 )}
               </div>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: textMuted, margin: '0.75rem 0 0', textAlign: 'center', lineHeight: 1.5 }}>Direct booking · No OTA fees · Best rate</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: textMuted, margin: '0.75rem 0 0', textAlign: 'center' }}>Direct · No OTA fees · Best rate</p>
             </div>
 
-            {/* Related links */}
             <div style={{ background: white, border: `1px solid ${border}`, borderRadius: 8, padding: '1.5rem' }}>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: gold, margin: '0 0 1rem' }}>Explore</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: gold, margin: '0 0 1rem' }}>Explore</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {regionSlug && (
-                  <Link href={`/destinations/${regionSlug}`} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: gold, textDecoration: 'none', display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: `1px solid ${border}` }}>
-                    <span>{hotelA.region} destination guide</span><span>→</span>
+                  <Link href={`/destinations/${regionSlug}`} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: gold, textDecoration: 'none', display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: `1px solid ${border}` }}>
+                    <span>{hotelA.region} guide</span><span>→</span>
                   </Link>
                 )}
                 {regionSlug && (
-                  <Link href={`/best/luxury-hotels-${regionSlug}`} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: gold, textDecoration: 'none', display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: `1px solid ${border}` }}>
-                    <span>Best luxury hotels in {hotelA.region}</span><span>→</span>
+                  <Link href={`/best/luxury-hotels-${regionSlug}`} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: gold, textDecoration: 'none', display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: `1px solid ${border}` }}>
+                    <span>Best hotels in {hotelA.region}</span><span>→</span>
                   </Link>
                 )}
-                <Link href={`/hotels/${hotelA.slug || hotelA.id}`} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: gold, textDecoration: 'none', display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: `1px solid ${border}` }}>
-                  <span>{hotelA.name} full profile</span><span>→</span>
+                <Link href={`/hotels/${hotelA.slug || hotelA.id}`} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: gold, textDecoration: 'none', display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: `1px solid ${border}` }}>
+                  <span>{hotelA.name} profile</span><span>→</span>
                 </Link>
-                <Link href={`/hotels/${hotelB.slug || hotelB.id}`} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: gold, textDecoration: 'none', display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0' }}>
-                  <span>{hotelB.name} full profile</span><span>→</span>
+                <Link href={`/hotels/${hotelB.slug || hotelB.id}`} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: gold, textDecoration: 'none', display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0' }}>
+                  <span>{hotelB.name} profile</span><span>→</span>
                 </Link>
               </div>
             </div>
