@@ -101,8 +101,13 @@ export async function GET(request: NextRequest) {
   location: hotel.location,
       region: hotel.region,
       category: hotel.category,
-      rating: hotel.rating,
-      nightly_rate_chf: hotel.nightly_rate_chf,
+      star_classification:
+  hotel.category === 'City Luxury' ? 5 :
+  hotel.category === 'Ski Resort' ? 5 :
+  hotel.category === 'Wellness Retreat' ? 5 :
+  4,
+
+nightly_rate_chf: hotel.nightly_rate_chf,
 
       badge,
       short_description: shortDescription,
