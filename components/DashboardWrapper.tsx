@@ -70,7 +70,10 @@ const { data: allCompVisibility } = await supabase
 
       const overviewScores = allCompVisibility?.filter((s: any) => s.category === null) || []
 
-      const runDatesAll = [...new Set(overviewScores.map((s: any) => s.checked_at?.split('T')[0]).filter(Boolean))].sort() as string[]
+const latestRunDate = [...new Set(overviewScores.map((s: any) => s.run_date).filter(Boolean))].sort().slice(-1)[0]
+const latestOverviewScores = overviewScores.filter((s: any) => s.run_date === latestRunDate)
+
+const runDatesAll = [...new Set(overviewScores.map((s: any) => s.run_date || s.checked_at?.split('T')[0]).filter(Boolean))].sort() as string[]
       const latestDate = runDatesAll[runDatesAll.length - 1]
       const prevDate = runDatesAll[runDatesAll.length - 2]
       const latestScores = overviewScores.filter((s: any) => s.checked_at?.startsWith(latestDate))
@@ -104,7 +107,7 @@ const prevRanking = allHotelNames
       const getPrevRank = (name: string) => prevRanking.findIndex(h => h.name === name) + 1
 
       const competitors = (regionHotels || []).map((h: any) => {
-        const hotelOverviewScores = overviewScores.filter((s: any) => s.competitor_name === h.name)
+        const hotelOverviewScores = latestOverviewScores.filter((s: any) => s.competitor_name === h.name)
         const visibilityScore = getLatestScore(hotelOverviewScores, h.name)
 
         const catScores: Record<string, number> = {}
