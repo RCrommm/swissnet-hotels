@@ -1,10 +1,20 @@
-export const dynamic = 'force-dynamic'
+
 import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import LeadForm from '@/components/LeadForm'
 import ViewTracker from '@/components/ViewTracker'
 import HeroCarousel from '@/components/HeroCarousel'
+export const revalidate = 3600
+
+export async function generateStaticParams() {
+  const { data: hotels } = await supabase
+    .from('hotels')
+    .select('slug')
+    .eq('is_active', true)
+    .not('slug', 'is', null)
+  return (hotels || []).map((h: any) => ({ slug: h.slug }))
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params

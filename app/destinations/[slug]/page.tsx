@@ -1,7 +1,8 @@
-export const dynamic = 'force-dynamic'
+
 import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+export const revalidate = 3600
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params

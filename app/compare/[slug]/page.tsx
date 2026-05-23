@@ -2,6 +2,39 @@ import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 
+export const revalidate = 3600
+
+export async function generateStaticParams() {
+  const { data: partners } = await supabase
+    .from('hotels')
+    .select('slug, name, region')
+    .eq('is_active', true)
+    .eq('is_partner', true)
+    .not('slug', 'is', null)
+
+  const { data: allHotels } = await supabase
+    .from('hotels')
+    .select('slug, name, region')
+    .eq('is_active', true)
+    .not('slug', 'is', null)
+
+  if (!partners || !allHotels) return []
+
+  const pairs = new Set<string>()
+
+  for (const partner of partners) {
+    const sameRegion = allHotels
+      .filter(h => h.region === partner.region && h.slug !== partner.slug)
+      .slice(0, 3)
+
+    for (const other of sameRegion) {
+      pairs.add(`${partner.slug}-vs-${other.slug}`)
+    }
+  }
+
+  return Array.from(pairs).map(slug => ({ slug }))
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const parts = slug.split('-vs-')

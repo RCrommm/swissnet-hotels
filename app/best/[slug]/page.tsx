@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { CSSProperties } from 'react'
+export const revalidate = 3600
 
 const MAX_HOTELS_PER_PAGE = 10
 
