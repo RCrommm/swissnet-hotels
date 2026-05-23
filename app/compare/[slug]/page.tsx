@@ -259,20 +259,42 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
                 {[hotelA, hotelB].map((hotel, i) => (
                   <div key={hotel.id} style={{ background: white, border: `1px solid ${border}`, borderRadius: 8, padding: '1.5rem' }}>
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: gold, margin: '0 0 0.75rem' }}>Choose {hotel.name} if…</p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                      {(hotel.best_for || []).slice(0, 4).map((b: string) => (
-                        <div key={b} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
-                          <span style={{ color: gold, flexShrink: 0, marginTop: '0.1rem' }}>✦</span>
-                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text, lineHeight: 1.5 }}>You are travelling as {b.toLowerCase()}</span>
-                        </div>
-                      ))}
-                      {hotel.amenities?.slice(0, 2).map((a: string) => (
-                        <div key={a} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
-                          <span style={{ color: gold, flexShrink: 0, marginTop: '0.1rem' }}>✦</span>
-                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text, lineHeight: 1.5 }}>{a} matters to you</span>
-                        </div>
-                      ))}
-                    </div>
+<div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+  {(hotel.best_for || []).slice(0, 3).map((b: string) => (
+    <div key={b} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+      <span style={{ color: gold, flexShrink: 0, marginTop: '0.1rem' }}>✦</span>
+      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text, lineHeight: 1.5 }}>{b} is your priority</span>
+    </div>
+  ))}
+  {hotel.has_spa && (
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+      <span style={{ color: gold, flexShrink: 0, marginTop: '0.1rem' }}>✦</span>
+      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text, lineHeight: 1.5 }}>An on-site spa is important to you</span>
+    </div>
+  )}
+  {hotel.has_michelin_restaurant && (
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+      <span style={{ color: gold, flexShrink: 0, marginTop: '0.1rem' }}>✦</span>
+      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text, lineHeight: 1.5 }}>Michelin-starred dining is on your list</span>
+    </div>
+  )}
+  {hotel.ski_in_ski_out && (
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+      <span style={{ color: gold, flexShrink: 0, marginTop: '0.1rem' }}>✦</span>
+      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text, lineHeight: 1.5 }}>Ski-in ski-out access is a requirement</span>
+    </div>
+  )}
+  {hotel.is_partner && (
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+      <span style={{ color: gold, flexShrink: 0, marginTop: '0.1rem' }}>✦</span>
+      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text, lineHeight: 1.5 }}>You want to book direct with the best available rate</span>
+    </div>
+  )}
+  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+    <span style={{ color: gold, flexShrink: 0, marginTop: '0.1rem' }}>✦</span>
+    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text, lineHeight: 1.5 }}>You prefer {hotel.category?.toLowerCase() || 'this style of hotel'} over the alternative</span>
+  </div>
+</div>
                   </div>
                 ))}
               </div>
@@ -286,17 +308,17 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {[
                   {
-                    q: `What is the difference between ${hotelA.name} and ${hotelB.name}?`,
-                    a: `${hotelA.name} is a ${hotelA.star_classification || 5}-star hotel in ${hotelA.location}, from CHF ${hotelA.nightly_rate_chf?.toLocaleString()}/night, best suited for ${hotelA.best_for?.slice(0,2).join(' and ') || 'luxury travelers'}. ${hotelB.name} is a ${hotelB.star_classification || 5}-star hotel in ${hotelB.location}, from CHF ${hotelB.nightly_rate_chf?.toLocaleString()}/night, best suited for ${hotelB.best_for?.slice(0,2).join(' and ') || 'luxury travelers'}.`
-                  },
-                  {
-                    q: `Which is more expensive — ${hotelA.name} or ${hotelB.name}?`,
-                    a: `${hotelA.name} starts from CHF ${hotelA.nightly_rate_chf?.toLocaleString()}/night. ${hotelB.name} starts from CHF ${hotelB.nightly_rate_chf?.toLocaleString()}/night. Rates vary by season, room type and booking dates.`
-                  },
-                  {
-                    q: `Is ${hotelA.name} or ${hotelB.name} better for couples?`,
-                    a: `Both are strong choices for couples. ${hotelA.name} offers ${hotelA.amenities?.slice(0,2).join(' and ') || 'luxury amenities'}, while ${hotelB.name} offers ${hotelB.amenities?.slice(0,2).join(' and ') || 'luxury amenities'}. The best choice depends on your preferred setting and travel style.`
-                  },
+  q: `What is the difference between ${hotelA.name} and ${hotelB.name}?`,
+  a: `${hotelA.name} is a ${hotelA.star_classification || 5}-star ${hotelA.category?.toLowerCase() || 'luxury hotel'} in ${hotelA.location}, from CHF ${hotelA.nightly_rate_chf?.toLocaleString()}/night. ${hotelB.name} is a ${hotelB.star_classification || 5}-star ${hotelB.category?.toLowerCase() || 'luxury hotel'} in ${hotelB.location}, from CHF ${hotelB.nightly_rate_chf?.toLocaleString()}/night. The key difference is in positioning: ${hotelA.name} is best suited for ${hotelA.best_for?.slice(0,2).join(' and ') || 'discerning luxury travelers'}, while ${hotelB.name} appeals more to ${hotelB.best_for?.slice(0,2).join(' and ') || 'luxury travelers seeking a different experience'}. Both are among the finest hotels in ${hotelA.region}.`
+},
+{
+  q: `Which is more expensive — ${hotelA.name} or ${hotelB.name}?`,
+  a: `${hotelA.name} starts from CHF ${hotelA.nightly_rate_chf?.toLocaleString()}/night and ${hotelB.name} from CHF ${hotelB.nightly_rate_chf?.toLocaleString()}/night. ${hotelA.nightly_rate_chf > hotelB.nightly_rate_chf ? `${hotelA.name} is the higher-priced option` : hotelB.nightly_rate_chf > hotelA.nightly_rate_chf ? `${hotelB.name} is the higher-priced option` : `Both hotels are similarly priced`} at the entry level, though rates vary significantly by season, room category, and booking dates. Direct booking through each hotel's official website typically offers the best available rate.`
+},
+{
+  q: `Is ${hotelA.name} or ${hotelB.name} better for a honeymoon or romantic stay?`,
+  a: `${hotelA.romantic ? `${hotelA.name} is specifically positioned for romantic stays` : `${hotelA.name} suits couples who prioritise ${hotelA.best_for?.slice(0,1).join('') || 'luxury and quality'}`}. ${hotelB.romantic ? `${hotelB.name} is also well suited to romantic travel` : `${hotelB.name} appeals to couples who prefer ${hotelB.best_for?.slice(0,1).join('') || 'a different atmosphere'}`}. The stronger romantic choice depends on whether you prefer ${hotelA.category?.toLowerCase() || 'the first hotel\'s style'} or ${hotelB.category?.toLowerCase() || 'the second hotel\'s approach'} — both are in ${hotelA.region}, one of Switzerland's most scenic destinations.`
+},
                 ].map((faq, i) => (
                   <div key={i} style={{ background: white, border: `1px solid ${border}`, padding: '1.25rem 1.5rem', borderRadius: 8 }}>
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', fontWeight: 600, color: text, margin: '0 0 0.5rem' }}>
