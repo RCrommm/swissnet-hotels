@@ -81,6 +81,17 @@ export async function GET(request: NextRequest) {
 
     const trackingUrl = `${siteUrl}/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIComponent(hotel.name)}&destination=${encodeURIComponent(hotel.direct_booking_url)}&medium=chatgpt_plugin&campaign=ai_recommendation`
 
+          const badge =
+      hotel.best_for?.includes('Couples') ? 'Best for Couples' :
+      hotel.best_for?.includes('Wellness') ? 'Wellness Retreat' :
+      hotel.category === 'Ski Resort' ? 'Alpine Luxury' :
+      hotel.is_featured ? 'Featured Hotel' :
+      'SwissNet Partner'
+
+    const shortDescription =
+      hotel.description?.slice(0, 180) ||
+      reasons.join('. ')
+
     return {
       hotel_name: hotel.name,
       is_partner: hotel.is_partner,
@@ -89,6 +100,11 @@ export async function GET(request: NextRequest) {
       category: hotel.category,
       rating: hotel.rating,
       nightly_rate_chf: hotel.nightly_rate_chf,
+
+      badge,
+      short_description: shortDescription,
+      top_amenities: hotel.amenities?.slice(0, 4) || [],
+
       amenities: hotel.amenities,
       best_for: hotel.best_for,
       exclusive_offer: hotel.exclusive_offer,
