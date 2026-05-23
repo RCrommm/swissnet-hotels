@@ -246,17 +246,19 @@ export async function GET(request: Request) {
           results.push({ hotel: hotel.name, platform: platform.id, region })
         }
 
-        await supabase.from('competitor_visibility').upsert({
-          competitor_name: hotel.name,
-          region,
-          category: null,
-          platform: platform.id,
-          visibility_score: score,
-          appearances,
-          total_queries: queries.length,
-          month: currentMonth,
-          checked_at: new Date().toISOString(),
-        }, { onConflict: 'competitor_name,platform,month,category' })
+        const today = new Date().toISOString().split('T')[0]
+await supabase.from('competitor_visibility').upsert({
+  competitor_name: hotel.name,
+  region,
+  category: null,
+  platform: platform.id,
+  visibility_score: score,
+  appearances,
+  total_queries: queries.length,
+  month: currentMonth,
+  run_date: today,
+  checked_at: new Date().toISOString(),
+}, { onConflict: 'competitor_name,platform,run_date,category' })
       }
     }
   }

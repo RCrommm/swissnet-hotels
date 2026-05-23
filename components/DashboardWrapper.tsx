@@ -40,10 +40,12 @@ export default function DashboardWrapper() {
 
       const region = hotel?.region || 'Geneva'
 
-      const { data: allCompVisibility } = await supabase
-        .from('competitor_visibility')
-        .select('competitor_name, category, platform, visibility_score, checked_at')
-        .eq('region', region)
+      // Fetch all daily snapshots ordered by run_date
+const { data: allCompVisibility } = await supabase
+  .from('competitor_visibility')
+  .select('competitor_name, category, platform, visibility_score, checked_at, run_date')
+  .eq('region', region)
+  .order('run_date', { ascending: true })
 
       const { data: googleAiScores } = await supabase
         .from('ai_visibility_scores')
@@ -74,42 +76,48 @@ export default function DashboardWrapper() {
       const latestScores = overviewScores.filter((s: any) => s.checked_at?.startsWith(latestDate))
       const prevScores = overviewScores.filter((s: any) => s.checked_at?.startsWith(prevDate))
 
-      const getAvgScore = (scores: any[], name: string) => {
-        const entries = scores.filter((s: any) => s.competitor_name === name)
-        if (!entries.length) return null
-        return Math.round(entries.reduce((sum: number, s: any) => sum + s.visibility_score, 0) / entries.length)
-      }
+      const getLatestScore = (scores: any[], name: string) => {
+  const entries = scores.filter((s: any) => s.competitor_name === name)
+  if (!entries.length) return null
+  // Get latest score per platform, then average those
+  const platforms = [...new Set(entries.map((s: any) => s.platform))]
+  const latestPerPlatform = platforms.map(platform => {
+    const platformEntries = entries
+      .filter((s: any) => s.platform === platform)
+      .sort((a: any, b: any) => (b.run_date || b.checked_at || '').localeCompare(a.run_date || a.checked_at || ''))
+    return platformEntries[0]?.visibility_score ?? null
+  }).filter((s): s is number => s !== null)
+  if (!latestPerPlatform.length) return null
+  return Math.round(latestPerPlatform.reduce((a, b) => a + b, 0) / latestPerPlatform.length)
+}
 
       const allHotelNames = [hotel?.name, ...(regionHotels || []).map((h: any) => h.name)].filter(Boolean)
 
       const latestRanking = allHotelNames
-        .map(name => ({ name, score: getAvgScore(latestScores, name) ?? -1 }))
-        .sort((a, b) => b.score - a.score)
-      const prevRanking = allHotelNames
-        .map(name => ({ name, score: getAvgScore(prevScores, name) ?? -1 }))
-        .sort((a, b) => b.score - a.score)
+  .map(name => ({ name, score: getLatestScore(latestScores, name) ?? -1 }))
+  .sort((a, b) => b.score - a.score)
+const prevRanking = allHotelNames
+  .map(name => ({ name, score: getLatestScore(prevScores, name) ?? -1 }))
+  .sort((a, b) => b.score - a.score)
 
       const getLatestRank = (name: string) => latestRanking.findIndex(h => h.name === name) + 1
       const getPrevRank = (name: string) => prevRanking.findIndex(h => h.name === name) + 1
 
       const competitors = (regionHotels || []).map((h: any) => {
         const hotelOverviewScores = overviewScores.filter((s: any) => s.competitor_name === h.name)
-        const visibilityScore = hotelOverviewScores.length > 0
-          ? Math.round(hotelOverviewScores.reduce((sum: number, s: any) => sum + s.visibility_score, 0) / hotelOverviewScores.length)
-          : null
+        const visibilityScore = getLatestScore(hotelOverviewScores, h.name)
 
         const catScores: Record<string, number> = {}
         for (const cat of ['spa', 'ski', 'dining', 'romantic', 'lake', 'business']) {
-          const catEntries = allCompVisibility?.filter((s: any) => s.competitor_name === h.name && s.category === cat) || []
-          if (catEntries.length > 0) {
-            catScores[cat] = Math.round(catEntries.reduce((sum: number, s: any) => sum + s.visibility_score, 0) / catEntries.length)
-          }
-        }
+  const catEntries = allCompVisibility?.filter((s: any) => s.competitor_name === h.name && s.category === cat) || []
+  const score = getLatestScore(catEntries, h.name)
+  if (score !== null) catScores[cat] = score
+}
 
         const latestRank = getLatestRank(h.name)
 const prevRank = getPrevRank(h.name)
-const hasLatest = getAvgScore(latestScores, h.name) !== null
-const hasPrev = getAvgScore(prevScores, h.name) !== null
+const hasLatest = getLatestScore(latestScores, h.name) !== null
+const hasPrev = getLatestScore(prevScores, h.name) !== null
 const rankChange = hasLatest && hasPrev && latestRank > 0 && prevRank > 0 ? prevRank - latestRank : null
         return { ...h, visibilityScore, catScores, rankChange }
       })
@@ -117,17 +125,17 @@ const rankChange = hasLatest && hasPrev && latestRank > 0 && prevRank > 0 ? prev
       const myOverviewScores = overviewScores.filter((s: any) => s.competitor_name === hotel?.name && s.checked_at !== null)
       const myLatestRank = getLatestRank(hotel?.name)
       const myPrevRank = getPrevRank(hotel?.name)
-      const myHasLatest = getAvgScore(latestScores, hotel?.name) !== null
-const myHasPrev = getAvgScore(prevScores, hotel?.name) !== null
+      const myHasLatest = getLatestScore(latestScores, hotel?.name) !== null
+const myHasPrev = getLatestScore(prevScores, hotel?.name) !== null
 const myRankChange = myHasLatest && myHasPrev && myLatestRank > 0 && myPrevRank > 0 ? myPrevRank - myLatestRank : null
 
       const rawChatgpt = myOverviewScores
-        .filter((s: any) => s.platform === 'chatgpt')
-        .sort((a: any, b: any) => new Date(b.checked_at).getTime() - new Date(a.checked_at).getTime())[0]?.visibility_score ?? null
+  .filter((s: any) => s.platform === 'chatgpt')
+  .sort((a: any, b: any) => (b.run_date || b.checked_at || '').localeCompare(a.run_date || a.checked_at || ''))[0]?.visibility_score ?? null
       const chatgptScore = rawChatgpt !== null ? Math.min(100, rawChatgpt + 20) : null
       const perplexityScore = myOverviewScores
-        .filter((s: any) => s.platform === 'perplexity')
-        .sort((a: any, b: any) => new Date(b.checked_at).getTime() - new Date(a.checked_at).getTime())[0]?.visibility_score ?? null
+  .filter((s: any) => s.platform === 'perplexity')
+  .sort((a: any, b: any) => (b.run_date || b.checked_at || '').localeCompare(a.run_date || a.checked_at || ''))[0]?.visibility_score ?? null
 
       const latestGoogleDate = googleAiScores?.[0]?.checked_at?.split('T')[0]
       const latestGoogleScores = googleAiScores?.filter((s: any) => s.checked_at?.startsWith(latestGoogleDate)) || []
@@ -142,11 +150,10 @@ const myRankChange = myHasLatest && myHasPrev && myLatestRank > 0 && myPrevRank 
 
       const hotelCatScores: Record<string, number> = {}
       for (const cat of ['spa', 'ski', 'dining', 'romantic', 'lake', 'business']) {
-        const catEntries = allCompVisibility?.filter((s: any) => s.competitor_name === hotel?.name && s.category === cat) || []
-        if (catEntries.length > 0) {
-          hotelCatScores[cat] = Math.round(catEntries.reduce((sum: number, s: any) => sum + s.visibility_score, 0) / catEntries.length)
-        }
-      }
+  const catEntries = allCompVisibility?.filter((s: any) => s.competitor_name === hotel?.name && s.category === cat) || []
+  const score = getLatestScore(catEntries, hotel?.name)
+  if (score !== null) hotelCatScores[cat] = score
+}
 
       setData({
         hotel,
