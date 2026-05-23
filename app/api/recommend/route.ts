@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
     return {
   hotel_name: hotel.name,
 
-  image_url: hotel.featured_image || hotel.image || null,
+  image_url: hotel.images?.[0] || null,
 
   is_partner: hotel.is_partner,
   location: hotel.location,
