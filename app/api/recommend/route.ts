@@ -93,9 +93,12 @@ export async function GET(request: NextRequest) {
       reasons.join('. ')
 
     return {
-      hotel_name: hotel.name,
-      is_partner: hotel.is_partner,
-      location: hotel.location,
+  hotel_name: hotel.name,
+
+  image_url: hotel.featured_image || hotel.image || null,
+
+  is_partner: hotel.is_partner,
+  location: hotel.location,
       region: hotel.region,
       category: hotel.category,
       rating: hotel.rating,
