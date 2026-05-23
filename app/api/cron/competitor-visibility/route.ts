@@ -176,7 +176,24 @@ export async function GET(request: Request) {
   }
 
   // ── REGION MODE ──
-  const { data: regionQueriesData } = await supabase
+const today = new Date().toISOString().split('T')[0]
+const regionParam = searchParams.get('region')
+
+const { data: alreadyRanRows } = await supabase
+  .from('competitor_visibility')
+  .select('id')
+  .eq('region', regionParam || 'Geneva')
+  .eq('run_date', today)
+  .is('category', null)
+  .limit(1)
+
+if (alreadyRanRows && alreadyRanRows.length > 0 && !forceRun) {
+  return NextResponse.json({ 
+    message: `Already ran for ${regionParam || 'Geneva'} on ${today}. Pass ?force=true to override.` 
+  })
+}
+
+const { data: regionQueriesData } = await supabase
     .from('region_queries')
     .select('region, query')
     .eq('is_active', true)
@@ -187,7 +204,7 @@ export async function GET(request: Request) {
     QUERIES_PER_REGION[row.region].push(row.query)
   }
 
-  const regionParam = searchParams.get('region')
+  
   let query = supabase.from('competitor_hotels').select('*').eq('is_active', true)
   if (regionParam) query = query.eq('region', regionParam)
   const { data: competitors } = await query
