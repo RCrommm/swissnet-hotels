@@ -21,10 +21,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
  const promptSlugs = [
   'luxury-hotels-zermatt', 'ski-hotels-zermatt', 'luxury-hotels-geneva',
   'luxury-hotels-zurich', 'luxury-hotels-interlaken', 'luxury-hotels-bern',
-  'ski-hotels-switzerland', 'wellness-hotels-switzerland', 'romantic-hotels-switzerland',
+  'ski-hotels-switzerland', 'romantic-hotels-switzerland',
   'luxury-hotels-switzerland', 'business-hotels-switzerland',
   'wellness-hotels-flims', 'ski-hotels-crans-montana', 'ski-hotels-davos',
-  'luxury-hotels-davos', 'luxury-hotels-gstaad', 'luxury-hotels-lugano', 'luxury-hotels-basel', 'luxury-hotels-lucerne', 'luxury-hotels-verbier', 'ski-hotels-verbier', 'honeymoon-hotels-switzerland', 'family-hotels-switzerland', 'spa-hotels-switzerland', 'luxury-hotels-ascona', 'luxury-hotels-andermatt', 'luxury-hotels-montreux'
+  'luxury-hotels-davos', 'luxury-hotels-gstaad', 'luxury-hotels-lugano',
+  'luxury-hotels-basel', 'luxury-hotels-lucerne', 'luxury-hotels-verbier',
+  'ski-hotels-verbier', 'business-city-hotels-switzerland', 'family-hotels-switzerland',
+  'spa-hotels-switzerland', 'luxury-hotels-ascona', 'luxury-hotels-andermatt',
+  'luxury-hotels-crans-montana', 'luxury-hotels-flims', 'luxury-hotels-montreux',
 ]
   const promptPages: MetadataRoute.Sitemap = promptSlugs.map(slug => ({
     url: `${baseUrl}/best/${slug}`,
@@ -45,17 +49,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: hotel.is_partner ? 0.9 : 0.7,
   }))
 
-  const intents = ['honeymoon', 'wellness', 'business', 'family']
+  
   const partnerHotels = (hotels || []).filter((h: any) => h.is_partner)
-  const intentPages: MetadataRoute.Sitemap = partnerHotels.flatMap((hotel: any) =>
-    intents.map(intent => ({
-      url: `${baseUrl}/hotels/${hotel.slug || hotel.id}/${intent}`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly' as const,
-      priority: 0.8,
-    }))
-  )
-  const subPages = ['rooms', 'dining', 'spa', 'experiences', 'events']
+const subPages = ['rooms', 'dining', 'spa', 'experiences', 'events']
 const subPageUrls: MetadataRoute.Sitemap = partnerHotels.flatMap((hotel: any) =>
   subPages.map(page => ({
     url: `${baseUrl}/hotels/${hotel.slug || hotel.id}/${page}`,
@@ -79,4 +75,4 @@ const comparePages: MetadataRoute.Sitemap = partnerHotels.flatMap((hotelA: any) 
     }))
 )
 
-return [...staticPages, ...destinationPages, ...promptPages, ...hotelPages, ...intentPages, ...subPageUrls, ...comparePages]}
+return [...staticPages, ...destinationPages, ...promptPages, ...hotelPages, ...subPageUrls, ...comparePages]}
