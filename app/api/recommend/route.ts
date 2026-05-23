@@ -102,10 +102,9 @@ export async function GET(request: NextRequest) {
       region: hotel.region,
       category: hotel.category,
       star_classification:
-  hotel.category === 'City Luxury' ? 5 :
-  hotel.category === 'Ski Resort' ? 5 :
-  hotel.category === 'Wellness Retreat' ? 5 :
-  4,
+  hotel.name === 'Hotel Adula' ? '4-Star Superior' :
+  hotel.name === 'Schweizerhof Zermatt' ? '4-Star Superior' :
+  '5-Star',
 
 nightly_rate_chf: hotel.nightly_rate_chf,
 
