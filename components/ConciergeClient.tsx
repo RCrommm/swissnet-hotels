@@ -180,7 +180,7 @@ export default function ConciergeClient() {
                   {msg.content && (
                     <div style={{ marginBottom: '2rem' }}>
                       {msg.content.split('\n\n').map((para: string, pi: number) => (
-                        <p key={pi} style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', fontWeight: 300, color: text, lineHeight: 1.9, marginTop: pi > 0 ? '1rem' : 0 }}>
+                        <p key={pi} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', fontWeight: 300, color: text, lineHeight: 1.9, marginTop: pi > 0 ? '1rem' : 0 }}>
                           {para}
                         </p>
                       ))}
@@ -191,7 +191,12 @@ export default function ConciergeClient() {
                       {msg.hotels.map((hotel: any, j: number) => (
                         <div key={j} className="hotel-card" style={{ animationDelay: `${j * 0.1}s`, background: white, border: `1px solid ${border}`, borderTop: `2px solid ${gold}`, position: 'relative', padding: '1.5rem' }}>
                           <Link href={hotel.profile_url} style={{ position: 'absolute', inset: 0, zIndex: 1 }} aria-label={hotel.hotel_name} />
-                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.48rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase' as const, color: gold, margin: '0 0 0.5rem' }}>
+{hotel.image && (
+  <div style={{ height: 200, overflow: 'hidden', marginBottom: '1rem' }}>
+    <img src={hotel.image} alt={hotel.hotel_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+  </div>
+)}
+<p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.48rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase' as const, color: gold, margin: '0 0 0.5rem' }}>
                             {hotel.category} · {hotel.location}
                           </p>
                           <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 300, color: dark, lineHeight: 1.2, margin: '0 0 1rem' }}>
