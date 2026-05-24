@@ -86,7 +86,7 @@ export default function ConciergeClient() {
         .hotel-card { animation: fadeUp 0.5s ease forwards; opacity: 0; }
         .view-btn:hover { background: ${G} !important; color: ${BG} !important; border-color: ${G} !important; }
         .ta:focus { outline: none; }
-        .ta::placeholder { color: rgba(255,255,255,0.4); }
+        .ta::placeholder { color: rgba(42,26,14,0.35); }
         .send:hover:not(:disabled) { background: ${G} !important; color: ${BG} !important; }
       `}</style>
 
