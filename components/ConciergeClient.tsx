@@ -9,9 +9,9 @@ const BG = '#111009'
 const BG2 = '#1A1410'
 const W = '#FFFFFF'
 const T = 'rgba(255,255,255,0.92)'
-const TM = 'rgba(255,255,255,0.65)'
-const TF = 'rgba(255,255,255,0.35)'
-const RULE = 'rgba(255,255,255,0.12)'
+const TM = '#C8C0B4'
+const TF = '#8A8070'
+const RULE = 'rgba(255,255,255,0.18)'
 
 const SUGGESTIONS = [
   'A private lakefront escape for two',
@@ -86,7 +86,7 @@ export default function ConciergeClient() {
         .hotel-card { animation: fadeUp 0.5s ease forwards; opacity: 0; }
         .view-btn:hover { background: ${G} !important; color: ${BG} !important; border-color: ${G} !important; }
         .ta:focus { outline: none; }
-        .ta::placeholder { color: rgba(255,255,255,0.2); }
+        .ta::placeholder { color: rgba(255,255,255,0.4); }
         .send:hover:not(:disabled) { background: ${G} !important; color: ${BG} !important; }
       `}</style>
 
