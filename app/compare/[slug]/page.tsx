@@ -70,11 +70,9 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
   const hotelA = allHotels.find(h => (h as any).slug === slugA) || allHotels.find(h => normalize(h.name) === slugA)
   const hotelB = allHotels.find(h => (h as any).slug === slugB) || allHotels.find(h => normalize(h.name) === slugB)
   if (!hotelA || !hotelB) notFound()
+    if (hotelA.region !== hotelB.region) notFound()
 
-  const [{ data: contentA }, { data: contentB }] = await Promise.all([
-    supabase.from('hotel_content').select('verdict, faqs').eq('hotel_id', hotelA.id).single(),
-    supabase.from('hotel_content').select('verdict, faqs').eq('hotel_id', hotelB.id).single(),
-  ])
+  
 
   const gold = '#C9A84C'
   const border = 'rgba(201,169,110,0.25)'
@@ -83,7 +81,10 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
   const bg = '#F8F5EF'
   const white = '#FFFFFF'
   const pageUrl = `https://swissnethotels.com/compare/${slug}`
-  const regionSlug = hotelA.region?.toLowerCase().replace(/\s+/g, '-')
+  const regionSlug = hotelA.region
+  ?.toLowerCase()
+  .replace(/[^a-z0-9]+/g, '-')
+  .replace(/^-|-$/g, '')
 
   const trackingUrlA = hotelA.is_partner && hotelA.direct_booking_url
     ? `/api/track?hotel_id=${hotelA.id}&hotel_name=${encodeURIComponent(hotelA.name)}&destination=${encodeURIComponent(hotelA.direct_booking_url)}&medium=website&campaign=compare`
@@ -525,7 +526,7 @@ h.category === hotelB.category
                   </div>
                   <div style={{ padding: '1.25rem' }}>
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: textMuted, lineHeight: 1.7, margin: '0 0 1rem', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties}>
-                      {i === 0 ? (contentA?.verdict || hotel.description) : (contentB?.verdict || hotel.description)}
+                      {hotel.description}
                     </p>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <Link href={`/hotels/${hotel.slug || hotel.id}`} style={{ flex: 1, display: 'block', textAlign: 'center', border: `1px solid ${border}`, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: text, padding: '0.6rem', textDecoration: 'none', borderRadius: 4 }}>
@@ -712,7 +713,7 @@ h.category === hotelB.category
                   </a>
                 )}
               </div>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: textMuted, margin: '0.75rem 0 0', textAlign: 'center' }}>Direct · No OTA fees · Best rate</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: textMuted, margin: '0.75rem 0 0', textAlign: 'center' }}>Direct booking · Hotel terms apply</p>
             </div>
 
             <div style={{ background: white, border: `1px solid ${border}`, borderRadius: 8, padding: '1.5rem' }}>
