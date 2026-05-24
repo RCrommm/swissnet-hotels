@@ -11,6 +11,38 @@
     {
       "path": "/api/indexnow",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/competitor-visibility?region=Geneva",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/ai-visibility",
+      "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/competitor-visibility?region=Geneva&type=category&category=spa",
+      "schedule": "0 8 * * 1"
+    },
+    {
+      "path": "/api/cron/competitor-visibility?region=Geneva&type=category&category=ski",
+      "schedule": "0 9 * * 1"
+    },
+    {
+      "path": "/api/cron/competitor-visibility?region=Geneva&type=category&category=dining",
+      "schedule": "0 10 * * 1"
+    },
+    {
+      "path": "/api/cron/competitor-visibility?region=Geneva&type=category&category=romantic",
+      "schedule": "0 11 * * 1"
+    },
+    {
+      "path": "/api/cron/competitor-visibility?region=Geneva&type=category&category=lake",
+      "schedule": "0 12 * * 1"
+    },
+    {
+      "path": "/api/cron/competitor-visibility?region=Geneva&type=category&category=business",
+      "schedule": "0 13 * * 1"
     }
   ]
 }
