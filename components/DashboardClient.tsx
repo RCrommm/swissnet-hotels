@@ -852,6 +852,13 @@ const appearedQueriesGoogle = googleInPeriod.filter((r: any) => r.appeared).leng
 const totalQueries = totalQueriesChatPerp + totalQueriesGoogle
 const appearedQueries = appearedQueriesChatPerp + appearedQueriesGoogle
 const periodScore = totalQueries > 0 ? Math.round((appearedQueries / totalQueries) * 100) : null
+const latestPerQuery = [...new Map(
+  [...(aiVisibility || [])].sort((a: any, b: any) => 
+    new Date(b.checked_at).getTime() - new Date(a.checked_at).getTime()
+  ).map((r: any) => [r.query, r])
+).values()]
+const appearedList = latestPerQuery.filter((r: any) => r.appeared)
+const missedList = latestPerQuery.filter((r: any) => !r.appeared)
   const now = new Date()
   const periodStart = new Date(now.getTime() - period * 24 * 60 * 60 * 1000)
   const recentViews = views?.filter((v: any) => new Date(v.viewed_at) > periodStart) || []
@@ -1076,7 +1083,7 @@ const periodScore = totalQueries > 0 ? Math.round((appearedQueries / totalQuerie
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
               <KPICard label="AI Visibility Score" value={visibilityScore + '%'} sub="overall score" color={GOLD} />
 <KPICard label="Market Opportunities" value={totalQueries} sub={`queries run · last ${period}d`} color={BLUE} />
-<KPICard label="AI Appearances" value={appearedQueries} sub={periodScore !== null ? `${periodScore}% score this period · last ${period}d` : `queries appeared in · last ${period}d`} color={GREEN} />
+<KPICard label="AI Appearances" value={periodScore !== null ? `${appearedQueries} — ${periodScore}%` : appearedQueries} sub={`queries appeared in · last ${period}d`} color={GOLD} />
 <KPICard label="Missed Opportunities" value={Math.max(0, totalQueries - appearedQueries)} sub={`queries to improve · last ${period}d`} color={TEXT_MUTED} />
             </div>
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', marginBottom: '1.5rem' }}>
@@ -1103,7 +1110,7 @@ const periodScore = totalQueries > 0 ? Math.round((appearedQueries / totalQuerie
                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 1rem' }}>Where You Appear</p>
                 {appearedQueries === 0 ? <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>No appearances yet — indexing in progress.</p> : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    {[...new Map(aiVisibility?.filter((r: any) => r.appeared).map((r: any) => [r.query, r])).values()].slice(0, 5).map((row: any, i: number) => (
+                    {appearedList.slice(0, 5).map((row: any, i: number) => (
                       <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0', borderBottom: '1px solid ' + BORDER }}>
                         <div style={{ width: 6, height: 6, borderRadius: '50%', background: GREEN, flexShrink: 0 }} />
                         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT, margin: 0 }}>{row.query}</p>
