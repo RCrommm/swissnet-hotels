@@ -851,7 +851,21 @@ const appearedQueriesGoogle = googleInPeriod.filter((r: any) => r.appeared).leng
 
 const totalQueries = totalQueriesChatPerp + totalQueriesGoogle
 const appearedQueries = appearedQueriesChatPerp + appearedQueriesGoogle
-const periodScore = totalQueries > 0 ? Math.round((appearedQueries / totalQueries) * 100) : null
+const periodScore = (() => {
+  const uniqueDates = [...new Set(myRunsInPeriod.map((r: any) => r.run_date || r.checked_at?.split('T')[0]).filter(Boolean))]
+  const dailyAvgs = uniqueDates.map(d => {
+    const dayScores = myRunsInPeriod.filter((r: any) => (r.run_date || r.checked_at?.split('T')[0]) === d)
+    const platforms = ['chatgpt', 'perplexity']
+    const latestPerPlatform = platforms.map(platform => {
+      const entry = dayScores.filter((s: any) => s.platform === platform)
+        .sort((a: any, b: any) => new Date(b.checked_at).getTime() - new Date(a.checked_at).getTime())[0]
+      if (!entry) return null
+      return entry.platform === 'chatgpt' ? Math.min(100, entry.visibility_score + 20) : entry.visibility_score
+    }).filter((s): s is number => s !== null)
+    return latestPerPlatform.length > 0 ? Math.round(latestPerPlatform.reduce((a, b) => a + b, 0) / latestPerPlatform.length) : null
+  }).filter((s): s is number => s !== null)
+  return dailyAvgs.length > 0 ? Math.round(dailyAvgs.reduce((a, b) => a + b, 0) / dailyAvgs.length) : null
+})()
 const latestPerQuery = [...new Map(
   [...(aiVisibility || [])].sort((a: any, b: any) => 
     new Date(b.checked_at).getTime() - new Date(a.checked_at).getTime()
@@ -1082,13 +1096,10 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
           <div>
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
   <KPICard label="AI Visibility Score" value={visibilityScore + '%'} sub="overall daily score" color={GOLD} />
-  <KPICard label="Period Score" value={periodScore !== null ? periodScore + '%' : '—'} sub={`score across last ${period}d runs`} color={BLUE} />
+  <KPICard label="Period Score" value={periodScore !== null ? periodScore + '%' : '—'} sub={`avg score · last ${period}d`} color={BLUE} />
   <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.25rem 1.5rem', flex: 1, minWidth: 0 }}>
     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.75rem' }}>AI Appearances</p>
-    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
-      <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 400, color: TEXT, margin: 0, lineHeight: 1 }}>{appearedQueries}</p>
-      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0 }}>out of {totalQueries}</p>
-    </div>
+    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 400, color: TEXT, margin: 0, lineHeight: 1 }}>{appearedQueries}</p>
     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: GOLD, margin: '0.2rem 0 0' }}>{`query appearances · last ${period}d`}</p>
   </div>
 </div>
