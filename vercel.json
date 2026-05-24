@@ -17,10 +17,6 @@
       "schedule": "0 6 * * *"
     },
     {
-      "path": "/api/cron/ai-visibility",
-      "schedule": "0 7 * * *"
-    },
-    {
       "path": "/api/cron/competitor-visibility?region=Geneva&type=category&category=spa",
       "schedule": "0 8 * * 1"
     },
