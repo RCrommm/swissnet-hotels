@@ -94,12 +94,20 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
     : hotelB.direct_booking_url
 
   // Related — same region, same luxury tier, not these two hotels, max 3
-  const relatedHotels = allHotels
+  // Prefer same category or overlapping best_for, same region and tier
+const relatedHotels = allHotels
   .filter(h =>
     h.id !== hotelA.id &&
     h.id !== hotelB.id &&
-    h.region === hotelA.region
+    h.region === hotelA.region &&
+    h.luxury_tier === hotelA.luxury_tier
   )
+  .sort((a, b) => {
+    // Prioritize same category as either hotel
+    const aScore = (a.category === hotelA.category || a.category === hotelB.category) ? 1 : 0
+    const bScore = (b.category === hotelA.category || b.category === hotelB.category) ? 1 : 0
+    return bScore - aScore
+  })
   .slice(0, 3)
 
   // ── EDITORIAL LOGIC ───────────────────────────────────────────────────────
@@ -148,6 +156,7 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
     grand_vs_boutique: `${hotelA.name} and ${hotelB.name} offer contrasting takes on ${hotelA.region} luxury. ${hotelA.name} is a classic grand hotel — expansive, traditionally elegant, suited to ${fitsA.slice(0, 2).join(' and ').toLowerCase()}. ${hotelB.name} takes a more intimate approach: smaller in scale, more design-forward, and better suited to travelers who prefer ${fitsB.slice(0, 2).join(' and ').toLowerCase()}.`,
     wellness_vs_ski: `In ${hotelA.region}, ${hotelA.name} and ${hotelB.name} serve different sides of the mountain experience. ${hotelA.name} leads with wellness — the spa, the treatments, and the recovery ritual are the core of what it offers. ${hotelB.name} is more ski-first, with the mountain and slopes at the center of its appeal. Travelers who want to come off the mountain and disappear into a spa will find ${hotelA.name} the stronger fit; those who want to ski hard and stay close to the action will prefer ${hotelB.name}.`,
     ski_vs_wellness: `${hotelA.name} and ${hotelB.name} both sit in ${hotelA.region} but appeal to different types of mountain traveler. ${hotelA.name} is ski-first — the slopes, the access, and the alpine energy are its primary draw. ${hotelB.name} prioritises wellness, with the spa and recovery experience taking center stage. The better choice depends on whether you're coming to ski or to restore.`,
+    ski_vs_ski: `${hotelA.name} and ${hotelB.name} are both ski hotels in ${hotelA.region}, but they appeal to different types of mountain traveler. ${hotelA.name} is a ${atmA} — ${fitsA.slice(0,2).join(' and ').toLowerCase()} tend to choose it for its ${hotelA.wellness_focus ? 'wellness offering and' : ''} atmosphere. ${hotelB.name} has a more ${atmB} character, with stronger appeal for ${fitsB.slice(0,2).join(' and ').toLowerCase()}. Both are strong — the decision comes down to scale and style.`,
     city_vs_city: `Both ${hotelA.name} and ${hotelB.name} operate at the top of the ${hotelA.region} luxury market, but they position themselves differently. ${hotelA.name} is the more ${atmA} option, drawing ${fitsA.slice(0, 2).join(' and ').toLowerCase()}. ${hotelB.name} has a more ${atmB} character, better suited to ${fitsB.slice(0, 2).join(' and ').toLowerCase()}. At this level, the decision comes down to atmosphere and personal fit rather than quality.`,
     default: `${hotelA.name} and ${hotelB.name} are both strong options in ${hotelA.region}, but they occupy different positions in the market. ${hotelA.name} is a ${atmA}, oriented toward ${fitsA.slice(0, 2).join(' and ').toLowerCase()}. ${hotelB.name} takes a ${atmB} approach, appealing more to ${fitsB.slice(0, 2).join(' and ').toLowerCase()}.`,
   }
@@ -389,12 +398,12 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
                             <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: text, lineHeight: 1.5 }}>{f}</span>
                           </div>
                         ))}
-                        {hotel.has_michelin_restaurant === true && (
-                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
-                            <span style={{ color: gold, flexShrink: 0, marginTop: '0.15rem' }}>✦</span>
-                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: text, lineHeight: 1.5 }}>Michelin-starred dining on-site</span>
-                          </div>
-                        )}
+                        {hotel.has_michelin_restaurant === true && !(hotel.best_for as string[])?.some((b: string) => b.toLowerCase().includes('dining') || b.toLowerCase().includes('michelin')) && (
+  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+    <span style={{ color: gold, flexShrink: 0, marginTop: '0.15rem' }}>✦</span>
+    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: text, lineHeight: 1.5 }}>Michelin-starred dining on-site</span>
+  </div>
+)}
                         {hotel.ski_in_ski_out === true && (
                           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
                             <span style={{ color: gold, flexShrink: 0, marginTop: '0.15rem' }}>✦</span>
