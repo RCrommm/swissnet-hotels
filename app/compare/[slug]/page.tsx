@@ -111,66 +111,186 @@ h.category === hotelB.category
   })
   .slice(0, 3)
 
-  // ── EDITORIAL LOGIC ───────────────────────────────────────────────────────
+  // ── EDITORIAL POSITIONING ENGINE ─────────────────────────────────────────
 
-  // Richer positioning based on actual DB fields, not just category
-  const getPositioning = (h: any): { identity: string; energy: string; setting: string } => {
+  type HotelPos = {
+    identity: string
+    setting: 'lakeside-resort' | 'city-centre' | 'mountain' | 'urban-lakefront' | 'swiss'
+    energy: string
+    privacy: 'very-private' | 'private' | 'social' | 'formal'
+    scale: 'boutique' | 'mid' | 'grand'
+    primaryDraw: string
+  }
+
+  const getPositioning = (h: any): HotelPos => {
     const cat = (h.category || '').toLowerCase()
+    const isLakefront = h.lakefront === true
+    const isLakeView = h.lake_view === true
+    const isWellness = h.wellness_focus === true
+    const isCentral = h.central_location === true
+    const isBusiness = h.business_hotel === true
+    const isSki = h.ski_in_ski_out === true || cat.includes('ski')
+    const isBoutique = cat.includes('boutique')
+    const hasSpа = h.has_spa === true
+    const isRomantic = h.romantic === true
+    const isWellnessRetreat = cat.includes('wellness')
 
-    // Lakefront resort — even if categorised as "city luxury"
-    if (h.lakefront === true && h.wellness_focus === true && h.central_location !== true) {
-      return { identity: 'discreet lakeside retreat', energy: 'private and unhurried', setting: 'resort' }
-    }
-    if (h.lakefront === true && h.central_location === true) {
-      return { identity: 'lakefront grand hotel', energy: 'urban and prestigious', setting: 'city' }
-    }
-    if (h.lakefront === true) {
-      return { identity: 'lakeside luxury hotel', energy: 'relaxed and scenic', setting: 'lakeside' }
-    }
-
-    // City hotels
-    if (cat.includes('city') && h.business_hotel === true && h.central_location === true) {
-      return { identity: 'urban grand hotel', energy: 'formal and central', setting: 'city' }
-    }
-    if (cat.includes('city') && h.wellness_focus === true) {
-      return { identity: 'city wellness hotel', energy: 'calm and design-led', setting: 'city' }
-    }
-    if (cat.includes('city')) {
-      return { identity: 'city luxury hotel', energy: 'urban and sophisticated', setting: 'city' }
-    }
-
-    // Mountain / ski
-    if (cat.includes('boutique') && h.wellness_focus === true) {
-      return { identity: 'boutique wellness lodge', energy: 'intimate and restorative', setting: 'mountain' }
-    }
-    if (cat.includes('boutique')) {
-      return { identity: 'boutique mountain hotel', energy: 'intimate and design-led', setting: 'mountain' }
-    }
-    if (cat.includes('wellness')) {
-      return { identity: 'wellness retreat', energy: 'restorative and quiet', setting: 'mountain' }
-    }
-    if (cat.includes('ski') && h.wellness_focus === true) {
-      return { identity: 'ski and wellness resort', energy: 'active and restorative', setting: 'mountain' }
-    }
-    if (cat.includes('ski') && h.has_spa === true) {
-      return { identity: 'classic alpine grand hotel', energy: 'traditional and complete', setting: 'mountain' }
-    }
-    if (cat.includes('ski')) {
-      return { identity: 'alpine ski hotel', energy: 'mountain-focused', setting: 'mountain' }
+    // Lakeside resort — secluded, not central
+    if (isLakefront && isWellness && !isCentral) {
+      return {
+        identity: 'discreet lakeside retreat',
+        setting: 'lakeside-resort',
+        energy: 'private and unhurried',
+        privacy: 'very-private',
+        scale: 'grand',
+        primaryDraw: 'lakeside seclusion and wellness',
+      }
     }
 
-    return { identity: 'luxury hotel', energy: 'refined', setting: 'swiss' }
+    // Urban lakefront — on the lake but central
+    if (isLakefront && isCentral) {
+      return {
+        identity: 'lakefront grand hotel',
+        setting: 'urban-lakefront',
+        energy: 'urban and prestigious',
+        privacy: 'formal',
+        scale: 'grand',
+        primaryDraw: 'central lakefront position',
+      }
+    }
+
+    // Lakefront without wellness or central — pure lakeside
+    if (isLakefront) {
+      return {
+        identity: 'lakeside luxury hotel',
+        setting: 'urban-lakefront',
+        energy: 'relaxed and scenic',
+        privacy: 'private',
+        scale: 'grand',
+        primaryDraw: 'lake setting',
+      }
+    }
+
+    // Urban business grand hotel
+    if (isBusiness && isCentral && !isWellness) {
+      return {
+        identity: 'urban grand hotel',
+        setting: 'city-centre',
+        energy: 'formal and central',
+        privacy: 'formal',
+        scale: 'grand',
+        primaryDraw: 'central city position and business facilities',
+      }
+    }
+
+    // Design boutique with wellness
+    if (isBoutique && isWellness) {
+      return {
+        identity: 'boutique wellness lodge',
+        setting: 'mountain',
+        energy: 'intimate and restorative',
+        privacy: 'very-private',
+        scale: 'boutique',
+        primaryDraw: 'intimate atmosphere and wellness',
+      }
+    }
+
+    // Pure boutique
+    if (isBoutique) {
+      return {
+        identity: 'boutique mountain hotel',
+        setting: 'mountain',
+        energy: 'intimate and design-led',
+        privacy: 'private',
+        scale: 'boutique',
+        primaryDraw: 'intimate scale and design',
+      }
+    }
+
+    // Wellness retreat
+    if (isWellnessRetreat || (isWellness && !isSki && !isCentral)) {
+      return {
+        identity: 'wellness retreat',
+        setting: 'mountain',
+        energy: 'restorative and quiet',
+        privacy: 'very-private',
+        scale: 'mid',
+        primaryDraw: 'wellness and nature',
+      }
+    }
+
+    // Ski and wellness
+    if (isSki && isWellness) {
+      return {
+        identity: 'ski and wellness alpine resort',
+        setting: 'mountain',
+        energy: 'active and restorative',
+        privacy: 'private',
+        scale: 'grand',
+        primaryDraw: 'skiing and spa recovery',
+      }
+    }
+
+    // Classic alpine grand hotel with spa
+    if (isSki && hasSpа) {
+      return {
+        identity: 'classic alpine grand hotel',
+        setting: 'mountain',
+        energy: 'traditional and complete',
+        privacy: 'formal',
+        scale: 'grand',
+        primaryDraw: 'grand alpine tradition and skiing',
+      }
+    }
+
+    // Ski-first
+    if (isSki) {
+      return {
+        identity: 'alpine ski resort',
+        setting: 'mountain',
+        energy: 'mountain-focused and active',
+        privacy: 'social',
+        scale: 'mid',
+        primaryDraw: 'skiing and mountain access',
+      }
+    }
+
+    // City luxury without business focus
+    if (cat.includes('city') && !isBusiness) {
+      return {
+        identity: 'city luxury hotel',
+        setting: 'city-centre',
+        energy: 'urban and sophisticated',
+        privacy: 'formal',
+        scale: 'grand',
+        primaryDraw: 'urban luxury and location',
+      }
+    }
+
+    // Fallback
+    return {
+      identity: 'luxury hotel',
+      setting: 'swiss',
+      energy: 'refined',
+      privacy: 'private',
+      scale: 'grand',
+      primaryDraw: 'luxury and quality',
+    }
   }
 
   const getTravelerFit = (h: any): string[] => {
+    // best_for from DB is most reliable — use it first
     if (h.best_for?.length > 0) return (h.best_for as string[]).slice(0, 3)
+    const pos = getPositioning(h)
     const fits: string[] = []
-    if (h.romantic) fits.push('Couples')
-    if (h.family_friendly) fits.push('Families')
-    if (h.business_hotel) fits.push('Business travelers')
-    if (h.wellness_focus) fits.push('Wellness seekers')
-    if (h.ski_in_ski_out) fits.push('Ski lovers')
-    return fits.length ? fits.slice(0, 3) : ['Discerning luxury travelers']
+    if (pos.setting === 'lakeside-resort') fits.push('Couples seeking privacy', 'Wellness travelers', 'Discerning guests avoiding the city')
+    else if (pos.setting === 'urban-lakefront') fits.push('Business travelers', 'Couples on city breaks', 'Those wanting lakefront and city access')
+    else if (pos.setting === 'city-centre') fits.push('Business travelers', 'Urban explorers', 'Diplomatic visitors')
+    else if (pos.scale === 'boutique') fits.push('Couples', 'Design-conscious travelers', 'Those preferring intimacy over scale')
+    else if (pos.identity.includes('wellness')) fits.push('Wellness seekers', 'Couples', 'Those prioritising restoration over activity')
+    else if (pos.identity.includes('ski')) fits.push('Skiers', 'Families', 'Active mountain travelers')
+    else fits.push('Luxury travelers', 'Couples', 'Special occasion stays')
+    return fits.slice(0, 3)
   }
 
   const posA = getPositioning(hotelA)
@@ -178,45 +298,70 @@ h.category === hotelB.category
   const fitsA = getTravelerFit(hotelA)
   const fitsB = getTravelerFit(hotelB)
 
-  // Keep getAtmosphere for sidebar/table display only
   const getAtmosphere = (h: any): string => getPositioning(h).identity
 
-  const atmA = posA.identity
-  const atmB = posB.identity
+  // ── OPENING GENERATOR ─────────────────────────────────────────────────────
 
-  // Opening — driven by setting combination, not category string
-  const getOpeningType = (): string => {
+  const generateOpening = (): string => {
     const sA = posA.setting
     const sB = posB.setting
-    if (sA === 'resort' && sB === 'city') return 'resort_vs_city'
-    if (sA === 'city' && sB === 'resort') return 'city_vs_resort'
-    if (sA === 'resort' && sB === 'lakeside') return 'resort_vs_lakeside'
-    if (sA === 'lakeside' && sB === 'city') return 'resort_vs_city'
-    if (sA === 'city' && sB === 'lakeside') return 'city_vs_resort'
-    if (sA === 'mountain' && sB === 'mountain') {
-      const aIsWellness = posA.identity.includes('wellness') || posA.identity.includes('boutique')
-      const bIsWellness = posB.identity.includes('wellness') || posB.identity.includes('boutique')
-      if (aIsWellness && !bIsWellness) return 'wellness_vs_grand'
-      if (!aIsWellness && bIsWellness) return 'grand_vs_wellness'
-      return 'mountain_vs_mountain'
+
+    // Resort vs city-centre — the most important distinction to get right
+    if (sA === 'lakeside-resort' && (sB === 'city-centre' || sB === 'urban-lakefront')) {
+      return `${hotelA.name} and ${hotelB.name} are both exceptional ${hotelA.region} addresses, but they offer fundamentally different experiences. ${hotelA.name} is a ${posA.identity} — set apart from the city, with a private lakeside setting and an atmosphere centred on calm and discretion rather than urban convenience. ${hotelB.name} is a ${posB.identity} positioned at the heart of ${hotelA.region}, within easy reach of the old town and the main lakefront — better suited to travelers who want the city immediately accessible. The choice comes down to whether you want ${hotelA.region} at your door or a private escape from it.`
     }
-    if (sA === 'city' && sB === 'city') return 'city_vs_city'
-    return 'default'
+
+    if ((sA === 'city-centre' || sA === 'urban-lakefront') && sB === 'lakeside-resort') {
+      return `${hotelA.name} and ${hotelB.name} occupy very different positions in ${hotelA.region}. ${hotelA.name} is a ${posA.identity} — central, prestigious, and oriented toward ${fitsA.slice(0, 2).join(' and ').toLowerCase()}. ${hotelB.name} takes a completely different approach: a ${posB.identity} removed from the urban centre, offering seclusion, a private lakeside setting, and an atmosphere more akin to a destination resort than a city hotel. The decision comes down to whether you want ${hotelA.region} at your door or a private retreat from it.`
+    }
+
+    // Both lakefront but different energy
+    if (sA === 'urban-lakefront' && sB === 'urban-lakefront') {
+      return `${hotelA.name} and ${hotelB.name} are both lakefront properties in ${hotelA.region}, but with different characters. ${hotelA.name} is a ${posA.identity} — ${posA.energy}, with ${posA.primaryDraw} at its core. ${hotelB.name} has a ${posB.energy} character, centred on ${posB.primaryDraw}. At this level the distinction is one of atmosphere and personal style rather than quality.`
+    }
+
+    // Both city
+    if (sA === 'city-centre' && sB === 'city-centre') {
+      const aMoreBusiness = hotelA.business_hotel && !hotelB.business_hotel
+      const bMoreBusiness = hotelB.business_hotel && !hotelA.business_hotel
+      if (aMoreBusiness) {
+        return `${hotelA.name} and ${hotelB.name} are both at the top of the ${hotelA.region} luxury market, but they attract different guests. ${hotelA.name} is a ${posA.identity} with a strong business and diplomatic orientation — suited to travelers who want central positioning and professional infrastructure. ${hotelB.name} has a more residential and ${posB.energy} character, better suited to ${fitsB.slice(0, 2).join(' and ').toLowerCase()} who want a central base without the corporate atmosphere.`
+      }
+      if (bMoreBusiness) {
+        return `${hotelA.name} and ${hotelB.name} both sit at the top of the ${hotelA.region} luxury market. ${hotelA.name} has a ${posA.energy} character suited to ${fitsA.slice(0, 2).join(' and ').toLowerCase()}. ${hotelB.name} is a more ${posB.identity} — better suited to business travelers and diplomatic visitors who want central positioning and professional infrastructure.`
+      }
+      return `Both ${hotelA.name} and ${hotelB.name} rank among the finest city hotels in ${hotelA.region}, but they have distinct characters. ${hotelA.name} is ${posA.energy} in atmosphere, drawing ${fitsA.slice(0, 2).join(' and ').toLowerCase()}. ${hotelB.name} is more ${posB.energy}, better suited to ${fitsB.slice(0, 2).join(' and ').toLowerCase()}. The decision at this level is one of atmosphere and fit rather than quality.`
+    }
+
+    // Mountain: wellness boutique vs grand alpine
+    if (sA === 'mountain' && sB === 'mountain') {
+      const aWellness = posA.identity.includes('wellness') || posA.identity.includes('boutique')
+      const bWellness = posB.identity.includes('wellness') || posB.identity.includes('boutique')
+
+      if (aWellness && !bWellness) {
+        return `${hotelA.name} and ${hotelB.name} sit in the same ${hotelA.region} landscape but represent different expressions of alpine luxury. ${hotelA.name} is a ${posA.identity} — its ${posA.energy} atmosphere and focus on ${posA.primaryDraw} make it the stronger choice for travelers who want the mountain as a backdrop to a restorative stay. ${hotelB.name} is the more ${posB.identity} — larger in scale, more complete in facilities, and more formal in character. The choice comes down to whether you want a wellness-led escape or the full grand hotel experience.`
+      }
+
+      if (!aWellness && bWellness) {
+        return `${hotelA.name} and ${hotelB.name} both sit in ${hotelA.region} but appeal to very different mountain travelers. ${hotelA.name} is the ${posA.identity} — the benchmark ${posA.energy} property in the area, with the scale, facilities, and tradition of a classic alpine grand hotel. ${hotelB.name} takes a more ${posB.energy} approach, better suited to travelers who want ${posB.primaryDraw} over grand hotel formality. If scale and completeness are the priority, ${hotelA.name} wins; if atmosphere and intimacy matter more, ${hotelB.name} is the stronger fit.`
+      }
+
+      // Both ski or both similar mountain
+      if (posA.privacy === 'social' || posB.privacy === 'social') {
+        return `${hotelA.name} and ${hotelB.name} are both strong mountain hotels in ${hotelA.region}, but they suit different types of skier. ${hotelA.name} is a ${posA.identity} — ${posA.energy} in character, with ${posA.primaryDraw} as its core appeal. ${hotelB.name} takes a ${posB.energy} approach, better suited to ${fitsB.slice(0, 2).join(' and ').toLowerCase()}. Both are well positioned for the slopes; the choice comes down to the kind of stay you want off the mountain.`
+      }
+
+      return `${hotelA.name} and ${hotelB.name} are both excellent choices in ${hotelA.region} but with different sensibilities. ${hotelA.name} is a ${posA.identity} — ${posA.energy}, drawing ${fitsA.slice(0, 2).join(' and ').toLowerCase()}. ${hotelB.name} has a ${posB.energy} character, better suited to ${fitsB.slice(0, 2).join(' and ').toLowerCase()}. Both are strong; the decision is one of personal fit.`
+    }
+
+    // Cross-setting default
+    return `${hotelA.name} and ${hotelB.name} are both strong options in ${hotelA.region} but occupy different positions in the luxury market. ${hotelA.name} is a ${posA.identity} with ${posA.energy} atmosphere — oriented toward ${fitsA.slice(0, 2).join(' and ').toLowerCase()}. ${hotelB.name} is a ${posB.identity}, more ${posB.energy} in character, better suited to ${fitsB.slice(0, 2).join(' and ').toLowerCase()}.`
   }
 
-  const openingVariants: Record<string, string> = {
-    resort_vs_city: `${hotelA.name} and ${hotelB.name} are both exceptional Geneva addresses, but they offer fundamentally different experiences. ${hotelA.name} is a ${posA.identity} — set apart from the city centre, with a private lakeside setting and an atmosphere that prioritises calm and discretion over urban convenience. ${hotelB.name} is a ${posB.identity} at the heart of Geneva, within walking distance of the old town and Jet d'Eau, better suited to travelers who want the city immediately on their doorstep. The choice is not about quality but about what kind of stay you are looking for.`,
-    city_vs_resort: `${hotelA.name} and ${hotelB.name} occupy different positions in the Geneva luxury market. ${hotelA.name} is a ${posA.identity} — central, prestigious, and oriented toward ${fitsA.slice(0, 2).join(' and ').toLowerCase()}. ${hotelB.name} takes a completely different approach: a ${posB.identity} removed from the urban centre, offering privacy, a lakeside park, and an atmosphere more akin to a destination resort than a city hotel. The decision comes down to whether you want Geneva at your door or a private escape from it.`,
-    wellness_vs_grand: `${hotelA.name} and ${hotelB.name} sit in the same ${hotelA.region} landscape but represent different expressions of alpine luxury. ${hotelA.name} is a ${posA.identity} — its spa, its intimate scale, and its ${posA.energy} atmosphere make it the stronger choice for travelers who want the mountain as a backdrop to a restorative stay. ${hotelB.name} is the more traditional ${posB.identity}, with the full grand hotel offering — larger scale, broader facilities, and a more formal alpine character. The choice comes down to whether you want a wellness-led escape or a complete grand hotel experience.`,
-    grand_vs_wellness: `${hotelA.name} and ${hotelB.name} both sit in ${hotelA.region} but appeal to very different types of traveler. ${hotelA.name} is a ${posA.identity} — the benchmark traditional alpine grand hotel, with the facilities, history, and formality that implies. ${hotelB.name} takes a more intimate and ${posB.energy} approach, suited to travelers who want the mountain experience with a stronger wellness and design focus. If scale and completeness matter, ${hotelA.name} is the stronger choice; if atmosphere and intimacy matter more, ${hotelB.name} wins.`,
-    mountain_vs_mountain: `${hotelA.name} and ${hotelB.name} are both strong choices in ${hotelA.region}, but they appeal to different sensibilities. ${hotelA.name} is a ${posA.identity} with a ${posA.energy} atmosphere, better suited to ${fitsA.slice(0, 2).join(' and ').toLowerCase()}. ${hotelB.name} is a ${posB.identity} — ${posB.energy} in character, drawing travelers who want ${fitsB.slice(0, 2).join(' and ').toLowerCase()}. Both are excellent; the decision is one of personal fit.`,
-    city_vs_city: `${hotelA.name} and ${hotelB.name} both operate at the top of the ${hotelA.region} luxury market, but with distinct characters. ${hotelA.name} is a ${posA.identity} — ${posA.energy}, drawing ${fitsA.slice(0, 2).join(' and ').toLowerCase()}. ${hotelB.name} has a more ${posB.energy} character, better suited to ${fitsB.slice(0, 2).join(' and ').toLowerCase()}. At this level the decision comes down to atmosphere and personal fit rather than quality.`,
-    default: `${hotelA.name} and ${hotelB.name} are both strong options in ${hotelA.region}, but they occupy different positions in the market. ${hotelA.name} is a ${posA.identity}, oriented toward ${fitsA.slice(0, 2).join(' and ').toLowerCase()}. ${hotelB.name} is a ${posB.identity}, appealing more to ${fitsB.slice(0, 2).join(' and ').toLowerCase()}.`,
-  }
+  const opening = generateOpening()
 
-  const opening = openingVariants[getOpeningType()] || openingVariants.default
+  // ── DIFFERENTIATORS ───────────────────────────────────────────────────────
 
-  // Key differentiators — only when explicitly true
   const differentiators: string[] = []
   if (hotelA.has_spa === true && hotelB.has_spa !== true) differentiators.push(`${hotelA.name} has an on-site spa; ${hotelB.name} does not`)
   if (hotelB.has_spa === true && hotelA.has_spa !== true) differentiators.push(`${hotelB.name} has an on-site spa; ${hotelA.name} does not`)
@@ -228,12 +373,13 @@ h.category === hotelB.category
   if (hotelB.lakefront === true && hotelA.lakefront !== true) differentiators.push(`${hotelB.name} sits directly on the lake`)
   if (hotelA.wellness_focus === true && hotelB.wellness_focus !== true) differentiators.push(`${hotelA.name} has a dedicated wellness programme`)
   if (hotelB.wellness_focus === true && hotelA.wellness_focus !== true) differentiators.push(`${hotelB.name} has a dedicated wellness programme`)
-  if (hotelA.central_location === true && hotelB.central_location !== true) differentiators.push(`${hotelA.name} is centrally located; ${hotelB.name} is set apart from the city`)
-  if (hotelB.central_location === true && hotelA.central_location !== true) differentiators.push(`${hotelB.name} is centrally located; ${hotelA.name} is set apart from the city`)
+  if (hotelA.central_location === true && hotelB.central_location !== true) differentiators.push(`${hotelA.name} is centrally located; ${hotelB.name} is set apart from the city centre`)
+  if (hotelB.central_location === true && hotelA.central_location !== true) differentiators.push(`${hotelB.name} is centrally located; ${hotelA.name} is set apart from the city centre`)
 
-  const verdict = `${hotelA.name} is the right choice for travelers who want ${posA.energy} atmosphere and ${fitsA[0]?.toLowerCase() || 'a distinctive experience'}. ${hotelB.name} suits those who prefer ${posB.energy} character and ${fitsB[0]?.toLowerCase() || 'a different kind of stay'}. Both are among the finest options in ${hotelA.region}.`
+  const verdict = `${hotelA.name} is the right choice for travelers who want ${posA.energy} atmosphere and ${posA.primaryDraw}. ${hotelB.name} suits those who prefer ${posB.energy} character and ${posB.primaryDraw}. Both are among the finest options in ${hotelA.region}.`
 
-  // FAQs
+  // ── FAQs ──────────────────────────────────────────────────────────────────
+
   const faqs = [
     {
       q: `What is the main difference between ${hotelA.name} and ${hotelB.name}?`,
@@ -245,42 +391,45 @@ h.category === hotelB.category
         const diff = Math.abs(hotelA.nightly_rate_chf - hotelB.nightly_rate_chf)
         const pricier = hotelA.nightly_rate_chf > hotelB.nightly_rate_chf ? hotelA : hotelB
         const cheaper = hotelA.nightly_rate_chf > hotelB.nightly_rate_chf ? hotelB : hotelA
+        const pricierPos = getPositioning(pricier)
         return diff > 150
-          ? `${pricier.name} starts higher at CHF ${pricier.nightly_rate_chf.toLocaleString()}/night versus ${cheaper.name} from CHF ${cheaper.nightly_rate_chf.toLocaleString()}/night. Whether the premium is justified depends on your priorities — ${pricier.name} offers a ${getPositioning(pricier).identity} experience that for the right traveler is worth the difference.`
-          : `Both hotels are comparably priced at this level. The choice is better guided by atmosphere and traveler fit than by budget.`
+          ? `${pricier.name} starts higher at CHF ${pricier.nightly_rate_chf.toLocaleString()}/night versus ${cheaper.name} from CHF ${cheaper.nightly_rate_chf.toLocaleString()}/night. The premium reflects ${pricierPos.primaryDraw} — for travelers who prioritise that, the difference is justified. For those whose priorities align more with ${getPositioning(cheaper).primaryDraw}, ${cheaper.name} represents the stronger value.`
+          : `Both hotels are comparably priced at CHF ${hotelA.nightly_rate_chf.toLocaleString()} and CHF ${hotelB.nightly_rate_chf.toLocaleString()}/night respectively. At this price parity the decision is better guided by atmosphere and traveler fit than by budget.`
       })()
     }] : []),
     {
       q: (() => {
-        if (posA.setting !== posB.setting) return `${hotelA.name} or ${hotelB.name} — which suits my trip better?`
+        if (posA.setting !== posB.setting) return `${hotelA.name} or ${hotelB.name} — which suits my trip to ${hotelA.region} better?`
         if (hotelA.ski_in_ski_out || hotelB.ski_in_ski_out) return `Which hotel has better ski access?`
-        if (hotelA.romantic && hotelB.romantic) return `Which is better for a romantic stay?`
+        if (hotelA.romantic && hotelB.romantic) return `Which is better for a romantic stay — ${hotelA.name} or ${hotelB.name}?`
         return `Which is better for a first visit to ${hotelA.region}?`
       })(),
       a: (() => {
-        if (posA.setting === 'resort' && posB.setting === 'city') {
-          return `If your trip is centred on the city — meetings, the old town, lakefront walking — ${hotelB.name} is the more practical choice, positioned centrally with everything within reach. If you want Geneva as a backdrop to a more private, resort-style stay with a strong wellness component, ${hotelA.name} is the stronger fit. Both are exceptional; the decision is about what the trip is for.`
+        if (posA.setting === 'lakeside-resort' && (posB.setting === 'city-centre' || posB.setting === 'urban-lakefront')) {
+          return `If your trip is city-focused — meetings, the old town, exploring ${hotelA.region} on foot — ${hotelB.name} is the more practical base, with the city immediately accessible. If you want ${hotelA.region} as a backdrop to a more private, resort-style stay centred on wellness and the lake, ${hotelA.name} is the stronger fit. The two hotels serve genuinely different trip purposes.`
         }
-        if (posA.setting === 'city' && posB.setting === 'resort') {
-          return `If your trip is city-focused — business meetings, the old town, dining across Geneva — ${hotelA.name} is the more convenient base, centrally positioned with the city at your door. If you want a more private, residential atmosphere with a lakeside setting and serious wellness offering, ${hotelB.name} is the stronger choice.`
+        if ((posA.setting === 'city-centre' || posA.setting === 'urban-lakefront') && posB.setting === 'lakeside-resort') {
+          return `If your trip is city-focused — business, the old town, dining across ${hotelA.region} — ${hotelA.name} is the more convenient base. If you want a more private, resort-style stay with seclusion and a serious wellness offering, ${hotelB.name} is the stronger choice. The two hotels are not really in competition — they suit different trip purposes entirely.`
         }
         if (hotelA.ski_in_ski_out === true && hotelB.ski_in_ski_out !== true) {
-          return `${hotelA.name} offers ski-in ski-out access — the clearer choice for ski-first travelers. ${hotelB.name} is well positioned in the resort but requires a short walk or transfer to the lifts.`
+          return `${hotelA.name} offers ski-in ski-out access — the clearer choice for ski-first travelers who want to step directly onto the slopes. ${hotelB.name} is well positioned in the resort but requires a short walk or transfer to the lifts. If ski convenience is the priority, ${hotelA.name} is the stronger option.`
         }
         if (hotelB.ski_in_ski_out === true && hotelA.ski_in_ski_out !== true) {
-          return `${hotelB.name} has ski-in ski-out access — the stronger choice for guests whose stay revolves around the mountain. ${hotelA.name} is excellent but does not offer direct slope access.`
+          return `${hotelB.name} has ski-in ski-out access — the stronger choice for guests whose stay revolves around the mountain. ${hotelA.name} is an excellent hotel but does not offer direct slope access. For ski-first travelers, ${hotelB.name} is the clearer fit.`
         }
         if (hotelA.romantic && hotelB.romantic) {
-          return `Both hotels suit couples well. ${hotelA.name} offers a ${posA.energy} atmosphere — better for ${fitsA[0]?.toLowerCase() || 'couples seeking privacy'}. ${hotelB.name} is ${posB.energy} in character, appealing to couples who want ${fitsB[0]?.toLowerCase() || 'a different setting'}.`
+          return `Both hotels suit couples well. ${hotelA.name} offers a ${posA.energy} atmosphere with ${posA.primaryDraw} — better for couples who want ${fitsA[0]?.toLowerCase() || 'privacy and calm'}. ${hotelB.name} has a ${posB.energy} character centred on ${posB.primaryDraw}, appealing to couples who want ${fitsB[0]?.toLowerCase() || 'a different kind of romantic stay'}. Neither is a wrong choice; the decision comes down to which atmosphere fits your trip.`
         }
-        return `For a first visit to ${hotelA.region}, ${hotelA.name} offers a ${posA.identity} experience suited to ${fitsA[0]?.toLowerCase() || 'luxury travelers'}. ${hotelB.name} is the stronger fit for ${fitsB[0]?.toLowerCase() || 'a different travel profile'}.`
+        return `For a first visit to ${hotelA.region}, ${hotelA.name} offers a ${posA.identity} experience — ${posA.energy}, suited to ${fitsA[0]?.toLowerCase() || 'luxury travelers'}. ${hotelB.name} is the stronger fit for ${fitsB[0]?.toLowerCase() || 'travelers who want a different atmosphere'}. First-time visitors who want the most complete and traditional introduction to ${hotelA.region} tend to gravitate toward ${posA.scale === 'grand' && posA.privacy === 'formal' ? hotelA.name : posB.scale === 'grand' && posB.privacy === 'formal' ? hotelB.name : hotelA.name}.`
       })()
     }
   ]
 
-  // Comparison table — only rows with real data
+  // ── COMPARISON TABLE ──────────────────────────────────────────────────────
+
   const criteria = [
     { label: 'Location', a: hotelA.location, b: hotelB.location },
+    { label: 'Setting', a: posA.identity, b: posB.identity },
     { label: 'Style', a: hotelA.category, b: hotelB.category },
     { label: 'Stars', a: '★'.repeat(hotelA.star_classification || 5), b: '★'.repeat(hotelB.star_classification || 5) },
     { label: 'From', a: hotelA.nightly_rate_chf ? `CHF ${hotelA.nightly_rate_chf.toLocaleString()}/night` : null, b: hotelB.nightly_rate_chf ? `CHF ${hotelB.nightly_rate_chf.toLocaleString()}/night` : null },
@@ -289,7 +438,6 @@ h.category === hotelB.category
     { label: 'Ski Access', a: hotelA.ski_in_ski_out === true ? 'Ski-in ski-out' : hotelA.near_ski_lifts === true ? 'Near lifts' : null, b: hotelB.ski_in_ski_out === true ? 'Ski-in ski-out' : hotelB.near_ski_lifts === true ? 'Near lifts' : null },
     { label: 'Lakefront', a: hotelA.lakefront === true ? 'Yes' : hotelA.lake_view === true ? 'Lake view' : null, b: hotelB.lakefront === true ? 'Yes' : hotelB.lake_view === true ? 'Lake view' : null },
     { label: 'Wellness', a: hotelA.wellness_focus === true ? 'Wellness focus' : hotelA.has_spa === true ? 'Spa' : null, b: hotelB.wellness_focus === true ? 'Wellness focus' : hotelB.has_spa === true ? 'Spa' : null },
-    { label: 'Setting', a: posA.identity, b: posB.identity },
     { label: 'Best For', a: (hotelA.best_for as string[])?.slice(0, 2).join(', ') || null, b: (hotelB.best_for as string[])?.slice(0, 2).join(', ') || null },
   ].filter((row: { label: string; a: any; b: any }) => row.a !== null || row.b !== null)
 
