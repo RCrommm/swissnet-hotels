@@ -43,7 +43,7 @@ export default function DashboardWrapper() {
       // Fetch all daily snapshots ordered by run_date
 const { data: allCompVisibility } = await supabase
   .from('competitor_visibility')
-  .select('competitor_name, category, platform, visibility_score, checked_at, run_date')
+  .select('competitor_name, category, platform, visibility_score, checked_at, run_date, appearances, total_queries')
   .eq('region', region)
   .order('run_date', { ascending: true })
 
