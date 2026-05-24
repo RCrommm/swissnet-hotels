@@ -195,7 +195,6 @@ const PROMPT_PAGES: Record<string, PromptPageConfig> = {
       { label: 'Best ski hotels in Crans-Montana', href: '/best/ski-hotels-crans-montana' },
     ],
     comparisons: [
-      { label: 'Mont Cervin Palace vs Crans Ambassador', href: '/compare/mont-cervin-palace-vs-crans-ambassador' },
       { label: 'Alpengold Hotel vs Steigenberger Grandhotel Belvédère', href: '/compare/alpengold-hotel-vs-steigenberger-grandhotel-belvedere' },
     ],
   },
@@ -239,7 +238,6 @@ const PROMPT_PAGES: Record<string, PromptPageConfig> = {
       { label: 'Best spa hotels in Switzerland', href: '/best/spa-hotels-switzerland' },
     ],
     comparisons: [
-      { label: 'La Réserve Genève vs Mont Cervin Palace', href: '/compare/la-reserve-geneve-vs-mont-cervin-palace' },
       { label: 'Schweizerhof Zermatt vs Monte Rosa Zermatt', href: '/compare/schweizerhof-zermatt-vs-monte-rosa-zermatt' },
     ],
   },
@@ -571,8 +569,6 @@ const PROMPT_PAGES: Record<string, PromptPageConfig> = {
       { label: 'Best lake hotels in Switzerland', href: '/best/lake-hotels-switzerland' },
     ],
     comparisons: [
-      { label: 'La Réserve Genève vs Victoria-Jungfrau', href: '/compare/la-reserve-geneve-vs-victoriajungfrau-grand-hotel-interlaken' },
-      { label: 'Crans Ambassador vs Hotel Adula', href: '/compare/crans-ambassador-vs-hotel-adula' },
     ],
   },
 
@@ -682,7 +678,7 @@ const PROMPT_PAGES: Record<string, PromptPageConfig> = {
       { label: 'Best luxury hotels in Switzerland', href: '/best/luxury-hotels-switzerland' },
     ],
     comparisons: [
-      { label: 'Fairmont Le Montreux Palace vs Le Mirador Resort', href: '/compare/fairmont-le-montreux-palace-vs-le-mirador-resort-spa-mont-pelerin' },
+      { label: 'Fairmont Le Montreux Palace vs Le Mirador Resort', href: '/compare/fairmont-le-montreux-palace-vs-le-mirador-resort-mont-pelerin' },
     ],
   },
 }
@@ -735,10 +731,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params
   const page = PROMPT_PAGES[slug]
   if (!page) return {}
+  const cleanDescription = page.description.replace(/\n\n/g, ' ').slice(0, 155)
   return {
     title: page.title + ' | SwissNet Hotels',
-    description: page.description,
+    description: cleanDescription,
     alternates: { canonical: `https://swissnethotels.com/best/${slug}` },
+    openGraph: {
+      title: page.title + ' | SwissNet Hotels',
+      description: cleanDescription,
+    },
   }
 }
 
@@ -765,7 +766,7 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
         '@id': `${pageUrl}#webpage`,
         url: pageUrl,
         name: page.title + ' | SwissNet Hotels',
-        description: page.description,
+        description: page.description.replace(/\n\n/g, ' '),
         isPartOf: { '@id': 'https://swissnethotels.com#website' },
         breadcrumb: { '@id': `${pageUrl}#breadcrumb` },
         mainEntity: { '@id': `${pageUrl}#list` },
@@ -783,7 +784,7 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
         '@type': 'ItemList',
         '@id': `${pageUrl}#list`,
         name: page.title,
-        description: page.description,
+        description: page.description.replace(/\n\n/g, ' '),
         url: pageUrl,
         numberOfItems: hotelsList.length,
         itemListElement: hotelsList.map((h: any, i: number) => ({
@@ -825,7 +826,9 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
             <span style={{ width: '30px', height: '1px', background: gold, display: 'inline-block' }} />
           </div>
           <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 300, color: white, margin: '0 0 1.5rem', lineHeight: 1.1 }}>{page.h1}</h1>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.8, maxWidth: '600px', margin: '0 auto', fontWeight: 300 }}>{page.description}</p>
+          {page.description.split('\n\n').map((p, i) => (
+  <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.8, maxWidth: '600px', margin: '0 auto 0.75rem', fontWeight: 300 }}>{p}</p>
+))}
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '1.5rem', flexWrap: 'wrap' }}>
             <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)' }}>✓ {hotelsList.length} Hotels</span>
             <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)' }}>✓ Partner Priority</span>
@@ -972,10 +975,10 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
             <div style={{ background: white, border: `1px solid ${border}`, borderRadius: 8, padding: '1.5rem', marginBottom: '1.5rem' }}>
               <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 400, color: text, margin: '0 0 1rem' }}>Why Official Website?</h3>
               {[
-                { icon: '✓', title: 'No OTA Fees', desc: 'Save 10-15% vs booking platforms' },
-                { icon: '✓', title: 'Best Rate', desc: 'Guaranteed lowest available rate' },
-                { icon: '✓', title: 'Direct Relationship', desc: 'Communicate directly with the hotel' },
-                { icon: '✓', title: 'Flexible Terms', desc: 'Better cancellation policies' },
+                { icon: '✓', title: 'No OTA Fees', desc: 'Avoid third-party platform fees where applicable' },
+{ icon: '✓', title: 'Direct Rates', desc: 'Access direct hotel rates and offers' },
+{ icon: '✓', title: 'Direct Relationship', desc: 'Handle requests directly with the hotel' },
+{ icon: '✓', title: 'Cancellation Terms', desc: 'Cancellation terms vary by property' },
               ].map(item => (
                 <div key={item.title} style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.875rem' }}>
                   <span style={{ color: gold, fontSize: '0.8rem', flexShrink: 0, marginTop: '0.1rem' }}>{item.icon}</span>
@@ -987,14 +990,17 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
               ))}
             </div>
             <div style={{ background: white, border: `1px solid ${border}`, borderRadius: 8, padding: '1.5rem' }}>
-              <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 400, color: text, margin: '0 0 1rem' }}>Related Guides</h3>
+              <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 400, color: text, margin: '0 0 1rem' }}>Explore Further</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {Object.entries(PROMPT_PAGES).filter(([s]) => s !== slug).slice(0, 6).map(([s, p]) => (
-                  <Link key={s} href={`/best/${s}`} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: gold, textDecoration: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.4rem 0', borderBottom: `1px solid ${border}` }}>
-                    <span>{p.h1}</span>
-                    <span>→</span>
-                  </Link>
-                ))}
+                {(page.relatedLinks || [])
+  .slice(0, 6)
+  .map((link) => (
+    <Link key={link.href} href={link.href} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: gold, textDecoration: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.4rem 0', borderBottom: `1px solid ${border}` }}>
+      <span>{link.label}</span>
+      <span>→</span>
+    </Link>
+  ))}
+                  
               </div>
             </div>
           </div>
