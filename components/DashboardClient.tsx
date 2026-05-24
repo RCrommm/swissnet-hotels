@@ -852,17 +852,19 @@ const appearedQueriesGoogle = googleInPeriod.filter((r: any) => r.appeared).leng
 const totalQueries = totalQueriesChatPerp + totalQueriesGoogle
 const appearedQueries = appearedQueriesChatPerp + appearedQueriesGoogle
 const periodScore = (() => {
-  const uniqueDates = [...new Set(myRunsInPeriod.map((r: any) => r.run_date || r.checked_at?.split('T')[0]).filter(Boolean))]
+  const uniqueDates = [...new Set(myRunsInPeriod.map((r: any) => r.run_date || r.checked_at?.split('T')[0]).filter(Boolean))] as string[]
   const dailyAvgs = uniqueDates.map(d => {
-    const dayScores = myRunsInPeriod.filter((r: any) => (r.run_date || r.checked_at?.split('T')[0]) === d)
-    const platforms = ['chatgpt', 'perplexity']
-    const latestPerPlatform = platforms.map(platform => {
-      const entry = dayScores.filter((s: any) => s.platform === platform)
+    const dayScoresAll = myRunsInPeriod.filter((r: any) => (r.run_date || r.checked_at?.split('T')[0]) === d)
+    const latestPerPlatform = ['chatgpt', 'perplexity'].map(platform => {
+      const entry = dayScoresAll.filter((s: any) => s.platform === platform)
         .sort((a: any, b: any) => new Date(b.checked_at).getTime() - new Date(a.checked_at).getTime())[0]
       if (!entry) return null
-      return entry.platform === 'chatgpt' ? Math.min(100, entry.visibility_score + 20) : entry.visibility_score
+      return platform === 'chatgpt' ? Math.min(100, entry.visibility_score + 20) : entry.visibility_score
     }).filter((s): s is number => s !== null)
-    return latestPerPlatform.length > 0 ? Math.round(latestPerPlatform.reduce((a, b) => a + b, 0) / latestPerPlatform.length) : null
+    const googleForDate = (googleAiScores || []).filter((r: any) => r.checked_at?.split('T')[0] === d)
+    const googleDayScore = googleForDate.length > 0 ? Math.round((googleForDate.filter((r: any) => r.appeared).length / googleForDate.length) * 100) : null
+    const allScores = [...latestPerPlatform, ...(googleDayScore !== null ? [googleDayScore] : [])].filter((s): s is number => s !== null)
+    return allScores.length > 0 ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length) : null
   }).filter((s): s is number => s !== null)
   return dailyAvgs.length > 0 ? Math.round(dailyAvgs.reduce((a, b) => a + b, 0) / dailyAvgs.length) : null
 })()
