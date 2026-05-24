@@ -20,10 +20,7 @@
       "path": "/api/cron/competitor-visibility?region=Geneva&type=category&category=spa",
       "schedule": "0 8 * * 1"
     },
-    {
-      "path": "/api/cron/competitor-visibility?region=Geneva&type=category&category=ski",
-      "schedule": "0 9 * * 1"
-    },
+    
     {
       "path": "/api/cron/competitor-visibility?region=Geneva&type=category&category=dining",
       "schedule": "0 10 * * 1"
