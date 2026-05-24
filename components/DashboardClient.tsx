@@ -1275,7 +1275,15 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
                     <text x={pL + cW - 4} y={py(marketAvg) - 5} textAnchor="end" fill="rgba(42,26,14,0.4)" fontSize="7" fontFamily="Montserrat, sans-serif" fontWeight="600">Market avg</text>
                     {segments.map((s, i) => (<path key={i} d={`M${s.x1} ${s.y1} L${s.x2} ${s.y2} L${s.x2} ${pT + cH} L${s.x1} ${pT + cH} Z`} fill="url(#ag4)" />))}
                     {segments.map((s, i) => (<line key={i} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} stroke={GOLD} strokeWidth="2" strokeLinecap="round" opacity="0.9" />))}
-                    {realPoints.map((d, i) => (<g key={i}><circle cx={dateToX(d.date)} cy={py(d.score)} r="3" fill={WHITE} stroke={GOLD} strokeWidth="1.5" /><text x={dateToX(d.date)} y={py(d.score) - 9} textAnchor="middle" fill={TEXT} fontSize="8" fontFamily="Montserrat, sans-serif" fontWeight="600">{d.score}%</text></g>))}
+                    {realPoints.map((d, i) => {
+  const showLabel = realPoints.length <= 14
+  return (
+    <g key={i}>
+      <circle cx={dateToX(d.date)} cy={py(d.score)} r="3" fill={WHITE} stroke={GOLD} strokeWidth="1.5" />
+      {showLabel && <text x={dateToX(d.date)} y={py(d.score) - 9} textAnchor="middle" fill={TEXT} fontSize="8" fontFamily="Montserrat, sans-serif" fontWeight="600">{d.score}%</text>}
+    </g>
+  )
+})}
                     <line x1={pL} y1={pT + cH} x2={pL + cW} y2={pT + cH} stroke="rgba(0,0,0,0.06)" strokeWidth="1" />
                     {xLabels.map((d, i) => (<text key={i} x={dateToX(d)} y={H - 4} textAnchor="middle" fill="rgba(42,26,14,0.3)" fontSize="7" fontFamily="Montserrat, sans-serif">{new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</text>))}
                   </svg>
