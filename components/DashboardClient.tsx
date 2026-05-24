@@ -838,8 +838,20 @@ const myRunsInPeriod = (overviewRunData || []).filter((r: any) => {
   const date = r.run_date || r.checked_at?.split('T')[0]
   return date >= periodStartDate
 })
-const totalQueries = myRunsInPeriod.reduce((sum: number, r: any) => sum + (r.total_queries || 0), 0)
-const appearedQueries = myRunsInPeriod.reduce((sum: number, r: any) => sum + (r.appearances || 0), 0)
+const totalQueriesChatPerp = myRunsInPeriod.reduce((sum: number, r: any) => sum + (r.total_queries || 0), 0)
+const appearedQueriesChatPerp = myRunsInPeriod.reduce((sum: number, r: any) => sum + (r.appearances || 0), 0)
+
+// Add Google AI queries in period
+const googleInPeriod = (googleAiScores || []).filter((r: any) => {
+  const date = r.checked_at?.split('T')[0]
+  return date >= periodStartDate
+})
+const totalQueriesGoogle = googleInPeriod.length
+const appearedQueriesGoogle = googleInPeriod.filter((r: any) => r.appeared).length
+
+const totalQueries = totalQueriesChatPerp + totalQueriesGoogle
+const appearedQueries = appearedQueriesChatPerp + appearedQueriesGoogle
+const periodScore = totalQueries > 0 ? Math.round((appearedQueries / totalQueries) * 100) : null
   const now = new Date()
   const periodStart = new Date(now.getTime() - period * 24 * 60 * 60 * 1000)
   const recentViews = views?.filter((v: any) => new Date(v.viewed_at) > periodStart) || []
@@ -1064,7 +1076,7 @@ const appearedQueries = myRunsInPeriod.reduce((sum: number, r: any) => sum + (r.
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
               <KPICard label="AI Visibility Score" value={visibilityScore + '%'} sub="overall score" color={GOLD} />
 <KPICard label="Market Opportunities" value={totalQueries} sub={`queries run · last ${period}d`} color={BLUE} />
-<KPICard label="AI Appearances" value={appearedQueries} sub={`queries appeared in · last ${period}d`} color={GREEN} />
+<KPICard label="AI Appearances" value={appearedQueries} sub={periodScore !== null ? `${periodScore}% score this period · last ${period}d` : `queries appeared in · last ${period}d`} color={GREEN} />
 <KPICard label="Missed Opportunities" value={Math.max(0, totalQueries - appearedQueries)} sub={`queries to improve · last ${period}d`} color={TEXT_MUTED} />
             </div>
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', marginBottom: '1.5rem' }}>
