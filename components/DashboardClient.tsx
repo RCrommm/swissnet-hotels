@@ -833,9 +833,13 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
   const runDates = [...new Set((overviewRunData || []).map((r: any) => r.checked_at?.split('T')[0]))].sort() as string[]
 
   // For "Where You Appear" and "Queries to Improve" — use hotelSpecificScores
-  const totalQueries = aiVisibility?.length || 0
-  const appearedQueries = aiVisibility?.filter((r: any) => r.appeared)?.length || 0
-
+  const periodStartDate = new Date(Date.now() - period * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+const myRunsInPeriod = (overviewRunData || []).filter((r: any) => {
+  const date = r.run_date || r.checked_at?.split('T')[0]
+  return date >= periodStartDate
+})
+const totalQueries = myRunsInPeriod.reduce((sum: number, r: any) => sum + (r.total_queries || 0), 0)
+const appearedQueries = myRunsInPeriod.reduce((sum: number, r: any) => sum + (r.appearances || 0), 0)
   const now = new Date()
   const periodStart = new Date(now.getTime() - period * 24 * 60 * 60 * 1000)
   const recentViews = views?.filter((v: any) => new Date(v.viewed_at) > periodStart) || []
@@ -1059,9 +1063,9 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
           <div>
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
               <KPICard label="AI Visibility Score" value={visibilityScore + '%'} sub="overall score" color={GOLD} />
-              <KPICard label="AI Appearances" value={appearedQueries} sub="times appeared in AI" color={GREEN} />
-              <KPICard label="Market Opportunities" value={totalQueries} sub="searches tracked" color={BLUE} />
-              <KPICard label="Missed Opportunities" value={totalQueries - appearedQueries} sub="searches to improve" color={TEXT_MUTED} />
+<KPICard label="Market Opportunities" value={totalQueries} sub={`queries run · last ${period}d`} color={BLUE} />
+<KPICard label="AI Appearances" value={appearedQueries} sub={`queries appeared in · last ${period}d`} color={GREEN} />
+<KPICard label="Missed Opportunities" value={Math.max(0, totalQueries - appearedQueries)} sub={`queries to improve · last ${period}d`} color={TEXT_MUTED} />
             </div>
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', marginBottom: '1.5rem' }}>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 0.25rem' }}>Visibility by AI Platform</p>
