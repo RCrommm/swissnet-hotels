@@ -115,7 +115,7 @@ export async function GET(request: Request) {
         for (const q of queries) {
           try {
             responseCache[q] = await platform.queryFn(q)
-            catCost += platform.id === 'chatgpt' ? 0.002 : 0.001
+            catCost += platform.id === 'chatgpt' ? 0.037 : 0.008
             await new Promise(r => setTimeout(r, 300))
           } catch (err: any) {
             console.error(`Error querying ${platform.id}:`, err.message)
@@ -242,7 +242,7 @@ const { data: regionQueriesData } = await supabase
         if (!responseCache[cacheKey]) {
           try {
             responseCache[cacheKey] = await platform.queryFn(q)
-            estimatedCost += platform.id === 'chatgpt' ? 0.002 : 0.001
+            estimatedCost += platform.id === 'chatgpt' ? 0.037 : 0.008
             await new Promise(r => setTimeout(r, 300))
           } catch (err: any) {
             console.error(`Error querying ${platform.id}:`, err.message)
