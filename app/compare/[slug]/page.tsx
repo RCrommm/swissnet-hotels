@@ -92,7 +92,7 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
     ? `/api/track?hotel_id=${hotelB.id}&hotel_name=${encodeURIComponent(hotelB.name)}&destination=${encodeURIComponent(hotelB.direct_booking_url)}&medium=website&campaign=compare`
     : hotelB.direct_booking_url
 
-// Related — same region, similar category or partner, max 3  
+// Related — same region, similar category, max 3
 const relatedHotels = allHotels
   .filter(h =>
     h.id !== hotelA.id &&
@@ -131,7 +131,7 @@ h.category === hotelB.category
     const isBusiness = h.business_hotel === true
     const isSki = h.ski_in_ski_out === true || cat.includes('ski')
     const isBoutique = cat.includes('boutique')
-    const hasSpа = h.has_spa === true
+    const hasSpa = h.has_spa === true
     const isRomantic = h.romantic === true
     const isWellnessRetreat = cat.includes('wellness')
 
@@ -232,7 +232,7 @@ h.category === hotelB.category
     }
 
     // Classic alpine grand hotel with spa
-    if (isSki && hasSpа) {
+    if (isSki && hasSpa) {
       return {
         identity: 'classic alpine grand hotel',
         setting: 'mountain',
@@ -657,7 +657,7 @@ h.category === hotelB.category
               </div>
             </section>
 
-            {/* Related comparisons — same region, same tier only */}
+            {/* Related comparisons — same region, similar category only */}
             {relatedHotels.length > 0 && (
               <section style={{ marginBottom: '2rem' }}>
                 <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.35rem', fontWeight: 300, color: text, marginBottom: '1rem' }}>
