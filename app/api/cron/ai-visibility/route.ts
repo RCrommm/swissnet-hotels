@@ -287,15 +287,15 @@ export async function GET(request: Request) {
       appeared_results.push({ hotel: hotel.name, query, platform: platform.id })
     }
 
-    await supabase.from('ai_visibility_scores').upsert({
-      hotel_id: hotel.id,
-      hotel_name: hotel.name,
-      query,
-      appeared,
-      platform: platform.id,
-      response_snippet: snippet,
-      checked_at: new Date().toISOString(),
-    }, { onConflict: 'hotel_id,query,platform' })
+    await supabase.from('ai_visibility_scores').insert({
+  hotel_id: hotel.id,
+  hotel_name: hotel.name,
+  query,
+  appeared,
+  platform: platform.id,
+  response_snippet: snippet,
+  checked_at: new Date().toISOString(),
+})
   }))
 
   await new Promise(r => setTimeout(r, 2000)) // 2s between queries only
