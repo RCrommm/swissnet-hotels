@@ -149,7 +149,8 @@ export async function GET(request: Request) {
         const today = new Date().toISOString().split('T')[0]
         const rowsWithDate = rows.map((r: any) => ({ ...r, run_date: today }))
         await supabase.from('competitor_visibility').upsert(rowsWithDate, {
-          onConflict: 'competitor_name,platform,run_date,category'
+          onConflict: 'competitor_name,platform,run_date,category',
+          ignoreDuplicates: true
         })
       }
     }
@@ -275,7 +276,7 @@ await supabase.from('competitor_visibility').upsert({
   month: currentMonth,
   run_date: today,
   checked_at: new Date().toISOString(),
-}, { onConflict: 'competitor_name,platform,run_date,category' })
+}, { onConflict: 'competitor_name,platform,run_date,category', ignoreDuplicates: true })
       }
     }
   }
