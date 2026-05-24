@@ -1186,9 +1186,11 @@ return { date: d, score: avg }
 
                 const startDate = chartPeriod === 365 ? new Date(realPoints[0].date) : new Date(Math.min(...realPoints.map(p => new Date(p.date).getTime()), new Date(cutoff).getTime()))
                 const endDate = new Date()
-                const totalDays = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
-                const calendarDays: string[] = []
-                for (let i = 0; i <= totalDays; i++) { const d = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000); calendarDays.push(d.toISOString().split('T')[0]) }
+                const today = new Date().toISOString().split('T')[0]
+const totalDays = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+const calendarDays: string[] = []
+for (let i = 0; i <= totalDays; i++) { const d = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000); calendarDays.push(d.toISOString().split('T')[0]) }
+if (!calendarDays.includes(today)) calendarDays.push(today)
 
                 if (realPoints.length === 1) return (
                   <div style={{ height: 160, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
