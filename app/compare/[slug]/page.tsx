@@ -25,9 +25,8 @@ export async function generateStaticParams() {
   for (const partner of partners) {
     const comparable = allHotels.filter(h =>
       h.slug !== partner.slug &&
-      h.region === partner.region 
-      
-    ).slice(0, 3)
+      h.region === partner.region
+).slice(0, 3)
 
     for (const other of comparable) {
       pairs.add(`${partner.slug}-vs-${other.slug}`)
@@ -93,8 +92,7 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
     ? `/api/track?hotel_id=${hotelB.id}&hotel_name=${encodeURIComponent(hotelB.name)}&destination=${encodeURIComponent(hotelB.direct_booking_url)}&medium=website&campaign=compare`
     : hotelB.direct_booking_url
 
-  // Related — same region, same luxury tier, not these two hotels, max 3
-  // Prefer same category or overlapping best_for, same region and tier
+// Related — same region, similar category or partner, max 3  
 const relatedHotels = allHotels
   .filter(h =>
     h.id !== hotelA.id &&
@@ -102,8 +100,7 @@ const relatedHotels = allHotels
     h.region === hotelA.region &&
     (
       h.category === hotelA.category ||
-      h.category === hotelB.category ||
-      h.is_partner === true
+h.category === hotelB.category
     )
   )
   .sort((a, b) => {
