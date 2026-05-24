@@ -912,13 +912,27 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
   const getCompetitorTableHotels = () => {
     if (competitorView === 'region') return allHotelsInRegion
 
-    // For all categories, use the same regional hotels
-    const list = allHotelsInRegion.map((h: any) => {
-      if (h.is_current) {
-        return { ...h, visibilityScore: hotelCatScores?.[competitorView] ?? null }
+    // Use the category-specific hotel list from CATEGORY_COMPETITORS
+    const categoryHotelNames = CATEGORY_COMPETITORS[competitorView]?.hotels || []
+
+    const list = categoryHotelNames.map((name: string) => {
+      // Check if this is the current hotel
+      if (name === hotelName) {
+        return {
+          name,
+          is_current: true,
+          visibilityScore: hotelCatScores?.[competitorView] ?? null,
+        }
       }
-      const catScore = h.catScores?.[competitorView] ?? null
-      return { ...h, visibilityScore: catScore }
+      // Find in competitors list for catScores
+      const competitor = competitors?.find((c: any) => c.name === name)
+      const catScore = competitor?.catScores?.[competitorView] ?? null
+      return {
+        name,
+        is_current: false,
+        visibilityScore: catScore,
+        ...competitor,
+      }
     })
 
     return list.sort((a: any, b: any) => {
