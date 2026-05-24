@@ -1081,9 +1081,16 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
         {tab === 'ai-visibility' && (
           <div>
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-              <KPICard label="AI Visibility Score" value={visibilityScore + '%'} sub="overall score" color={GOLD} />
+              <KPICard label="AI Visibility Score" value={visibilityScore + '%'} sub="overall daily score" color={GOLD} />
 <KPICard label="Market Opportunities" value={totalQueries} sub={`queries run · last ${period}d`} color={BLUE} />
-<KPICard label="AI Appearances" value={periodScore !== null ? `${appearedQueries} — ${periodScore}%` : appearedQueries} sub={`queries appeared in · last ${period}d`} color={GOLD} />
+<div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.25rem 1.5rem', flex: 1, minWidth: 0 }}>
+  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.75rem' }}>AI Appearances</p>
+  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 400, color: TEXT, margin: 0, lineHeight: 1 }}>{appearedQueries}</p>
+    {periodScore !== null && <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 400, color: GOLD, margin: 0, lineHeight: 1, fontStyle: 'italic' }}>{periodScore}%</p>}
+  </div>
+  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: GOLD, margin: '0.2rem 0 0' }}>{`queries appeared in · last ${period}d`}</p>
+</div>
 <KPICard label="Missed Opportunities" value={Math.max(0, totalQueries - appearedQueries)} sub={`queries to improve · last ${period}d`} color={TEXT_MUTED} />
             </div>
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', marginBottom: '1.5rem' }}>
