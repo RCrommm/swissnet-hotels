@@ -23,10 +23,10 @@ const SUGGESTIONS = [
 ]
 
 const DESTINATIONS = [
-  { name: 'Zermatt', tagline: 'The Matterhorn & alpine intimacy', img: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=900&q=75', href: '/destinations/zermatt' },
-  { name: 'Geneva', tagline: 'Lakeside diplomacy and refinement', img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=900&q=75', href: '/destinations/geneva' },
-  { name: 'St. Moritz', tagline: 'Aristocratic winter glamour', img: 'https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?w=900&q=75', href: '/destinations/st-moritz' },
-  { name: 'Gstaad', tagline: 'Discreet alpine exclusivity', img: 'https://images.unsplash.com/photo-1488085061387-422e29b40080?w=900&q=75', href: '/destinations/gstaad' },
+  { name: 'Zermatt', tagline: 'The Matterhorn & alpine intimacy', img: 'https://images.unsplash.com/photo-1580137189272-c9379f8864fd?w=900&q=75', href: '/destinations/zermatt' },
+  { name: 'Geneva', tagline: 'Lakeside diplomacy and refinement', img: 'https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?w=900&q=75', href: '/destinations/geneva' },
+  { name: 'St. Moritz', tagline: 'Aristocratic winter glamour', img: 'https://images.unsplash.com/photo-1612969308146-066d55f37ccb?w=900&q=75', href: '/destinations/st-moritz' },
+  { name: 'Gstaad', tagline: 'Discreet alpine exclusivity', img: 'https://images.unsplash.com/photo-1547393429-2e4e0b80c3c3?w=900&q=75', href: '/destinations/gstaad' },
 ]
 
 interface Hotel {
