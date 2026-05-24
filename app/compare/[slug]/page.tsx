@@ -100,7 +100,11 @@ const relatedHotels = allHotels
     h.id !== hotelA.id &&
     h.id !== hotelB.id &&
     h.region === hotelA.region &&
-    h.luxury_tier === hotelA.luxury_tier
+    (
+      h.category === hotelA.category ||
+      h.category === hotelB.category ||
+      h.is_partner === true
+    )
   )
   .sort((a, b) => {
     // Prioritize same category as either hotel
