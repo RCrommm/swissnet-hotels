@@ -30,26 +30,39 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'No image found' }, { status: 404 })
       }
 
-      const imageUrl = twitterMatch[1].startsWith('http')
-        ? twitterMatch[1]
-        : new URL(twitterMatch[1], url).href
+      const rawTwitterUrl = twitterMatch[1]
 
-      if (hotel_id) {
-        await supabase.from('hotels').update({ images: [imageUrl] }).eq('id', hotel_id)
-      }
+if (rawTwitterUrl.startsWith('data:')) {
+  return NextResponse.json({ error: 'Image is base64 encoded — set URL manually' }, { status: 404 })
+}
 
-      return NextResponse.json({ success: true, image_url: imageUrl })
+const imageUrl = rawTwitterUrl.startsWith('http')
+  ? rawTwitterUrl
+  : new URL(rawTwitterUrl, url).href
+
+if (hotel_id) {
+  await supabase.from('hotels').update({ images: [imageUrl] }).eq('id', hotel_id)
+}
+
+return NextResponse.json({ success: true, image_url: imageUrl })
     }
 
-    const imageUrl = ogMatch[1].startsWith('http')
-      ? ogMatch[1]
-      : new URL(ogMatch[1], url).href
+    const rawUrl = ogMatch[1]
 
-    if (hotel_id) {
-      await supabase.from('hotels').update({ images: [imageUrl] }).eq('id', hotel_id)
-    }
+// Reject base64 images — they are compressed and unusable as hero images
+if (rawUrl.startsWith('data:')) {
+  return NextResponse.json({ error: 'Image is base64 encoded — set URL manually' }, { status: 404 })
+}
 
-    return NextResponse.json({ success: true, image_url: imageUrl })
+const imageUrl = rawUrl.startsWith('http')
+  ? rawUrl
+  : new URL(rawUrl, url).href
+
+if (hotel_id) {
+  await supabase.from('hotels').update({ images: [imageUrl] }).eq('id', hotel_id)
+}
+
+return NextResponse.json({ success: true, image_url: imageUrl })
 
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
