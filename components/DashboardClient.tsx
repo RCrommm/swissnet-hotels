@@ -1236,7 +1236,7 @@ return { date: d, score: avg }
                     ? Math.round(adjustedDayScores.reduce((sum: number, s: any) => sum + s.visibility_score, 0) / adjustedDayScores.length)
                     : null
                   return { date: d, score }
-                }).filter((d): d is { date: string; score: number } => d.score !== null)
+                }).filter((d): d is { date: string; score: number } => d.score !== null && d.date >= cutoff)
 
                 if (realPoints.length === 0) return <div style={{ height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED }}>No data yet for this platform</p></div>
 
