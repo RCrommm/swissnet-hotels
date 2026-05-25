@@ -951,28 +951,18 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
   const getCompetitorTableHotels = () => {
     if (competitorView === 'region') return allHotelsInRegion
 
-    // Use the category-specific hotel list from CATEGORY_COMPETITORS
-    const categoryHotelNames = CATEGORY_COMPETITORS[competitorView]?.hotels || []
-
-    const list = categoryHotelNames.map((name: string) => {
-      // Check if this is the current hotel
-      if (name === hotelName) {
-        return {
-          name,
-          is_current: true,
-          visibilityScore: hotelCatScores?.[competitorView] ?? null,
-        }
-      }
-      // Find in competitors list for catScores
-      const competitor = competitors?.find((c: any) => c.name === name)
-      const catScore = competitor?.catScores?.[competitorView] ?? null
-      return {
-        name,
+    const list = [
+      {
+        name: hotelName,
+        is_current: true,
+        visibilityScore: hotelCatScores?.[competitorView] ?? null,
+      },
+      ...(competitors || []).map((h: any) => ({
+        ...h,
         is_current: false,
-        visibilityScore: catScore,
-        ...competitor,
-      }
-    })
+        visibilityScore: h.catScores?.[competitorView] ?? null,
+      }))
+    ]
 
     return list.sort((a: any, b: any) => {
       const sA = a.visibilityScore ?? -1
