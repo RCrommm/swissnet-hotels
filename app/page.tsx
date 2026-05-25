@@ -68,7 +68,7 @@ export default async function HomePage() {
 
       {/* Dashboard Preview */}
 <section style={{ maxWidth: '1200px', margin: '0 auto', padding: '6rem 2rem' }}>
-  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr', gap: '4rem', alignItems: 'center' }}>
+  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem', alignItems: 'center', marginBottom: '4rem' }}>
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
         <span style={{ width: '30px', height: '1px', background: gold, display: 'inline-block' }} />
@@ -86,7 +86,7 @@ export default async function HomePage() {
           'Daily AI visibility score across all platforms',
           'Competitor ranking table updated every 24h',
           'Category scores — ski, spa, romantic, dining',
-          'Where you appear and what you\'re missing',
+          "Where you appear and what you're missing",
         ].map(f => (
           <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
             <span style={{ color: gold, fontSize: '0.6rem', flexShrink: 0, marginTop: '0.2rem' }}>✦</span>
@@ -98,14 +98,13 @@ export default async function HomePage() {
         Get Your Dashboard →
       </a>
     </div>
-    <div>
-      <img
-        src="/images/dashboard-preview.png"
-        alt="SwissNet AI Visibility Dashboard"
-        style={{ width: '100%', borderRadius: '12px', boxShadow: '0 24px 80px rgba(0,0,0,0.4)' }}
-      />
-    </div>
+    <div />
   </div>
+  <img
+    src="/images/dashboard-preview.png"
+    alt="SwissNet AI Visibility Dashboard"
+    style={{ width: '100%', borderRadius: '12px', boxShadow: '0 24px 80px rgba(0,0,0,0.4)' }}
+  />
 </section>
 
       {/* Why SwissNet */}
