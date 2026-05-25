@@ -171,6 +171,7 @@ export default async function HomePage() {
       </section>
 
       {/* ChatGPT Preview */}
+<div style={{ borderTop: '1px solid ' + border }} />
 <section style={{ maxWidth: '1200px', margin: '0 auto', padding: '6rem 2rem' }}>
   <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: '4rem', alignItems: 'center' }}>
     <div>
