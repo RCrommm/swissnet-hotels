@@ -135,7 +135,7 @@ export default function Navigation() {
   { label: 'Victoria-Jungfrau vs Grand Hotel Regina', href: '/compare/victoriajungfrau-grand-hotel-interlaken-vs-grand-hotel-regina' },
   { label: 'Bellevue Palace vs Schweizerhof Bern', href: '/compare/bellevue-palace-vs-hotel-schweizerhof-bern' },
   { label: 'Crans Ambassador vs Six Senses Crans-Montana', href: '/compare/crans-ambassador-vs-six-senses-crans-montana' },
-  { label: 'Alpengold Hotel vs Waldhaus Flims', href: '/compare/alpengold-hotel-vs-grand-hotel-waldhaus-flims' },
+  { label: 'Alpengold Hotel vs Steigenberger Belvédère', href: '/compare/alpengold-hotel-vs-steigenberger-grandhotel-belvedere' },
   { label: 'Hotel Adula vs Parkhotel Waldhaus Flims', href: '/compare/hotel-adula-vs-parkhotel-waldhaus-flims' },
 ].map(item => (
   <Link key={item.href} href={item.href} style={dropdownItemStyle} onMouseEnter={e => { e.currentTarget.style.color = gold; e.currentTarget.style.background = 'rgba(201,169,110,0.1)' }} onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; e.currentTarget.style.background = 'transparent' }}>{item.label}</Link>
