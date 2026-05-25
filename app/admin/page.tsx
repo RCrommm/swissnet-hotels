@@ -268,8 +268,33 @@ const { data: cronCosts } = await supabase
               ))}
             </div>
 
-            {/* Views by source */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 28 }}>
+            {/* Clicks by page type */}
+<div style={{ background: '#fff', border: '1px solid #e7e5e4', borderRadius: 8, padding: '20px 24px', marginBottom: 28 }}>
+  <h3 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 700, color: '#78716c', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 16px' }}>Clicks by Page Type</h3>
+  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+    {[
+      { label: 'Hotel Profile', campaign: 'hotel_profile', color: '#C9A84C' },
+      { label: 'Compare Pages', campaign: 'compare', color: '#8B5CF6' },
+      { label: 'Best Pages', campaign: 'best_page', color: '#3b82f6' },
+      { label: 'Destination', campaign: 'hotels_page_website', color: '#16a34a' },
+      { label: 'Rooms', campaign: 'rooms_page', color: '#f59e0b' },
+      { label: 'Dining', campaign: 'dining_page', color: '#ef4444' },
+      { label: 'Spa', campaign: 'spa_page', color: '#ec4899' },
+      { label: 'AI Concierge', campaign: 'ai_concierge', color: '#06b6d4' },
+    ].map(({ label, campaign, color }) => {
+      const count = clicksList.filter((c: any) => c.utm_campaign === campaign).length
+      return (
+        <div key={campaign} style={{ background: '#fafaf9', border: '1px solid #e7e5e4', borderRadius: 6, padding: '12px 16px' }}>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, fontWeight: 600, color: '#a8a29e', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 6px' }}>{label}</p>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 28, fontWeight: 400, color: count > 0 ? color : '#a8a29e', margin: 0 }}>{count}</p>
+        </div>
+      )
+    })}
+  </div>
+</div>
+
+{/* Views by source */}
+<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 28 }}>
               <div style={{ background: '#fff', border: '1px solid #e7e5e4', borderRadius: 8, padding: '20px 24px' }}>
                 <h3 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 700, color: '#78716c', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 16px' }}>Views by Source</h3>
                 {Object.keys(viewsBySource).length === 0 ? (
