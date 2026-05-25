@@ -633,15 +633,18 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
 
       {/* Hero */}
-      <div style={{ position: 'relative', height: '50vh', overflow: 'hidden' }}>
-        <img src={dest.image} alt={dest.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(61,43,31,0.75) 0%, transparent 50%)' }} />
-        <div style={{ position: 'absolute', bottom: '2rem', left: 0, right: 0, maxWidth: '1200px', margin: '0 auto', padding: '0 2rem' }}>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: gold, marginBottom: '0.5rem' }}>{dest.region}</p>
-          <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3.5rem', fontWeight: 300, color: '#fff', margin: '0 0 0.5rem' }}>
+      <div style={{ background: '#492816', padding: '6rem 2rem 4rem' }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto', textAlign: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '1rem' }}>
+            <span style={{ width: '30px', height: '1px', background: gold, display: 'inline-block' }} />
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.3em', textTransform: 'uppercase', color: gold, margin: 0 }}>SwissNet Hotels</p>
+            <span style={{ width: '30px', height: '1px', background: gold, display: 'inline-block' }} />
+          </div>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,110,0.6)', marginBottom: '1rem' }}>{dest.region}</p>
+          <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 300, color: '#fff', margin: '0 0 1rem', lineHeight: 1.1 }}>
             Luxury Hotels in {dest.name}
           </h1>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: 'rgba(255,255,255,0.8)', margin: 0, fontStyle: 'italic' }}>{dest.tagline}</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: 'rgba(255,255,255,0.55)', margin: '0 auto', fontStyle: 'italic', maxWidth: 560, lineHeight: 1.8 }}>{dest.tagline}</p>
         </div>
       </div>
 
