@@ -68,7 +68,7 @@ export default async function HomePage() {
 
       {/* Dashboard Preview */}
 <section style={{ maxWidth: '1200px', margin: '0 auto', padding: '6rem 2rem' }}>
-  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5rem', alignItems: 'center' }}>
+  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr', gap: '4rem', alignItems: 'center' }}>
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
         <span style={{ width: '30px', height: '1px', background: gold, display: 'inline-block' }} />
@@ -172,7 +172,7 @@ export default async function HomePage() {
 
       {/* ChatGPT Preview */}
 <section style={{ maxWidth: '1200px', margin: '0 auto', padding: '6rem 2rem' }}>
-  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5rem', alignItems: 'center' }}>
+  <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: '4rem', alignItems: 'center' }}>
     <div>
       <img
         src="/images/chatgpt-preview.webp"
