@@ -11,13 +11,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Missing required fields', body }, { status: 400 })
   }
 
-  const { error, data } = await supabase.from('ai_visibility_scores').upsert({
+  const { error, data } = await supabase.from('ai_visibility_scores').insert({
     hotel_id,
+    hotel_name,
     query,
     appeared,
     platform: 'google_ai',
     checked_at: new Date().toISOString(),
-  }, { onConflict: 'hotel_id,query,platform' })
+  })
 
   if (error) {
     console.error('Supabase error:', error)
