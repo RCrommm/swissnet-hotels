@@ -20,6 +20,8 @@ const destinationLinks = [
   { label: 'Ascona', href: '/destinations/ascona' },
   { label: 'Andermatt', href: '/destinations/andermatt' },
   { label: 'Montreux', href: '/destinations/montreux' },
+  { label: 'Lausanne', href: '/destinations/lausanne' },
+  { label: 'Grindelwald', href: '/destinations/grindelwald' },
 ]
 
 export default function Navigation() {
@@ -186,7 +188,9 @@ export default function Navigation() {
             { label: 'Davos', href: '/destinations/davos' },
             { label: 'Crans-Montana', href: '/destinations/crans-montana' },
             { label: 'Flims', href: '/destinations/flims' },
-            { label: 'Bern', href: '/destinations/bern' },
+{ label: 'Bern', href: '/destinations/bern' },
+{ label: 'Lausanne', href: '/destinations/lausanne' },
+{ label: 'Grindelwald', href: '/destinations/grindelwald' },
             { label: 'Pricing', href: '/#pricing' },
             { label: 'Hotel Login', href: '/dashboard/login' },
           ].map(item => (
