@@ -66,28 +66,47 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* AI Hotel Preview */}
-      <section style={{ maxWidth: '1200px', margin: '0 auto', padding: '6rem 2rem' }}>
-        <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '1rem' }}>
-            <span style={{ width: '30px', height: '1px', background: gold, display: 'inline-block' }} />
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.3em', textTransform: 'uppercase', color: gold, margin: 0 }}>Coming Soon</p>
-            <span style={{ width: '30px', height: '1px', background: gold, display: 'inline-block' }} />
+      {/* Dashboard Preview */}
+<section style={{ maxWidth: '1200px', margin: '0 auto', padding: '6rem 2rem' }}>
+  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5rem', alignItems: 'center' }}>
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+        <span style={{ width: '30px', height: '1px', background: gold, display: 'inline-block' }} />
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.3em', textTransform: 'uppercase', color: gold, margin: 0 }}>Live Dashboard</p>
+      </div>
+      <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 300, color: text, margin: '0 0 1.5rem', lineHeight: 1.1 }}>
+        Track your AI visibility<br />
+        <span style={{ fontStyle: 'italic', color: gold }}>in real time.</span>
+      </h2>
+      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: textMuted, fontWeight: 300, lineHeight: 1.9, margin: '0 0 2rem' }}>
+        See exactly where your hotel ranks against competitors across ChatGPT, Perplexity and Google AI. Track your score daily, monitor what queries you appear in, and act on the gaps.
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '1rem', marginBottom: '2.5rem' }}>
+        {[
+          'Daily AI visibility score across all platforms',
+          'Competitor ranking table updated every 24h',
+          'Category scores — ski, spa, romantic, dining',
+          'Where you appear and what you\'re missing',
+        ].map(f => (
+          <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+            <span style={{ color: gold, fontSize: '0.6rem', flexShrink: 0, marginTop: '0.2rem' }}>✦</span>
+            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted, lineHeight: 1.6 }}>{f}</span>
           </div>
-          <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 300, color: text, margin: '0 0 1rem' }}>See How Your Hotel Appears in AI Search</h2>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: textMuted, fontWeight: 300, maxWidth: '560px', margin: '0 auto' }}>
-            This is what your hotel looks like when a traveller searches on ChatGPT. Professional cards, live rates, and a direct booking button — all powered by SwissNet AI.
-          </p>
-        </div>
-        <img
-          src="/images/chatgpt-preview.webp"
-          alt="SwissNet AI in ChatGPT"
-          style={{ width: '100%', borderRadius: '12px', boxShadow: '0 24px 80px rgba(0,0,0,0.3)' }}
-        />
-        <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
-          <a href="#contact" style={{ display: 'inline-block', background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.875rem 2rem', textDecoration: 'none' }}>Get Your Hotel Listed →</a>
-        </div>
-      </section>
+        ))}
+      </div>
+      <a href="#contact" style={{ display: 'inline-block', background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.875rem 2rem', textDecoration: 'none' }}>
+        Get Your Dashboard →
+      </a>
+    </div>
+    <div>
+      <img
+        src="/images/dashboard-preview.png"
+        alt="SwissNet AI Visibility Dashboard"
+        style={{ width: '100%', borderRadius: '12px', boxShadow: '0 24px 80px rgba(0,0,0,0.4)' }}
+      />
+    </div>
+  </div>
+</section>
 
       {/* Why SwissNet */}
       <section style={{ background: bgLight, borderTop: '1px solid ' + border, padding: '6rem 0' }}>
@@ -150,6 +169,48 @@ export default async function HomePage() {
           Interested in joining? <a href="#contact" style={{ color: gold, textDecoration: 'none' }}>Get in touch →</a>
         </p>
       </section>
+
+      {/* ChatGPT Preview */}
+<section style={{ maxWidth: '1200px', margin: '0 auto', padding: '6rem 2rem' }}>
+  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5rem', alignItems: 'center' }}>
+    <div>
+      <img
+        src="/images/chatgpt-preview.webp"
+        alt="SwissNet AI in ChatGPT"
+        style={{ width: '100%', borderRadius: '12px', boxShadow: '0 24px 80px rgba(0,0,0,0.4)' }}
+      />
+    </div>
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+        <span style={{ width: '30px', height: '1px', background: gold, display: 'inline-block' }} />
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.3em', textTransform: 'uppercase', color: gold, margin: 0 }}>Coming Soon</p>
+      </div>
+      <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 300, color: text, margin: '0 0 1.5rem', lineHeight: 1.1 }}>
+        Appear directly<br />
+        <span style={{ fontStyle: 'italic', color: gold }}>inside ChatGPT.</span>
+      </h2>
+      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: textMuted, fontWeight: 300, lineHeight: 1.9, margin: '0 0 2rem' }}>
+        When a traveller asks ChatGPT for the best luxury hotel in Zermatt, your hotel appears with a professional card, live rates, and a direct booking button — all powered by SwissNet AI.
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '1rem', marginBottom: '2.5rem' }}>
+        {[
+          'Professional hotel cards inside ChatGPT results',
+          'Live nightly rates and availability',
+          'Direct booking button — no OTA fees',
+          'Launching to SwissNet partners first',
+        ].map(f => (
+          <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+            <span style={{ color: gold, fontSize: '0.6rem', flexShrink: 0, marginTop: '0.2rem' }}>✦</span>
+            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted, lineHeight: 1.6 }}>{f}</span>
+          </div>
+        ))}
+      </div>
+      <a href="#contact" style={{ display: 'inline-block', background: 'transparent', color: gold, fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.875rem 2rem', border: '1px solid ' + gold, textDecoration: 'none' }}>
+        Join the Waitlist →
+      </a>
+    </div>
+  </div>
+</section>
 
       {/* Pricing */}
 {/* Pricing */}
