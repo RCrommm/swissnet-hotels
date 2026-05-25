@@ -67,8 +67,8 @@ export default async function HomePage() {
       </section>
 
       {/* Dashboard Preview */}
-<section style={{ maxWidth: '1200px', margin: '0 auto', padding: '6rem 2rem' }}>
-  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem', alignItems: 'center', marginBottom: '4rem' }}>
+<section style={{ maxWidth: '1300px', margin: '0 auto', padding: '6rem 2rem' }}>
+  <div style={{ display: 'grid', gridTemplateColumns: '0.6fr 1fr', gap: '5rem', alignItems: 'center' }}>
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
         <span style={{ width: '30px', height: '1px', background: gold, display: 'inline-block' }} />
@@ -98,13 +98,14 @@ export default async function HomePage() {
         Get Your Dashboard →
       </a>
     </div>
-    <div />
+    <div>
+      <img
+        src="/images/dashboard-preview.png"
+        alt="SwissNet AI Visibility Dashboard"
+        style={{ width: '100%', borderRadius: '12px', boxShadow: '0 32px 100px rgba(0,0,0,0.5)' }}
+      />
+    </div>
   </div>
-  <img
-    src="/images/dashboard-preview.png"
-    alt="SwissNet AI Visibility Dashboard"
-    style={{ width: '100%', borderRadius: '12px', boxShadow: '0 24px 80px rgba(0,0,0,0.4)' }}
-  />
 </section>
 
       {/* Why SwissNet */}
