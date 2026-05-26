@@ -59,6 +59,13 @@ export async function GET(request: Request) {
   const typeParam = searchParams.get('type')
   const categoryParam = searchParams.get('category')
 
+  // Block unauthorized requests
+  const authHeader = request.headers.get('authorization')
+  const isVercelCron = authHeader === `Bearer ${process.env.CRON_SECRET}`
+  if (!isVercelCron && !forceRun) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   if (!forceRun) {
     const { data: setting } = await supabase
       .from('settings')
