@@ -62,7 +62,7 @@ export async function GET(request: Request) {
   // Block unauthorized requests
   const authHeader = request.headers.get('authorization')
   const isVercelCron = authHeader === `Bearer ${process.env.CRON_SECRET}`
-  if (!isVercelCron && !forceRun) {
+  if (!isVercelCron) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
