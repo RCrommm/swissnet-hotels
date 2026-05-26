@@ -83,6 +83,20 @@ export async function GET(request: Request) {
   if (typeParam === 'category') {
     const regionFilter = searchParams.get('region') || 'Geneva'
 
+    // Check if already ran today
+    const todayDate = new Date().toISOString().split('T')[0]
+    const { data: alreadyRanCat } = await supabase
+      .from('competitor_visibility')
+      .select('id')
+      .eq('region', regionFilter)
+      .eq('category', categoryParam)
+      .eq('run_date', todayDate)
+      .limit(1)
+
+    if (alreadyRanCat && alreadyRanCat.length > 0 && !forceRun) {
+      return NextResponse.json({ message: `Already ran ${categoryParam} for ${regionFilter} on ${todayDate}. Pass ?force=true to override.` })
+    }
+
     let catQuery = supabase.from('category_queries').select('*').eq('is_active', true)
     if (categoryParam) catQuery = catQuery.eq('category', categoryParam)
     const { data: categoryQueries } = await catQuery
