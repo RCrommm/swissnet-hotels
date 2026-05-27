@@ -138,6 +138,13 @@ export async function GET(request: Request) {
   const forceRun = searchParams.get('force') === 'true'
   const currentMonth = new Date().toISOString().slice(0, 7)
 
+  // Block unauthorized requests
+  const authHeader = request.headers.get('authorization')
+  const isVercelCron = authHeader === `Bearer ${process.env.CRON_SECRET}`
+  if (!isVercelCron) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   // ── REGION MODE — runs all hotels in a region against general queries ──
   if (regionParam) {
     const { data: regionHotels } = await supabase
