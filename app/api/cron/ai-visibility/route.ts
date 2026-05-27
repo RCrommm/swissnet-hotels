@@ -142,7 +142,7 @@ export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization')
   const isVercelCron = authHeader === `Bearer ${process.env.CRON_SECRET}`
   if (!isVercelCron) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ message: 'Skipped' }, { status: 200 })
   }
 
   // ── REGION MODE — runs all hotels in a region against general queries ──
