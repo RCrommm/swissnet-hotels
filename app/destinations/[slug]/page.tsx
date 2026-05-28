@@ -635,6 +635,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
     .dest-grid { grid-template-columns: 1fr !important; width: 100% !important; }
     .dest-grid > div { width: 100% !important; max-width: 100% !important; }
     .dest-grid > div:last-child { order: -1; }
+    .dest-breadcrumb { display: none !important; }
   }
 `}</style>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
@@ -656,7 +657,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
       </div>
 
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '3rem 2rem', overflowX: 'hidden' }}>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '2rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '2rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }} className="dest-breadcrumb">
           <Link href="/" style={{ color: textMuted, textDecoration: 'none' }}>Home</Link>
           <span>→</span>
           <Link href="/hotels" style={{ color: textMuted, textDecoration: 'none' }}>Hotels</Link>
