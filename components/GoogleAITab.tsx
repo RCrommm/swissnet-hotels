@@ -19,8 +19,8 @@ const BASE_QUERIES = [
   'top luxury hotel',
   'best family hotel',
   'best hotel with pool',
-  'best hotel with tennis',
-  'best hotel for kids',
+  'hotel with tennis court',
+  'best hotel for families',
 ]
 
 function getQueries(region: string) {
