@@ -855,7 +855,7 @@ function CategoryTrendChart({ category, hotelName, hotels }: { category: string;
         const date = row.checked_at?.split('T')[0]
         if (!date) continue
         if (!grouped[row.competitor_name][date]) grouped[row.competitor_name][date] = []
-        const score = row.platform === 'chatgpt' ? Math.min(100, row.visibility_score + 20) : row.visibility_score
+        const score = row.platform === 'chatgpt' ? Math.min(100, row.visibility_score + 8) : row.visibility_score
         grouped[row.competitor_name][date].push(score)
       }
 
@@ -1087,7 +1087,7 @@ const periodScore = (() => {
       const entry = dayScoresAll.filter((s: any) => s.platform === platform)
         .sort((a: any, b: any) => new Date(b.checked_at).getTime() - new Date(a.checked_at).getTime())[0]
       if (!entry) return null
-      return platform === 'chatgpt' ? Math.min(100, entry.visibility_score + 20) : entry.visibility_score
+      return platform === 'chatgpt' ? Math.min(100, entry.visibility_score + 8) : entry.visibility_score
     }).filter((s): s is number => s !== null)
     const googleForDate = (googleAiScores || []).filter((r: any) => r.checked_at?.split('T')[0] === d)
     const googleDayScore = googleForDate.length > 0 ? Math.round((googleForDate.filter((r: any) => r.appeared).length / googleForDate.length) * 100) : null
@@ -1425,7 +1425,7 @@ const dayScores = ['chatgpt', 'perplexity'].map(platform =>
 ).filter(Boolean)
                     const adjustedScores = dayScores.map((s: any) => ({
   ...s,
-  visibility_score: s.platform === 'chatgpt' ? Math.min(100, s.visibility_score + 20) : s.visibility_score
+  visibility_score: s.platform === 'chatgpt' ? Math.min(100, s.visibility_score + 8) : s.visibility_score
 }))
 const platformAvg = adjustedScores.length > 0
   ? Math.round(adjustedScores.reduce((sum: number, s: any) => sum + s.visibility_score, 0) / adjustedScores.length)
@@ -1448,7 +1448,7 @@ return { date: d, score: avg }
                   const dayScores = (overviewRunData || []).filter((r: any) => r.checked_at?.startsWith(d) && r.platform === chartPlatform)
                   const adjustedDayScores = dayScores.map((s: any) => ({
   ...s,
-  visibility_score: s.platform === 'chatgpt' ? Math.min(100, s.visibility_score + 20) : s.visibility_score
+  visibility_score: s.platform === 'chatgpt' ? Math.min(100, s.visibility_score +8) : s.visibility_score
 }))
                   const score = adjustedDayScores.length > 0
                     ? Math.round(adjustedDayScores.reduce((sum: number, s: any) => sum + s.visibility_score, 0) / adjustedDayScores.length)
