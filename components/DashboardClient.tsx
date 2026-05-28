@@ -1074,16 +1074,12 @@ function SourcePageChart({ hotelId }: { hotelId: string }) {
           }
         } else if (row.utm_campaign === 'destination') {
           label = 'Destination Page'
-        } else if (row.utm_campaign === 'hotel_profile') {
-          label = 'Hotel Profile'
+        } else {
+          continue
         }
         if (!label) continue
         if (!pageMap[label]) pageMap[label] = { profile: 0, website: 0 }
-        if (row.utm_campaign === 'hotel_profile') {
-          pageMap[label].profile++
-        } else {
-          pageMap[label].website++
-        }
+        pageMap[label].website++
       }
 
       const result = Object.entries(pageMap)
