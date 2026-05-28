@@ -19,6 +19,14 @@ export default async function HomePage() {
 
   return (
     <div style={{ background: bg, minHeight: '100vh' }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          .dashboard-grid { grid-template-columns: 1fr !important; gap: 2rem !important; }
+          .chatgpt-grid { grid-template-columns: 1fr !important; gap: 2rem !important; }
+          .pricing-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
       <Navigation />
 
       {/* Hero */}
@@ -51,7 +59,7 @@ export default async function HomePage() {
 
       {/* Stats */}
       <section style={{ background: bgLight, borderTop: '1px solid ' + border, borderBottom: '1px solid ' + border, padding: '2.5rem 0' }}>
-        <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 2rem', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '2rem', textAlign: 'center' }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 2rem', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '2rem', textAlign: 'center' }} className="stats-grid">
           {[
             { n: '10', label: 'Partner Hotels' },
             { n: '130+', label: 'Swiss Hotels' },
@@ -68,7 +76,7 @@ export default async function HomePage() {
 
       {/* Dashboard Preview */}
 <section style={{ maxWidth: '1300px', margin: '0 auto', padding: '6rem 2rem' }}>
-  <div style={{ display: 'grid', gridTemplateColumns: '0.6fr 1fr', gap: '5rem', alignItems: 'center' }}>
+  <div style={{ display: 'grid', gridTemplateColumns: '0.6fr 1fr', gap: '5rem', alignItems: 'center' }} className="dashboard-grid">
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
         <span style={{ width: '30px', height: '1px', background: gold, display: 'inline-block' }} />
@@ -173,7 +181,7 @@ export default async function HomePage() {
       {/* ChatGPT Preview */}
 <section style={{ background: bgLight, borderTop: '1px solid ' + border, borderBottom: '1px solid ' + border, padding: '6rem 0' }}>
   <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem' }}>
-  <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: '4rem', alignItems: 'center' }}>
+  <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: '4rem', alignItems: 'center' }} className="chatgpt-grid">
     <div>
       <img
         src="/images/chatgpt-preview.webp"
@@ -262,7 +270,7 @@ export default async function HomePage() {
       </div>
 
       {/* Features */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem 2rem', marginBottom: '2.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem 2rem', marginBottom: '2.5rem' }} className="pricing-grid">
         {[
           'Premium hotel listing on SwissNet',
           'Optimisation for ChatGPT, Google AI, Perplexity',
