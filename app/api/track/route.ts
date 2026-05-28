@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
   const destination = searchParams.get('destination')
   const medium = searchParams.get('medium') || 'website'
   const campaign = searchParams.get('campaign') || 'direct_booking'
+  const source = searchParams.get('source') || ''
 
   if (!destination) {
     return NextResponse.json({ error: 'destination required' }, { status: 400 })
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
   await supabase.from('referral_clicks').insert([{
     hotel_id: hotel_id || null,
     hotel_name: hotel_name || null,
-    source_page: request.headers.get('referer') || '',
+    source_page: source || request.headers.get('referer') || '',
     utm_source: 'swissnet',
     utm_medium: medium,
     utm_campaign: campaign,

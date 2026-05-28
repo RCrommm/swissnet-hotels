@@ -915,7 +915,7 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
                           View Profile
                         </Link>
                         {hotel.direct_booking_url && (
-                          <a href={(hotel.is_partner || PARTNER_HOTEL_NAMES.has(hotel.name)) ? `/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIComponent(hotel.name)}&destination=${encodeURIComponent(hotel.direct_booking_url)}&medium=website&campaign=best_page` : hotel.direct_booking_url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#1a0e06', background: gold, padding: '0.5rem 1rem', textDecoration: 'none', borderRadius: 2 }}>
+                          <a href={(hotel.is_partner || PARTNER_HOTEL_NAMES.has(hotel.name)) ? `/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIComponent(hotel.name)}&destination=${encodeURIComponent(hotel.direct_booking_url)}&medium=website&campaign=best_page&source=${encodeURIComponent(typeof window !== 'undefined' ? window.location.pathname : '')}` : hotel.direct_booking_url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#1a0e06', background: gold, padding: '0.5rem 1rem', textDecoration: 'none', borderRadius: 2 }}>
                             Official Website →
                           </a>
                         )}

@@ -87,10 +87,10 @@ export default async function ComparePage({ params }: { params: Promise<{ slug: 
   .replace(/^-|-$/g, '')
 
   const trackingUrlA = hotelA.is_partner && hotelA.direct_booking_url
-    ? `/api/track?hotel_id=${hotelA.id}&hotel_name=${encodeURIComponent(hotelA.name)}&destination=${encodeURIComponent(hotelA.direct_booking_url)}&medium=website&campaign=compare`
+    ? `/api/track?hotel_id=${hotelA.id}&hotel_name=${encodeURIComponent(hotelA.name)}&destination=${encodeURIComponent(hotelA.direct_booking_url)}&medium=website&campaign=compare&source=${encodeURIComponent(typeof window !== 'undefined' ? window.location.pathname : '')}`
     : hotelA.direct_booking_url
   const trackingUrlB = hotelB.is_partner && hotelB.direct_booking_url
-    ? `/api/track?hotel_id=${hotelB.id}&hotel_name=${encodeURIComponent(hotelB.name)}&destination=${encodeURIComponent(hotelB.direct_booking_url)}&medium=website&campaign=compare`
+    ? `/api/track?hotel_id=${hotelB.id}&hotel_name=${encodeURIComponent(hotelB.name)}&destination=${encodeURIComponent(hotelB.direct_booking_url)}&medium=website&campaign=compare&source=${encodeURIComponent(typeof window !== 'undefined' ? window.location.pathname : '')}`
     : hotelB.direct_booking_url
 
 // Related — same region, similar category, max 3
