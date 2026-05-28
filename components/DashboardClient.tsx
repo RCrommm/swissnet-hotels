@@ -843,7 +843,6 @@ function CategoryTrendChart({ category, hotelName, hotels }: { category: string;
         .from('competitor_visibility')
         .select('competitor_name, visibility_score, checked_at, platform, category')
         .eq('category', category)
-        .in('competitor_name', hotelNames)
         .gte('checked_at', since)
         .order('checked_at', { ascending: true })
 
