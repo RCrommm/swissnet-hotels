@@ -1611,7 +1611,7 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
               <CategoryTrendChart
                 category={competitorView}
                 hotelName={hotelName}
-                hotels={competitorTableHotels}
+                hotels={CATEGORY_COMPETITORS[competitorView]?.hotels.map((name: string) => ({ name })) || []}
               />
             )}
 
