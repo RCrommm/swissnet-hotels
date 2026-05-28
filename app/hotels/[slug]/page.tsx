@@ -313,6 +313,12 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
 
   return (
     <div style={{ background: bg, minHeight: '100vh' }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .hotel-grid { grid-template-columns: 1fr !important; gap: 2rem !important; }
+          .hotel-grid > div:last-child { order: -1; position: static !important; top: auto !important; }
+        }
+      `}</style>
       
       <SchemaMarkup hotel={hotel} keywords={keywords || []} roomTypes={roomTypes || []} faqs={faqs} restaurants={restaurants || []} spaData={spaData || []} awards={awards || []} />
       <ViewTracker hotelId={hotel.id} hotelName={hotel.name} />
@@ -370,7 +376,7 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
 
       {/* MAIN CONTENT */}
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '5rem 2.5rem' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '5rem', alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '5rem', alignItems: 'start' }} className="hotel-grid">
 
           {/* LEFT */}
           <div>
@@ -396,7 +402,7 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
   ))}
 </div>
 
-<p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 300, color: text, lineHeight: 1.6, margin: '0 0 1.5rem', maxWidth: 600 }}>{hotel.description}</p>
+<p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(1rem, 3vw, 1.5rem)', fontWeight: 300, color: text, lineHeight: 1.6, margin: '0 0 1.5rem', maxWidth: 600 }}>{hotel.description}</p>
 
               {/* Why stay here */}
               {hotel.amenities?.length > 0 && (
