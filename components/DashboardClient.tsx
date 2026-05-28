@@ -166,39 +166,12 @@ function DualAxisChart({ datasets, labels, height = 160, hotelId }: { datasets: 
   const [markers, setMarkers] = useState<{ idx: number; label: string; type: string }[]>([])
 
   useEffect(() => {
-    if (!hotelId) return
-    const load = async () => {
-      const { createClient } = await import('@supabase/supabase-js')
-      const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-      const [{ data: faqs }, { data: offers }] = await Promise.all([
-        sb.from('hotel_faq_suggestions').select('page_type, created_at').eq('hotel_id', hotelId).eq('status', 'approved').order('created_at'),
-        sb.from('hotel_offers').select('name, created_at').eq('hotel_id', hotelId).eq('offer_type', 'temporary').eq('is_available', true).order('created_at'),
-      ])
-      const events: { date: string; label: string; type: string }[] = []
-      const seenFaqDates = new Set<string>()
-      for (const f of faqs || []) {
-        const date = f.created_at?.split('T')[0]
-        if (date && !seenFaqDates.has(date)) {
-          seenFaqDates.add(date)
-          events.push({ date, label: 'FAQs updated', type: 'faq' })
-        }
-      }
-      for (const o of offers || []) {
-        const date = o.created_at?.split('T')[0]
-        if (date) events.push({ date, label: o.name || 'Offer published', type: 'offer' })
-      }
-      const result = events.map(e => {
-        const idx = labels.indexOf(e.date)
-        if (idx === -1) return null
-        return { idx, label: e.label, type: e.type }
-      }).filter(Boolean) as { idx: number; label: string; type: string }[]
-      setMarkers(result)
-    }
-    load()
+    setMarkers([])
   }, [hotelId, labels.join(',')])
 
   const clicks = datasets.find(d => d.label === 'Clicks')?.data || []
   const views = datasets.find(d => d.label === 'Views')?.data || []
+  const conversions = datasets.find(d => d.label === 'Conversions')?.data || []
   const n = labels.length
   if (n < 2) return null
 
@@ -225,9 +198,11 @@ function DualAxisChart({ datasets, labels, height = 160, hotelId }: { datasets: 
 
   const vPts: [number, number][] = views.map((v, i) => [cx(i), cyV(v)])
   const cPts: [number, number][] = clicks.map((v, i) => [cx(i), cyC(v)])
+  const convPts: [number, number][] = conversions.map((v, i) => [cx(i), cyC(v)])
   const vPath = smooth(vPts)
   const vArea = vPath + ` L${cx(n - 1)},${pT + cH} L${cx(0)},${pT + cH} Z`
   const cPath = smooth(cPts)
+  const convPath = smooth(convPts)
   const xLabels = labels.filter((_, i) => i % Math.ceil(n / 6) === 0)
   const hoverX = hoverIdx !== null ? cx(hoverIdx) : null
   const hoverClickVal = hoverIdx !== null ? clicks[hoverIdx] : null
@@ -273,6 +248,7 @@ function DualAxisChart({ datasets, labels, height = 160, hotelId }: { datasets: 
           <path d={vArea} fill="url(#vFill)" />
           <path d={vPath} fill="none" stroke={BLUE} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity={hoverIdx !== null ? 0.85 : 0.65} />
           <path d={cPath} fill="none" stroke={GOLD} strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" opacity={hoverIdx !== null ? 0.7 : 0.5} />
+          <path d={convPath} fill="none" stroke={GREEN} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity={hoverIdx !== null ? 0.9 : 0.7} />
         </g>
         {hoverX !== null && (
           <g>
@@ -1416,15 +1392,15 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', marginBottom: '1.5rem' }}>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 1rem' }}>Performance Over Time</p>
               <div style={{ display: 'flex', gap: '1.25rem', marginBottom: '0.75rem' }}>
-                {[{ label: 'Booking Clicks', color: GOLD }, { label: 'Views', color: BLUE }].map(l => (
+                {[{ label: 'Booking Clicks', color: GOLD }, { label: 'Views', color: BLUE }, { label: 'Conversions', color: GREEN }].map(l => (
                   <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <div style={{ width: 18, height: 2, background: l.color, borderRadius: 2, opacity: l.label === 'Views' ? 0.7 : 0.9 }} />
+                    <div style={{ width: 18, height: 2, background: l.color, borderRadius: 2, opacity: 0.9 }} />
                     <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{l.label}</span>
                     {l.label === 'Views' && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.48rem', color: 'rgba(55,138,221,0.5)', marginLeft: 2 }}>right axis</span>}
                   </div>
                 ))}
               </div>
-              <DualAxisChart datasets={[{ data: clicksByDay, color: GOLD, label: 'Clicks' }, { data: viewsByDay, color: BLUE, label: 'Views' }]} labels={days} height={160} hotelId={hotel?.id} />
+              <DualAxisChart datasets={[{ data: clicksByDay, color: GOLD, label: 'Clicks' }, { data: viewsByDay, color: BLUE, label: 'Views' }, { data: bookingsByDay, color: GREEN, label: 'Conversions' }]} labels={days} height={160} hotelId={hotel?.id} />
             </div>
             <InsightCard text={insight.text} type={insight.type} />
           </div>
