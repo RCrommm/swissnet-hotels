@@ -1086,14 +1086,7 @@ function SourcePageChart({ hotelId }: { hotelId: string }) {
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 0.2rem' }}>Clicks by Page</p>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: 0 }}>Where visitors discover and click through to your hotel</p>
         </div>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          {[{ label: 'Profile Clicks', color: GOLD }, { label: 'Website Clicks', color: TEXT }].map(l => (
-            <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <div style={{ width: 8, height: 8, borderRadius: 2, background: l.color, opacity: 0.8 }} />
-              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED }}>{l.label}</span>
-            </div>
-          ))}
-        </div>
+        
       </div>
 
       <div style={{ display: 'flex', gap: '2rem' }}>
