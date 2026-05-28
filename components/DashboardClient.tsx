@@ -841,9 +841,9 @@ function CategoryTrendChart({ category, hotelName, hotels }: { category: string;
       const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
       const { data } = await sb
         .from('competitor_visibility')
-        .select('hotel_name, visibility_score, checked_at, platform, category')
+        .select('competitor_name, visibility_score, checked_at, platform, category')
         .eq('category', category)
-        .in('hotel_name', hotelNames)
+        .in('competitor_name', hotelNames)
         .gte('checked_at', since)
         .order('checked_at', { ascending: true })
 
@@ -852,12 +852,12 @@ function CategoryTrendChart({ category, hotelName, hotels }: { category: string;
       // Group by hotel → by date → average chatgpt+perplexity
       const grouped: Record<string, Record<string, number[]>> = {}
       for (const row of data) {
-        if (!grouped[row.hotel_name]) grouped[row.hotel_name] = {}
+        if (!grouped[row.competitor_name]) grouped[row.competitor_name] = {}
         const date = row.checked_at?.split('T')[0]
         if (!date) continue
-        if (!grouped[row.hotel_name][date]) grouped[row.hotel_name][date] = []
+        if (!grouped[row.competitor_name][date]) grouped[row.competitor_name][date] = []
         const score = row.platform === 'chatgpt' ? Math.min(100, row.visibility_score + 20) : row.visibility_score
-        grouped[row.hotel_name][date].push(score)
+        grouped[row.competitor_name][date].push(score)
       }
 
       const result: Record<string, { date: string; score: number }[]> = {}
@@ -1611,7 +1611,7 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
               <CategoryTrendChart
                 category={competitorView}
                 hotelName={hotelName}
-                hotels={CATEGORY_COMPETITORS[competitorView]?.hotels.map((name: string) => ({ name })) || []}
+                hotels={competitorTableHotels}
               />
             )}
 
