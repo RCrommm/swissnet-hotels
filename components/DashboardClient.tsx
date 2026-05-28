@@ -1062,18 +1062,11 @@ function SourcePageChart({ hotelId }: { hotelId: string }) {
         const src = row.source_page || ''
         let label = ''
         if (row.utm_campaign === 'best_page') {
-          const match = src.match(/best\/([^?]+)/)
-          label = match ? match[1].replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) : 'Best Pages'
+          label = 'Best Pages'
         } else if (row.utm_campaign === 'compare') {
-          const match = src.match(/compare\/([^?]+)/)
-          if (match) {
-            const parts = match[1].split('-vs-')
-            label = 'vs ' + (parts[1] || parts[0]).split('-').slice(0, 3).map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-          } else {
-            label = 'Compare Pages'
-          }
+          label = 'Compare Pages'
         } else if (row.utm_campaign === 'destination') {
-          label = 'Destination Page'
+          label = 'Destination Pages'
         } else {
           continue
         }
