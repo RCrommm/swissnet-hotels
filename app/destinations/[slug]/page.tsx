@@ -2,6 +2,7 @@
 import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import HotelCard from './HotelCard'
 export const revalidate = 3600
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
@@ -737,39 +738,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   {hotelsList.map((hotel, i) => (
-                    <Link key={hotel.id} href={`/hotels/${(hotel as any).slug || hotel.id}`} style={{ textDecoration: 'none' }}>
-                      <div style={{ background: white, border: hotel.is_partner ? `1px solid ${gold}88` : `1px solid ${border}`, padding: '1.25rem 1.5rem', display: 'flex', gap: '1.25rem', alignItems: 'flex-start' }}>
-                        <div style={{ flexShrink: 0, width: 32, height: 32, background: i === 0 ? gold : bg, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', fontWeight: 600, color: i === 0 ? '#1a0e06' : textMuted }}>#{i + 1}</span>
-                        </div>
-                        {hotel.images?.[0] && (
-                          <div style={{ width: 80, height: 60, flexShrink: 0, overflow: 'hidden', borderRadius: 4 }}>
-                            <img src={hotel.images[0]} alt={hotel.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          </div>
-                        )}
-                        <div style={{ flex: 1 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.3rem' }}>
-                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', fontWeight: 600, color: text, margin: 0 }}>{hotel.name}</p>
-                            {hotel.is_partner && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, background: gold, color: '#1a0e06', padding: '2px 8px', borderRadius: 20 }}>✦ Partner</span>}
-                          </div>
-                          <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem' }}>
-                            <span style={{ display: 'flex', gap: '0.1rem' }}>
-                              {Array.from({ length: (hotel as any).star_classification || 5 }).map((_, si) => (
-                                <span key={si} style={{ color: gold, fontSize: '0.55rem' }}>★</span>
-                              ))}
-                            </span>
-                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>{hotel.category}</span>
-                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: gold }}>From CHF {hotel.nightly_rate_chf?.toLocaleString()}/night</span>
-                          </div>
-                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted, margin: 0, lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                            {hotel.description}
-                          </p>
-                        </div>
-                        <div style={{ flexShrink: 0 }}>
-                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: gold }}>View →</span>
-                        </div>
-                      </div>
-                    </Link>
+                    <HotelCard key={hotel.id} hotel={hotel} slug={slug} index={i} gold={gold} border={border} bg={bg} text={text} textMuted={textMuted} />
                   ))}
                 </div>
               )}
