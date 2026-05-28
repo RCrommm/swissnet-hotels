@@ -814,15 +814,15 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string; hotel
 // ── CATEGORY TREND CHART ─────────────────────────────────────────────────────
 
 const CHART_COLORS = [
-  '#C9A84C', // gold — current hotel always first
+  '#C9A84C',
   '#94a3b8',
-  '#64748b',
-  '#a78bfa',
-  '#6ee7b7',
-  '#f9a8d4',
-  '#fbbf24',
-  '#60a5fa',
-  '#f87171',
+  '#6366f1',
+  '#ec4899',
+  '#14b8a6',
+  '#f97316',
+  '#8b5cf6',
+  '#06b6d4',
+  '#84cc16',
 ]
 
 function CategoryTrendChart({ category, hotelName, hotels }: { category: string; hotelName: string; hotels: any[] }) {
@@ -974,7 +974,7 @@ function CategoryTrendChart({ category, hotelName, hotels }: { category: string;
               {datasets.filter(ds => ds.name !== hotelName && !hidden.has(ds.name)).map(ds => {
                 if (ds.points.length < 2) return null
                 return (
-                  <path key={ds.name} d={smooth(ds.points)} fill="none" stroke="rgba(42,26,14,0.1)" strokeWidth="1" strokeLinecap="round" />
+                  <path key={ds.name} d={smooth(ds.points)} fill="none" stroke={ds.color} strokeWidth="1" strokeLinecap="round" opacity="0.35" />
                 )
               })}
 
@@ -1015,7 +1015,6 @@ function CategoryTrendChart({ category, hotelName, hotels }: { category: string;
               <div key={ds.name} onClick={() => toggleHotel(ds.name)} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.5rem 0.6rem', borderRadius: 6, cursor: 'pointer', background: isHidden ? 'transparent' : GOLD_LIGHT, border: `1px solid ${isHidden ? BORDER : 'rgba(201,169,76,0.3)'}`, marginBottom: '0.5rem', opacity: isHidden ? 0.4 : 1 }}>
                 <div style={{ width: 14, height: 3, borderRadius: 2, background: isHidden ? 'transparent' : GOLD, border: isHidden ? `1.5px solid ${GOLD}` : 'none', flexShrink: 0 }} />
                 <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: GOLD, fontWeight: 700, flex: 1, lineHeight: 1.3 }}>{ds.name} ✦</span>
-                {lastScore !== undefined && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: GOLD, fontWeight: 700, flexShrink: 0 }}>{lastScore}%</span>}
               </div>
             )
           })}
@@ -1028,9 +1027,8 @@ function CategoryTrendChart({ category, hotelName, hotels }: { category: string;
               const lastScore = ds.points.slice(-1)[0]?.score
               return (
                 <div key={ds.name} onClick={() => toggleHotel(ds.name)} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.3rem 0.4rem', borderRadius: 4, cursor: 'pointer', opacity: isHidden ? 0.25 : 0.7 }}>
-                  <div style={{ width: 12, height: 2, borderRadius: 1, background: isHidden ? 'transparent' : 'rgba(42,26,14,0.25)', border: isHidden ? '1px solid rgba(42,26,14,0.2)' : 'none', flexShrink: 0 }} />
+                  <div style={{ width: 12, height: 2, borderRadius: 1, background: isHidden ? 'transparent' : ds.color, border: isHidden ? `1px solid ${ds.color}` : 'none', flexShrink: 0, opacity: 0.7 }} />
                   <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', color: TEXT_MUTED, flex: 1, lineHeight: 1.3, textDecoration: isHidden ? 'line-through' : 'none' }}>{ds.name}</span>
-                  {lastScore !== undefined && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.54rem', color: TEXT_MUTED, flexShrink: 0 }}>{lastScore}%</span>}
                 </div>
               )
             })}
