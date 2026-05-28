@@ -1668,7 +1668,7 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
                       color: GOLD,
                     },
                     {
-                      label: 'Change This Week',
+                      label: 'Daily Position Change',
                       value: (() => {
                         if (myRankChange === null) return '—'
                         return myRankChange > 0 ? `↑ ${myRankChange}pts` : myRankChange < 0 ? `↓ ${Math.abs(myRankChange)}pts` : 'No change'
