@@ -630,6 +630,12 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
 
   return (
     <div style={{ background: bg, minHeight: '100vh' }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .dest-grid { grid-template-columns: 1fr !important; }
+          .dest-grid > div:last-child { order: -1; }
+        }
+      `}</style>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
 
       {/* Hero */}
@@ -657,7 +663,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
           <span style={{ color: text }}>{dest.name}</span>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '3rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '3rem' }} className="dest-grid">
           <div>
             {/* Structured destination sections */}
 <div style={{ marginBottom: '2.5rem' }}>
