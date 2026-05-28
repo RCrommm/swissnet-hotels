@@ -892,7 +892,7 @@ function CategoryTrendChart({ category, hotelName, hotels }: { category: string;
       points: trendData[name].filter(p => p.date >= cutoff),
     }))
 
-  const W = 560, H = 160, pL = 32, pR = 16, pT = 12, pB = 24
+  const W = 580, H = 200, pL = 36, pR = 20, pT = 16, pB = 28
   const cW = W - pL - pR, cH = H - pT - pB
   const n = allDates.length
 
@@ -903,68 +903,138 @@ function CategoryTrendChart({ category, hotelName, hotels }: { category: string;
   }
   const py = (v: number) => pT + cH - (v / 100) * cH
 
+  const smooth = (points: {date: string; score: number}[]) => {
+    if (points.length < 2) return ''
+    const pts: [number, number][] = points.map(p => [dateToX(p.date), py(p.score)])
+    let d = `M${pts[0][0]},${pts[0][1]}`
+    for (let i = 1; i < pts.length; i++) {
+      const [x0, y0] = pts[i - 1]
+      const [x1, y1] = pts[i]
+      const t = 0.3
+      d += ` C${x0 + (x1 - x0) * t},${y0} ${x1 - (x1 - x0) * t},${y1} ${x1},${y1}`
+    }
+    return d
+  }
+
   if (!loaded) return (
     <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '2rem', marginBottom: '1.5rem', textAlign: 'center' }}>
       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED }}>Loading trend data...</p>
     </div>
   )
 
+  const currentHotelDataset = datasets.find(ds => ds.name === hotelName)
+  const cutoffDate = new Date(Date.now() - chartDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  const latestScore = currentHotelDataset?.points?.slice(-1)[0]?.score
+  const firstScore = currentHotelDataset?.points?.find(p => p.date >= cutoffDate)?.score
+  const delta = latestScore !== undefined && firstScore !== undefined ? latestScore - firstScore : null
+
   return (
-    <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', marginBottom: '1.5rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: 0 }}>Category Trend</p>
-        <div style={{ display: 'flex', gap: '0.25rem' }}>
-          {[{ l: '7D', v: 7 }, { l: '30D', v: 30 }, { l: '90D', v: 90 }].map(p => (
-            <button key={p.v} onClick={() => setChartDays(p.v)} style={{ padding: '0.28rem 0.6rem', borderRadius: 4, border: '1px solid ' + BORDER, background: chartDays === p.v ? TEXT : 'transparent', color: chartDays === p.v ? WHITE : TEXT_MUTED, fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 600, cursor: 'pointer' }}>{p.l}</button>
-          ))}
+    <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1.75rem', marginBottom: '1.5rem', boxShadow: '0 1px 16px rgba(42,26,14,0.05)' }}>
+
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+        <div>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 0.2rem' }}>Category Trend</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: 0, letterSpacing: '0.03em' }}>AI visibility score over time · click legend to filter</p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {delta !== null && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.3rem 0.75rem', borderRadius: 20, background: delta >= 0 ? GREEN + '12' : RED + '12', border: `1px solid ${delta >= 0 ? GREEN + '30' : RED + '30'}` }}>
+              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, color: delta >= 0 ? GREEN : RED }}>{delta >= 0 ? '↑' : '↓'} {Math.abs(delta)}pts</span>
+              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', color: TEXT_MUTED }}>{chartDays}d</span>
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: '0.2rem', background: BG, borderRadius: 6, padding: '0.2rem' }}>
+            {[{ l: '7D', v: 7 }, { l: '30D', v: 30 }, { l: '90D', v: 90 }].map(p => (
+              <button key={p.v} onClick={() => setChartDays(p.v)} style={{ padding: '0.25rem 0.65rem', borderRadius: 4, border: 'none', background: chartDays === p.v ? WHITE : 'transparent', color: chartDays === p.v ? TEXT : TEXT_MUTED, fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: chartDays === p.v ? 700 : 400, cursor: 'pointer', boxShadow: chartDays === p.v ? '0 1px 4px rgba(0,0,0,0.08)' : 'none' }}>{p.l}</button>
+            ))}
+          </div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '1.5rem' }}>
+      <div style={{ display: 'flex', gap: '2rem' }}>
+
         {/* Chart */}
         <div style={{ flex: 1, minWidth: 0 }}>
           {allDates.length < 2 ? (
-            <div style={{ height: H, display: 'flex', alignItems: 'center', justifyContent: 'center', background: BG, borderRadius: 8 }}>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED }}>Not enough data yet — runs accumulate daily</p>
+            <div style={{ height: H, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: BG, borderRadius: 8, gap: '0.5rem' }}>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', color: TEXT_MUTED, margin: 0 }}>Trend builds with each weekly run</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: 0 }}>Check back after the next Sunday cron</p>
             </div>
           ) : (
             <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow: 'visible' }}>
               {[0, 25, 50, 75, 100].map(v => (
                 <g key={v}>
-                  <line x1={pL} y1={py(v)} x2={pL + cW} y2={py(v)} stroke="rgba(0,0,0,0.03)" strokeWidth="1" />
-                  <text x={pL - 5} y={py(v) + 3} textAnchor="end" fill="rgba(42,26,14,0.3)" fontSize="7" fontFamily="Montserrat, sans-serif">{v}%</text>
+                  <line x1={pL} y1={py(v)} x2={pL + cW} y2={py(v)} stroke={v === 0 ? 'rgba(0,0,0,0.07)' : 'rgba(0,0,0,0.03)'} strokeWidth="1" />
+                  <text x={pL - 6} y={py(v) + 3} textAnchor="end" fill="rgba(42,26,14,0.22)" fontSize="6.5" fontFamily="Montserrat, sans-serif">{v}%</text>
                 </g>
               ))}
-              {datasets.filter(ds => !hidden.has(ds.name)).map(ds => {
+
+              {/* Competitor lines — muted */}
+              {datasets.filter(ds => ds.name !== hotelName && !hidden.has(ds.name)).map(ds => {
                 if (ds.points.length < 2) return null
-                const pts = ds.points.map(p => `${dateToX(p.date)},${py(p.score)}`).join(' ')
                 return (
-                  <g key={ds.name}>
-                    <polyline points={pts} fill="none" stroke={ds.color} strokeWidth={ds.name === hotelName ? 2 : 1.5} strokeLinecap="round" strokeLinejoin="round" opacity={ds.name === hotelName ? 1 : 0.55} />
-                    {ds.points.map((p, i) => (
-                      <circle key={i} cx={dateToX(p.date)} cy={py(p.score)} r={ds.name === hotelName ? 2.5 : 2} fill={WHITE} stroke={ds.color} strokeWidth="1.5" opacity={ds.name === hotelName ? 1 : 0.6} />
-                    ))}
-                  </g>
+                  <path key={ds.name} d={smooth(ds.points)} fill="none" stroke="rgba(42,26,14,0.1)" strokeWidth="1" strokeLinecap="round" />
                 )
               })}
+
+              {/* Your hotel — dominant */}
+              {currentHotelDataset && !hidden.has(hotelName) && currentHotelDataset.points.length >= 2 && (() => {
+                const path = smooth(currentHotelDataset.points)
+                const lastPt = currentHotelDataset.points[currentHotelDataset.points.length - 1]
+                const firstPt = currentHotelDataset.points[0]
+                return (
+                  <g>
+                    <path d={path} fill="none" stroke={GOLD} strokeWidth="6" strokeLinecap="round" opacity="0.07" />
+                    <path d={path} fill="none" stroke={GOLD} strokeWidth="2.5" strokeLinecap="round" />
+                    <circle cx={dateToX(firstPt.date)} cy={py(firstPt.score)} r="3" fill={WHITE} stroke={GOLD} strokeWidth="2" />
+                    <circle cx={dateToX(lastPt.date)} cy={py(lastPt.score)} r="4.5" fill={GOLD} stroke={WHITE} strokeWidth="2" />
+                    <text x={dateToX(lastPt.date) + 9} y={py(lastPt.score) + 4} fill={GOLD} fontSize="8.5" fontFamily="Montserrat, sans-serif" fontWeight="700">{lastPt.score}%</text>
+                  </g>
+                )
+              })()}
+
               <line x1={pL} y1={pT + cH} x2={pL + cW} y2={pT + cH} stroke="rgba(0,0,0,0.06)" strokeWidth="1" />
-              {allDates.filter((_, i) => i % Math.ceil(n / 5) === 0).map((d, i) => (
-                <text key={i} x={dateToX(d)} y={H - 4} textAnchor="middle" fill="rgba(42,26,14,0.3)" fontSize="7" fontFamily="Montserrat, sans-serif">
-                  {new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+              {[0, Math.floor(n / 2), n - 1].filter(i => i >= 0 && i < allDates.length).map((i) => (
+                <text key={i} x={dateToX(allDates[i])} y={H - 6} textAnchor="middle" fill="rgba(42,26,14,0.28)" fontSize="6.5" fontFamily="Montserrat, sans-serif">
+                  {new Date(allDates[i]).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
                 </text>
               ))}
             </svg>
           )}
         </div>
 
-        {/* Legend with checkboxes */}
-        <div style={{ width: 180, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-          {datasets.map((ds, i) => (
-            <div key={ds.name} onClick={() => toggleHotel(ds.name)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.35rem 0.5rem', borderRadius: 4, cursor: 'pointer', opacity: hidden.has(ds.name) ? 0.35 : 1, background: ds.name === hotelName ? GOLD_LIGHT : 'transparent' }}>
-              <div style={{ width: 10, height: 10, borderRadius: 2, background: hidden.has(ds.name) ? 'transparent' : ds.color, border: '1.5px solid ' + ds.color, flexShrink: 0 }} />
-              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: ds.name === hotelName ? GOLD : TEXT_MUTED, fontWeight: ds.name === hotelName ? 700 : 400, lineHeight: 1.3 }}>{ds.name === hotelName ? ds.name + ' ✦' : ds.name}</span>
-            </div>
-          ))}
+        {/* Legend */}
+        <div style={{ width: 190, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+
+          {/* Your hotel */}
+          {datasets.filter(ds => ds.name === hotelName).map(ds => {
+            const isHidden = hidden.has(ds.name)
+            const lastScore = ds.points.slice(-1)[0]?.score
+            return (
+              <div key={ds.name} onClick={() => toggleHotel(ds.name)} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.5rem 0.6rem', borderRadius: 6, cursor: 'pointer', background: isHidden ? 'transparent' : GOLD_LIGHT, border: `1px solid ${isHidden ? BORDER : 'rgba(201,169,76,0.3)'}`, marginBottom: '0.5rem', opacity: isHidden ? 0.4 : 1 }}>
+                <div style={{ width: 14, height: 3, borderRadius: 2, background: isHidden ? 'transparent' : GOLD, border: isHidden ? `1.5px solid ${GOLD}` : 'none', flexShrink: 0 }} />
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: GOLD, fontWeight: 700, flex: 1, lineHeight: 1.3 }}>{ds.name} ✦</span>
+                {lastScore !== undefined && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: GOLD, fontWeight: 700, flexShrink: 0 }}>{lastScore}%</span>}
+              </div>
+            )
+          })}
+
+          {/* Competitors */}
+          <div style={{ borderTop: '1px solid ' + BORDER, paddingTop: '0.5rem' }}>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.48rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem 0.4rem' }}>Competitors</p>
+            {datasets.filter(ds => ds.name !== hotelName).map(ds => {
+              const isHidden = hidden.has(ds.name)
+              const lastScore = ds.points.slice(-1)[0]?.score
+              return (
+                <div key={ds.name} onClick={() => toggleHotel(ds.name)} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.3rem 0.4rem', borderRadius: 4, cursor: 'pointer', opacity: isHidden ? 0.25 : 0.7 }}>
+                  <div style={{ width: 12, height: 2, borderRadius: 1, background: isHidden ? 'transparent' : 'rgba(42,26,14,0.25)', border: isHidden ? '1px solid rgba(42,26,14,0.2)' : 'none', flexShrink: 0 }} />
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', color: TEXT_MUTED, flex: 1, lineHeight: 1.3, textDecoration: isHidden ? 'line-through' : 'none' }}>{ds.name}</span>
+                  {lastScore !== undefined && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.54rem', color: TEXT_MUTED, flexShrink: 0 }}>{lastScore}%</span>}
+                </div>
+              )
+            })}
+          </div>
         </div>
       </div>
     </div>
