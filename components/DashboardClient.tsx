@@ -1427,18 +1427,17 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
               <KPICard label="Conversions" value={recentBookings.length} sub={`last ${period} days`} color={PURPLE} />
             </div>
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', marginBottom: '1.5rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: 0 }}>Performance Trend</p>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                  {[{ label: 'Clicks', color: GOLD }, { label: 'Conversions', color: GREEN }].map(l => (
-                    <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      <div style={{ width: 8, height: 2, background: l.color, borderRadius: 1 }} />
-                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED }}>{l.label}</span>
-                    </div>
-                  ))}
-                </div>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 1rem' }}>Performance Over Time</p>
+              <div style={{ display: 'flex', gap: '1.25rem', marginBottom: '0.75rem' }}>
+                {[{ label: 'Booking Clicks', color: GOLD }, { label: 'Views', color: BLUE }].map(l => (
+                  <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <div style={{ width: 18, height: 2, background: l.color, borderRadius: 2, opacity: l.label === 'Views' ? 0.7 : 0.9 }} />
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{l.label}</span>
+                    {l.label === 'Views' && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.48rem', color: 'rgba(55,138,221,0.5)', marginLeft: 2 }}>right axis</span>}
+                  </div>
+                ))}
               </div>
-              <LineChart datasets={[{ data: clicksByDay, color: GOLD, label: 'Clicks' }, { data: bookingsByDay, color: GREEN, label: 'Conversions' }]} labels={days} />
+              <DualAxisChart datasets={[{ data: clicksByDay, color: GOLD, label: 'Clicks' }, { data: viewsByDay, color: BLUE, label: 'Views' }]} labels={days} height={160} hotelId={hotel?.id} />
             </div>
             <InsightCard text={insight.text} type={insight.type} />
           </div>
