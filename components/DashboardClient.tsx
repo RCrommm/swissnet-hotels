@@ -1721,7 +1721,7 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
                       const top = allHotelsInRegion.filter((h: any) => !h.is_current).sort((a: any, b: any) => (b.visibilityScore ?? 0) - (a.visibilityScore ?? 0))[0]
                       return top ? top.name.replace(' Geneva', '').replace(' Hotel', '') : '—'
                     })(), color: TEXT },
-                    { label: 'Hotels Tracked', value: `${allHotelsInRegion.length} in ${hotelRegion}`, color: TEXT_MUTED },
+                    { label: 'Overall Status', value: visibilityScore >= 70 ? 'Strong' : visibilityScore >= 50 ? 'Improving' : visibilityScore >= 30 ? 'Growing' : 'Early Stage', color: visibilityScore >= 70 ? GREEN : visibilityScore >= 50 ? GOLD : visibilityScore >= 30 ? '#d97706' : TEXT_MUTED },
                   ].map((item, i) => (
                     <div key={i} style={{ padding: '1rem 1.25rem', background: BG, borderRadius: 8 }}>
                       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>{item.label}</p>
