@@ -3,9 +3,7 @@ import Link from 'next/link'
 
 export default function HotelCard({ hotel, slug, index, gold, border, bg, text, textMuted }: any) {
   const handleClick = () => {
-    if (hotel.is_partner) {
-      fetch(`/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIComponent(hotel.name)}&destination=${encodeURIComponent(`https://swissnethotels.com/hotels/${hotel.slug || hotel.id}`)}&medium=profile&campaign=destination&source=${encodeURIComponent(`/destinations/${slug}`)}`).catch(() => {})
-    }
+    fetch(`/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIComponent(hotel.name)}&destination=${encodeURIComponent(`https://swissnethotels.com/hotels/${hotel.slug || hotel.id}`)}&medium=profile&campaign=destination&source=${encodeURIComponent(`/destinations/${slug}`)}`).catch(() => {})
   }
 
   return (
