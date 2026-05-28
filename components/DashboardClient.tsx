@@ -1696,13 +1696,41 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
 
             
 
-            <InsightCard
-              text={hotelRank === 1
-                ? `You lead the ${competitorView === 'region' ? hotelRegion : CATEGORY_COMPETITORS[competitorView]?.label || ''} category. Maintain your position by keeping your profile content complete and up to date.`
-                : `You are ranked #${hotelRank} in the ${competitorView === 'region' ? hotelRegion : CATEGORY_COMPETITORS[competitorView]?.label || ''} category. Completing your hotel profile will help you rise in AI search rankings.`
-              }
-              type={hotelRank === 1 ? 'success' : 'info'}
-            />
+            {competitorView === 'region' && (
+              <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.75rem', marginBottom: '1.5rem' }}>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 1.25rem' }}>AI Visibility Summary</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+                  {[
+                    { label: 'Your Visibility', value: visibilityScore + '%', color: GOLD },
+                    { label: 'Market Rank', value: `#${hotelRank} in ${hotelRegion}`, color: TEXT },
+                    { label: 'Strongest Category', value: (() => {
+                      const cats = Object.entries(hotelCatScores || {})
+                      if (!cats.length) return '—'
+                      const best = cats.sort((a, b) => (b[1] as number) - (a[1] as number))[0]
+                      const labels: Record<string, string> = { spa: 'Spa & Wellness', dining: 'Fine Dining', romantic: 'Romantic', lake: 'Lake Hotel', business: 'Business', ski: 'Ski Resort' }
+                      return labels[best[0]] || best[0]
+                    })(), color: GREEN },
+                    { label: 'Weakest Category', value: (() => {
+                      const cats = Object.entries(hotelCatScores || {})
+                      if (!cats.length) return '—'
+                      const worst = cats.sort((a, b) => (a[1] as number) - (b[1] as number))[0]
+                      const labels: Record<string, string> = { spa: 'Spa & Wellness', dining: 'Fine Dining', romantic: 'Romantic', lake: 'Lake Hotel', business: 'Business', ski: 'Ski Resort' }
+                      return labels[worst[0]] || worst[0]
+                    })(), color: RED },
+                    { label: 'Main Competitor', value: (() => {
+                      const top = allHotelsInRegion.filter((h: any) => !h.is_current).sort((a: any, b: any) => (b.visibilityScore ?? 0) - (a.visibilityScore ?? 0))[0]
+                      return top ? top.name.replace(' Geneva', '').replace(' Hotel', '') : '—'
+                    })(), color: TEXT },
+                    { label: 'Hotels Tracked', value: `${allHotelsInRegion.length} in ${hotelRegion}`, color: TEXT_MUTED },
+                  ].map((item, i) => (
+                    <div key={i} style={{ padding: '1rem 1.25rem', background: BG, borderRadius: 8 }}>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>{item.label}</p>
+                      <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 400, color: item.color, margin: 0, lineHeight: 1.2 }}>{item.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
