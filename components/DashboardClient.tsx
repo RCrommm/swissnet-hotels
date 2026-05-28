@@ -1149,16 +1149,10 @@ function SourcePageChart({ hotelId }: { hotelId: string }) {
 
         {/* Summary */}
         <div style={{ width: 140, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {[
-            { label: 'Profile Clicks', value: totalProfile, color: GOLD },
-            { label: 'Website Clicks', value: totalWebsite, color: TEXT },
-            { label: 'Total', value: totalProfile + totalWebsite, color: TEXT_MUTED },
-          ].map((s, i) => (
-            <div key={i} style={{ padding: '0.75rem 1rem', background: BG, borderRadius: 8 }}>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.3rem' }}>{s.label}</p>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', color: s.color, margin: 0, lineHeight: 1 }}>{s.value}</p>
-            </div>
-          ))}
+          <div style={{ padding: '0.75rem 1rem', background: BG, borderRadius: 8 }}>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.3rem' }}>Total Clicks</p>
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', color: GOLD, margin: 0, lineHeight: 1 }}>{totalProfile + totalWebsite}</p>
+          </div>
         </div>
       </div>
     </div>
