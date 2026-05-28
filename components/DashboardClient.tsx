@@ -811,6 +811,167 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string; hotel
   )
 }
 
+// ── CATEGORY TREND CHART ─────────────────────────────────────────────────────
+
+const CHART_COLORS = [
+  '#C9A84C', // gold — current hotel always first
+  '#94a3b8',
+  '#64748b',
+  '#a78bfa',
+  '#6ee7b7',
+  '#f9a8d4',
+  '#fbbf24',
+  '#60a5fa',
+  '#f87171',
+]
+
+function CategoryTrendChart({ category, hotelName, hotels }: { category: string; hotelName: string; hotels: any[] }) {
+  const [trendData, setTrendData] = useState<Record<string, { date: string; score: number }[]>>({})
+  const [loaded, setLoaded] = useState(false)
+  const [chartDays, setChartDays] = useState(30)
+  const [hidden, setHidden] = useState<Set<string>>(new Set())
+
+  const hotelNames = hotels.map((h: any) => h.name)
+
+  useEffect(() => {
+    const load = async () => {
+      setLoaded(false)
+      const { createClient } = await import('@supabase/supabase-js')
+      const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+      const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
+      const { data } = await sb
+        .from('competitor_visibility')
+        .select('hotel_name, visibility_score, checked_at, platform, category')
+        .eq('category', category)
+        .in('hotel_name', hotelNames)
+        .gte('checked_at', since)
+        .order('checked_at', { ascending: true })
+
+      if (!data) { setLoaded(true); return }
+
+      // Group by hotel → by date → average chatgpt+perplexity
+      const grouped: Record<string, Record<string, number[]>> = {}
+      for (const row of data) {
+        if (!grouped[row.hotel_name]) grouped[row.hotel_name] = {}
+        const date = row.checked_at?.split('T')[0]
+        if (!date) continue
+        if (!grouped[row.hotel_name][date]) grouped[row.hotel_name][date] = []
+        const score = row.platform === 'chatgpt' ? Math.min(100, row.visibility_score + 20) : row.visibility_score
+        grouped[row.hotel_name][date].push(score)
+      }
+
+      const result: Record<string, { date: string; score: number }[]> = {}
+      for (const [hotel, dates] of Object.entries(grouped)) {
+        result[hotel] = Object.entries(dates)
+          .map(([date, scores]) => ({ date, score: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) }))
+          .sort((a, b) => a.date.localeCompare(b.date))
+      }
+      setTrendData(result)
+      setLoaded(true)
+    }
+    load()
+  }, [category, hotelNames.join(',')])
+
+  const toggleHotel = (name: string) => {
+    setHidden(prev => {
+      const next = new Set(prev)
+      if (next.has(name)) next.delete(name)
+      else next.add(name)
+      return next
+    })
+  }
+
+  const cutoff = new Date(Date.now() - chartDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  const allDates = [...new Set(Object.values(trendData).flatMap(d => d.map(p => p.date)).filter(d => d >= cutoff))].sort()
+
+  const orderedHotels = [hotelName, ...hotelNames.filter(n => n !== hotelName)]
+  const datasets = orderedHotels
+    .filter(name => trendData[name] && trendData[name].length > 0)
+    .map((name, i) => ({
+      name,
+      color: i === 0 ? GOLD : CHART_COLORS[i] || '#94a3b8',
+      points: trendData[name].filter(p => p.date >= cutoff),
+    }))
+
+  const W = 560, H = 160, pL = 32, pR = 16, pT = 12, pB = 24
+  const cW = W - pL - pR, cH = H - pT - pB
+  const n = allDates.length
+
+  const dateToX = (date: string) => {
+    const idx = allDates.indexOf(date)
+    if (idx === -1 || n <= 1) return pL
+    return pL + (idx / (n - 1)) * cW
+  }
+  const py = (v: number) => pT + cH - (v / 100) * cH
+
+  if (!loaded) return (
+    <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '2rem', marginBottom: '1.5rem', textAlign: 'center' }}>
+      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED }}>Loading trend data...</p>
+    </div>
+  )
+
+  return (
+    <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', marginBottom: '1.5rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: 0 }}>Category Trend</p>
+        <div style={{ display: 'flex', gap: '0.25rem' }}>
+          {[{ l: '7D', v: 7 }, { l: '30D', v: 30 }, { l: '90D', v: 90 }].map(p => (
+            <button key={p.v} onClick={() => setChartDays(p.v)} style={{ padding: '0.28rem 0.6rem', borderRadius: 4, border: '1px solid ' + BORDER, background: chartDays === p.v ? TEXT : 'transparent', color: chartDays === p.v ? WHITE : TEXT_MUTED, fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 600, cursor: 'pointer' }}>{p.l}</button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: '1.5rem' }}>
+        {/* Chart */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {allDates.length < 2 ? (
+            <div style={{ height: H, display: 'flex', alignItems: 'center', justifyContent: 'center', background: BG, borderRadius: 8 }}>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED }}>Not enough data yet — runs accumulate daily</p>
+            </div>
+          ) : (
+            <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow: 'visible' }}>
+              {[0, 25, 50, 75, 100].map(v => (
+                <g key={v}>
+                  <line x1={pL} y1={py(v)} x2={pL + cW} y2={py(v)} stroke="rgba(0,0,0,0.03)" strokeWidth="1" />
+                  <text x={pL - 5} y={py(v) + 3} textAnchor="end" fill="rgba(42,26,14,0.3)" fontSize="7" fontFamily="Montserrat, sans-serif">{v}%</text>
+                </g>
+              ))}
+              {datasets.filter(ds => !hidden.has(ds.name)).map(ds => {
+                if (ds.points.length < 2) return null
+                const pts = ds.points.map(p => `${dateToX(p.date)},${py(p.score)}`).join(' ')
+                return (
+                  <g key={ds.name}>
+                    <polyline points={pts} fill="none" stroke={ds.color} strokeWidth={ds.name === hotelName ? 2 : 1.5} strokeLinecap="round" strokeLinejoin="round" opacity={ds.name === hotelName ? 1 : 0.55} />
+                    {ds.points.map((p, i) => (
+                      <circle key={i} cx={dateToX(p.date)} cy={py(p.score)} r={ds.name === hotelName ? 2.5 : 2} fill={WHITE} stroke={ds.color} strokeWidth="1.5" opacity={ds.name === hotelName ? 1 : 0.6} />
+                    ))}
+                  </g>
+                )
+              })}
+              <line x1={pL} y1={pT + cH} x2={pL + cW} y2={pT + cH} stroke="rgba(0,0,0,0.06)" strokeWidth="1" />
+              {allDates.filter((_, i) => i % Math.ceil(n / 5) === 0).map((d, i) => (
+                <text key={i} x={dateToX(d)} y={H - 4} textAnchor="middle" fill="rgba(42,26,14,0.3)" fontSize="7" fontFamily="Montserrat, sans-serif">
+                  {new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                </text>
+              ))}
+            </svg>
+          )}
+        </div>
+
+        {/* Legend with checkboxes */}
+        <div style={{ width: 180, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+          {datasets.map((ds, i) => (
+            <div key={ds.name} onClick={() => toggleHotel(ds.name)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.35rem 0.5rem', borderRadius: 4, cursor: 'pointer', opacity: hidden.has(ds.name) ? 0.35 : 1, background: ds.name === hotelName ? GOLD_LIGHT : 'transparent' }}>
+              <div style={{ width: 10, height: 10, borderRadius: 2, background: hidden.has(ds.name) ? 'transparent' : ds.color, border: '1.5px solid ' + ds.color, flexShrink: 0 }} />
+              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: ds.name === hotelName ? GOLD : TEXT_MUTED, fontWeight: ds.name === hotelName ? 700 : 400, lineHeight: 1.3 }}>{ds.name === hotelName ? ds.name + ' ✦' : ds.name}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── MAIN DASHBOARD ────────────────────────────────────────────────────────────
 
 export default function DashboardClient({ hotel, views, clicks, leads, aiVisibility, googleAiScores, bookings, competitors, hotelCatScores, platformScores, overviewRunData, myRankChange }: any) {
@@ -1429,22 +1590,30 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
               </table>
             </div>
 
-            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', marginBottom: '1.5rem' }}>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 1rem' }}>Recommendations</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {[
-                  hotelRank === 1 ? 'Maintain your #1 position by keeping content fresh and complete' : 'Improve your profile content to rise in category rankings',
-                  'Complete your spa, dining and room schema for better AI coverage',
-                  'Add FAQs targeting high-intent travel queries',
-                  'Ensure your hotel appears in destination and best-of pages',
-                ].map((rec, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.75rem 0', borderBottom: i < 3 ? '1px solid ' + BORDER : 'none' }}>
-                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: GOLD, flexShrink: 0, marginTop: 4 }} />
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.5 }}>{rec}</p>
-                  </div>
-                ))}
+            {competitorView === 'region' ? (
+              <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', marginBottom: '1.5rem' }}>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 1rem' }}>Recommendations</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {[
+                    hotelRank === 1 ? 'Maintain your #1 position by keeping content fresh and complete' : 'Improve your profile content to rise in category rankings',
+                    'Complete your spa, dining and room schema for better AI coverage',
+                    'Add FAQs targeting high-intent travel queries',
+                    'Ensure your hotel appears in destination and best-of pages',
+                  ].map((rec, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.75rem 0', borderBottom: i < 3 ? '1px solid ' + BORDER : 'none' }}>
+                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: GOLD, flexShrink: 0, marginTop: 4 }} />
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.5 }}>{rec}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              <CategoryTrendChart
+                category={competitorView}
+                hotelName={hotelName}
+                hotels={competitorTableHotels}
+              />
+            )}
 
             <InsightCard
               text={hotelRank === 1
