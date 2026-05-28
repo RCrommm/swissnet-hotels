@@ -629,13 +629,14 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
   }
 
   return (
-    <div style={{ background: bg, minHeight: '100vh' }}>
+    <div style={{ background: bg, minHeight: '100vh', overflowX: 'hidden' }}>
       <style>{`
-        @media (max-width: 768px) {
-          .dest-grid { grid-template-columns: 1fr !important; }
-          .dest-grid > div:last-child { order: -1; }
-        }
-      `}</style>
+  @media (max-width: 768px) {
+    .dest-grid { grid-template-columns: 1fr !important; width: 100% !important; }
+    .dest-grid > div { width: 100% !important; max-width: 100% !important; }
+    .dest-grid > div:last-child { order: -1; }
+  }
+`}</style>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
 
       {/* Hero */}
@@ -654,7 +655,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
         </div>
       </div>
 
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '3rem 2rem' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '3rem 2rem', overflowX: 'hidden' }}>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '2rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>
           <Link href="/" style={{ color: textMuted, textDecoration: 'none' }}>Home</Link>
           <span>→</span>
