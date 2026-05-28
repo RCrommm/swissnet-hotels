@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import CompareProfileLink from './HotelCard'
 
 export const revalidate = 3600
 
@@ -529,9 +530,7 @@ h.category === hotelB.category
                       {hotel.description}
                     </p>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <Link href={`/hotels/${hotel.slug || hotel.id}`} style={{ flex: 1, display: 'block', textAlign: 'center', border: `1px solid ${border}`, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: text, padding: '0.6rem', textDecoration: 'none', borderRadius: 4 }}>
-                        View Profile
-                      </Link>
+                      <CompareProfileLink hotel={hotel} gold={gold} border={border} text={text} />
                       {(i === 0 ? trackingUrlA : trackingUrlB) && (
                         <a href={(i === 0 ? trackingUrlA : trackingUrlB)!} target="_blank" rel="noopener noreferrer" style={{ flex: 1, display: 'block', textAlign: 'center', background: gold, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#1a0e06', padding: '0.6rem', textDecoration: 'none', borderRadius: 4 }}>
                           Official Website
