@@ -1565,12 +1565,49 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
         {/* ── COMPETITORS ── */}
         {tab === 'competitors' && (
           <div>
-            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-              <KPICard label="Your Rank" value={'#' + hotelRank} sub={myRankChange !== null ? (myRankChange > 0 ? `↑ ${myRankChange}pts vs last run` : myRankChange < 0 ? `↓ ${Math.abs(myRankChange)}pts vs last run` : 'No change vs last run') : `in ${hotelRegion}`} color={myRankChange > 0 ? GREEN : myRankChange < 0 ? RED : GOLD} />
-              <KPICard label="Hotels Tracked" value={competitorTableHotels.length} sub="in this category" color={BLUE} />
-              <KPICard label="Market Position" value={hotelRank === 1 ? 'Leader' : hotelRank <= 3 ? 'Top 3' : 'Growing'} sub="competitive status" color={PURPLE} />
-              <KPICard label="Visibility Score" value={visibilityScore + '%'} sub="your AI score" color={GOLD} />
-            </div>
+            {competitorView === 'region' ? (
+              <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+                <KPICard label="Your Rank" value={'#' + hotelRank} sub={myRankChange !== null ? (myRankChange > 0 ? `↑ ${myRankChange}pts vs last run` : myRankChange < 0 ? `↓ ${Math.abs(myRankChange)}pts vs last run` : 'No change vs last run') : `in ${hotelRegion}`} color={myRankChange > 0 ? GREEN : myRankChange < 0 ? RED : GOLD} />
+                <KPICard label="Hotels Tracked" value={competitorTableHotels.length} sub="in this category" color={BLUE} />
+                <KPICard label="Market Position" value={hotelRank === 1 ? 'Leader' : hotelRank <= 3 ? 'Top 3' : 'Growing'} sub="competitive status" color={PURPLE} />
+                <KPICard label="Visibility Score" value={visibilityScore + '%'} sub="your AI score" color={GOLD} />
+              </div>
+            ) : (
+              <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.75rem', marginBottom: '1.5rem' }}>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 1.25rem' }}>
+                  {({ spa: 'Spa & Wellness', dining: 'Fine Dining', romantic: 'Romantic', lake: 'Lake Hotel', business: 'Business', ski: 'Ski Resort' } as Record<string,string>)[competitorView] || competitorView} Summary
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+                  {(() => {
+                    const catScore = hotelCatScores?.[competitorView] ?? null
+                    const catHotels = competitorTableHotels
+                    const myRankInCat = catHotels.findIndex((h: any) => h.is_current) + 1
+                    const topCompetitor = catHotels.filter((h: any) => !h.is_current).sort((a: any, b: any) => (b.visibilityScore ?? 0) - (a.visibilityScore ?? 0))[0]
+                    const status = catScore === null ? '—' : catScore >= 70 ? 'Strong' : catScore >= 40 ? 'Growing' : 'Needs work'
+                    const statusColor = catScore === null ? TEXT_MUTED : catScore >= 70 ? GREEN : catScore >= 40 ? GOLD : RED
+                    return [
+                      { label: 'Your Score', value: catScore !== null ? catScore + '%' : '—', color: GOLD },
+                      { label: 'Category Rank', value: myRankInCat > 0 ? `#${myRankInCat} in ${hotelRegion}` : '—', color: TEXT },
+                      { label: 'Performance', value: status, color: statusColor },
+                      { label: 'Top Competitor', value: topCompetitor ? topCompetitor.name.replace(' Geneva', '').replace(' Hotel', '') : '—', color: TEXT },
+                      { label: 'Competitor Score', value: topCompetitor?.visibilityScore != null ? topCompetitor.visibilityScore + '%' : '—', color: TEXT_MUTED },
+                      { label: 'Gap to Leader', value: (() => {
+                        if (catScore === null || !topCompetitor?.visibilityScore) return '—'
+                        const gap = catScore - topCompetitor.visibilityScore
+                        if (gap > 0) return `+${gap}pts ahead`
+                        if (gap < 0) return `${gap}pts behind`
+                        return 'Tied'
+                      })(), color: catScore !== null && topCompetitor?.visibilityScore != null && catScore >= topCompetitor.visibilityScore ? GREEN : RED },
+                    ].map((item, i) => (
+                      <div key={i} style={{ padding: '1rem 1.25rem', background: BG, borderRadius: 8 }}>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>{item.label}</p>
+                        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 400, color: item.color, margin: 0, lineHeight: 1.2 }}>{item.value}</p>
+                      </div>
+                    ))
+                  })()}
+                </div>
+              </div>
+            )}
 
             {/* Category tabs */}
             <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
