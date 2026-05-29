@@ -35,6 +35,10 @@
     {
       "path": "/api/cron/competitor-visibility?region=Geneva&type=category&category=business",
       "schedule": "0 13 * * 0"
+    },
+    {
+      "path": "/api/cron/competitor-visibility?region=Geneva&type=category&category=family",
+      "schedule": "0 14 * * 0"
     }
   ]
 }
