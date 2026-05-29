@@ -15,7 +15,9 @@ const CATEGORIES = [
   { key: 'dining', label: 'Fine Dining' },
   { key: 'romantic', label: 'Romantic' },
   { key: 'lake', label: 'Lake Hotel' },
-  { key: 'business', label: 'Business & City' },
+  { key: 'business', label: 'Business' },
+  { key: 'family', label: 'Family' },
+
 ]
 
 export default function AIVisibilityQueries({ hotels }: { hotels: any[] }) {

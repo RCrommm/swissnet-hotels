@@ -1256,7 +1256,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
     romantic: 'Romantic',
     lake: 'Lake Hotel',
     business: 'Business',
-    family: 'Family Hotel',
+    family: 'Family',
   }
 
   const competitorTabs = [
@@ -1652,7 +1652,7 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
             ) : (
               <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.75rem', marginBottom: '1.5rem' }}>
                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 1.25rem' }}>
-                  {({ spa: 'Spa & Wellness', dining: 'Fine Dining', romantic: 'Romantic', lake: 'Lake Hotel', business: 'Business', ski: 'Ski Resort' } as Record<string,string>)[competitorView] || competitorView} Summary
+                  {({ spa: 'Spa & Wellness', dining: 'Fine Dining', romantic: 'Romantic', lake: 'Lake Hotel', business: 'Business', ski: 'Ski Resort', family: 'Family' } as Record<string,string>)[competitorView] || competitorView} Summary
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
                   {(() => {
