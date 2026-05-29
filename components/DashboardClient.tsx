@@ -104,16 +104,16 @@ const CATEGORY_COMPETITORS: Record<string, { label: string; hotels: string[] }> 
 
 // Max 2 categories per hotel + region always shown
 const HOTEL_CATEGORIES: Record<string, string[]> = {
-  'La Réserve Genève': ['spa', 'dining', 'romantic', 'lake', 'business'],
+  'La Réserve Genève': ['spa', 'dining', 'romantic', 'lake', 'business', 'family'],
   'La Réserve Eden au Lac Zurich': ['business', 'romantic', 'lake', 'dining'],
-  'Mont Cervin Palace': ['ski', 'dining', 'romantic'],
+  'Mont Cervin Palace': ['ski', 'dining', 'romantic', 'family'],
   'Monte Rosa Zermatt': ['ski', 'romantic'],
-  'Schweizerhof Zermatt': ['ski', 'spa'],
-  'Victoria-Jungfrau Grand Hotel Interlaken': ['spa', 'dining', 'romantic'],
+  'Schweizerhof Zermatt': ['ski', 'spa', 'family'],
+  'Victoria-Jungfrau Grand Hotel Interlaken': ['spa', 'dining', 'romantic', 'family'],
   'Bellevue Palace': ['business', 'dining', 'romantic'],
   'Crans Ambassador': ['ski', 'spa'],
   'Alpengold Hotel': ['ski', 'business'],
-  'Hotel Adula': ['spa', 'ski'],
+  'Hotel Adula': ['spa', 'ski', 'family'],
 }
 
 // ── CHART COMPONENTS ──────────────────────────────────────────────────────────
@@ -1256,6 +1256,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
     romantic: 'Romantic',
     lake: 'Lake Hotel',
     business: 'Business',
+    family: 'Family Hotel',
   }
 
   const competitorTabs = [
@@ -1705,6 +1706,7 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
     {competitorView === 'lake' && 'Tracks visibility for lakeside hotel and lake view accommodation searches'}
     {competitorView === 'business' && 'Tracks visibility for business travel, corporate stays and congress hotel searches'}
     {competitorView === 'ski' && 'Tracks visibility for ski hotel, ski resort and alpine winter sports searches'}
+    {competitorView === 'family' && 'Tracks visibility for family hotel, kids friendly and family resort searches'}
   </p>
 </div>
               </div>
