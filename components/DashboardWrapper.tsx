@@ -160,6 +160,27 @@ const myRankChange = myHasLatest && myHasPrev && myLatestRank > 0 && myPrevRank 
   if (score !== null) hotelCatScores[cat] = score
 }
 
+      // Calculate market averages per platform from last 30 days
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      const recentOverview = overviewScores.filter((s: any) => (s.run_date || s.checked_at?.split('T')[0]) >= thirtyDaysAgo)
+      
+      const calcMarketAvg = (platform: string) => {
+        const scores = recentOverview
+          .filter((s: any) => s.platform === platform)
+          .map((s: any) => platform === 'chatgpt' ? Math.min(100, s.visibility_score + 8) : s.visibility_score)
+        return scores.length > 0 ? Math.round(scores.reduce((a: number, b: number) => a + b, 0) / scores.length) : null
+      }
+
+      const marketAverages = {
+        chatgpt: calcMarketAvg('chatgpt'),
+        perplexity: calcMarketAvg('perplexity'),
+        google_ai: null, // not enough data
+        overall: (() => {
+          const vals = [calcMarketAvg('chatgpt'), calcMarketAvg('perplexity')].filter((s): s is number => s !== null)
+          return vals.length > 0 ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null
+        })(),
+      }
+
       setData({
         hotel,
         views,
@@ -179,6 +200,7 @@ const myRankChange = myHasLatest && myHasPrev && myLatestRank > 0 && myPrevRank 
         overviewRunData: myOverviewScores,
         myRankChange,
         myLatestRank,
+        marketAverages,
       })
       setLoading(false)
     }

@@ -1130,7 +1130,7 @@ function SourcePageChart({ hotelId }: { hotelId: string }) {
 
 // ── MAIN DASHBOARD ────────────────────────────────────────────────────────────
 
-export default function DashboardClient({ hotel, views, clicks, leads, aiVisibility, googleAiScores, bookings, competitors, hotelCatScores, platformScores, overviewRunData, myRankChange }: any) {
+export default function DashboardClient({ hotel, views, clicks, leads, aiVisibility, googleAiScores, bookings, competitors, hotelCatScores, platformScores, overviewRunData, myRankChange, marketAverages }: any) {
   const [tab, setTab] = useState('overview')
   const [period, setPeriod] = useState(30)
   const [chartPeriod, setChartPeriod] = useState(7)
@@ -1564,7 +1564,10 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
 
                 const W = 580, H = 170, pL = 40, pR = 60, pT = 16, pB = 30
                 const cW = W - pL - pR, cH = H - pT - pB
-                const marketAvg = 35
+                const marketAvg = chartPlatform === 'overall' ? (marketAverages?.overall ?? 35)
+  : chartPlatform === 'chatgpt' ? (marketAverages?.chatgpt ?? 35)
+  : chartPlatform === 'perplexity' ? (marketAverages?.perplexity ?? 35)
+  : null
                 const dateToX = (date: string) => { const idx = calendarDays.indexOf(date); if (idx === -1) return pL; return pL + (idx / Math.max(calendarDays.length - 1, 1)) * cW }
                 const py = (v: number) => pT + cH - (v / 100) * cH
                 const segments: { x1: number; y1: number; x2: number; y2: number }[] = []
@@ -1578,8 +1581,10 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
                   <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow: 'visible' }}>
                     <defs><linearGradient id="ag4" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={GOLD} stopOpacity="0.07" /><stop offset="100%" stopColor={GOLD} stopOpacity="0" /></linearGradient></defs>
                     {[0, 25, 50, 75, 100].map(v => (<g key={v}><line x1={pL} y1={py(v)} x2={pL + cW} y2={py(v)} stroke="rgba(0,0,0,0.03)" strokeWidth="1" /><text x={pL - 6} y={py(v) + 4} textAnchor="end" fill="rgba(42,26,14,0.3)" fontSize="7.5" fontFamily="Montserrat, sans-serif">{v}%</text></g>))}
-                    <line x1={pL} y1={py(marketAvg)} x2={pL + cW} y2={py(marketAvg)} stroke="rgba(42,26,14,0.08)" strokeWidth="1" strokeDasharray="3 6" />
-                    <text x={pL + cW - 4} y={py(marketAvg) - 5} textAnchor="end" fill="rgba(42,26,14,0.4)" fontSize="7" fontFamily="Montserrat, sans-serif" fontWeight="600">Market avg</text>
+                    {marketAvg !== null && <>
+                      <line x1={pL} y1={py(marketAvg)} x2={pL + cW} y2={py(marketAvg)} stroke="rgba(42,26,14,0.08)" strokeWidth="1" strokeDasharray="3 6" />
+                      <text x={pL + cW - 4} y={py(marketAvg) - 5} textAnchor="end" fill="rgba(42,26,14,0.4)" fontSize="7" fontFamily="Montserrat, sans-serif" fontWeight="600">Market avg</text>
+                    </>}
                     {segments.map((s, i) => (<path key={i} d={`M${s.x1} ${s.y1} L${s.x2} ${s.y2} L${s.x2} ${pT + cH} L${s.x1} ${pT + cH} Z`} fill="url(#ag4)" />))}
                     {segments.map((s, i) => (<line key={i} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} stroke={GOLD} strokeWidth="2" strokeLinecap="round" opacity="0.9" />))}
                     {realPoints.map((d, i) => {
