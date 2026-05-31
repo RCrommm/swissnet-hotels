@@ -256,50 +256,40 @@ const { data: regionQueriesData } = await supabase
       ...(partnerHotels || []).map((h: any) => ({ id: h.id, name: h.name, isPartner: true })),
     ]
 
-    const responseCache: Record<string, string> = {}
+    const responseCache: Record<string, Record<string, string>> = {}
 
-    for (const platform of PLATFORMS) {
+    await Promise.all(PLATFORMS.map(async (platform) => {
+      responseCache[platform.id] = {}
       for (const q of queries) {
-        const cacheKey = `${platform.id}:${q}`
-        if (!responseCache[cacheKey]) {
-          try {
-            responseCache[cacheKey] = await platform.queryFn(q)
-            estimatedCost += platform.id === 'chatgpt' ? 0.037 : 0.008
-            await new Promise(r => setTimeout(r, 300))
-          } catch (err: any) {
-            console.error(`Error querying ${platform.id}:`, err.message)
-            responseCache[cacheKey] = ''
-          }
+        try {
+          responseCache[platform.id][q] = await platform.queryFn(q)
+          estimatedCost += platform.id === 'chatgpt' ? 0.037 : 0.008
+          await new Promise(r => setTimeout(r, 300))
+        } catch (err: any) {
+          console.error(`Error querying ${platform.id}:`, err.message)
+          responseCache[platform.id][q] = ''
         }
       }
 
       for (const hotel of allHotels) {
-        const appearances = queries.filter(q => {
-          const text = responseCache[`${platform.id}:${q}`] || ''
-          return checkAppeared(hotel.name, text)
-        }).length
-
+        const appearances = queries.filter(q => checkAppeared(hotel.name, responseCache[platform.id][q] || '')).length
         const score = queries.length > 0 ? Math.round((appearances / queries.length) * 100) : 0
-
-        if (appearances > 0) {
-          results.push({ hotel: hotel.name, platform: platform.id, region })
-        }
-
+        if (appearances > 0) results.push({ hotel: hotel.name, platform: platform.id, region })
         const today = new Date().toISOString().split('T')[0]
-await supabase.from('competitor_visibility').upsert({
-  competitor_name: hotel.name,
-  region,
-  category: null,
-  platform: platform.id,
-  visibility_score: score,
-  appearances,
-  total_queries: queries.length,
-  month: currentMonth,
-  run_date: today,
-  checked_at: new Date().toISOString(),
-}, { onConflict: 'competitor_name,platform,run_date,category', ignoreDuplicates: true })
+        await supabase.from('competitor_visibility').upsert({
+          competitor_name: hotel.name,
+          region,
+          category: null,
+          platform: platform.id,
+          visibility_score: score,
+          appearances,
+          total_queries: queries.length,
+          month: currentMonth,
+          run_date: today,
+          checked_at: new Date().toISOString(),
+        }, { onConflict: 'competitor_name,platform,run_date,category', ignoreDuplicates: true })
       }
-    }
+    }))
   }
   await supabase.from('cron_costs').insert({
     hotels_checked: competitors.length,
