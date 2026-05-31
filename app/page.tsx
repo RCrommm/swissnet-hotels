@@ -17,8 +17,36 @@ export default async function HomePage() {
   const text = '#FFFFFF'
   const textMuted = 'rgba(255,255,255,0.6)'
 
+  const organizationSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    '@id': 'https://swissnethotels.com#organization',
+    name: 'SwissNet Hotels',
+    url: 'https://swissnethotels.com',
+    logo: 'https://swissnethotels.com/logo.png',
+    description: 'AI search visibility platform for Swiss luxury hotels. Helping hotels appear in ChatGPT, Perplexity and Google AI to drive direct bookings.',
+    foundingDate: '2026',
+    founder: {
+      '@type': 'Person',
+      name: 'Romeo Carpentier',
+    },
+    areaServed: {
+      '@type': 'Country',
+      name: 'Switzerland',
+    },
+    contactPoint: {
+      '@type': 'ContactPoint',
+      email: 'contact@swissnethotels.com',
+      contactType: 'customer service',
+    },
+    sameAs: [
+      'https://www.linkedin.com/company/swissnet-hotels',
+    ],
+  }
+
   return (
     <div style={{ background: bg, minHeight: '100vh' }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
       <style>{`
         @media (max-width: 768px) {
           .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
