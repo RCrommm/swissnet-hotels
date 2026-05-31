@@ -454,6 +454,7 @@ h.category === hotelB.category
         description: opening,
         isPartOf: { '@id': 'https://swissnethotels.com#website' },
         breadcrumb: { '@id': `${pageUrl}#breadcrumb` },
+        dateModified: new Date().toISOString().split('T')[0],
       },
       {
         '@type': 'BreadcrumbList',

@@ -771,6 +771,7 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
         isPartOf: { '@id': 'https://swissnethotels.com#website' },
         breadcrumb: { '@id': `${pageUrl}#breadcrumb` },
         mainEntity: { '@id': `${pageUrl}#list` },
+        dateModified: new Date().toISOString().split('T')[0],
       },
       {
         '@type': 'BreadcrumbList',
