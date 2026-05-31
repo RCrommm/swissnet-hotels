@@ -1,87 +1,13 @@
 name: SwissNet AI Visibility Cron
-
 on:
   schedule:
-    - cron: '0 6 * * *'      # Daily at 6am UTC — General Geneva
-    - cron: '0 7 * * 1'      # Weekly Monday at 7am UTC — Categories Geneva
+    - cron: '0 6 * * *'      # Daily at 6am UTC — Google AI scoring
   workflow_dispatch:          # Allow manual trigger from GitHub
-
 jobs:
-
-  # ── DAILY — General Geneva only ──────────────────────────────────────────
   general-geneva:
-    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 6 * * *'
     runs-on: ubuntu-latest
     steps:
-      - name: General — Geneva
+      - name: Google AI Score — Geneva
         run: |
           curl -f "https://swissnethotels.com/api/cron/ai-visibility?region=Geneva&force=true"
-          echo "✓ General Geneva done"
-
-  # ── WEEKLY MONDAY — Categories Geneva only ───────────────────────────────
-  categories-geneva:
-    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 7 * * 1'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Category Spa — Geneva
-        run: curl -f "https://swissnethotels.com/api/cron/competitor-visibility?type=category&category=spa&region=Geneva&force=true"
-
-      - name: Sleep
-        run: sleep 300
-
-      - name: Category Dining — Geneva
-        run: curl -f "https://swissnethotels.com/api/cron/competitor-visibility?type=category&category=dining&region=Geneva&force=true"
-
-      - name: Sleep
-        run: sleep 300
-
-      - name: Category Romantic — Geneva
-        run: curl -f "https://swissnethotels.com/api/cron/competitor-visibility?type=category&category=romantic&region=Geneva&force=true"
-
-      - name: Sleep
-        run: sleep 300
-
-      - name: Category Lake — Geneva
-        run: curl -f "https://swissnethotels.com/api/cron/competitor-visibility?type=category&category=lake&region=Geneva&force=true"
-
-      - name: Sleep
-        run: sleep 300
-
-      - name: Category Business — Geneva
-        run: curl -f "https://swissnethotels.com/api/cron/competitor-visibility?type=category&category=business&region=Geneva&force=true"
-
-  # ── PAUSED — All other regions (uncomment when ready) ────────────────────
-  # general-zermatt:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - run: curl -f "https://swissnethotels.com/api/cron/ai-visibility?region=Zermatt&force=true"
-  #
-  # general-zurich:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - run: curl -f "https://swissnethotels.com/api/cron/ai-visibility?region=Zurich&force=true"
-  #
-  # general-interlaken:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - run: curl -f "https://swissnethotels.com/api/cron/ai-visibility?region=Interlaken&force=true"
-  #
-  # general-bern:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - run: curl -f "https://swissnethotels.com/api/cron/ai-visibility?region=Bern&force=true"
-  #
-  # general-flims:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - run: curl -f "https://swissnethotels.com/api/cron/ai-visibility?region=Flims&force=true"
-  #
-  # general-crans-montana:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - run: curl -f "https://swissnethotels.com/api/cron/ai-visibility?region=Crans-Montana&force=true"
-  #
-  # general-davos:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - run: curl -f "https://swissnethotels.com/api/cron/ai-visibility?region=Davos&force=true"
+          echo "✓ Google AI Geneva done"
