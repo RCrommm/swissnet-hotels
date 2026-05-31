@@ -1186,7 +1186,7 @@ const periodScore = (() => {
   return dailyAvgs.length > 0 ? Math.round(dailyAvgs.reduce((a, b) => a + b, 0) / dailyAvgs.length) : null
 })()
 const latestPerQuery = [...new Map(
-  [...(aiVisibility || [])].sort((a: any, b: any) => 
+  [...(googleAiScores || [])].sort((a: any, b: any) => 
     new Date(b.checked_at).getTime() - new Date(a.checked_at).getTime()
   ).map((r: any) => [r.query, r])
 ).values()]
@@ -1448,9 +1448,9 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
               <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem' }}>
                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 0.25rem' }}>Queries to Improve</p>
                 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: '0 0 1rem' }}>Searches where your hotel did not appear</p>
-                {aiVisibility?.filter((r: any) => !r.appeared).slice(0, 6).length === 0
-                  ? <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>No missed queries — excellent coverage.</p>
-                  : [...new Map(aiVisibility?.filter((r: any) => !r.appeared).map((r: any) => [r.query, r])).values()].slice(0, 6).map((row: any, i: number) => (
+                {googleAiScores?.filter((r: any) => !r.appeared).slice(0, 6).length === 0
+  ? <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>No missed queries — excellent coverage.</p>
+  : [...new Map(googleAiScores?.filter((r: any) => !r.appeared).map((r: any) => [r.query, r])).values()].slice(0, 6).map((row: any, i: number) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0', borderBottom: '1px solid ' + BORDER }}>
                       <div style={{ width: 6, height: 6, borderRadius: '50%', background: RED, flexShrink: 0 }} />
                       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, margin: 0, flex: 1 }}>{row.query}</p>
