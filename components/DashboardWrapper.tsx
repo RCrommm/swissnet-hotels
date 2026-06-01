@@ -113,7 +113,7 @@ const prevRanking = allHotelNames
         const visibilityScore = getLatestScore(hotelOverviewScores, h.name)
 
         const catScores: Record<string, number> = {}
-        for (const cat of ['spa', 'ski', 'dining', 'romantic', 'lake', 'business']) {
+        for (const cat of ['spa', 'ski', 'dining', 'romantic', 'lake', 'business', 'family']) {
   const catEntries = allCompVisibility?.filter((s: any) => s.competitor_name === h.name && s.category === cat) || []
   const score = getLatestScore(catEntries, h.name)
   if (score !== null) catScores[cat] = score
@@ -154,7 +154,7 @@ const myRankChange = myHasLatest && myHasPrev && myLatestRank > 0 && myPrevRank 
         : null
 
       const hotelCatScores: Record<string, number> = {}
-      for (const cat of ['spa', 'ski', 'dining', 'romantic', 'lake', 'business']) {
+      for (const cat of ['spa', 'ski', 'dining', 'romantic', 'lake', 'business', 'family']) {
   const catEntries = allCompVisibility?.filter((s: any) => s.competitor_name === hotel?.name && s.category === cat) || []
   const score = getLatestScore(catEntries, hotel?.name)
   if (score !== null) hotelCatScores[cat] = score
