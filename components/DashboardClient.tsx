@@ -1128,6 +1128,154 @@ function SourcePageChart({ hotelId }: { hotelId: string }) {
   )
 }
 
+function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: string; onGoToOptimise: () => void }) {
+  const [data, setData] = useState<any>(null)
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    if (!hotelId) return
+    const load = async () => {
+      const { createClient } = await import('@supabase/supabase-js')
+      const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+      const [{ data: spa }, { data: rooms }, { data: restaurants }, { data: experiences }, { data: content }, { data: faqs }] = await Promise.all([
+        sb.from('hotel_spa').select('*').eq('hotel_id', hotelId).eq('is_available', true),
+        sb.from('room_types').select('*').eq('hotel_id', hotelId).eq('is_active', true),
+        sb.from('hotel_restaurants').select('*').eq('hotel_id', hotelId).eq('is_available', true),
+        sb.from('hotel_experiences').select('*').eq('hotel_id', hotelId).eq('is_available', true),
+        sb.from('hotel_content').select('faqs').eq('hotel_id', hotelId).single(),
+        sb.from('hotel_faq_suggestions').select('*').eq('hotel_id', hotelId),
+      ])
+      setData({ spa, rooms, restaurants, experiences, faqs: content?.faqs || [], faqSuggestions: faqs || [] })
+      setLoaded(true)
+    }
+    load()
+  }, [hotelId])
+
+  if (!loaded) return <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>Loading schema health...</p>
+
+  const totalFaqs = (data.faqs?.length || 0) + (data.faqSuggestions?.length || 0)
+
+  const fields = [
+    { label: 'Hotel Description', impact: 'High', done: !!hotel?.description, fix: 'overview' },
+    { label: 'Direct Booking URL', impact: 'High', done: !!hotel?.direct_booking_url, fix: null },
+    { label: 'Nightly Rate', impact: 'High', done: !!hotel?.nightly_rate_chf, fix: null },
+    { label: 'FAQs', impact: 'High', done: totalFaqs >= 5, detail: `${totalFaqs} published`, fix: 'overview' },
+    { label: 'Spa & Wellness', impact: 'High', done: (data.spa?.length || 0) > 0, detail: `${data.spa?.length || 0} venue${data.spa?.length !== 1 ? 's' : ''}`, fix: 'spa' },
+    { label: 'Room Types', impact: 'High', done: (data.rooms?.length || 0) > 0, detail: `${data.rooms?.length || 0} room${data.rooms?.length !== 1 ? 's' : ''}`, fix: null },
+    { label: 'Restaurants & Dining', impact: 'Medium', done: (data.restaurants?.length || 0) > 0, detail: `${data.restaurants?.length || 0} restaurant${data.restaurants?.length !== 1 ? 's' : ''}`, fix: 'dining' },
+    { label: 'Experiences', impact: 'Medium', done: (data.experiences?.length || 0) > 0, detail: `${data.experiences?.length || 0} experience${data.experiences?.length !== 1 ? 's' : ''}`, fix: 'experiences' },
+    { label: 'Star Rating', impact: 'Medium', done: !!hotel?.rating, fix: null },
+    { label: 'Contact Email', impact: 'Low', done: !!hotel?.contact_email, fix: null },
+    { label: 'Telephone', impact: 'Low', done: !!hotel?.telephone, fix: null },
+    { label: 'Location', impact: 'Low', done: !!hotel?.location, fix: null },
+  ]
+
+  const highFields = fields.filter(f => f.impact === 'High')
+  const medFields = fields.filter(f => f.impact === 'Medium')
+  const lowFields = fields.filter(f => f.impact === 'Low')
+
+  const completedHigh = highFields.filter(f => f.done).length
+  const completedMed = medFields.filter(f => f.done).length
+  const completedLow = lowFields.filter(f => f.done).length
+
+  const score = Math.round(
+    (completedHigh / highFields.length) * 60 +
+    (completedMed / medFields.length) * 30 +
+    (completedLow / lowFields.length) * 10
+  )
+
+  const scoreColor = score >= 80 ? GREEN : score >= 50 ? GOLD : RED
+  const scoreLabel = score >= 80 ? 'Strong' : score >= 50 ? 'Good' : 'Needs Work'
+  const missing = fields.filter(f => !f.done)
+
+  return (
+    <div>
+      {/* Score card */}
+      <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.75rem 2rem', marginBottom: '1.5rem', display: 'flex', gap: '2rem', alignItems: 'center' }}>
+        <div style={{ textAlign: 'center', minWidth: 120 }}>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3.5rem', color: scoreColor, margin: 0, lineHeight: 1 }}>{score}</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, color: scoreColor, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0.25rem 0 0' }}>{scoreLabel}</p>
+        </div>
+        <div style={{ flex: 1 }}>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: TEXT, margin: '0 0 0.75rem' }}>AI Schema Health Score</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            {[
+              { label: 'High Impact', completed: completedHigh, total: highFields.length, color: RED },
+              { label: 'Medium Impact', completed: completedMed, total: medFields.length, color: GOLD },
+              { label: 'Low Impact', completed: completedLow, total: lowFields.length, color: BLUE },
+            ].map(bar => (
+              <div key={bar.label} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, width: 100 }}>{bar.label}</span>
+                <div style={{ flex: 1, height: 4, background: BORDER, borderRadius: 2 }}>
+                  <div style={{ height: '100%', width: `${(bar.completed / bar.total) * 100}%`, background: bar.color, borderRadius: 2 }} />
+                </div>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, width: 40 }}>{bar.completed}/{bar.total}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Missing fields — recommendations */}
+      {missing.length > 0 && (
+        <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', marginBottom: '1.5rem' }}>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: TEXT, margin: '0 0 1rem' }}>Recommendations</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+            {missing.map((f, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', background: BG, borderRadius: 8, border: '1px solid ' + BORDER }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: f.impact === 'High' ? RED : f.impact === 'Medium' ? GOLD : BLUE, flexShrink: 0 }} />
+                  <div>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, color: TEXT, margin: 0 }}>{f.label}</p>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: 0 }}>{f.impact} impact on AI visibility</p>
+                  </div>
+                </div>
+                {f.fix ? (
+                  <button onClick={onGoToOptimise} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: GOLD, background: GOLD_LIGHT, border: '1px solid ' + BORDER, borderRadius: 4, padding: '0.3rem 0.75rem', cursor: 'pointer' }}>Fix in Optimise →</button>
+                ) : (
+                  <a href="mailto:contact@swissnethotels.com" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, borderRadius: 4, padding: '0.3rem 0.75rem', textDecoration: 'none' }}>Contact SwissNet</a>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* All fields */}
+      <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, overflow: 'hidden' }}>
+        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid ' + BORDER }}>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: TEXT, margin: 0 }}>Full Schema Breakdown</p>
+        </div>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ background: BG }}>
+              {['Field', 'Status', 'Detail', 'AI Impact'].map(h => (
+                <th key={h} style={{ textAlign: 'left', padding: '0.75rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, borderBottom: '1px solid ' + BORDER }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {fields.map((f, i) => (
+              <tr key={i} style={{ borderBottom: '1px solid ' + BORDER }}>
+                <td style={{ padding: '0.875rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, color: TEXT }}>{f.label}</td>
+                <td style={{ padding: '0.875rem 1.5rem' }}>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, color: f.done ? GREEN : RED, background: (f.done ? GREEN : RED) + '12', padding: '2px 8px', borderRadius: 20 }}>
+                    {f.done ? '✓ Complete' : '✗ Missing'}
+                  </span>
+                </td>
+                <td style={{ padding: '0.875rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED }}>{f.detail || '—'}</td>
+                <td style={{ padding: '0.875rem 1.5rem' }}>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, color: f.impact === 'High' ? RED : f.impact === 'Medium' ? GOLD : BLUE }}>{f.impact}</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
 // ── MAIN DASHBOARD ────────────────────────────────────────────────────────────
 
 export default function DashboardClient({ hotel, views, clicks, leads, aiVisibility, googleAiScores, bookings, competitors, hotelCatScores, platformScores, overviewRunData, myRankChange, marketAverages }: any) {
@@ -1295,13 +1443,14 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
     : `${competitorTabs.find(t => t.key === competitorView)?.label || ''} — ${hotelRegion}`
 
   const navItems = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'ai-visibility', label: 'AI Visibility' },
-    { id: 'performance', label: 'Performance' },
-    { id: 'competitors', label: 'Competitors' },
-    { id: 'optimise', label: '✦ Optimise' },
-    { id: 'settings', label: 'Settings' },
-  ]
+  { id: 'overview', label: 'Overview' },
+  { id: 'ai-visibility', label: 'AI Visibility' },
+  { id: 'performance', label: 'Performance' },
+  { id: 'competitors', label: 'Competitors' },
+  { id: 'schema', label: '✦ Schema' },
+  { id: 'optimise', label: '✦ Optimise' },
+  { id: 'settings', label: 'Settings' },
+]
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: BG, fontFamily: 'Montserrat, sans-serif' }}>
@@ -1338,16 +1487,18 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
               {tab === 'ai-visibility' && 'AI Visibility'}
               {tab === 'performance' && 'Performance'}
               {tab === 'competitors' && 'Competitors'}
-              {tab === 'optimise' && '✦ Optimise'}
-              {tab === 'settings' && 'Settings'}
+              {tab === 'schema' && '✦ Schema Health'}
+{tab === 'optimise' && '✦ Optimise'}
+{tab === 'settings' && 'Settings'}
             </h1>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0 }}>
               {tab === 'overview' && `Last ${period} days · ${hotelRegion}, Switzerland`}
               {tab === 'ai-visibility' && 'Your presence across AI search platforms'}
               {tab === 'performance' && 'Clicks, leads and conversion tracking'}
               {tab === 'competitors' && 'AI visibility rankings across categories'}
-              {tab === 'optimise' && 'Manage your content and FAQs'}
-              {tab === 'settings' && 'Account and hotel settings'}
+              {tab === 'schema' && 'AI readiness score and content recommendations'}
+{tab === 'optimise' && 'Manage your content and FAQs'}
+{tab === 'settings' && 'Account and hotel settings'}
             </p>
           </div>
           <div style={{ display: 'flex', gap: '0.4rem' }}>
@@ -1816,6 +1967,11 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
             )}
           </div>
         )}
+
+        {/* ── SCHEMA ── */}
+{tab === 'schema' && (
+  <SchemaTab hotel={hotel} hotelId={hotel?.id} onGoToOptimise={() => setTab('optimise')} />
+)}
 
         {/* ── OPTIMISE ── */}
         {tab === 'optimise' && (

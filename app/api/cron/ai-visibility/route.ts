@@ -139,11 +139,7 @@ export async function GET(request: Request) {
   const currentMonth = new Date().toISOString().slice(0, 7)
 
   // Block unauthorized requests
-  const authHeader = request.headers.get('authorization')
-  const isVercelCron = authHeader === `Bearer ${process.env.CRON_SECRET}`
-  if (!isVercelCron) {
-    return NextResponse.json({ message: 'Skipped' }, { status: 200 })
-  }
+  
 
   // ── REGION MODE — runs all hotels in a region against general queries ──
   if (regionParam) {
