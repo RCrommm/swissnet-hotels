@@ -1139,7 +1139,7 @@ function CategoryTrendChart({ category, hotelName, hotels }: { category: string;
 
 // ── SOURCE PAGE CHART ─────────────────────────────────────────────────────────
 
-function SourcePageChart({ hotelId }: { hotelId: string }) {
+function SourcePageChart({ hotelId, period }: { hotelId: string; period: number }) {
   const [data, setData] = useState<{ page: string; count: number }[]>([])
   const [loaded, setLoaded] = useState(false)
 
@@ -1148,29 +1148,22 @@ function SourcePageChart({ hotelId }: { hotelId: string }) {
     const load = async () => {
       const { createClient } = await import('@supabase/supabase-js')
       const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+      const since = new Date(Date.now() - period * 24 * 60 * 60 * 1000).toISOString()
       const { data: rows } = await sb
         .from('referral_clicks')
-        .select('utm_campaign')
+        .select('utm_campaign, clicked_at')
         .eq('hotel_id', hotelId)
+        .gte('clicked_at', since)
       if (!rows) { setLoaded(true); return }
 
       const LABELS: Record<string, string> = {
         best_page: 'Best Pages',
         compare: 'Compare Pages',
         destination: 'Destination Pages',
-        hotel_profile: 'Profile Page',
-        rooms_page: 'Rooms Page',
-        dining_page: 'Dining Page',
-        spa_page: 'Spa Page',
-        experiences_page: 'Experiences Page',
-        events_page: 'Events Page',
         ai_concierge: 'AI Concierge',
-        direct_booking: 'Direct Booking',
-        hotels_page_website: 'Website Button',
-        hotels_page_book: 'Book Room Button',
       }
 
-      const PROFILE_SOURCES = ['best_page', 'compare', 'destination']
+      const PROFILE_SOURCES = ['best_page', 'compare', 'destination', 'ai_concierge']
       const counts: Record<string, number> = {}
       for (const row of rows) {
         const key = row.utm_campaign || 'other'
@@ -1187,7 +1180,7 @@ function SourcePageChart({ hotelId }: { hotelId: string }) {
       setLoaded(true)
     }
     load()
-  }, [hotelId])
+  }, [hotelId, period])
 
   if (!loaded) return (
     <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '2rem', textAlign: 'center' }}>
@@ -1704,7 +1697,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
   const viewsByDay = days.map(d => recentViews.filter((v: any) => v.viewed_at?.startsWith(d)).length)
   const bookingsByDay = days.map(d => recentBookings.filter((b: any) => b.booked_at?.startsWith(d)).length)
   const WEBSITE_CAMPAIGNS = ['hotel_profile', 'rooms_page', 'dining_page', 'spa_page', 'experiences_page', 'events_page', 'hotels_page_website']
-  const PROFILE_CAMPAIGNS = ['best_page', 'compare', 'destination']
+  const PROFILE_CAMPAIGNS = ['best_page', 'compare', 'destination', 'ai_concierge']
   const websiteClicks = (clicks || []).filter((c: any) => WEBSITE_CAMPAIGNS.includes(c.utm_campaign) && new Date(c.clicked_at) > periodStart)
   const bookClicks = (clicks || []).filter((c: any) => c.utm_campaign === 'hotels_page_book' && new Date(c.clicked_at) > periodStart)
   const profileClicks = (clicks || []).filter((c: any) => PROFILE_CAMPAIGNS.includes(c.utm_campaign) && new Date(c.clicked_at) > periodStart)
@@ -2149,7 +2142,7 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
                 <CountryBreakdown hotelId={hotel?.id} period={period} />
               </div>
             </div>
-            <SourcePageChart hotelId={hotel?.id} />
+            <SourcePageChart hotelId={hotel?.id} period={period} />
           </div>
         )}
 
