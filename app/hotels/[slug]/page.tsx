@@ -676,6 +676,41 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
   </>
 )}
 
+{/* HOTEL FACTS */}
+            {(hotel.check_in_time || hotel.check_out_time || hotel.cancellation_policy || hotel.parking || hotel.languages || hotel.accessibility || hotel.seasonal_notes || hotel.booking_benefits || hotel.private_transfer) && (
+              <>
+                <section style={{ marginBottom: '4rem' }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>Hotel Facts</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+                    {[
+                      { label: 'Check-in', value: hotel.check_in_time },
+                      { label: 'Check-out', value: hotel.check_out_time },
+                      { label: 'Languages', value: hotel.languages },
+                      { label: 'Parking', value: hotel.parking },
+                      { label: 'Cancellation', value: hotel.cancellation_policy },
+                      { label: 'Accessibility', value: hotel.accessibility },
+                      { label: 'Seasonal', value: hotel.seasonal_notes },
+                      { label: 'Airport Transfer', value: hotel.private_transfer ? 'Available' : null },
+                      { label: 'Pet Friendly', value: hotel.pet_friendly ? 'Yes' : null },
+                      { label: 'Family Friendly', value: hotel.family_friendly ? 'Yes' : null },
+                    ].filter(f => f.value).map((f, i) => (
+                      <div key={f.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '0.875rem 0', borderBottom: `1px solid ${border}` }}>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 600, color: textMuted, textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0, width: 140 }}>{f.label}</span>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: text, textAlign: 'right', flex: 1 }}>{f.value}</span>
+                      </div>
+                    ))}
+                    {hotel.booking_benefits && (
+                      <div style={{ padding: '0.875rem 0', borderBottom: `1px solid ${border}` }}>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 600, color: textMuted, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: '0.4rem' }}>Book Direct Benefits</span>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: gold }}>{hotel.booking_benefits}</span>
+                      </div>
+                    )}
+                  </div>
+                </section>
+                <div style={{ height: 1, background: border, marginBottom: '4rem' }} />
+              </>
+            )}
+
             <section style={{ marginBottom: '4rem' }}>
   <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>Location</p>
 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, margin: '0 0 1rem' }}>📍 {hotel.street_address ? `${hotel.street_address}, ` : ''}{hotel.location}, Switzerland{hotel.postal_code ? ` ${hotel.postal_code}` : ''}</p>
