@@ -58,20 +58,18 @@ function SchemaMarkup({ hotel, keywords, roomTypes, faqs, restaurants, spaData, 
   const pageUrl = `https://swissnethotels.com/hotels/${hotel.slug || hotel.id}`
 
   const regionSlug = hotel.region?.toLowerCase().replace(/\s+/g, '-')
-  const categorySlugMap: Record<string, string> = {
-    'Ski Resort': 'ski-hotels-switzerland',
-    'Wellness Retreat': 'wellness-hotels-switzerland',
-    'City Luxury': 'luxury-hotels-switzerland',
-  }
-  const categoryBestPage = categorySlugMap[hotel.category]
+  const base = 'https://swissnethotels.com/best'
   const relatedPages = [
     regionSlug && `https://swissnethotels.com/destinations/${regionSlug}`,
-    regionSlug && `https://swissnethotels.com/best/luxury-hotels-${regionSlug}`,
-    categoryBestPage && `https://swissnethotels.com/best/${categoryBestPage}`,
-    `https://swissnethotels.com/best/luxury-hotels-switzerland`,
-    hotel.romantic && `https://swissnethotels.com/hotels/${hotel.slug || hotel.id}/honeymoon`,
-    hotel.wellness_focus && `https://swissnethotels.com/hotels/${hotel.slug || hotel.id}/wellness`,
-    hotel.business_hotel && `https://swissnethotels.com/hotels/${hotel.slug || hotel.id}/business`,
+    regionSlug && `${base}/luxury-hotels-${regionSlug}`,
+    `${base}/luxury-hotels-switzerland`,
+    hotel.category === 'Ski Resort' && `${base}/ski-hotels-switzerland`,
+    (hotel.category === 'Wellness Retreat' || hotel.wellness_focus) && `${base}/wellness-hotels-switzerland`,
+    hotel.has_spa && `${base}/spa-hotels-switzerland`,
+    hotel.lakefront && `${base}/lake-hotels-switzerland`,
+    hotel.romantic && `${base}/romantic-hotels-switzerland`,
+    hotel.business_hotel && `${base}/business-hotels-switzerland`,
+    hotel.has_michelin_restaurant && `${base}/fine-dining-hotels-switzerland`,
   ].filter(Boolean) as string[]
 
   // Separate memberships from actual awards
