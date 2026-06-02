@@ -1170,9 +1170,11 @@ function SourcePageChart({ hotelId }: { hotelId: string }) {
         hotels_page_book: 'Book Room Button',
       }
 
+      const PROFILE_SOURCES = ['best_page', 'compare', 'destination']
       const counts: Record<string, number> = {}
       for (const row of rows) {
         const key = row.utm_campaign || 'other'
+        if (!PROFILE_SOURCES.includes(key)) continue
         const label = LABELS[key] || key
         counts[label] = (counts[label] || 0) + 1
       }
