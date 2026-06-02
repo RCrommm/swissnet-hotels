@@ -1869,6 +1869,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0', borderBottom: '1px solid ' + BORDER }}>
                       <div style={{ width: 6, height: 6, borderRadius: '50%', background: RED, flexShrink: 0 }} />
                       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, margin: 0, flex: 1 }}>{row.query}</p>
+                      <button onClick={() => { setTab('optimise') }} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, color: GOLD, background: GOLD_LIGHT, border: '1px solid ' + BORDER, borderRadius: 4, padding: '0.2rem 0.6rem', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>Add FAQ →</button>
                     </div>
                   ))
                 }
