@@ -373,6 +373,12 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug, hotel, onSchemaRefresh }: 
   check_out_time: hotel?.check_out_time || '',
   parking: hotel?.parking || '',
   pet_friendly: hotel?.pet_friendly || false,
+  family_friendly: hotel?.family_friendly || false,
+  private_transfer: hotel?.private_transfer || false,
+  cancellation_policy: hotel?.cancellation_policy || '',
+  accessibility: hotel?.accessibility || '',
+  seasonal_notes: hotel?.seasonal_notes || '',
+  booking_benefits: hotel?.booking_benefits || '',
 })
 const [savingInfo, setSavingInfo] = useState(false)
 
@@ -673,6 +679,42 @@ const saveHotelInfo = async () => {
           <input type="checkbox" checked={hotelInfo.pet_friendly} onChange={e => setHotelInfo(p => ({ ...p, pet_friendly: e.target.checked }))} style={{ accentColor: GOLD, width: 16, height: 16 }} />
           <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT }}>{hotelInfo.pet_friendly ? 'Yes' : 'No'}</span>
         </label>
+      </div>
+      <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.2rem' }}>Family Friendly</label>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Appears in "family luxury hotel" searches</p>
+        </div>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+          <input type="checkbox" checked={hotelInfo.family_friendly} onChange={e => setHotelInfo(p => ({ ...p, family_friendly: e.target.checked }))} style={{ accentColor: GOLD, width: 16, height: 16 }} />
+          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT }}>{hotelInfo.family_friendly ? 'Yes' : 'No'}</span>
+        </label>
+      </div>
+      <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.2rem' }}>Airport Transfer</label>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Appears in "hotel with airport transfer" searches</p>
+        </div>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+          <input type="checkbox" checked={hotelInfo.private_transfer} onChange={e => setHotelInfo(p => ({ ...p, private_transfer: e.target.checked }))} style={{ accentColor: GOLD, width: 16, height: 16 }} />
+          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT }}>{hotelInfo.private_transfer ? 'Yes' : 'No'}</span>
+        </label>
+      </div>
+      <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1.25rem' }}>
+        <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Cancellation Policy</label>
+        <input value={hotelInfo.cancellation_policy} onChange={e => setHotelInfo(p => ({ ...p, cancellation_policy: e.target.value }))} placeholder="e.g. Free cancellation up to 48 hours before arrival" style={inp} />
+      </div>
+      <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1.25rem' }}>
+        <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Accessibility</label>
+        <input value={hotelInfo.accessibility} onChange={e => setHotelInfo(p => ({ ...p, accessibility: e.target.value }))} placeholder="e.g. Wheelchair accessible rooms, lift access, accessible spa" style={inp} />
+      </div>
+      <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1.25rem' }}>
+        <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Seasonal Notes</label>
+        <input value={hotelInfo.seasonal_notes} onChange={e => setHotelInfo(p => ({ ...p, seasonal_notes: e.target.value }))} placeholder="e.g. Outdoor pool open May–September, ski access December–April" style={inp} />
+      </div>
+      <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1.25rem' }}>
+        <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Direct Booking Benefits <span style={{ color: GOLD }}>· High AI Impact</span></label>
+        <textarea value={hotelInfo.booking_benefits} onChange={e => setHotelInfo(p => ({ ...p, booking_benefits: e.target.value }))} rows={3} placeholder="e.g. Complimentary welcome drink, early check-in from 12pm, late check-out until 2pm, no booking fees" style={{ ...inp, resize: 'vertical' }} />
       </div>
     </div>
     <div style={{ marginTop: '1.25rem' }}>
