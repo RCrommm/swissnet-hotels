@@ -1387,7 +1387,7 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
       impact: 'High',
       done: totalFaqs >= 5,
       score: totalFaqs === 0 ? 0 : totalFaqs <= 3 ? 30 : totalFaqs <= 5 ? 60 : totalFaqs <= 7 ? 80 : 100,
-      detail: `${totalFaqs} published`,
+      detail: `${data.faqs?.length || 0} overview + ${data.faqSuggestions?.length || 0} subpage = ${totalFaqs} total`,
       tip: 'Aim for 8+ FAQs covering spa, dining, location, family, honeymoon',
       fix: 'overview',
     },
