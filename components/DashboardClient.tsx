@@ -1253,7 +1253,7 @@ function SchemaVisualizer({ hotelId, hotelSlug }: { hotelId: string; hotelSlug: 
     if (schema) { setOpen(o => !o); return }
     setLoading(true)
     try {
-      const res = await fetch(`/hotels/${hotelSlug}`)
+      const res = await fetch(`https://swissnethotels.com/hotels/${hotelSlug}`)
       const html = await res.text()
       const match = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)
       if (match) {
