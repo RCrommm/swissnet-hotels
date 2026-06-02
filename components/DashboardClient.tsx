@@ -1709,6 +1709,10 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
   const clicksByDay = days.map(d => recentClicks.filter((c: any) => c.clicked_at?.startsWith(d)).length)
   const viewsByDay = days.map(d => recentViews.filter((v: any) => v.viewed_at?.startsWith(d)).length)
   const bookingsByDay = days.map(d => recentBookings.filter((b: any) => b.booked_at?.startsWith(d)).length)
+  const websiteClicks = (clicks || []).filter((c: any) => c.utm_campaign === 'hotels_page_website' && new Date(c.clicked_at) > periodStart)
+  const bookClicks = (clicks || []).filter((c: any) => c.utm_campaign === 'hotels_page_book' && new Date(c.clicked_at) > periodStart)
+  const websiteClicksByDay = days.map(d => websiteClicks.filter((c: any) => c.clicked_at?.startsWith(d)).length)
+  const bookClicksByDay = days.map(d => bookClicks.filter((c: any) => c.clicked_at?.startsWith(d)).length)
 
   const regionHotels = competitors?.filter((h: any) => h.region === hotelRegion) || []
   const allHotelsInRegion = [
@@ -1884,10 +1888,10 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
               </div>
             </div>
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-              <KPICard label="Booking Clicks" value={recentClicks.length} sub={`last ${period} days`} color={GOLD} spark={clicksByDay} />
+              <KPICard label="Official Website Clicks" value={websiteClicks.length} sub={`last ${period} days`} color={GOLD} spark={websiteClicksByDay} />
+              <KPICard label="Booking Clicks" value={bookClicks.length} sub={`book room · last ${period} days`} color={GOLD} spark={bookClicksByDay} />
               <KPICard label="Profile Views" value={recentViews.length} sub={`last ${period} days`} color={BLUE} spark={viewsByDay} />
               <KPICard label="Direct Savings" value={recentBookings.length > 0 ? `CHF ${Math.round(recentBookings.reduce((sum: number, b: any) => sum + (b.total_chf || 0), 0) * 0.15).toLocaleString()}` : '—'} sub="vs OTA commissions" color={GREEN} />
-              <KPICard label="Conversions" value={recentBookings.length} sub={`last ${period} days`} color={PURPLE} />
             </div>
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', marginBottom: '1.5rem' }}>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 1rem' }}>Performance Over Time</p>
