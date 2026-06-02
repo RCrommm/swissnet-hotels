@@ -810,8 +810,8 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
                   <div style={{ paddingTop: '1.25rem', borderTop: `1px solid ${border}` }}>
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, color: textMuted, margin: '0 0 0.5rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Booking options</p>
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: '0 0 0.25rem' }}>✓ Direct — from CHF {hotel.nightly_rate_chf?.toLocaleString()}</p>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: '0 0 0.5rem' }}>○ OTAs — typically CHF {Math.round(hotel.nightly_rate_chf * 1.1).toLocaleString()}–{Math.round(hotel.nightly_rate_chf * 1.15).toLocaleString()}</p>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: textMuted, margin: 0, fontStyle: 'italic' }}>OTA range is an estimate based on typical commission rates</p>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: '0 0 0.5rem' }}>○ OTAs — same or higher rate, no extras</p>
+<p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: textMuted, margin: 0, fontStyle: 'italic' }}>Direct bookings include hotel benefits OTAs don't offer</p>
                   </div>
                 </>
               ) : hotel.direct_booking_url ? (
