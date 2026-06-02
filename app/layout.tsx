@@ -38,6 +38,9 @@ const organizationSchema = {
         '@type': 'Country',
         name: 'Switzerland',
       },
+      sameAs: [
+        'https://www.linkedin.com/company/swissnet-hotels',
+      ],
     },
     {
       '@type': 'WebSite',
