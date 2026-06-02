@@ -1243,6 +1243,87 @@ function SourcePageChart({ hotelId }: { hotelId: string }) {
   )
 }
 
+function SchemaVisualizer({ hotelId, hotelSlug }: { hotelId: string; hotelSlug: string }) {
+  const [schema, setSchema] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
+  const [open, setOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  const fetchSchema = async () => {
+    if (schema) { setOpen(o => !o); return }
+    setLoading(true)
+    try {
+      const res = await fetch(`/hotels/${hotelSlug}`)
+      const html = await res.text()
+      const match = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)
+      if (match) {
+        const parsed = JSON.parse(match[1])
+        setSchema(parsed)
+        setOpen(true)
+      }
+    } catch {
+      setSchema({ error: 'Could not load schema' })
+      setOpen(true)
+    }
+    setLoading(false)
+  }
+
+  const copy = () => {
+    navigator.clipboard.writeText(JSON.stringify(schema, null, 2))
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const countFields = (obj: any): number => {
+    if (!obj || typeof obj !== 'object') return 0
+    return Object.keys(obj).length + Object.values(obj).reduce((sum: number, v) => sum + (typeof v === 'object' ? countFields(v) : 0), 0)
+  }
+
+  return (
+    <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, overflow: 'hidden', marginTop: '1.5rem' }}>
+      <div style={{ padding: '1.25rem 1.5rem', borderBottom: open ? '1px solid ' + BORDER : 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: TEXT, margin: '0 0 0.2rem' }}>JSON-LD Schema Viewer</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>The exact structured data AI bots read when crawling your page</p>
+        </div>
+        <button onClick={fetchSchema} disabled={loading} style={{ background: open ? BG : GOLD, color: open ? TEXT_MUTED : '#1a0e06', border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.5rem 1.25rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, cursor: 'pointer' }}>
+          {loading ? 'Loading...' : open ? 'Hide Schema' : 'View My Schema →'}
+        </button>
+      </div>
+      {open && schema && !schema.error && (
+        <div style={{ padding: '1.25rem 1.5rem' }}>
+          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+            {[
+              { label: 'Schema Types', value: schema['@graph']?.length || 1 },
+              { label: 'Total Fields', value: countFields(schema) },
+              { label: 'FAQs', value: schema['@graph']?.find((n: any) => n['@type'] === 'FAQPage')?.mainEntity?.length || 0 },
+              { label: 'Rooms', value: schema['@graph']?.find((n: any) => n['@type'] === 'Hotel')?.containsPlace?.filter((p: any) => p['@type'] === 'HotelRoom')?.length || 0 },
+            ].map(s => (
+              <div key={s.label} style={{ background: BG, borderRadius: 6, padding: '0.6rem 1rem' }}>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', color: TEXT_MUTED, margin: '0 0 0.2rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{s.label}</p>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', color: GOLD, margin: 0, lineHeight: 1 }}>{s.value}</p>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
+            <button onClick={copy} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: copied ? GREEN : TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, borderRadius: 4, padding: '0.3rem 0.75rem', cursor: 'pointer' }}>
+              {copied ? '✓ Copied' : 'Copy JSON'}
+            </button>
+          </div>
+          <pre style={{ background: '#1a0e06', color: '#C9A84C', fontFamily: 'monospace', fontSize: '0.6rem', padding: '1.25rem', borderRadius: 8, overflow: 'auto', maxHeight: 400, margin: 0, lineHeight: 1.6 }}>
+            {JSON.stringify(schema, null, 2)}
+          </pre>
+        </div>
+      )}
+      {open && schema?.error && (
+        <div style={{ padding: '1.25rem 1.5rem' }}>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: RED }}>Could not load schema — check that your hotel page is live.</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: string; onGoToOptimise: () => void }) {
   const [data, setData] = useState<any>(null)
   const [loaded, setLoaded] = useState(false)
@@ -1536,6 +1617,7 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
           </tbody>
         </table>
       </div>
+      <SchemaVisualizer hotelId={hotelId} hotelSlug={hotel?.slug || ''} />
     </div>
   )
 }
