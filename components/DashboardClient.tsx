@@ -12,7 +12,6 @@ const GREEN = '#16a34a'
 const RED = '#dc2626'
 const BLUE = '#3b82f6'
 const PURPLE = '#8B5CF6'
-const [optimiseTab, setOptimiseTab] = useState('overview')
 
 // ── CATEGORY COMPETITOR DATA ──────────────────────────────────────────────────
 
@@ -1637,7 +1636,7 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
   const [chartPeriod, setChartPeriod] = useState(7)
   const [chartPlatform, setChartPlatform] = useState('overall')
   const [competitorView, setCompetitorView] = useState('region')
-
+  const [optimiseTab, setOptimiseTab] = useState('overview')
   const hotelName = hotel?.name || 'Your Hotel'
   const hotelRegion = hotel?.region || 'Switzerland'
 
