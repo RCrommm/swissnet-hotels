@@ -1139,7 +1139,7 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
       const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
       const [{ data: spa }, { data: rooms }, { data: restaurants }, { data: experiences }, { data: content }, { data: faqs }] = await Promise.all([
         sb.from('hotel_spa').select('*').eq('hotel_id', hotelId).eq('is_available', true),
-        sb.from('room_types').select('*').eq('hotel_id', hotelId).eq('is_active', true),
+        sb.from('room_types').select('*').eq('hotel_id', hotelId),
         sb.from('hotel_restaurants').select('*').eq('hotel_id', hotelId).eq('is_available', true),
         sb.from('hotel_experiences').select('*').eq('hotel_id', hotelId).eq('is_available', true),
         sb.from('hotel_content').select('faqs').eq('hotel_id', hotelId).single(),
