@@ -367,7 +367,7 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug, hotel, onSchemaRefresh }: 
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
   const [hotelInfo, setHotelInfo] = useState({
-  awards: hotel?.awards || '',
+  
   languages: hotel?.languages || '',
   check_in_time: hotel?.check_in_time || '',
   check_out_time: hotel?.check_out_time || '',
@@ -640,11 +640,7 @@ const saveHotelInfo = async () => {
       </div>
     </div>
     <div style={{ display: 'grid', gap: '1rem' }}>
-      <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1.25rem' }}>
-        <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Awards & Accolades <span style={{ color: GOLD }}>· High AI Impact</span></label>
-        <input value={hotelInfo.awards} onChange={e => setHotelInfo(p => ({ ...p, awards: e.target.value }))} placeholder="e.g. Forbes Five Star, LHW Member, Michelin Key, Swiss Deluxe Hotels" style={inp} />
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', color: TEXT_MUTED, margin: '0.3rem 0 0' }}>Mentioned in 40% of luxury hotel AI responses — add all relevant awards</p>
-      </div>
+      
       <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1.25rem' }}>
         <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Languages Spoken <span style={{ color: GOLD }}>· Medium AI Impact</span></label>
         <input value={hotelInfo.languages} onChange={e => setHotelInfo(p => ({ ...p, languages: e.target.value }))} placeholder="e.g. French, English, German, Italian, Japanese" style={inp} />
@@ -1236,7 +1232,7 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
     { label: 'Room Types', impact: 'High', done: (data.rooms?.length || 0) > 0, detail: `${data.rooms?.length || 0} room${data.rooms?.length !== 1 ? 's' : ''}`, fix: null },
     { label: 'Restaurants & Dining', impact: 'Medium', done: (data.restaurants?.length || 0) > 0, detail: `${data.restaurants?.length || 0} restaurant${data.restaurants?.length !== 1 ? 's' : ''}`, fix: 'dining' },
     { label: 'Experiences', impact: 'Medium', done: (data.experiences?.length || 0) > 0, detail: `${data.experiences?.length || 0} experience${data.experiences?.length !== 1 ? 's' : ''}`, fix: 'experiences' },
-    { label: 'Awards & Accolades', impact: 'High', done: !!hotel?.awards, fix: 'hotel-info' },
+    
 { label: 'Languages Spoken', impact: 'Medium', done: !!hotel?.languages, fix: 'hotel-info' },
 { label: 'Check-in / Check-out', impact: 'Low', done: !!hotel?.check_in_time, fix: 'hotel-info' },
 { label: 'Star Rating', impact: 'Medium', done: !!hotel?.rating, fix: null },
