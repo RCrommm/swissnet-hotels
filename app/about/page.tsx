@@ -55,6 +55,22 @@ export default function AboutPage() {
         <div style={{ height: '1px', background: border }} />
       </div>
 
+      {/* Editorial */}
+      <section style={{ maxWidth: '720px', margin: '0 auto', padding: '5rem 2rem' }}>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>How Hotels Are Listed</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: textMuted, lineHeight: 1.9, fontWeight: 300, margin: '0 0 1.25rem' }}>
+          Hotels listed on SwissNet are selected based on objective criteria: Swiss Deluxe Hotels membership, Leading Hotels of the World accreditation, official star classification, and direct editorial verification. No hotel is listed solely because of a commercial relationship.
+        </p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: textMuted, lineHeight: 1.9, fontWeight: 300, margin: 0 }}>
+          Partner hotels pay for access to visibility tools, schema optimisation, and the partner dashboard — not for rankings or placement in search results. All hotel descriptions, FAQs, and structured content are written independently by SwissNet based on verified hotel data.
+        </p>
+      </section>
+
+      {/* Divider */}
+      <div style={{ maxWidth: '720px', margin: '0 auto', padding: '0 2rem' }}>
+        <div style={{ height: '1px', background: border }} />
+      </div>
+
       {/* Why Switzerland */}
       <section style={{ maxWidth: '720px', margin: '0 auto', padding: '5rem 2rem' }}>
         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>Why Switzerland</p>
@@ -97,6 +113,11 @@ export default function AboutPage() {
         <a href="mailto:contact@swissnethotels.com" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: gold, textDecoration: 'none', fontWeight: 500 }}>
           contact@swissnethotels.com
         </a>
+        <div style={{ marginTop: '1.25rem' }}>
+          <a href="https://www.linkedin.com/company/swissnet-hotels" target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: gold, textDecoration: 'none', fontWeight: 500 }}>
+            LinkedIn → SwissNet Hotels
+          </a>
+        </div>
         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted, lineHeight: 1.9, fontWeight: 300, margin: '2rem 0 0' }}>
           Switzerland
         </p>
