@@ -664,6 +664,9 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
           { label: `Best luxury hotels in Switzerland`, href: `/best/luxury-hotels-switzerland` },
           hotel.category === 'Ski Resort' && { label: `Best ski hotels in Switzerland`, href: `/best/ski-hotels-switzerland` },
           hotel.category === 'Wellness Retreat' && { label: `Best wellness hotels in Switzerland`, href: `/best/wellness-hotels-switzerland` },
+          hotel.has_spa && { label: `Best spa hotels in Switzerland`, href: `/best/spa-hotels-switzerland` },
+          hotel.lakefront && { label: `Best lake hotels in Switzerland`, href: `/best/lake-hotels-switzerland` },
+          hotel.romantic && { label: `Best romantic hotels in Switzerland`, href: `/best/romantic-hotels-switzerland` },
         ].filter(Boolean).map((link: any) => (
           <Link key={link.label} href={link.href} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.875rem 1.25rem', background: white, border: `1px solid ${border}`, borderRadius: 4, textDecoration: 'none' }}>
             <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text }}>{link.label}</span>
@@ -675,7 +678,22 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
     <div style={{ height: 1, background: border, marginBottom: '4rem' }} />
   </>
 )}
-
+{hotel.is_partner && content?.compare_links?.length > 0 && (
+              <>
+                <section style={{ marginBottom: '4rem' }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>Compare Hotels</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {content.compare_links.map((link: any) => (
+                      <Link key={link.href} href={link.href} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.875rem 1.25rem', background: white, border: `1px solid ${border}`, borderRadius: 4, textDecoration: 'none' }}>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text }}>{link.label}</span>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: gold }}>→</span>
+                      </Link>
+                    ))}
+                  </div>
+                </section>
+                <div style={{ height: 1, background: border, marginBottom: '4rem' }} />
+              </>
+            )}
 {/* HOTEL FACTS */}
             {(hotel.check_in_time || hotel.check_out_time || hotel.cancellation_policy || hotel.parking || hotel.languages || hotel.accessibility || hotel.seasonal_notes || hotel.booking_benefits || hotel.private_transfer) && (
               <>
