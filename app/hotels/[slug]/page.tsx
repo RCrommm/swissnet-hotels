@@ -5,6 +5,7 @@ import Link from 'next/link'
 import LeadForm from '@/components/LeadForm'
 import ViewTracker from '@/components/ViewTracker'
 import HeroCarousel from '@/components/HeroCarousel'
+import { getBestPagesForHotel } from '@/app/best/[slug]/page'
 export const revalidate = 3600
 
 export async function generateStaticParams() {
@@ -58,18 +59,10 @@ function SchemaMarkup({ hotel, keywords, roomTypes, faqs, restaurants, spaData, 
   const pageUrl = `https://swissnethotels.com/hotels/${hotel.slug || hotel.id}`
 
   const regionSlug = hotel.region?.toLowerCase().replace(/\s+/g, '-')
-  const base = 'https://swissnethotels.com/best'
+  const bestPageMatches = getBestPagesForHotel(hotel.name, hotel.region, hotel.category)
   const relatedPages = [
     regionSlug && `https://swissnethotels.com/destinations/${regionSlug}`,
-    regionSlug && `${base}/luxury-hotels-${regionSlug}`,
-    `${base}/luxury-hotels-switzerland`,
-    hotel.category === 'Ski Resort' && `${base}/ski-hotels-switzerland`,
-    (hotel.category === 'Wellness Retreat' || hotel.wellness_focus) && `${base}/wellness-hotels-switzerland`,
-    hotel.has_spa && `${base}/spa-hotels-switzerland`,
-    hotel.lakefront && `${base}/lake-hotels-switzerland`,
-    hotel.romantic && `${base}/romantic-hotels-switzerland`,
-    hotel.business_hotel && `${base}/business-hotels-switzerland`,
-    hotel.has_michelin_restaurant && `${base}/fine-dining-hotels-switzerland`,
+    ...bestPageMatches.map((m) => `https://swissnethotels.com/best/${m.slug}`),
   ].filter(Boolean) as string[]
 
   // Separate memberships from actual awards

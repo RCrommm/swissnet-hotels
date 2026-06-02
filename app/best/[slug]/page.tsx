@@ -684,6 +684,19 @@ const PROMPT_PAGES: Record<string, PromptPageConfig> = {
   },
 }
 
+export function getBestPagesForHotel(hotelName: string, region?: string, category?: string): { slug: string }[] {
+  const matches: { slug: string }[] = []
+  for (const [slug, page] of Object.entries(PROMPT_PAGES)) {
+    let included = false
+    if (page.hotels) included = page.hotels.includes(hotelName)
+    else if (page.region && page.category) included = page.region === region && page.category === category
+    else if (page.region) included = page.region === region
+    else if (page.category) included = page.category === category
+    if (included) matches.push({ slug })
+  }
+  return matches
+}
+
 function sortPartnersFirst(hotels: any[]) {
   return [...hotels].sort((a, b) => {
     const aPartner = Boolean(a.is_partner) || PARTNER_HOTEL_NAMES.has(a.name)
