@@ -1880,7 +1880,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
             </div>
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
               <KPICard label="Official Website Clicks" value={websiteClicks.length} sub={`last ${period} days`} color={GOLD} spark={websiteClicksByDay} />
-              <KPICard label="Booking Clicks" value={bookClicks.length} sub={`book room · last ${period} days`} color={GOLD} spark={bookClicksByDay} />
+              <KPICard label="Booking Engine Clicks" value={bookClicks.length} sub={`to hotel booking engine · last ${period} days`} color={GOLD} spark={bookClicksByDay} />
               <KPICard label="Profile Views" value={recentViews.length} sub={`last ${period} days`} color={BLUE} spark={viewsByDay} />
               <KPICard label="Direct Savings" value={recentBookings.length > 0 ? `CHF ${Math.round(recentBookings.reduce((sum: number, b: any) => sum + (b.total_chf || 0), 0) * 0.15).toLocaleString()}` : '—'} sub="vs OTA commissions" color={GREEN} />
             </div>
