@@ -353,8 +353,8 @@ function CountryBreakdown({ hotelId, period }: { hotelId: string; period: number
 
 // ── OPTIMISE TAB ──────────────────────────────────────────────────────────────
 
-function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string; hotelName: string; hotelSlug: string }) {
-  const [mainTab, setMainTab] = useState<'overview' | 'events' | 'rooms' | 'dining' | 'spa' | 'experiences'>('overview')
+function OptimiseTab({ hotelId, hotelName, hotelSlug, hotel, onSchemaRefresh }: { hotelId: string; hotelName: string; hotelSlug: string; hotel: any; onSchemaRefresh?: () => void }) {
+  const [mainTab, setMainTab] = useState<'overview' | 'events' | 'rooms' | 'dining' | 'spa' | 'experiences' | 'hotel-info'>('overview')
   const [subTab, setSubTab] = useState<'content' | 'faqs'>('faqs')
   const [faqs, setFaqs] = useState<Record<string, { q: string; a: string }[]>>({ overview: [], rooms: [], dining: [], spa: [], experiences: [], events: [] })
   const [offers, setOffers] = useState<any[]>([])
@@ -366,6 +366,27 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string; hotel
   const [loaded, setLoaded] = useState(false)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
+  const [hotelInfo, setHotelInfo] = useState({
+  awards: hotel?.awards || '',
+  languages: hotel?.languages || '',
+  check_in_time: hotel?.check_in_time || '',
+  check_out_time: hotel?.check_out_time || '',
+  parking: hotel?.parking || '',
+  pet_friendly: hotel?.pet_friendly || false,
+})
+const [savingInfo, setSavingInfo] = useState(false)
+
+const saveHotelInfo = async () => {
+  setSavingInfo(true)
+  const { createClient } = await import('@supabase/supabase-js')
+  const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+  await sb.from('hotels').update(hotelInfo).eq('id', hotelId)
+  await notify('Hotel info updated', 'Awards, languages, check-in, parking')
+  setSavingInfo(false)
+  setMsg('Hotel info updated and live.')
+  setTimeout(() => setMsg(''), 3000)
+  if (onSchemaRefresh) onSchemaRefresh()
+}
   const today = new Date().toISOString().split('T')[0]
 
   useEffect(() => {
@@ -516,13 +537,14 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string; hotel
   const activeOffers = offers.filter(o => !o.end_date || o.end_date >= today)
   const faqPageKey = mainTab === 'events' ? 'events' : mainTab
   const mainTabs = [
-    { key: 'overview', label: 'Overview', count: `${(faqs.overview || []).length}/8` },
-    { key: 'events', label: 'Events & Offers', count: `${activeOffers.length}/3` },
-    { key: 'rooms', label: 'Rooms', count: `${(faqs.rooms || []).length}/6` },
-    { key: 'dining', label: 'Dining', count: `${(faqs.dining || []).length}/6` },
-    { key: 'spa', label: 'Spa', count: `${(faqs.spa || []).length}/6` },
-    { key: 'experiences', label: 'Experiences', count: `${experiences.length}` },
-  ]
+  { key: 'hotel-info', label: 'Hotel Info', count: '' },
+  { key: 'overview', label: 'Overview', count: `${(faqs.overview || []).length}/8` },
+  { key: 'events', label: 'Events & Offers', count: `${activeOffers.length}/3` },
+  { key: 'rooms', label: 'Rooms', count: `${(faqs.rooms || []).length}/6` },
+  { key: 'dining', label: 'Dining', count: `${(faqs.dining || []).length}/6` },
+  { key: 'spa', label: 'Spa', count: `${(faqs.spa || []).length}/6` },
+  { key: 'experiences', label: 'Experiences', count: `${experiences.length}` },
+]
   const inp: any = { width: '100%', fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.55rem 0.875rem', background: BG, outline: 'none', boxSizing: 'border-box' }
 
   return (
@@ -607,6 +629,56 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug }: { hotelId: string; hotel
           </div>
         </div>
       )}
+
+      {/* HOTEL INFO */}
+{mainTab === 'hotel-info' && (
+  <div>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+      <div>
+        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Hotel Information</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>These details appear in your AI schema and boost visibility in specific searches</p>
+      </div>
+    </div>
+    <div style={{ display: 'grid', gap: '1rem' }}>
+      <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1.25rem' }}>
+        <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Awards & Accolades <span style={{ color: GOLD }}>· High AI Impact</span></label>
+        <input value={hotelInfo.awards} onChange={e => setHotelInfo(p => ({ ...p, awards: e.target.value }))} placeholder="e.g. Forbes Five Star, LHW Member, Michelin Key, Swiss Deluxe Hotels" style={inp} />
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', color: TEXT_MUTED, margin: '0.3rem 0 0' }}>Mentioned in 40% of luxury hotel AI responses — add all relevant awards</p>
+      </div>
+      <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1.25rem' }}>
+        <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Languages Spoken <span style={{ color: GOLD }}>· Medium AI Impact</span></label>
+        <input value={hotelInfo.languages} onChange={e => setHotelInfo(p => ({ ...p, languages: e.target.value }))} placeholder="e.g. French, English, German, Italian, Japanese" style={inp} />
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1.25rem' }}>
+          <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Check-in Time</label>
+          <input value={hotelInfo.check_in_time} onChange={e => setHotelInfo(p => ({ ...p, check_in_time: e.target.value }))} placeholder="e.g. 3:00 PM" style={inp} />
+        </div>
+        <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1.25rem' }}>
+          <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Check-out Time</label>
+          <input value={hotelInfo.check_out_time} onChange={e => setHotelInfo(p => ({ ...p, check_out_time: e.target.value }))} placeholder="e.g. 12:00 PM" style={inp} />
+        </div>
+      </div>
+      <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1.25rem' }}>
+        <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Parking</label>
+        <input value={hotelInfo.parking} onChange={e => setHotelInfo(p => ({ ...p, parking: e.target.value }))} placeholder="e.g. Valet parking available, CHF 50/night" style={inp} />
+      </div>
+      <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.2rem' }}>Pet Friendly</label>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Appears in "pet friendly luxury hotel" searches</p>
+        </div>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+          <input type="checkbox" checked={hotelInfo.pet_friendly} onChange={e => setHotelInfo(p => ({ ...p, pet_friendly: e.target.checked }))} style={{ accentColor: GOLD, width: 16, height: 16 }} />
+          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT }}>{hotelInfo.pet_friendly ? 'Yes' : 'No'}</span>
+        </label>
+      </div>
+    </div>
+    <div style={{ marginTop: '1.25rem' }}>
+      <button onClick={saveHotelInfo} disabled={savingInfo} style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.5rem', border: 'none', borderRadius: 4, cursor: 'pointer', opacity: savingInfo ? 0.7 : 1 }}>{savingInfo ? 'Saving...' : 'Save & Publish'}</button>
+    </div>
+  </div>
+)}
 
       {/* ROOMS/DINING CONTENT */}
       {(mainTab === 'rooms' || mainTab === 'dining') && subTab === 'content' && (
@@ -1164,7 +1236,10 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
     { label: 'Room Types', impact: 'High', done: (data.rooms?.length || 0) > 0, detail: `${data.rooms?.length || 0} room${data.rooms?.length !== 1 ? 's' : ''}`, fix: null },
     { label: 'Restaurants & Dining', impact: 'Medium', done: (data.restaurants?.length || 0) > 0, detail: `${data.restaurants?.length || 0} restaurant${data.restaurants?.length !== 1 ? 's' : ''}`, fix: 'dining' },
     { label: 'Experiences', impact: 'Medium', done: (data.experiences?.length || 0) > 0, detail: `${data.experiences?.length || 0} experience${data.experiences?.length !== 1 ? 's' : ''}`, fix: 'experiences' },
-    { label: 'Star Rating', impact: 'Medium', done: !!hotel?.rating, fix: null },
+    { label: 'Awards & Accolades', impact: 'High', done: !!hotel?.awards, fix: 'hotel-info' },
+{ label: 'Languages Spoken', impact: 'Medium', done: !!hotel?.languages, fix: 'hotel-info' },
+{ label: 'Check-in / Check-out', impact: 'Low', done: !!hotel?.check_in_time, fix: 'hotel-info' },
+{ label: 'Star Rating', impact: 'Medium', done: !!hotel?.rating, fix: null },
     { label: 'Contact Email', impact: 'Low', done: !!hotel?.contact_email, fix: null },
     { label: 'Telephone', impact: 'Low', done: !!hotel?.telephone, fix: null },
     { label: 'Location', impact: 'Low', done: !!hotel?.location, fix: null },
@@ -1231,7 +1306,7 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
                   </div>
                 </div>
                 {f.fix ? (
-                  <button onClick={onGoToOptimise} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: GOLD, background: GOLD_LIGHT, border: '1px solid ' + BORDER, borderRadius: 4, padding: '0.3rem 0.75rem', cursor: 'pointer' }}>Fix in Optimise →</button>
+                  <button onClick={() => { onGoToOptimise(); }} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: GOLD, background: GOLD_LIGHT, border: '1px solid ' + BORDER, borderRadius: 4, padding: '0.3rem 0.75rem', cursor: 'pointer' }}>Fix in Optimise →</button>
                 ) : (
                   <a href="mailto:contact@swissnethotels.com" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, borderRadius: 4, padding: '0.3rem 0.75rem', textDecoration: 'none' }}>Contact SwissNet</a>
                 )}
@@ -1975,7 +2050,7 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
 
         {/* ── OPTIMISE ── */}
         {tab === 'optimise' && (
-          <OptimiseTab hotelId={hotel?.id} hotelName={hotelName} hotelSlug={hotel?.slug} />
+          <OptimiseTab hotelId={hotel?.id} hotelName={hotelName} hotelSlug={hotel?.slug} hotel={hotel} />
         )}
 
         {/* ── SETTINGS ── */}
