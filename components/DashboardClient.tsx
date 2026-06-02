@@ -12,6 +12,7 @@ const GREEN = '#16a34a'
 const RED = '#dc2626'
 const BLUE = '#3b82f6'
 const PURPLE = '#8B5CF6'
+const [optimiseTab, setOptimiseTab] = useState('overview')
 
 // ── CATEGORY COMPETITOR DATA ──────────────────────────────────────────────────
 
@@ -353,8 +354,8 @@ function CountryBreakdown({ hotelId, period }: { hotelId: string; period: number
 
 // ── OPTIMISE TAB ──────────────────────────────────────────────────────────────
 
-function OptimiseTab({ hotelId, hotelName, hotelSlug, hotel, onSchemaRefresh }: { hotelId: string; hotelName: string; hotelSlug: string; hotel: any; onSchemaRefresh?: () => void }) {
-  const [mainTab, setMainTab] = useState<'overview' | 'events' | 'rooms' | 'dining' | 'spa' | 'experiences' | 'hotel-info'>('overview')
+function OptimiseTab({ hotelId, hotelName, hotelSlug, hotel, onSchemaRefresh, initialTab }: { hotelId: string; hotelName: string; hotelSlug: string; hotel: any; onSchemaRefresh?: () => void; initialTab?: string }) {
+  const [mainTab, setMainTab] = useState<'overview' | 'events' | 'rooms' | 'dining' | 'spa' | 'experiences' | 'hotel-info'>((initialTab as any) || 'overview')
   const [subTab, setSubTab] = useState<'content' | 'faqs'>('faqs')
   const [faqs, setFaqs] = useState<Record<string, { q: string; a: string }[]>>({ overview: [], rooms: [], dining: [], spa: [], experiences: [], events: [] })
   const [offers, setOffers] = useState<any[]>([])
@@ -1326,7 +1327,7 @@ function SchemaVisualizer({ hotelId, hotelSlug }: { hotelId: string; hotelSlug: 
   )
 }
 
-function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: string; onGoToOptimise: () => void }) {
+function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: string; onGoToOptimise: (tab?: string) => void }) {
   const [data, setData] = useState<any>(null)
   const [loaded, setLoaded] = useState(false)
 
@@ -1570,7 +1571,7 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
                   </div>
                 </div>
                 {f.fix ? (
-                  <button onClick={() => { onGoToOptimise(); }} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: GOLD, background: GOLD_LIGHT, border: '1px solid ' + BORDER, borderRadius: 4, padding: '0.3rem 0.75rem', cursor: 'pointer' }}>Fix in Optimise →</button>
+                  <button onClick={() => { onGoToOptimise(f.fix!); }} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: GOLD, background: GOLD_LIGHT, border: '1px solid ' + BORDER, borderRadius: 4, padding: '0.3rem 0.75rem', cursor: 'pointer' }}>Fix in Optimise →</button>
                 ) : (
                   <a href="mailto:contact@swissnethotels.com" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, borderRadius: 4, padding: '0.3rem 0.75rem', textDecoration: 'none' }}>Contact SwissNet</a>
                 )}
@@ -2319,12 +2320,12 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
 
         {/* ── SCHEMA ── */}
 {tab === 'schema' && (
-  <SchemaTab hotel={hotel} hotelId={hotel?.id} onGoToOptimise={() => setTab('optimise')} />
+  <SchemaTab hotel={hotel} hotelId={hotel?.id} onGoToOptimise={(tab) => { setTab('optimise'); setOptimiseTab(tab || 'overview') }} />
 )}
 
         {/* ── OPTIMISE ── */}
         {tab === 'optimise' && (
-          <OptimiseTab hotelId={hotel?.id} hotelName={hotelName} hotelSlug={hotel?.slug} hotel={hotel} />
+          <OptimiseTab hotelId={hotel?.id} hotelName={hotelName} hotelSlug={hotel?.slug} hotel={hotel} initialTab={optimiseTab} />
         )}
 
         {/* ── SETTINGS ── */}
