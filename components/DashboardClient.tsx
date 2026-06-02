@@ -565,7 +565,7 @@ const saveHotelInfo = async () => {
       </div>
 
       {/* Sub tabs */}
-      {mainTab !== 'overview' && (
+      {mainTab !== 'overview' && mainTab !== 'hotel-info' && (
         <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '1.5rem' }}>
           {[{ key: 'content', label: 'Content' }, { key: 'faqs', label: `FAQs (${(faqs[faqPageKey] || []).length}/6)` }].map(s => (
             <button key={s.key} onClick={() => setSubTab(s.key as any)} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, padding: '0.4rem 1rem', borderRadius: 4, cursor: 'pointer', background: subTab === s.key ? TEXT : WHITE, color: subTab === s.key ? WHITE : TEXT_MUTED, border: '1px solid ' + (subTab === s.key ? TEXT : BORDER) }}>{s.label}</button>
