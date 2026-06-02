@@ -354,10 +354,13 @@ function CountryBreakdown({ hotelId, period }: { hotelId: string; period: number
 // ── OPTIMISE TAB ──────────────────────────────────────────────────────────────
 
 function OptimiseTab({ hotelId, hotelName, hotelSlug, hotel, onSchemaRefresh, initialTab }: { hotelId: string; hotelName: string; hotelSlug: string; hotel: any; onSchemaRefresh?: () => void; initialTab?: string }) {
-  const [mainTab, setMainTab] = useState<'overview' | 'events' | 'rooms' | 'dining' | 'spa' | 'experiences' | 'hotel-info'>('overview')
+  const [mainTab, setMainTab] = useState<'overview' | 'events' | 'rooms' | 'dining' | 'spa' | 'experiences' | 'hotel-info'>(initialTab as any || 'overview')
 
   useEffect(() => {
-    if (initialTab) setMainTab(initialTab as any)
+    if (initialTab) {
+      setMainTab(initialTab as any)
+      setSubTab(initialTab === 'overview' ? 'faqs' : 'content')
+    }
   }, [initialTab])
   const [subTab, setSubTab] = useState<'content' | 'faqs'>('faqs')
   const [faqs, setFaqs] = useState<Record<string, { q: string; a: string }[]>>({ overview: [], rooms: [], dining: [], spa: [], experiences: [], events: [] })
