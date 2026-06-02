@@ -1701,7 +1701,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
   const clicksByDay = days.map(d => recentClicks.filter((c: any) => c.clicked_at?.startsWith(d)).length)
   const viewsByDay = days.map(d => recentViews.filter((v: any) => v.viewed_at?.startsWith(d)).length)
   const bookingsByDay = days.map(d => recentBookings.filter((b: any) => b.booked_at?.startsWith(d)).length)
-  const WEBSITE_CAMPAIGNS = ['hotel_profile', 'rooms_page', 'dining_page', 'spa_page', 'experiences_page', 'events_page', 'best_page', 'compare', 'destination', 'hotels_page_website']
+  const WEBSITE_CAMPAIGNS = ['hotel_profile', 'rooms_page', 'dining_page', 'spa_page', 'experiences_page', 'events_page', 'hotels_page_website']
   const PROFILE_CAMPAIGNS = ['best_page', 'compare', 'destination']
   const websiteClicks = (clicks || []).filter((c: any) => WEBSITE_CAMPAIGNS.includes(c.utm_campaign) && new Date(c.clicked_at) > periodStart)
   const bookClicks = (clicks || []).filter((c: any) => c.utm_campaign === 'hotels_page_book' && new Date(c.clicked_at) > periodStart)
