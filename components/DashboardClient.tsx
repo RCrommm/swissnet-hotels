@@ -367,7 +367,7 @@ function OptimiseTab({ hotelId, hotelName, hotelSlug, hotel, onSchemaRefresh }: 
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
   const [hotelInfo, setHotelInfo] = useState({
-  
+  about_us: hotel?.about_us || '',
   languages: hotel?.languages || '',
   check_in_time: hotel?.check_in_time || '',
   check_out_time: hotel?.check_out_time || '',
@@ -654,6 +654,11 @@ const saveHotelInfo = async () => {
           <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Check-out Time</label>
           <input value={hotelInfo.check_out_time} onChange={e => setHotelInfo(p => ({ ...p, check_out_time: e.target.value }))} placeholder="e.g. 12:00 PM" style={inp} />
         </div>
+      </div>
+      <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1.25rem' }}>
+        <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>About Us <span style={{ color: GOLD }}>· High AI Impact</span></label>
+        <textarea value={hotelInfo.about_us} onChange={e => setHotelInfo(p => ({ ...p, about_us: e.target.value }))} rows={4} placeholder="Tell guests what makes your hotel unique. Be specific — mention exact features, philosophy, special experiences. E.g. 'La Réserve Genève is the only resort-style hotel in Geneva with a private lakefront park, offering a rare combination of urban proximity and resort tranquility.'" style={{ ...inp, resize: 'vertical' }} />
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', color: TEXT_MUTED, margin: '0.3rem 0 0' }}>Your words — specific facts boost AI visibility. Avoid vague marketing language.</p>
       </div>
       <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1.25rem' }}>
         <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Parking</label>
@@ -1222,58 +1227,151 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
   if (!loaded) return <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>Loading schema health...</p>
 
   const totalFaqs = (data.faqs?.length || 0) + (data.faqSuggestions?.length || 0)
+  const spaFields = data.spa?.[0] ? ['name','description','size_sqm','treatments','price_from'].filter(f => data.spa[0][f]).length : 0
+  const roomsWithDetail = (data.rooms || []).filter((r: any) => r.size_sqm && r.base_rate_chf).length
+  const restaurantsWithDetail = (data.restaurants || []).filter((r: any) => r.description && r.cuisine_type).length
 
-  const fields = [
-    { label: 'Hotel Description', impact: 'High', done: !!hotel?.description, fix: 'overview' },
-    { label: 'Direct Booking URL', impact: 'High', done: !!hotel?.direct_booking_url, fix: null },
-    { label: 'Nightly Rate', impact: 'High', done: !!hotel?.nightly_rate_chf, fix: null },
-    { label: 'FAQs', impact: 'High', done: totalFaqs >= 5, detail: `${totalFaqs} published`, fix: 'overview' },
-    { label: 'Spa & Wellness', impact: 'High', done: (data.spa?.length || 0) > 0, detail: `${data.spa?.length || 0} venue${data.spa?.length !== 1 ? 's' : ''}`, fix: 'spa' },
-    { label: 'Room Types', impact: 'High', done: (data.rooms?.length || 0) > 0, detail: `${data.rooms?.length || 0} room${data.rooms?.length !== 1 ? 's' : ''}`, fix: null },
-    { label: 'Restaurants & Dining', impact: 'Medium', done: (data.restaurants?.length || 0) > 0, detail: `${data.restaurants?.length || 0} restaurant${data.restaurants?.length !== 1 ? 's' : ''}`, fix: 'dining' },
-    { label: 'Experiences', impact: 'Medium', done: (data.experiences?.length || 0) > 0, detail: `${data.experiences?.length || 0} experience${data.experiences?.length !== 1 ? 's' : ''}`, fix: 'experiences' },
-    
-{ label: 'Languages Spoken', impact: 'Medium', done: !!hotel?.languages, fix: 'hotel-info' },
-{ label: 'Check-in / Check-out', impact: 'Low', done: !!hotel?.check_in_time, fix: 'hotel-info' },
-{ label: 'Star Rating', impact: 'Medium', done: !!hotel?.rating, fix: null },
-    { label: 'Contact Email', impact: 'Low', done: !!hotel?.contact_email, fix: null },
-    { label: 'Telephone', impact: 'Low', done: !!hotel?.telephone, fix: null },
-    { label: 'Location', impact: 'Low', done: !!hotel?.location, fix: null },
+  const scoredFields = [
+    {
+      label: 'Hotel Description',
+      impact: 'High',
+      done: !!hotel?.description,
+      score: hotel?.description ? Math.min(100, Math.round((hotel.description.split(' ').length / 80) * 100)) : 0,
+      detail: hotel?.description ? `${hotel.description.split(' ').length} words` : 'Missing',
+      tip: 'Include specific facts: m², distances, number of rooms, awards',
+      fix: null,
+    },
+    {
+      label: 'About Us',
+      impact: 'High',
+      done: !!hotel?.about_us,
+      score: hotel?.about_us ? Math.min(100, Math.round((hotel.about_us.split(' ').length / 50) * 100)) : 0,
+      detail: hotel?.about_us ? `${hotel.about_us.split(' ').length} words` : 'Missing',
+      tip: 'Your unique story — specific facts AI can quote',
+      fix: 'hotel-info',
+    },
+    {
+      label: 'FAQs',
+      impact: 'High',
+      done: totalFaqs >= 5,
+      score: totalFaqs === 0 ? 0 : totalFaqs <= 3 ? 30 : totalFaqs <= 5 ? 60 : totalFaqs <= 7 ? 80 : 100,
+      detail: `${totalFaqs} published`,
+      tip: 'Aim for 8+ FAQs covering spa, dining, location, family, honeymoon',
+      fix: 'overview',
+    },
+    {
+      label: 'Spa & Wellness',
+      impact: 'High',
+      done: (data.spa?.length || 0) > 0,
+      score: Math.round((spaFields / 5) * 100),
+      detail: data.spa?.[0] ? `${spaFields}/5 fields complete` : 'Missing',
+      tip: 'Add size, treatments, price, pool/sauna/hammam details',
+      fix: 'spa',
+    },
+    {
+      label: 'Room Types',
+      impact: 'High',
+      done: (data.rooms?.length || 0) > 0,
+      score: data.rooms?.length === 0 ? 0 : Math.min(100, Math.round((roomsWithDetail / Math.max(data.rooms?.length || 1, 4)) * 100)),
+      detail: `${data.rooms?.length || 0} rooms · ${roomsWithDetail} with full detail`,
+      tip: 'Add size, bed type and price to every room for maximum AI retrieval',
+      fix: null,
+    },
+    {
+      label: 'Restaurants & Dining',
+      impact: 'Medium',
+      done: (data.restaurants?.length || 0) > 0,
+      score: data.restaurants?.length === 0 ? 0 : Math.min(100, Math.round((restaurantsWithDetail / Math.max(data.restaurants?.length || 1, 2)) * 100) + (data.restaurants?.some((r: any) => r.michelin_stars > 0) ? 20 : 0)),
+      detail: `${data.restaurants?.length || 0} restaurants · ${restaurantsWithDetail} with full detail`,
+      tip: 'Add cuisine type, description and Michelin stars to each restaurant',
+      fix: 'dining',
+    },
+    {
+      label: 'Experiences',
+      impact: 'Medium',
+      done: (data.experiences?.length || 0) > 0,
+      score: data.experiences?.length === 0 ? 0 : Math.min(100, data.experiences.length * 25),
+      detail: `${data.experiences?.length || 0} experiences`,
+      tip: 'Add at least 4 specific experiences with descriptions',
+      fix: 'experiences',
+    },
+    {
+      label: 'Languages Spoken',
+      impact: 'Medium',
+      done: !!hotel?.languages,
+      score: hotel?.languages ? 100 : 0,
+      detail: hotel?.languages || 'Missing',
+      tip: 'Helps appear in searches from international travelers',
+      fix: 'hotel-info',
+    },
+    {
+      label: 'Check-in / Check-out',
+      impact: 'Low',
+      done: !!hotel?.check_in_time,
+      score: hotel?.check_in_time && hotel?.check_out_time ? 100 : hotel?.check_in_time ? 50 : 0,
+      detail: hotel?.check_in_time ? `${hotel.check_in_time} / ${hotel.check_out_time || '?'}` : 'Missing',
+      tip: 'AI answers "what time is check-in" queries with this',
+      fix: 'hotel-info',
+    },
+    {
+      label: 'Star Rating',
+      impact: 'Medium',
+      done: !!hotel?.rating,
+      score: hotel?.rating ? 100 : 0,
+      detail: hotel?.rating ? `${hotel.rating} stars` : 'Missing',
+      tip: null,
+      fix: null,
+    },
+    {
+      label: 'Direct Booking URL',
+      impact: 'High',
+      done: !!hotel?.direct_booking_url,
+      score: hotel?.direct_booking_url ? 100 : 0,
+      detail: hotel?.direct_booking_url ? 'Connected ✓' : 'Missing',
+      tip: null,
+      fix: null,
+    },
+    {
+      label: 'Nightly Rate',
+      impact: 'High',
+      done: !!hotel?.nightly_rate_chf,
+      score: hotel?.nightly_rate_chf ? 100 : 0,
+      detail: hotel?.nightly_rate_chf ? `CHF ${hotel.nightly_rate_chf}` : 'Missing',
+      tip: null,
+      fix: null,
+    },
   ]
 
-  const highFields = fields.filter(f => f.impact === 'High')
-  const medFields = fields.filter(f => f.impact === 'Medium')
-  const lowFields = fields.filter(f => f.impact === 'Low')
-
-  const completedHigh = highFields.filter(f => f.done).length
-  const completedMed = medFields.filter(f => f.done).length
-  const completedLow = lowFields.filter(f => f.done).length
-
-  const score = Math.round(
-    (completedHigh / highFields.length) * 60 +
-    (completedMed / medFields.length) * 30 +
-    (completedLow / lowFields.length) * 10
+  const overallScore = Math.round(
+    scoredFields.reduce((sum, f) => {
+      const weight = f.impact === 'High' ? 3 : f.impact === 'Medium' ? 2 : 1
+      return sum + (f.score * weight)
+    }, 0) /
+    scoredFields.reduce((sum, f) => {
+      const weight = f.impact === 'High' ? 3 : f.impact === 'Medium' ? 2 : 1
+      return sum + (weight * 100)
+    }, 0) * 100
   )
 
-  const scoreColor = score >= 80 ? GREEN : score >= 50 ? GOLD : RED
-  const scoreLabel = score >= 80 ? 'Strong' : score >= 50 ? 'Good' : 'Needs Work'
-  const missing = fields.filter(f => !f.done)
+  const scoreColor = overallScore >= 80 ? GREEN : overallScore >= 50 ? GOLD : RED
+  const scoreLabel = overallScore >= 80 ? 'Strong' : overallScore >= 50 ? 'Good' : 'Needs Work'
+  const missing = scoredFields.filter(f => !f.done)
 
   return (
     <div>
       {/* Score card */}
       <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.75rem 2rem', marginBottom: '1.5rem', display: 'flex', gap: '2rem', alignItems: 'center' }}>
         <div style={{ textAlign: 'center', minWidth: 120 }}>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3.5rem', color: scoreColor, margin: 0, lineHeight: 1 }}>{score}</p>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3.5rem', color: scoreColor, margin: 0, lineHeight: 1 }}>{overallScore}</p>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, color: scoreColor, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0.25rem 0 0' }}>{scoreLabel}</p>
         </div>
         <div style={{ flex: 1 }}>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: TEXT, margin: '0 0 0.75rem' }}>AI Schema Health Score</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
             {[
-              { label: 'High Impact', completed: completedHigh, total: highFields.length, color: RED },
-              { label: 'Medium Impact', completed: completedMed, total: medFields.length, color: GOLD },
-              { label: 'Low Impact', completed: completedLow, total: lowFields.length, color: BLUE },
+              { label: 'High Impact', completed: scoredFields.filter(f => f.impact === 'High').filter(f => f.done).length, total: scoredFields.filter(f => f.impact === 'High').length, color: RED },
+            { label: 'Medium Impact', completed: scoredFields.filter(f => f.impact === 'Medium').filter(f => f.done).length, total: scoredFields.filter(f => f.impact === 'Medium').length, color: GOLD },
+            { label: 'Low Impact', completed: scoredFields.filter(f => f.impact === 'Low').filter(f => f.done).length, total: scoredFields.filter(f => f.impact === 'Low').length, color: BLUE },
             ].map(bar => (
               <div key={bar.label} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, width: 100 }}>{bar.label}</span>
@@ -1320,26 +1418,34 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ background: BG }}>
-              {['Field', 'Status', 'Detail', 'AI Impact'].map(h => (
+              {['Field', 'AI Score', 'Detail', 'Impact', 'Tip'].map(h => (
                 <th key={h} style={{ textAlign: 'left', padding: '0.75rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, borderBottom: '1px solid ' + BORDER }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {fields.map((f, i) => (
-              <tr key={i} style={{ borderBottom: '1px solid ' + BORDER }}>
-                <td style={{ padding: '0.875rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, color: TEXT }}>{f.label}</td>
-                <td style={{ padding: '0.875rem 1.5rem' }}>
-                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, color: f.done ? GREEN : RED, background: (f.done ? GREEN : RED) + '12', padding: '2px 8px', borderRadius: 20 }}>
-                    {f.done ? '✓ Complete' : '✗ Missing'}
-                  </span>
-                </td>
-                <td style={{ padding: '0.875rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED }}>{f.detail || '—'}</td>
-                <td style={{ padding: '0.875rem 1.5rem' }}>
-                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, color: f.impact === 'High' ? RED : f.impact === 'Medium' ? GOLD : BLUE }}>{f.impact}</span>
-                </td>
-              </tr>
-            ))}
+            {scoredFields.map((f, i) => {
+              const sc = f.score
+              const scColor = sc >= 80 ? GREEN : sc >= 50 ? GOLD : RED
+              return (
+                <tr key={i} style={{ borderBottom: '1px solid ' + BORDER }}>
+                  <td style={{ padding: '0.875rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, color: TEXT }}>{f.label}</td>
+                  <td style={{ padding: '0.875rem 1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <div style={{ width: 50, height: 4, background: BORDER, borderRadius: 2 }}>
+                        <div style={{ height: '100%', width: sc + '%', background: scColor, borderRadius: 2 }} />
+                      </div>
+                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: scColor }}>{sc}%</span>
+                    </div>
+                  </td>
+                  <td style={{ padding: '0.875rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED }}>{f.detail || '—'}</td>
+                  <td style={{ padding: '0.875rem 1.5rem' }}>
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, color: f.impact === 'High' ? RED : f.impact === 'Medium' ? GOLD : BLUE }}>{f.impact}</span>
+                  </td>
+                  <td style={{ padding: '0.875rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, fontStyle: 'italic', maxWidth: 200 }}>{f.tip || '—'}</td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
