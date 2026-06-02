@@ -1140,7 +1140,7 @@ function CategoryTrendChart({ category, hotelName, hotels }: { category: string;
 // ── SOURCE PAGE CHART ─────────────────────────────────────────────────────────
 
 function SourcePageChart({ hotelId }: { hotelId: string }) {
-  const [data, setData] = useState<{ page: string; profile: number; website: number }[]>([])
+  const [data, setData] = useState<{ page: string; count: number }[]>([])
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
@@ -1150,33 +1150,36 @@ function SourcePageChart({ hotelId }: { hotelId: string }) {
       const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
       const { data: rows } = await sb
         .from('referral_clicks')
-        .select('utm_campaign, source_page')
+        .select('utm_campaign')
         .eq('hotel_id', hotelId)
-        .in('utm_campaign', ['best_page', 'compare', 'destination', 'hotel_profile'])
       if (!rows) { setLoaded(true); return }
 
-      const pageMap: Record<string, { profile: number; website: number }> = {}
-      for (const row of rows) {
-        const src = row.source_page || ''
-        let label = ''
-        if (row.utm_campaign === 'best_page') {
-          label = 'Best Pages'
-        } else if (row.utm_campaign === 'compare') {
-          label = 'Compare Pages'
-        } else if (row.utm_campaign === 'destination') {
-          label = 'Destination Pages'
-        } else {
-          continue
-        }
-        if (!label) continue
-        if (!pageMap[label]) pageMap[label] = { profile: 0, website: 0 }
-        pageMap[label].website++
+      const LABELS: Record<string, string> = {
+        best_page: 'Best Pages',
+        compare: 'Compare Pages',
+        destination: 'Destination Pages',
+        hotel_profile: 'Profile Page',
+        rooms_page: 'Rooms Page',
+        dining_page: 'Dining Page',
+        spa_page: 'Spa Page',
+        experiences_page: 'Experiences Page',
+        events_page: 'Events Page',
+        ai_concierge: 'AI Concierge',
+        direct_booking: 'Direct Booking',
+        hotels_page_website: 'Website Button',
+        hotels_page_book: 'Book Room Button',
       }
 
-      const result = Object.entries(pageMap)
-        .map(([page, counts]) => ({ page, ...counts }))
-        .sort((a, b) => (b.profile + b.website) - (a.profile + a.website))
-        .slice(0, 8)
+      const counts: Record<string, number> = {}
+      for (const row of rows) {
+        const key = row.utm_campaign || 'other'
+        const label = LABELS[key] || key
+        counts[label] = (counts[label] || 0) + 1
+      }
+
+      const result = Object.entries(counts)
+        .map(([page, count]) => ({ page, count }))
+        .sort((a, b) => b.count - a.count)
 
       setData(result)
       setLoaded(true)
@@ -1193,13 +1196,12 @@ function SourcePageChart({ hotelId }: { hotelId: string }) {
   if (data.length === 0) return (
     <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '2rem', textAlign: 'center' }}>
       <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>No page click data yet</p>
-      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0 }}>Clicks from best, compare and destination pages will appear here</p>
+      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0 }}>Clicks will appear here as visitors engage</p>
     </div>
   )
 
-  const maxVal = Math.max(...data.map(d => d.profile + d.website)) || 1
-  const totalProfile = data.reduce((s, d) => s + d.profile, 0)
-  const totalWebsite = data.reduce((s, d) => s + d.website, 0)
+  const maxVal = Math.max(...data.map(d => d.count)) || 1
+  const total = data.reduce((s, d) => s + d.count, 0)
 
   return (
     <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem' }}>
@@ -1208,11 +1210,9 @@ function SourcePageChart({ hotelId }: { hotelId: string }) {
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 0.2rem' }}>Clicks by Page</p>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: 0 }}>Where visitors discover and click through to your hotel</p>
         </div>
-        
       </div>
 
       <div style={{ display: 'flex', gap: '2rem' }}>
-        {/* Bar chart */}
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {data.map((d, i) => (
@@ -1221,28 +1221,20 @@ function SourcePageChart({ hotelId }: { hotelId: string }) {
                   <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.page}</p>
                 </div>
                 <div style={{ flex: 1, display: 'flex', gap: '2px', height: 20 }}>
-                  {d.profile > 0 && (
-                    <div style={{ width: `${(d.profile / maxVal) * 100}%`, background: GOLD, borderRadius: '3px 0 0 3px', opacity: 0.85, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 4, minWidth: 20 }}>
-                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, color: '#1a0e06' }}>{d.profile}</span>
-                    </div>
-                  )}
-                  {d.website > 0 && (
-                    <div style={{ width: `${(d.website / maxVal) * 100}%`, background: TEXT, borderRadius: d.profile > 0 ? '0 3px 3px 0' : '3px', opacity: 0.7, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 4, minWidth: 20 }}>
-                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, color: WHITE }}>{d.website}</span>
-                    </div>
-                  )}
+                  <div style={{ width: `${(d.count / maxVal) * 100}%`, background: GOLD, borderRadius: '3px', opacity: 0.85, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 4, minWidth: 20 }}>
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, color: '#1a0e06' }}>{d.count}</span>
+                  </div>
                 </div>
-                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: TEXT_MUTED, width: 24, textAlign: 'right', flexShrink: 0 }}>{d.profile + d.website}</span>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: TEXT_MUTED, width: 24, textAlign: 'right', flexShrink: 0 }}>{d.count}</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Summary */}
         <div style={{ width: 140, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           <div style={{ padding: '0.75rem 1rem', background: BG, borderRadius: 8 }}>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.3rem' }}>Total Clicks</p>
-            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', color: GOLD, margin: 0, lineHeight: 1 }}>{totalProfile + totalWebsite}</p>
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', color: GOLD, margin: 0, lineHeight: 1 }}>{total}</p>
           </div>
         </div>
       </div>
@@ -1710,8 +1702,11 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
   const viewsByDay = days.map(d => recentViews.filter((v: any) => v.viewed_at?.startsWith(d)).length)
   const bookingsByDay = days.map(d => recentBookings.filter((b: any) => b.booked_at?.startsWith(d)).length)
   const WEBSITE_CAMPAIGNS = ['hotel_profile', 'rooms_page', 'dining_page', 'spa_page', 'experiences_page', 'events_page', 'best_page', 'compare', 'destination', 'hotels_page_website']
+  const PROFILE_CAMPAIGNS = ['best_page', 'compare', 'destination']
   const websiteClicks = (clicks || []).filter((c: any) => WEBSITE_CAMPAIGNS.includes(c.utm_campaign) && new Date(c.clicked_at) > periodStart)
   const bookClicks = (clicks || []).filter((c: any) => c.utm_campaign === 'hotels_page_book' && new Date(c.clicked_at) > periodStart)
+  const profileClicks = (clicks || []).filter((c: any) => PROFILE_CAMPAIGNS.includes(c.utm_campaign) && new Date(c.clicked_at) > periodStart)
+  const profileClicksByDay = days.map(d => profileClicks.filter((c: any) => c.clicked_at?.startsWith(d)).length)
   const websiteClicksByDay = days.map(d => websiteClicks.filter((c: any) => c.clicked_at?.startsWith(d)).length)
   const bookClicksByDay = days.map(d => bookClicks.filter((c: any) => c.clicked_at?.startsWith(d)).length)
 
@@ -2125,7 +2120,7 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
         {tab === 'performance' && (
           <div>
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-              <KPICard label="Booking Clicks" value={recentClicks.length} sub={`last ${period} days`} color={GOLD} spark={clicksByDay} />
+              <KPICard label="Profile Clicks" value={profileClicks.length} sub={`to your profile · last ${period} days`} color={GOLD} spark={profileClicksByDay} />
               <KPICard label="Conversions" value={recentBookings.length} sub={`last ${period} days`} color={GREEN} spark={bookingsByDay} />
               <KPICard label="Conversion Rate" value={conversionRate + '%'} sub="clicks to enquiries" color={PURPLE} />
               <KPICard label="Profile Views" value={recentViews.length} sub={`last ${period} days`} color={BLUE} spark={viewsByDay} />
