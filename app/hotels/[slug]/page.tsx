@@ -793,6 +793,9 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
   <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: textMuted, letterSpacing: '0.1em', textTransform: 'uppercase', marginRight: '0.4rem' }}>From</span>CHF {hotel.nightly_rate_chf?.toLocaleString()}
 </p>
 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: textMuted, margin: 0 }}>per night · typical direct rate</p>
+<p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: textMuted, margin: '0.75rem 0 0', paddingTop: '0.75rem', borderTop: `1px solid ${border}` }}>
+  ✦ Verified by SwissNet · Updated {new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
+</p>
                 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, margin: '0.4rem 0 0' }}>Price varies by dates and room type</p>
               </div>
 
