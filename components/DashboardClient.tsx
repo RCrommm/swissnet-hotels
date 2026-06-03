@@ -1677,6 +1677,33 @@ const periodScore = (() => {
   }).filter((s): s is number => s !== null)
   return dailyAvgs.length > 0 ? Math.round(dailyAvgs.reduce((a, b) => a + b, 0) / dailyAvgs.length) : null
 })()
+const prevPeriodScore = (() => {
+  const prevEnd = customRange ? new Date(customRange.start + 'T00:00:00') : new Date(Date.now() - period * 86400000)
+  const prevStart = new Date(prevEnd.getTime() - (customRange ? (new Date(customRange.end).getTime() - new Date(customRange.start).getTime()) : period * 86400000))
+  const prevStartStr = prevStart.toISOString().split('T')[0]
+  const prevEndStr = prevEnd.toISOString().split('T')[0]
+  const prevRuns = (overviewRunData || []).filter((r: any) => {
+    const d = r.run_date || r.checked_at?.split('T')[0]
+    return d >= prevStartStr && d < prevEndStr
+  })
+  const uniqueDates = [...new Set(prevRuns.map((r: any) => r.run_date || r.checked_at?.split('T')[0]).filter(Boolean))] as string[]
+  const dailyAvgs = uniqueDates.map(d => {
+    const dayScoresAll = prevRuns.filter((r: any) => (r.run_date || r.checked_at?.split('T')[0]) === d)
+    const latestPerPlatform = ['chatgpt', 'perplexity'].map(platform => {
+      const entry = dayScoresAll.filter((s: any) => s.platform === platform)
+        .sort((a: any, b: any) => new Date(b.checked_at).getTime() - new Date(a.checked_at).getTime())[0]
+      if (!entry) return null
+      return platform === 'chatgpt' ? Math.min(100, entry.visibility_score + 8) : entry.visibility_score
+    }).filter((s): s is number => s !== null)
+    const googleForDate = (googleAiScores || []).filter((r: any) => r.checked_at?.split('T')[0] === d)
+    const googleDayScore = googleForDate.length > 0 ? Math.round((googleForDate.filter((r: any) => r.appeared).length / googleForDate.length) * 100) : null
+    const allScores = [...latestPerPlatform, ...(googleDayScore !== null ? [googleDayScore] : [])]
+    return allScores.length > 0 ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length) : null
+  }).filter((s): s is number => s !== null)
+  const score = dailyAvgs.length > 0 ? Math.round(dailyAvgs.reduce((a, b) => a + b, 0) / dailyAvgs.length) : null
+  const label = prevStart.toLocaleDateString('en-GB', { month: 'short' })
+  return { score, label }
+})()
 const latestPerQuery = [...new Map(
   [...(googleAiScores || [])].sort((a: any, b: any) => 
     new Date(b.checked_at).getTime() - new Date(a.checked_at).getTime()
@@ -1950,7 +1977,28 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
           <div>
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
   <KPICard label="AI Visibility Score" value={visibilityScore + '%'} sub="overall daily score" color={GOLD} />
-  <KPICard label="Period Score" value={periodScore !== null ? periodScore + '%' : '—'} sub={`avg score · last ${period}d`} color={BLUE} />
+  <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.25rem 1.5rem', flex: 1, minWidth: 0 }}>
+    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.75rem' }}>Period Score</p>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+      <div>
+        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 400, color: TEXT, margin: '0 0 0.2rem', lineHeight: 1 }}>{periodScore !== null ? periodScore + '%' : '—'}</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: BLUE, margin: 0 }}>{customRange ? 'selected range' : `avg score · last ${period}d`}</p>
+      </div>
+      {prevPeriodScore.score !== null && (
+        <div style={{ textAlign: 'right' }}>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT_MUTED, margin: '0 0 0.15rem', lineHeight: 1 }}>{prevPeriodScore.score}%</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', color: TEXT_MUTED, margin: 0 }}>
+            {prevPeriodScore.label}
+            {periodScore !== null && (
+              <span style={{ color: periodScore >= prevPeriodScore.score ? GREEN : RED, fontWeight: 700, marginLeft: 4 }}>
+                {periodScore >= prevPeriodScore.score ? '↑' : '↓'}{Math.abs(periodScore - prevPeriodScore.score)}
+              </span>
+            )}
+          </p>
+        </div>
+      )}
+    </div>
+  </div>
   <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.25rem 1.5rem', flex: 1, minWidth: 0 }}>
     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.75rem' }}>AI Appearances</p>
     <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 400, color: TEXT, margin: 0, lineHeight: 1 }}>{appearedQueries}</p>
