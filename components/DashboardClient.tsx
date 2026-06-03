@@ -2219,7 +2219,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
       <div>
         <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 400, color: TEXT, margin: '0 0 0.2rem', lineHeight: 1 }}>{periodScore !== null ? periodScore + '%' : '—'}</p>
-<p style={{ fontSize: '0.5rem', color: 'red', wordBreak: 'break-all' }}>DEBUG sw: {(() => { const startStr='2026-06-01', endStr='2026-07-01'; const runs=(overviewRunData||[]).filter((r:any)=>{const d=r.run_date||r.checked_at?.split('T')[0]; return d>=startStr&&d<endStr}); const uniqueDates=[...new Set(runs.map((r:any)=>r.run_date||r.checked_at?.split('T')[0]).filter(Boolean))]; return `runs=${runs.length} uniqueDates=[${uniqueDates.join('|')}]` })()}</p>
+<p style={{ fontSize: '0.5rem', color: 'red', wordBreak: 'break-all' }}>DEBUG: scoreForWindow(June)={scoreForWindow('2026-06-01','2026-07-01')} · periodScore={periodScore} · visibilityScore={visibilityScore}</p>
         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: BLUE, margin: 0 }}>{new Date().toLocaleDateString('en-GB', { month: 'long' })} avg score</p>
       </div>
       {prevPeriodScore.score !== null && (
