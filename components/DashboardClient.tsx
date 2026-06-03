@@ -272,7 +272,7 @@ function DualAxisChart({ datasets, labels, height = 160, hotelId }: { datasets: 
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
               <div style={{ width: 6, height: 6, borderRadius: '50%', background: GOLD, opacity: 0.7 }} />
-              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT }}>{hoverClickVal} booking clicks</span>
+              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT }}>{hoverClickVal} total clicks</span>
             </div>
           </div>
         </div>
@@ -2195,7 +2195,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', marginBottom: '1.5rem' }}>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 1rem' }}>Performance Over Time</p>
               <div style={{ display: 'flex', gap: '1.25rem', marginBottom: '0.75rem' }}>
-                {[{ label: 'Booking Clicks', color: GOLD }, { label: 'Views', color: BLUE }, { label: 'Conversions', color: GREEN }].map(l => (
+                {[{ label: 'Total Clicks', color: GOLD }, { label: 'Views', color: BLUE }, { label: 'Conversions', color: GREEN }].map(l => (
                   <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                     <div style={{ width: 18, height: 2, background: l.color, borderRadius: 2, opacity: 0.9 }} />
                     <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{l.label}</span>
