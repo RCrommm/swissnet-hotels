@@ -1678,50 +1678,50 @@ function getQueryRec(query: string, hotelName: string) {
   }
 }
 
-function GoalCard({ num, kicker, title, stat, actions, onGo, goLabel }: any) {
+function GoalCard({ num, kicker, title, chips, actions }: any) {
+  const chipStyle = (tone: string) => {
+    if (tone === 'live') return { color: TEXT, background: WHITE, border: '1px solid ' + BORDER }
+    if (tone === 'goal') return { color: '#7a5e10', background: GOLD_LIGHT, border: '1px solid rgba(201,169,76,0.35)' }
+    if (tone === 'note') return { color: TEXT_MUTED, background: 'transparent', border: '1px dashed ' + BORDER }
+    return { color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER }
+  }
   return (
-    <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1.75rem', marginBottom: '1.5rem', boxShadow: '0 1px 12px rgba(42,26,14,0.04)' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', marginBottom: '1.25rem' }}>
-        <div style={{ width: 30, height: 30, borderRadius: '50%', background: GOLD, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.05rem', fontWeight: 600, color: WHITE }}>{num}</span>
+    <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.85rem', marginBottom: '1.5rem', boxShadow: '0 2px 16px rgba(42,26,14,0.05)' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.1rem', marginBottom: chips && chips.length ? '1.4rem' : '1.25rem' }}>
+        <div style={{ width: 34, height: 34, borderRadius: '50%', background: `linear-gradient(135deg, ${GOLD} 0%, #b8923f 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 2px 8px rgba(201,169,76,0.3)' }}>
+          <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', fontWeight: 600, color: WHITE }}>{num}</span>
         </div>
         <div style={{ flex: 1 }}>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.3rem' }}>{kicker}</p>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: 0, lineHeight: 1.2 }}>{title}</p>
-          {stat && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '0.6rem', flexWrap: 'wrap' }}>
-              {stat.a && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, borderRadius: 20, padding: '0.25rem 0.7rem' }}>{stat.a}</span>}
-              {stat.b && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: GOLD }}>→</span>}
-              {stat.b && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: TEXT, background: GOLD_LIGHT, border: '1px solid rgba(201,169,76,0.3)', borderRadius: 20, padding: '0.25rem 0.7rem' }}>{stat.b}</span>}
-              {stat.target && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontStyle: 'italic', color: TEXT_MUTED }}>· {stat.target}</span>}
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.35rem' }}>{kicker}</p>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.35rem', color: TEXT, margin: 0, lineHeight: 1.25 }}>{title}</p>
+          {chips && chips.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+              {chips.map((c: any, i: number) => (
+                <span key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, borderRadius: 20, padding: '0.3rem 0.75rem', ...chipStyle(c.tone) }}>{c.text}</span>
+              ))}
             </div>
           )}
         </div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         {actions.map((a: any, i: number) => (
-          <div key={i} style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start', padding: '0.85rem 1rem', background: BG, borderRadius: 8, border: '1px solid ' + BORDER }}>
-            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: GOLD, background: WHITE, border: '1px solid rgba(201,169,76,0.3)', borderRadius: 4, padding: '0.3rem 0.55rem', whiteSpace: 'nowrap', flexShrink: 0, width: 120, textAlign: 'center' }}>{a.label}</span>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: TEXT, margin: 0, lineHeight: 1.65 }}>{a.text}</p>
+          <div key={i} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', padding: '0.95rem 1.1rem', background: BG, borderRadius: 10 }}>
+            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: GOLD, background: WHITE, border: '1px solid rgba(201,169,76,0.3)', borderRadius: 5, padding: '0.35rem 0', whiteSpace: 'nowrap', flexShrink: 0, width: 110, textAlign: 'center', marginTop: '0.05rem' }}>{a.label}</span>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT, margin: 0, lineHeight: 1.7 }}>{a.text}</p>
           </div>
         ))}
       </div>
-      {onGo && (
-        <div style={{ marginTop: '1.1rem' }}>
-          <button onClick={onGo} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, color: TEXT, background: GOLD, border: 'none', borderRadius: 4, padding: '0.55rem 1.25rem', cursor: 'pointer' }}>{goLabel} →</button>
-        </div>
-      )}
     </div>
   )
 }
 
-function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelCatScores, competitors, missedList, categoryLabels, onGo }: any) {
+function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelCatScores, competitors, missedList, categoryLabels, googleAiScores, onGo }: any) {
   const now = new Date()
   const monthName = now.toLocaleDateString('en-GB', { month: 'long' })
   const prevMonthName = new Date(now.getFullYear(), now.getMonth() - 1, 1).toLocaleDateString('en-GB', { month: 'long' })
   const prevScore = prevPeriodScore?.score ?? null
   const cur = periodScore ?? null
-  const scoreTarget = cur !== null ? Math.min(100, Math.max(cur + 3, (prevScore ?? cur) + 3)) : null
+  const scoreTarget = prevScore !== null ? Math.min(100, prevScore + 5) : (cur !== null ? cur + 5 : null)
 
   // GOAL 2 — weakest tracked category + rank
   const catRank = (cat: string) => {
@@ -1741,7 +1741,7 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
   const weakCatLabel = weakestCat ? (categoryLabels?.[weakestCat] || weakestCat) : ''
   const targetRank = weakCatRank ? Math.max(1, weakCatRank.rank - 2) : null
 
-  // GOAL 3 — first missed query that ISN'T the same theme as goal 2
+  // GOAL 3 — a genuinely missed query (appeared === false), latest per query, distinct theme from goal 2
   const catKeywords: Record<string, string[]> = {
     spa: ['spa', 'wellness', 'thermal'], romantic: ['honeymoon', 'romantic', 'couple'],
     lake: ['lake', 'waterfront'], family: ['family', 'kids', 'children'],
@@ -1749,19 +1749,23 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
     ski: ['ski', 'slope', 'alpine'],
   }
   const usedWords = weakestCat ? (catKeywords[weakestCat] || []) : []
-  const distinctMissed = (missedList || []).filter((m: any) => {
+  const latestMissed = [...new Map(
+    [...(googleAiScores || [])]
+      .sort((a: any, b: any) => new Date(b.checked_at).getTime() - new Date(a.checked_at).getTime())
+      .map((r: any) => [r.query, r])
+  ).values()].filter((r: any) => r.appeared === false)
+  const distinctMissed = latestMissed.filter((m: any) => {
     const q = (m.query || '').toLowerCase()
     return !usedWords.some(w => q.includes(w))
   })
-  const missedQuery = distinctMissed.length > 0 ? distinctMissed[0].query
-    : (missedList && missedList.length > 0 ? missedList[0].query : null)
+  const missedQuery = (distinctMissed[0] || latestMissed[0])?.query || null
   const queryRec = missedQuery ? getQueryRec(missedQuery, hotelName) : null
 
   return (
     <div>
-      <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 12, padding: '1.75rem 2rem', marginBottom: '1.75rem' }}>
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.6)', margin: '0 0 0.6rem' }}>{monthName} {now.getFullYear()} · Your focus this month</p>
-        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.35rem', fontWeight: 300, color: WHITE, margin: 0, lineHeight: 1.4 }}>Three specific actions, each chosen from where {hotelName} is weakest right now. Complete them this month to climb the AI rankings.</p>
+      <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 14, padding: '1.9rem 2.1rem', marginBottom: '1.9rem' }}>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.65)', margin: '0 0 0.7rem' }}>{monthName} {now.getFullYear()} · Your focus this month</p>
+        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', fontWeight: 300, color: WHITE, margin: 0, lineHeight: 1.45 }}>Three specific actions, each chosen from where {hotelName} is weakest right now. Complete them this month to climb the AI rankings.</p>
       </div>
 
       {/* GOAL 1 */}
@@ -1769,14 +1773,16 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
         num={1}
         kicker="Period Score Improvement"
         title="Raise your overall AI visibility score"
-        stat={{ a: prevScore !== null ? `${prevMonthName} ${prevScore}%` : 'No prior month', b: cur !== null ? `${monthName} ${cur}%` : '—', target: scoreTarget !== null ? `Keep above ${scoreTarget}%` : null }}
+        chips={[
+          prevScore !== null ? { text: `${prevMonthName}: ${prevScore}%`, tone: 'muted' } : null,
+          cur !== null ? { text: `${monthName} so far: ${cur}%`, tone: 'live' } : null,
+          scoreTarget !== null ? { text: `Goal: reach ${scoreTarget}%`, tone: 'goal' } : null,
+        ].filter(Boolean)}
         actions={[
-          { label: 'Publish FAQs', text: `Add 2 new FAQs in Optimise this ${monthName}. Each published FAQ widens the set of questions AI can match you to — the single highest-leverage move on your score.` },
-          { label: 'Complete schema', text: 'Open Schema Health and fill any field still marked "Missing". Completeness directly raises how often AI retrieves and quotes you.' },
-          { label: 'Stay current', text: 'Publish one dated Event — a seasonal offer or happening. Fresh, dated content signals an active property, which AI crawlers favour.' },
+          { label: 'Add FAQs', text: `Add 2 new guest FAQs this ${monthName}. Each one widens the questions AI can match you to — the single highest-impact move on your score.` },
+          { label: 'Complete content', text: 'In Content, fill any field still marked "Missing" — about, cancellation policy, booking benefits. The more complete your profile, the more often AI quotes you.' },
+          { label: 'Stay current', text: 'Publish one dated offer or event. Fresh, dated content signals an active hotel, which AI systems favour.' },
         ]}
-        onGo={() => onGo('schema')}
-        goLabel="Open Schema Health"
       />
 
       {/* GOAL 2 */}
@@ -1785,17 +1791,19 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
           num={2}
           kicker="Category to Improve"
           title={`Climb the ${weakCatLabel} ranking`}
-          stat={{ a: `Currently #${weakCatRank.rank} of ${weakCatRank.total}`, b: targetRank ? `Target #${targetRank}` : null, target: weakCatRank.ahead ? `Overtake ${weakCatRank.ahead.replace(' Geneva','').replace(' Hotel','')}` : null }}
+          chips={[
+            { text: `Currently #${weakCatRank.rank} of ${weakCatRank.total}`, tone: 'muted' },
+            targetRank ? { text: `Goal: reach #${targetRank}`, tone: 'goal' } : null,
+            weakCatRank.ahead ? { text: `Overtake ${weakCatRank.ahead.replace(' Geneva','').replace(' Hotel','')}`, tone: 'note' } : null,
+          ].filter(Boolean)}
           actions={[
             { label: 'Add this FAQ', text: weakCatRec.faq },
-            { label: 'Mention these words', text: weakCatRec.words },
+            { label: 'Use these words', text: weakCatRec.words },
             { label: 'Run this campaign', text: weakCatRec.campaign },
           ]}
-          onGo={() => onGo('optimise')}
-          goLabel="Go to Optimise"
         />
       ) : (
-        <GoalCard num={2} kicker="Category to Improve" title="Category ranking" actions={[{ label: 'Building', text: 'Category rankings appear once your category crons have logged enough data. Check back after the next weekly run.' }]} />
+        <GoalCard num={2} kicker="Category to Improve" title="Category ranking" chips={[]} actions={[{ label: 'Building', text: 'Category rankings appear once enough data has been logged. Check back after the next weekly run.' }]} />
       )}
 
       {/* GOAL 3 */}
@@ -1804,17 +1812,18 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
           num={3}
           kicker="Query Coverage"
           title={`Start appearing for "${missedQuery}"`}
-          stat={{ a: 'Not appearing', b: 'Target: appearing', target: 'Win this search in AI answers' }}
+          chips={[
+            { text: 'Not appearing in Google AI', tone: 'muted' },
+            { text: 'Goal: appear in Google AI', tone: 'goal' },
+          ]}
           actions={[
             { label: 'Add this FAQ', text: queryRec.faq },
-            { label: 'Mention these words', text: queryRec.words },
+            { label: 'Use these words', text: queryRec.words },
             { label: 'Run this campaign', text: queryRec.campaign },
           ]}
-          onGo={() => onGo('optimise')}
-          goLabel="Go to Optimise"
         />
       ) : (
-        <GoalCard num={3} kicker="Query Coverage" title="Win a missed search" actions={[{ label: 'Great coverage', text: 'You are currently appearing in all tracked Google AI queries. Keep adding FAQs to widen the queries you are tracked against.' }]} />
+        <GoalCard num={3} kicker="Query Coverage" title="Win a missed search" chips={[]} actions={[{ label: 'Great coverage', text: 'You currently appear in all tracked Google AI queries. Keep adding FAQs to widen the queries you are tracked against.' }]} />
       )}
     </div>
   )
@@ -2647,7 +2656,7 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
             competitors={competitors}
             missedList={missedList}
             categoryLabels={categoryLabels}
-            onGoTo={(t: string) => setTab(t)}
+            googleAiScores={googleAiScores}
           />
         )}
 
