@@ -1739,7 +1739,7 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
   const weakCatRank = weakestCat ? catRank(weakestCat) : null
   const weakCatRec = weakestCat ? getCategoryRec(weakestCat, hotelName) : null
   const weakCatLabel = weakestCat ? (categoryLabels?.[weakestCat] || weakestCat) : ''
-  const targetRank = weakCatRank ? Math.max(1, weakCatRank.rank - 2) : null
+  const targetRank = weakCatRank ? Math.max(1, weakCatRank.rank - (weakCatRank.rank > 2 ? 2 : 1)) : null
 
   // GOAL 3 — a genuinely missed query (appeared === false), latest per query, distinct theme from goal 2
   const catKeywords: Record<string, string[]> = {
@@ -1795,8 +1795,8 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
           kicker="Category to Improve"
           title={`Climb the ${weakCatLabel} ranking`}
           chips={[
-            { text: `Currently #${weakCatRank.rank} of ${weakCatRank.total}`, tone: 'muted' },
-            targetRank ? { text: `Goal: reach #${targetRank}`, tone: 'goal' } : null,
+            { text: `Starting rank: #${weakCatRank.rank} of ${weakCatRank.total}`, tone: 'muted' },
+            targetRank ? { text: `Goal: climb to #${targetRank}`, tone: 'goal' } : null,
             weakCatRank.ahead ? { text: `Overtake ${weakCatRank.ahead.replace(' Geneva','').replace(' Hotel','')}`, tone: 'note' } : null,
           ].filter(Boolean)}
           actions={[
