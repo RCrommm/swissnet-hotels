@@ -1623,6 +1623,8 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
 export default function DashboardClient({ hotel, views, clicks, leads, aiVisibility, googleAiScores, bookings, competitors, hotelCatScores, platformScores, overviewRunData, myRankChange, marketAverages }: any) {
   const [tab, setTab] = useState('overview')
   const [period, setPeriod] = useState(30)
+  const [customRange, setCustomRange] = useState<{ start: string; end: string } | null>(null)
+  const [showRangePicker, setShowRangePicker] = useState(false)
   const [chartPeriod, setChartPeriod] = useState(7)
   const [chartPlatform, setChartPlatform] = useState('overall')
   const [competitorView, setCompetitorView] = useState('region')
@@ -1683,14 +1685,20 @@ const latestPerQuery = [...new Map(
 const appearedList = latestPerQuery.filter((r: any) => r.appeared)
 const missedList = latestPerQuery.filter((r: any) => !r.appeared)
   const now = new Date()
-  const periodStart = new Date(now.getTime() - period * 24 * 60 * 60 * 1000)
-  const recentViews = views?.filter((v: any) => new Date(v.viewed_at) > periodStart) || []
-  const recentClicks = clicks?.filter((c: any) => new Date(c.clicked_at) > periodStart) || []
-  const recentLeads = leads?.filter((l: any) => new Date(l.created_at) > periodStart) || []
-  const recentBookings = bookings?.filter((b: any) => new Date(b.booked_at) > periodStart) || []
+  const periodStart = customRange ? new Date(customRange.start + 'T00:00:00') : new Date(now.getTime() - period * 24 * 60 * 60 * 1000)
+  const periodEnd = customRange ? new Date(customRange.end + 'T23:59:59') : now
+  const inRange = (dateStr: string) => { const d = new Date(dateStr); return d > periodStart && d <= periodEnd }
+  const recentViews = views?.filter((v: any) => inRange(v.viewed_at)) || []
+  const recentClicks = clicks?.filter((c: any) => inRange(c.clicked_at)) || []
+  const recentLeads = leads?.filter((l: any) => inRange(l.created_at)) || []
+  const recentBookings = bookings?.filter((b: any) => inRange(b.booked_at)) || []
 
-  const days = Array.from({ length: period }, (_, i) => {
-    const d = new Date(now.getTime() - (period - 1 - i) * 24 * 60 * 60 * 1000)
+  const rangeDays = customRange
+    ? Math.max(1, Math.round((new Date(customRange.end).getTime() - new Date(customRange.start).getTime()) / 86400000) + 1)
+    : period
+  const days = Array.from({ length: rangeDays }, (_, i) => {
+    const base = customRange ? new Date(customRange.start + 'T00:00:00') : new Date(now.getTime() - (period - 1) * 86400000)
+    const d = new Date(base.getTime() + i * 86400000)
     return d.toISOString().split('T')[0]
   })
   const clicksByDay = days.map(d => recentClicks.filter((c: any) => c.clicked_at?.startsWith(d)).length)
@@ -1698,9 +1706,9 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
   const bookingsByDay = days.map(d => recentBookings.filter((b: any) => b.booked_at?.startsWith(d)).length)
   const WEBSITE_CAMPAIGNS = ['hotel_profile', 'rooms_page', 'dining_page', 'spa_page', 'experiences_page', 'events_page', 'hotels_page_website']
   const PROFILE_CAMPAIGNS = ['best_page', 'compare', 'destination', 'ai_concierge']
-  const websiteClicks = (clicks || []).filter((c: any) => WEBSITE_CAMPAIGNS.includes(c.utm_campaign) && new Date(c.clicked_at) > periodStart)
-  const bookClicks = (clicks || []).filter((c: any) => c.utm_campaign === 'hotels_page_book' && new Date(c.clicked_at) > periodStart)
-  const profileClicks = (clicks || []).filter((c: any) => PROFILE_CAMPAIGNS.includes(c.utm_campaign) && new Date(c.clicked_at) > periodStart)
+  const websiteClicks = (clicks || []).filter((c: any) => WEBSITE_CAMPAIGNS.includes(c.utm_campaign) && inRange(c.clicked_at))
+  const bookClicks = (clicks || []).filter((c: any) => c.utm_campaign === 'hotels_page_book' && inRange(c.clicked_at))
+  const profileClicks = (clicks || []).filter((c: any) => PROFILE_CAMPAIGNS.includes(c.utm_campaign) && inRange(c.clicked_at))
   const profileClicksByDay = days.map(d => profileClicks.filter((c: any) => c.clicked_at?.startsWith(d)).length)
   const websiteClicksByDay = days.map(d => websiteClicks.filter((c: any) => c.clicked_at?.startsWith(d)).length)
   const bookClicksByDay = days.map(d => bookClicks.filter((c: any) => c.clicked_at?.startsWith(d)).length)
@@ -1842,7 +1850,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
 {tab === 'settings' && 'Settings'}
             </h1>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0 }}>
-              {tab === 'overview' && `Last ${period} days · ${hotelRegion}, Switzerland`}
+              {tab === 'overview' && `${customRange ? `${customRange.start} → ${customRange.end}` : `Last ${period} days`} · ${hotelRegion}, Switzerland`}
               {tab === 'ai-visibility' && 'Your presence across AI search platforms'}
               {tab === 'performance' && 'Clicks, leads and conversion tracking'}
               {tab === 'competitors' && 'AI visibility rankings across categories'}
@@ -1851,10 +1859,46 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
 {tab === 'settings' && 'Account and hotel settings'}
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '0.4rem' }}>
-            {[7, 30, 90].map(p => (
-              <button key={p} onClick={() => setPeriod(p)} style={{ padding: '0.35rem 0.75rem', borderRadius: 4, border: '1px solid ' + BORDER, background: period === p ? GOLD : WHITE, color: period === p ? WHITE : TEXT_MUTED, fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, cursor: 'pointer' }}>{p}d</button>
-            ))}
+          <div style={{ position: 'relative' }}>
+            <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+              <select
+                value={customRange ? 'custom' : String(period)}
+                onChange={(e) => {
+                  const v = e.target.value
+                  if (v === 'custom') {
+                    const end = new Date().toISOString().split('T')[0]
+                    const start = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0]
+                    setCustomRange({ start, end }); setShowRangePicker(true)
+                  } else {
+                    setCustomRange(null); setShowRangePicker(false); setPeriod(Number(v))
+                  }
+                }}
+                style={{ padding: '0.4rem 0.75rem', borderRadius: 4, border: '1px solid ' + BORDER, background: WHITE, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, cursor: 'pointer', outline: 'none' }}
+              >
+                <option value="7">Last week</option>
+                <option value="30">Last month</option>
+                <option value="90">Last 90 days</option>
+                <option value="custom">Custom range…</option>
+              </select>
+              {customRange && (
+                <button onClick={() => setShowRangePicker(s => !s)} style={{ padding: '0.4rem 0.75rem', borderRadius: 4, border: '1px solid ' + GOLD, background: GOLD_LIGHT, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  {customRange.start} → {customRange.end}
+                </button>
+              )}
+            </div>
+            {showRangePicker && customRange && (
+              <div style={{ position: 'absolute', right: 0, top: '2.5rem', background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1rem', boxShadow: '0 4px 20px rgba(42,26,14,0.12)', zIndex: 50, display: 'flex', flexDirection: 'column', gap: '0.6rem', minWidth: 220 }}>
+                <div>
+                  <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.25rem' }}>From</label>
+                  <input type="date" value={customRange.start} max={customRange.end} onChange={(e) => setCustomRange(r => r ? { ...r, start: e.target.value } : r)} style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: 4, border: '1px solid ' + BORDER, fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, boxSizing: 'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.25rem' }}>To</label>
+                  <input type="date" value={customRange.end} min={customRange.start} max={new Date().toISOString().split('T')[0]} onChange={(e) => setCustomRange(r => r ? { ...r, end: e.target.value } : r)} style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: 4, border: '1px solid ' + BORDER, fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, boxSizing: 'border-box' }} />
+                </div>
+                <button onClick={() => setShowRangePicker(false)} style={{ background: GOLD, color: TEXT, border: 'none', borderRadius: 4, padding: '0.45rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, cursor: 'pointer' }}>Apply</button>
+              </div>
+            )}
           </div>
         </div>
 
