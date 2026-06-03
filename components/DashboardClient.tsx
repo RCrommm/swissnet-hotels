@@ -1660,10 +1660,14 @@ const appearedQueriesGoogle = googleInPeriod.filter((r: any) => r.appeared).leng
 
 const totalQueries = totalQueriesChatPerp + totalQueriesGoogle
 const appearedQueries = appearedQueriesChatPerp + appearedQueriesGoogle
-const periodScore = (() => {
-  const uniqueDates = [...new Set(myRunsInPeriod.map((r: any) => r.run_date || r.checked_at?.split('T')[0]).filter(Boolean))] as string[]
+const scoreForWindow = (startStr: string, endStr: string) => {
+  const runs = (overviewRunData || []).filter((r: any) => {
+    const d = r.run_date || r.checked_at?.split('T')[0]
+    return d >= startStr && d < endStr
+  })
+  const uniqueDates = [...new Set(runs.map((r: any) => r.run_date || r.checked_at?.split('T')[0]).filter(Boolean))] as string[]
   const dailyAvgs = uniqueDates.map(d => {
-    const dayScoresAll = myRunsInPeriod.filter((r: any) => (r.run_date || r.checked_at?.split('T')[0]) === d)
+    const dayScoresAll = runs.filter((r: any) => (r.run_date || r.checked_at?.split('T')[0]) === d)
     const latestPerPlatform = ['chatgpt', 'perplexity'].map(platform => {
       const entry = dayScoresAll.filter((s: any) => s.platform === platform)
         .sort((a: any, b: any) => new Date(b.checked_at).getTime() - new Date(a.checked_at).getTime())[0]
@@ -1676,7 +1680,11 @@ const periodScore = (() => {
     return allScores.length > 0 ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length) : null
   }).filter((s): s is number => s !== null)
   return dailyAvgs.length > 0 ? Math.round(dailyAvgs.reduce((a, b) => a + b, 0) / dailyAvgs.length) : null
-})()
+}
+const _now = new Date()
+const curMonthStart = new Date(_now.getFullYear(), _now.getMonth(), 1).toISOString().split('T')[0]
+const nextMonthStart = new Date(_now.getFullYear(), _now.getMonth() + 1, 1).toISOString().split('T')[0]
+const periodScore = scoreForWindow(curMonthStart, nextMonthStart)
 const prevPeriodScore = (() => {
   const now = new Date()
   // previous full calendar month
@@ -1984,7 +1992,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
       <div>
         <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 400, color: TEXT, margin: '0 0 0.2rem', lineHeight: 1 }}>{periodScore !== null ? periodScore + '%' : '—'}</p>
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: BLUE, margin: 0 }}>{customRange ? 'selected range' : `avg score · last ${period}d`}</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: BLUE, margin: 0 }}>{new Date().toLocaleDateString('en-GB', { month: 'long' })} avg score</p>
       </div>
       {prevPeriodScore.score !== null && (
         <div style={{ textAlign: 'right' }}>
