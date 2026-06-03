@@ -1618,6 +1618,198 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
   )
 }
 
+// ── GOALS TAB ─────────────────────────────────────────────────────────────────
+
+function getCategoryRec(cat: string, hotelName: string) {
+  const h = hotelName
+  const lib: Record<string, { faq: string; words: string; campaign: string }> = {
+    spa: {
+      faq: `Add an FAQ: "What makes the spa at ${h} special?" — answer with the spa's size in m², signature treatments, and thermal facilities (pool, sauna, hammam).`,
+      words: `Use these in your spa description & FAQs: "wellness retreat", "thermal spa", "signature treatment", "spa day pass", "detox programme".`,
+      campaign: `Launch a "Midweek Wellness Escape" package — 2 nights with daily spa access and one signature treatment — and add it under Optimise → Events. AI surfaces named packages directly in spa-hotel queries.`,
+    },
+    dining: {
+      faq: `Add an FAQ: "Does ${h} have a notable restaurant?" — name the chef, cuisine style, and any Michelin stars or awards.`,
+      words: `Use these: "gastronomic", "tasting menu", "Michelin", "chef's table", "seasonal Swiss produce".`,
+      campaign: `Create a "Gourmet Stay" offer pairing one night with a tasting menu for two. It gives AI a concrete, citable dining package and lifts fine-dining query matches.`,
+    },
+    romantic: {
+      faq: `Add an FAQ: "Is ${h} good for a honeymoon or romantic getaway?" — mention private terraces, couples spa treatments, and lake or mountain views.`,
+      words: `Use these: "romantic getaway", "honeymoon suite", "couples retreat", "private dinner", "sunset terrace".`,
+      campaign: `Build a "Romantic Escape" package — champagne on arrival, a couples massage, and a private candlelit dinner — and list it in Events. Romantic queries strongly favour named couples packages.`,
+    },
+    lake: {
+      faq: `Add an FAQ: "Does ${h} have lake views and lake access?" — specify which rooms have views, and any private beach, pontoon, or boat access.`,
+      words: `Use these: "lakefront", "lake-view rooms", "private beach", "waterfront dining", "Lake Geneva".`,
+      campaign: `Add a "Lakeside Summer" experience — a private boat cruise with a lakefront lunch — under Optimise → Experiences. It directly strengthens lake-hotel query matching.`,
+    },
+    business: {
+      faq: `Add an FAQ: "Is ${h} suitable for business travel and meetings?" — give meeting-room capacities, airport distance, and late check-out for corporate guests.`,
+      words: `Use these: "conference facilities", "meeting rooms", "business centre", "airport transfer", "executive".`,
+      campaign: `Publish your meeting-room capacities and add a "Corporate Rate" booking benefit. AI cites concrete facilities and rates when answering business-hotel queries.`,
+    },
+    family: {
+      faq: `Add an FAQ: "Is ${h} family-friendly?" — mention connecting rooms, kids' club, family activities, and babysitting.`,
+      words: `Use these: "family suite", "kids club", "connecting rooms", "child-friendly", "family activities".`,
+      campaign: `Add a "Family Summer" package — connecting rooms, kids eat free, and one family activity — in Events. Family queries reward hotels with explicit family packages.`,
+    },
+    ski: {
+      faq: `Add an FAQ: "Is ${h} ski-in/ski-out?" — state distance to the nearest lift, ski storage, and any ski concierge service.`,
+      words: `Use these: "ski-in ski-out", "slopeside", "ski concierge", "boot room", "alpine".`,
+      campaign: `Add a "Ski Week" package with lift passes and ski storage, and publish your exact distance to the nearest lift. Ski queries rank proximity and named ski packages highly.`,
+    },
+  }
+  return lib[cat] || lib.spa
+}
+
+function getQueryRec(query: string, hotelName: string) {
+  const q = (query || '').toLowerCase()
+  if (q.includes('spa') || q.includes('wellness') || q.includes('thermal')) return getCategoryRec('spa', hotelName)
+  if (q.includes('honeymoon') || q.includes('romantic') || q.includes('couple')) return getCategoryRec('romantic', hotelName)
+  if (q.includes('lake') || q.includes('waterfront')) return getCategoryRec('lake', hotelName)
+  if (q.includes('family') || q.includes('kids') || q.includes('children')) return getCategoryRec('family', hotelName)
+  if (q.includes('business') || q.includes('conference') || q.includes('meeting')) return getCategoryRec('business', hotelName)
+  if (q.includes('dining') || q.includes('restaurant') || q.includes('michelin') || q.includes('food')) return getCategoryRec('dining', hotelName)
+  if (q.includes('ski') || q.includes('slope') || q.includes('alpine')) return getCategoryRec('ski', hotelName)
+  return {
+    faq: `Add an FAQ that directly answers "${query}" — use the exact phrasing of the question and give a specific, factual answer AI can quote.`,
+    words: `Mirror the language of the search itself: include the key words from "${query}" naturally in your description and FAQs.`,
+    campaign: `Add a time-limited Event or package themed around this search. Fresh, dated, specific content is what tips a "not appearing" query into appearing.`,
+  }
+}
+
+function GoalCard({ num, title, metricLeft, metricRight, arrow, actions, onGo, goLabel }: any) {
+  return (
+    <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1.5rem 1.75rem', marginBottom: '1.25rem', boxShadow: '0 1px 12px rgba(42,26,14,0.04)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.9rem' }}>
+          <div style={{ width: 28, height: 28, borderRadius: '50%', background: GOLD, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', fontWeight: 600, color: WHITE }}>{num}</span>
+          </div>
+          <div>
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: TEXT, margin: '0 0 0.15rem', lineHeight: 1.2 }}>{title}</p>
+            {metricLeft && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.3rem' }}>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: TEXT }}>{metricLeft}</span>
+                {arrow && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: GOLD }}>→</span>}
+                {metricRight && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: GOLD }}>{metricRight}</span>}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+        {actions.map((a: any, i: number) => (
+          <div key={i} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', padding: '0.75rem 1rem', background: BG, borderRadius: 8 }}>
+            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: GOLD, background: GOLD_LIGHT, border: '1px solid ' + BORDER, borderRadius: 4, padding: '0.25rem 0.5rem', whiteSpace: 'nowrap', flexShrink: 0, marginTop: '0.1rem' }}>{a.label}</span>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT, margin: 0, lineHeight: 1.6 }}>{a.text}</p>
+          </div>
+        ))}
+      </div>
+      {onGo && (
+        <div style={{ marginTop: '1rem' }}>
+          <button onClick={onGo} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, color: TEXT, background: GOLD, border: 'none', borderRadius: 4, padding: '0.5rem 1.125rem', cursor: 'pointer' }}>{goLabel} →</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelCatScores, competitors, missedList, categoryLabels, onGo }: any) {
+  const monthName = new Date().toLocaleDateString('en-GB', { month: 'long' })
+
+  // GOAL 1 — overall score
+  const baseScore = prevPeriodScore?.score ?? periodScore ?? 0
+  const targetScore = Math.min(100, baseScore + 3)
+
+  // GOAL 2 — weakest tracked category + rank
+  const catRank = (cat: string) => {
+    const list = [
+      { name: hotelName, score: hotelCatScores?.[cat] ?? null, mine: true },
+      ...(competitors || []).map((h: any) => ({ name: h.name, score: h.catScores?.[cat] ?? null, mine: false })),
+    ].filter(x => x.score !== null).sort((a, b) => (b.score as number) - (a.score as number))
+    const idx = list.findIndex(x => x.mine)
+    return idx === -1 ? null : { rank: idx + 1, total: list.length, ahead: list[idx - 1]?.name }
+  }
+  const trackedCats = Object.keys(hotelCatScores || {})
+  const weakestCat = trackedCats.length
+    ? trackedCats.sort((a, b) => (hotelCatScores[a] as number) - (hotelCatScores[b] as number))[0]
+    : null
+  const weakCatRank = weakestCat ? catRank(weakestCat) : null
+  const weakCatRec = weakestCat ? getCategoryRec(weakestCat, hotelName) : null
+  const weakCatLabel = weakestCat ? (categoryLabels?.[weakestCat] || weakestCat) : ''
+  const targetRank = weakCatRank ? Math.max(1, weakCatRank.rank - 2) : null
+
+  // GOAL 3 — first missed query
+  const missedQuery = (missedList && missedList.length > 0) ? missedList[0].query : null
+  const queryRec = missedQuery ? getQueryRec(missedQuery, hotelName) : null
+
+  return (
+    <div>
+      <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 10, padding: '1.5rem 2rem', marginBottom: '1.5rem' }}>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.6)', margin: '0 0 0.5rem' }}>{monthName} · Your focus this month</p>
+        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', fontWeight: 300, color: WHITE, margin: 0, lineHeight: 1.4 }}>Three specific actions to climb the AI rankings. Each one is chosen from where you are weakest right now.</p>
+      </div>
+
+      {/* GOAL 1 */}
+      <GoalCard
+        num={1}
+        title="Raise your overall AI visibility score"
+        metricLeft={periodScore !== null ? `${periodScore}% now` : 'Building'}
+        metricRight={`${targetScore}% target`}
+        arrow
+        actions={[
+          { label: 'Publish FAQs', text: 'Add 2 new FAQs in Optimise this month. Each published FAQ widens the set of questions AI can match you to — the single highest-leverage move on your score.' },
+          { label: 'Complete schema', text: 'Open Schema Health and fill any field still marked "Missing". Completeness directly raises how often AI retrieves and quotes you.' },
+          { label: 'Stay current', text: 'Publish one dated Event — a seasonal offer or happening. Fresh, dated content signals an active property, which AI crawlers favour.' },
+        ]}
+        onGo={() => onGo('schema')}
+        goLabel="Open Schema Health"
+      />
+
+      {/* GOAL 2 */}
+      {weakestCat && weakCatRank && weakCatRec ? (
+        <GoalCard
+          num={2}
+          title={`Climb the ${weakCatLabel} ranking`}
+          metricLeft={`#${weakCatRank.rank} of ${weakCatRank.total}`}
+          metricRight={targetRank ? `#${targetRank} target` : undefined}
+          arrow={!!targetRank}
+          actions={[
+            { label: 'Add this FAQ', text: weakCatRec.faq },
+            { label: 'Mention these words', text: weakCatRec.words },
+            { label: 'Run this campaign', text: weakCatRec.campaign },
+          ]}
+          onGo={() => onGo('optimise')}
+          goLabel="Go to Optimise"
+        />
+      ) : (
+        <GoalCard num={2} title="Category ranking" actions={[{ label: 'Building', text: 'Category rankings appear once your category crons have logged enough data. Check back after the next weekly run.' }]} />
+      )}
+
+      {/* GOAL 3 */}
+      {missedQuery && queryRec ? (
+        <GoalCard
+          num={3}
+          title={`Start appearing for "${missedQuery}"`}
+          metricLeft="Not appearing"
+          metricRight="Appearing target"
+          arrow
+          actions={[
+            { label: 'Add this FAQ', text: queryRec.faq },
+            { label: 'Mention these words', text: queryRec.words },
+            { label: 'Run this campaign', text: queryRec.campaign },
+          ]}
+          onGo={() => onGo('optimise')}
+          goLabel="Go to Optimise"
+        />
+      ) : (
+        <GoalCard num={3} title="Win a missed search" actions={[{ label: 'Great coverage', text: 'You are currently appearing in all tracked Google AI queries. Keep adding FAQs to widen the queries you are tracked against.' }]} />
+      )}
+    </div>
+  )
+}
+
 // ── MAIN DASHBOARD ────────────────────────────────────────────────────────────
 
 export default function DashboardClient({ hotel, views, clicks, leads, aiVisibility, googleAiScores, bookings, competitors, hotelCatScores, platformScores, overviewRunData, myRankChange, marketAverages }: any) {
@@ -1844,6 +2036,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
   { id: 'competitors', label: 'Competitors' },
   { id: 'schema', label: '✦ Schema' },
   { id: 'optimise', label: '✦ Optimise' },
+  { id: 'goals', label: '✦ Goals' },
   { id: 'settings', label: 'Settings' },
 ]
 
@@ -1884,6 +2077,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
               {tab === 'competitors' && 'Competitors'}
               {tab === 'schema' && '✦ Schema Health'}
 {tab === 'optimise' && '✦ Optimise'}
+{tab === 'goals' && '✦ Goals This Month'}
 {tab === 'settings' && 'Settings'}
             </h1>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0 }}>
@@ -1893,6 +2087,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
               {tab === 'competitors' && 'AI visibility rankings across categories'}
               {tab === 'schema' && 'AI readiness score and content recommendations'}
 {tab === 'optimise' && 'Manage your content and FAQs'}
+{tab === 'goals' && 'Three focused actions to climb the AI rankings'}
 {tab === 'settings' && 'Account and hotel settings'}
             </p>
           </div>
@@ -2429,6 +2624,21 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
         {/* ── OPTIMISE ── */}
         {tab === 'optimise' && (
           <OptimiseTab hotelId={hotel?.id} hotelName={hotelName} hotelSlug={hotel?.slug} hotel={hotel} initialTab={optimiseTab} />
+        )}
+
+        {/* ── GOALS ── */}
+        {tab === 'goals' && (
+          <GoalsTab
+            hotelName={hotelName}
+            hotelRegion={hotelRegion}
+            periodScore={periodScore}
+            prevPeriodScore={prevPeriodScore}
+            hotelCatScores={hotelCatScores}
+            competitors={competitors}
+            missedList={missedList}
+            categoryLabels={categoryLabels}
+            onGoTo={(t: string) => setTab(t)}
+          />
         )}
 
         {/* ── SETTINGS ── */}
