@@ -1906,16 +1906,17 @@ const scoreForWindow = (startStr: string, endStr: string) => {
   return dailyAvgs.length > 0 ? Math.round(dailyAvgs.reduce((a, b) => a + b, 0) / dailyAvgs.length) : null
 }
 const _now = new Date()
-const curMonthStart = new Date(_now.getFullYear(), _now.getMonth(), 1).toISOString().split('T')[0]
-const nextMonthStart = new Date(_now.getFullYear(), _now.getMonth() + 1, 1).toISOString().split('T')[0]
+const fmt = (y: number, m: number) => `${y}-${String(m + 1).padStart(2, '0')}-01`
+const curMonthStart = fmt(_now.getFullYear(), _now.getMonth())
+const nextMonthStart = _now.getMonth() === 11 ? fmt(_now.getFullYear() + 1, 0) : fmt(_now.getFullYear(), _now.getMonth() + 1)
 const periodScore = scoreForWindow(curMonthStart, nextMonthStart)
 const prevPeriodScore = (() => {
   const now = new Date()
   // previous full calendar month
   const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-  const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 1) // first of current month
-  const prevStartStr = prevMonthStart.toISOString().split('T')[0]
-  const prevEndStr = prevMonthEnd.toISOString().split('T')[0]
+  const fmt2 = (y: number, m: number) => `${y}-${String(m + 1).padStart(2, '0')}-01`
+  const prevStartStr = now.getMonth() === 0 ? fmt2(now.getFullYear() - 1, 11) : fmt2(now.getFullYear(), now.getMonth() - 1)
+  const prevEndStr = fmt2(now.getFullYear(), now.getMonth())
   const prevRuns = (overviewRunData || []).filter((r: any) => {
     const d = r.run_date || r.checked_at?.split('T')[0]
     return d >= prevStartStr && d < prevEndStr
