@@ -1678,10 +1678,12 @@ const periodScore = (() => {
   return dailyAvgs.length > 0 ? Math.round(dailyAvgs.reduce((a, b) => a + b, 0) / dailyAvgs.length) : null
 })()
 const prevPeriodScore = (() => {
-  const prevEnd = customRange ? new Date(customRange.start + 'T00:00:00') : new Date(Date.now() - period * 86400000)
-  const prevStart = new Date(prevEnd.getTime() - (customRange ? (new Date(customRange.end).getTime() - new Date(customRange.start).getTime()) : period * 86400000))
-  const prevStartStr = prevStart.toISOString().split('T')[0]
-  const prevEndStr = prevEnd.toISOString().split('T')[0]
+  const now = new Date()
+  // previous full calendar month
+  const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+  const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 1) // first of current month
+  const prevStartStr = prevMonthStart.toISOString().split('T')[0]
+  const prevEndStr = prevMonthEnd.toISOString().split('T')[0]
   const prevRuns = (overviewRunData || []).filter((r: any) => {
     const d = r.run_date || r.checked_at?.split('T')[0]
     return d >= prevStartStr && d < prevEndStr
@@ -1701,7 +1703,7 @@ const prevPeriodScore = (() => {
     return allScores.length > 0 ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length) : null
   }).filter((s): s is number => s !== null)
   const score = dailyAvgs.length > 0 ? Math.round(dailyAvgs.reduce((a, b) => a + b, 0) / dailyAvgs.length) : null
-  const label = prevStart.toLocaleDateString('en-GB', { month: 'short' })
+  const label = prevMonthStart.toLocaleDateString('en-GB', { month: 'short' })
   return { score, label }
 })()
 const latestPerQuery = [...new Map(
