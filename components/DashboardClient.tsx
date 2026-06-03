@@ -1678,37 +1678,37 @@ function getQueryRec(query: string, hotelName: string) {
   }
 }
 
-function GoalCard({ num, title, metricLeft, metricRight, arrow, actions, onGo, goLabel }: any) {
+function GoalCard({ num, kicker, title, stat, actions, onGo, goLabel }: any) {
   return (
-    <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1.5rem 1.75rem', marginBottom: '1.25rem', boxShadow: '0 1px 12px rgba(42,26,14,0.04)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.9rem' }}>
-          <div style={{ width: 28, height: 28, borderRadius: '50%', background: GOLD, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', fontWeight: 600, color: WHITE }}>{num}</span>
-          </div>
-          <div>
-            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: TEXT, margin: '0 0 0.15rem', lineHeight: 1.2 }}>{title}</p>
-            {metricLeft && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.3rem' }}>
-                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: TEXT }}>{metricLeft}</span>
-                {arrow && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: GOLD }}>→</span>}
-                {metricRight && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: GOLD }}>{metricRight}</span>}
-              </div>
-            )}
-          </div>
+    <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1.75rem', marginBottom: '1.5rem', boxShadow: '0 1px 12px rgba(42,26,14,0.04)' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', marginBottom: '1.25rem' }}>
+        <div style={{ width: 30, height: 30, borderRadius: '50%', background: GOLD, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.05rem', fontWeight: 600, color: WHITE }}>{num}</span>
+        </div>
+        <div style={{ flex: 1 }}>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.3rem' }}>{kicker}</p>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: 0, lineHeight: 1.2 }}>{title}</p>
+          {stat && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '0.6rem', flexWrap: 'wrap' }}>
+              {stat.a && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, borderRadius: 20, padding: '0.25rem 0.7rem' }}>{stat.a}</span>}
+              {stat.b && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: GOLD }}>→</span>}
+              {stat.b && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: TEXT, background: GOLD_LIGHT, border: '1px solid rgba(201,169,76,0.3)', borderRadius: 20, padding: '0.25rem 0.7rem' }}>{stat.b}</span>}
+              {stat.target && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontStyle: 'italic', color: TEXT_MUTED }}>· {stat.target}</span>}
+            </div>
+          )}
         </div>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         {actions.map((a: any, i: number) => (
-          <div key={i} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', padding: '0.75rem 1rem', background: BG, borderRadius: 8 }}>
-            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: GOLD, background: GOLD_LIGHT, border: '1px solid ' + BORDER, borderRadius: 4, padding: '0.25rem 0.5rem', whiteSpace: 'nowrap', flexShrink: 0, marginTop: '0.1rem' }}>{a.label}</span>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT, margin: 0, lineHeight: 1.6 }}>{a.text}</p>
+          <div key={i} style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start', padding: '0.85rem 1rem', background: BG, borderRadius: 8, border: '1px solid ' + BORDER }}>
+            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: GOLD, background: WHITE, border: '1px solid rgba(201,169,76,0.3)', borderRadius: 4, padding: '0.3rem 0.55rem', whiteSpace: 'nowrap', flexShrink: 0, width: 120, textAlign: 'center' }}>{a.label}</span>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: TEXT, margin: 0, lineHeight: 1.65 }}>{a.text}</p>
           </div>
         ))}
       </div>
       {onGo && (
-        <div style={{ marginTop: '1rem' }}>
-          <button onClick={onGo} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, color: TEXT, background: GOLD, border: 'none', borderRadius: 4, padding: '0.5rem 1.125rem', cursor: 'pointer' }}>{goLabel} →</button>
+        <div style={{ marginTop: '1.1rem' }}>
+          <button onClick={onGo} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, color: TEXT, background: GOLD, border: 'none', borderRadius: 4, padding: '0.55rem 1.25rem', cursor: 'pointer' }}>{goLabel} →</button>
         </div>
       )}
     </div>
@@ -1716,11 +1716,12 @@ function GoalCard({ num, title, metricLeft, metricRight, arrow, actions, onGo, g
 }
 
 function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelCatScores, competitors, missedList, categoryLabels, onGo }: any) {
-  const monthName = new Date().toLocaleDateString('en-GB', { month: 'long' })
-
-  // GOAL 1 — overall score
-  const baseScore = prevPeriodScore?.score ?? periodScore ?? 0
-  const targetScore = Math.min(100, baseScore + 3)
+  const now = new Date()
+  const monthName = now.toLocaleDateString('en-GB', { month: 'long' })
+  const prevMonthName = new Date(now.getFullYear(), now.getMonth() - 1, 1).toLocaleDateString('en-GB', { month: 'long' })
+  const prevScore = prevPeriodScore?.score ?? null
+  const cur = periodScore ?? null
+  const scoreTarget = cur !== null ? Math.min(100, Math.max(cur + 3, (prevScore ?? cur) + 3)) : null
 
   // GOAL 2 — weakest tracked category + rank
   const catRank = (cat: string) => {
@@ -1740,26 +1741,37 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
   const weakCatLabel = weakestCat ? (categoryLabels?.[weakestCat] || weakestCat) : ''
   const targetRank = weakCatRank ? Math.max(1, weakCatRank.rank - 2) : null
 
-  // GOAL 3 — first missed query
-  const missedQuery = (missedList && missedList.length > 0) ? missedList[0].query : null
+  // GOAL 3 — first missed query that ISN'T the same theme as goal 2
+  const catKeywords: Record<string, string[]> = {
+    spa: ['spa', 'wellness', 'thermal'], romantic: ['honeymoon', 'romantic', 'couple'],
+    lake: ['lake', 'waterfront'], family: ['family', 'kids', 'children'],
+    business: ['business', 'conference', 'meeting'], dining: ['dining', 'restaurant', 'michelin', 'food'],
+    ski: ['ski', 'slope', 'alpine'],
+  }
+  const usedWords = weakestCat ? (catKeywords[weakestCat] || []) : []
+  const distinctMissed = (missedList || []).filter((m: any) => {
+    const q = (m.query || '').toLowerCase()
+    return !usedWords.some(w => q.includes(w))
+  })
+  const missedQuery = distinctMissed.length > 0 ? distinctMissed[0].query
+    : (missedList && missedList.length > 0 ? missedList[0].query : null)
   const queryRec = missedQuery ? getQueryRec(missedQuery, hotelName) : null
 
   return (
     <div>
-      <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 10, padding: '1.5rem 2rem', marginBottom: '1.5rem' }}>
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.6)', margin: '0 0 0.5rem' }}>{monthName} · Your focus this month</p>
-        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', fontWeight: 300, color: WHITE, margin: 0, lineHeight: 1.4 }}>Three specific actions to climb the AI rankings. Each one is chosen from where you are weakest right now.</p>
+      <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 12, padding: '1.75rem 2rem', marginBottom: '1.75rem' }}>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.6)', margin: '0 0 0.6rem' }}>{monthName} {now.getFullYear()} · Your focus this month</p>
+        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.35rem', fontWeight: 300, color: WHITE, margin: 0, lineHeight: 1.4 }}>Three specific actions, each chosen from where {hotelName} is weakest right now. Complete them this month to climb the AI rankings.</p>
       </div>
 
       {/* GOAL 1 */}
       <GoalCard
         num={1}
+        kicker="Period Score Improvement"
         title="Raise your overall AI visibility score"
-        metricLeft={periodScore !== null ? `${periodScore}% now` : 'Building'}
-        metricRight={`${targetScore}% target`}
-        arrow
+        stat={{ a: prevScore !== null ? `${prevMonthName} ${prevScore}%` : 'No prior month', b: cur !== null ? `${monthName} ${cur}%` : '—', target: scoreTarget !== null ? `Keep above ${scoreTarget}%` : null }}
         actions={[
-          { label: 'Publish FAQs', text: 'Add 2 new FAQs in Optimise this month. Each published FAQ widens the set of questions AI can match you to — the single highest-leverage move on your score.' },
+          { label: 'Publish FAQs', text: `Add 2 new FAQs in Optimise this ${monthName}. Each published FAQ widens the set of questions AI can match you to — the single highest-leverage move on your score.` },
           { label: 'Complete schema', text: 'Open Schema Health and fill any field still marked "Missing". Completeness directly raises how often AI retrieves and quotes you.' },
           { label: 'Stay current', text: 'Publish one dated Event — a seasonal offer or happening. Fresh, dated content signals an active property, which AI crawlers favour.' },
         ]}
@@ -1771,10 +1783,9 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
       {weakestCat && weakCatRank && weakCatRec ? (
         <GoalCard
           num={2}
+          kicker="Category to Improve"
           title={`Climb the ${weakCatLabel} ranking`}
-          metricLeft={`#${weakCatRank.rank} of ${weakCatRank.total}`}
-          metricRight={targetRank ? `#${targetRank} target` : undefined}
-          arrow={!!targetRank}
+          stat={{ a: `Currently #${weakCatRank.rank} of ${weakCatRank.total}`, b: targetRank ? `Target #${targetRank}` : null, target: weakCatRank.ahead ? `Overtake ${weakCatRank.ahead.replace(' Geneva','').replace(' Hotel','')}` : null }}
           actions={[
             { label: 'Add this FAQ', text: weakCatRec.faq },
             { label: 'Mention these words', text: weakCatRec.words },
@@ -1784,17 +1795,16 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
           goLabel="Go to Optimise"
         />
       ) : (
-        <GoalCard num={2} title="Category ranking" actions={[{ label: 'Building', text: 'Category rankings appear once your category crons have logged enough data. Check back after the next weekly run.' }]} />
+        <GoalCard num={2} kicker="Category to Improve" title="Category ranking" actions={[{ label: 'Building', text: 'Category rankings appear once your category crons have logged enough data. Check back after the next weekly run.' }]} />
       )}
 
       {/* GOAL 3 */}
       {missedQuery && queryRec ? (
         <GoalCard
           num={3}
+          kicker="Query Coverage"
           title={`Start appearing for "${missedQuery}"`}
-          metricLeft="Not appearing"
-          metricRight="Appearing target"
-          arrow
+          stat={{ a: 'Not appearing', b: 'Target: appearing', target: 'Win this search in AI answers' }}
           actions={[
             { label: 'Add this FAQ', text: queryRec.faq },
             { label: 'Mention these words', text: queryRec.words },
@@ -1804,7 +1814,7 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
           goLabel="Go to Optimise"
         />
       ) : (
-        <GoalCard num={3} title="Win a missed search" actions={[{ label: 'Great coverage', text: 'You are currently appearing in all tracked Google AI queries. Keep adding FAQs to widen the queries you are tracked against.' }]} />
+        <GoalCard num={3} kicker="Query Coverage" title="Win a missed search" actions={[{ label: 'Great coverage', text: 'You are currently appearing in all tracked Google AI queries. Keep adding FAQs to widen the queries you are tracked against.' }]} />
       )}
     </div>
   )
