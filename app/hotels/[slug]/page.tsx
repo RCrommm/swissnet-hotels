@@ -685,8 +685,35 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
                 <div style={{ height: 1, background: border, marginBottom: '4rem' }} />
               </>
             )}
+{/* WHY BOOK DIRECT */}
+            {hotel.is_partner && (hotel.booking_benefits || hotel.cancellation_policy) && (
+              <>
+                <section style={{ marginBottom: '4rem' }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>Why Book Direct</p>
+                  <div style={{ background: 'rgba(201,169,76,0.05)', border: `1px solid rgba(201,169,76,0.2)`, borderRadius: 4, padding: '1.75rem 2rem' }}>
+                    {hotel.booking_benefits && (
+                      <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                        {hotel.booking_benefits.split(/[,;\n]/).map((b: string) => b.trim()).filter(Boolean).map((b: string, i: number) => (
+                          <li key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', color: text, display: 'flex', gap: '0.75rem', alignItems: 'flex-start', lineHeight: 1.6 }}>
+                            <span style={{ color: gold, flexShrink: 0, marginTop: '0.05rem' }}>✦</span>
+                            {b.charAt(0).toUpperCase() + b.slice(1)}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {hotel.cancellation_policy && (
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: textMuted, margin: hotel.booking_benefits ? '1.25rem 0 0' : 0, paddingTop: hotel.booking_benefits ? '1.25rem' : 0, borderTop: hotel.booking_benefits ? `1px solid ${border}` : 'none', lineHeight: 1.7 }}>
+                        <span style={{ fontWeight: 600, color: text }}>Cancellation: </span>{hotel.cancellation_policy}
+                      </p>
+                    )}
+                  </div>
+                </section>
+                <div style={{ height: 1, background: border, marginBottom: '4rem' }} />
+              </>
+            )}
+
 {/* HOTEL FACTS */}
-            {(hotel.check_in_time || hotel.check_out_time || hotel.cancellation_policy || hotel.parking || hotel.languages || hotel.accessibility || hotel.seasonal_notes || hotel.booking_benefits || hotel.private_transfer) && (
+            {(hotel.check_in_time || hotel.check_out_time || hotel.cancellation_policy || hotel.parking || hotel.languages || hotel.accessibility || hotel.seasonal_notes || hotel.private_transfer) && (
               <>
                 <section style={{ marginBottom: '4rem' }}>
                   <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>Hotel Facts</p>
@@ -708,12 +735,7 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
                         <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: text, textAlign: 'right', flex: 1 }}>{f.value}</span>
                       </div>
                     ))}
-                    {hotel.booking_benefits && (
-                      <div style={{ padding: '0.875rem 0', borderBottom: `1px solid ${border}` }}>
-                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 600, color: textMuted, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: '0.4rem' }}>Book Direct Benefits</span>
-                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: gold }}>{hotel.booking_benefits}</span>
-                      </div>
-                    )}
+                    
                   </div>
                 </section>
                 <div style={{ height: 1, background: border, marginBottom: '4rem' }} />
