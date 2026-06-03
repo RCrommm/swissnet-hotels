@@ -2219,7 +2219,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
       <div>
         <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 400, color: TEXT, margin: '0 0 0.2rem', lineHeight: 1 }}>{periodScore !== null ? periodScore + '%' : '—'}</p>
-<p style={{ fontSize: '0.5rem', color: 'red', wordBreak: 'break-all' }}>DEBUG rows: {(overviewRunData || []).filter((r: any) => (r.run_date || r.checked_at?.split('T')[0]) >= '2026-06-01' && (r.run_date || r.checked_at?.split('T')[0]) < '2026-07-01').map((r: any) => `${r.run_date}/${r.platform}/${r.visibility_score}`).join(' · ')}</p>
+<p style={{ fontSize: '0.5rem', color: 'red', wordBreak: 'break-all' }}>DEBUG google: {['2026-06-01','2026-06-02','2026-06-03'].map(d => { const g = (googleAiScores || []).filter((r: any) => r.checked_at?.split('T')[0] === d); const ga = g.filter((r: any) => r.appeared).length; return `${d}: ${g.length}rows ${ga}appeared` }).join(' · ')}</p>
         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: BLUE, margin: 0 }}>{new Date().toLocaleDateString('en-GB', { month: 'long' })} avg score</p>
       </div>
       {prevPeriodScore.score !== null && (
