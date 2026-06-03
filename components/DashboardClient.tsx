@@ -1749,11 +1749,14 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
     ski: ['ski', 'slope', 'alpine'],
   }
   const usedWords = weakestCat ? (catKeywords[weakestCat] || []) : []
-  const latestMissed = [...new Map(
-    [...(googleAiScores || [])]
-      .sort((a: any, b: any) => new Date(b.checked_at).getTime() - new Date(a.checked_at).getTime())
-      .map((r: any) => [r.query, r])
-  ).values()].filter((r: any) => r.appeared === false)
+  // For each query, find the single most recent row, then keep only those whose latest = not appeared
+  const byQuery: Record<string, any> = {}
+  for (const r of (googleAiScores || [])) {
+    if (!r.query) continue
+    const t = new Date(r.checked_at).getTime()
+    if (!byQuery[r.query] || t > new Date(byQuery[r.query].checked_at).getTime()) byQuery[r.query] = r
+  }
+  const latestMissed = Object.values(byQuery).filter((r: any) => r.appeared === false)
   const distinctMissed = latestMissed.filter((m: any) => {
     const q = (m.query || '').toLowerCase()
     return !usedWords.some(w => q.includes(w))
