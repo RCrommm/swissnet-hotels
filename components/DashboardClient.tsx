@@ -2419,7 +2419,7 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
                     {segments.map((s, i) => (<path key={i} d={`M${s.x1} ${s.y1} L${s.x2} ${s.y2} L${s.x2} ${pT + cH} L${s.x1} ${pT + cH} Z`} fill="url(#ag4)" />))}
                     {segments.map((s, i) => (<line key={i} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} stroke={GOLD} strokeWidth="2" strokeLinecap="round" opacity="0.9" />))}
                     {realPoints.map((d, i) => {
-  const showLabel = chartPeriod <= 30
+  const showLabel = chartPlatform === 'overall' && chartPeriod <= 30
   return (
     <g key={i}>
       <circle cx={dateToX(d.date)} cy={py(d.score)} r="3" fill={WHITE} stroke={GOLD} strokeWidth="1.5" />
