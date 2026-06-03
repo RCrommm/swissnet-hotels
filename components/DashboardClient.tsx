@@ -1622,41 +1622,48 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
 
 function getCategoryRec(cat: string, hotelName: string) {
   const h = hotelName
-  const lib: Record<string, { faq: string; words: string; campaign: string }> = {
+  const lib: Record<string, { faq: string; words: string; campaign: string; ad: string }> = {
     spa: {
       faq: `Add an FAQ: "What makes the spa at ${h} special?" — answer with the spa's size in m², signature treatments, and thermal facilities (pool, sauna, hammam).`,
       words: `Use these in your spa description & FAQs: "wellness retreat", "thermal spa", "signature treatment", "spa day pass", "detox programme".`,
-      campaign: `Launch a "Midweek Wellness Escape" package — 2 nights with daily spa access and one signature treatment — and add it under Optimise → Events. AI surfaces named packages directly in spa-hotel queries.`,
+      campaign: `Launch a "Midweek Wellness Escape" package — 2 nights with daily spa access and one signature treatment.`,
+      ad: `Post title: "A Day of Calm at ${h}". Content: a 20–30s Instagram Reel — slow shots of the spa, pool and a treatment, captioned with the spa size and one signature treatment. Boost to ages 30–55 within 100km. Wellness ads work best as quiet, sensory video.`,
     },
     dining: {
       faq: `Add an FAQ: "Does ${h} have a notable restaurant?" — name the chef, cuisine style, and any Michelin stars or awards.`,
       words: `Use these: "gastronomic", "tasting menu", "Michelin", "chef's table", "seasonal Swiss produce".`,
-      campaign: `Create a "Gourmet Stay" offer pairing one night with a tasting menu for two. It gives AI a concrete, citable dining package and lifts fine-dining query matches.`,
+      campaign: `Create a "Gourmet Stay" offer pairing one night with a tasting menu for two.`,
+      ad: `Post title: "Dinner Worth the Journey". Content: an Instagram carousel of 4–5 plated dishes plus one of the chef, captioned with the tasting-menu name and chef. Also post as a Google Business update. Food carousels earn strong saves and shares.`,
     },
     romantic: {
       faq: `Add an FAQ: "Is ${h} good for a honeymoon or romantic getaway?" — mention private terraces, couples spa treatments, and lake or mountain views.`,
       words: `Use these: "romantic getaway", "honeymoon suite", "couples retreat", "private dinner", "sunset terrace".`,
-      campaign: `Build a "Romantic Escape" package — champagne on arrival, a couples massage, and a private candlelit dinner — and list it in Events. Romantic queries strongly favour named couples packages.`,
+      campaign: `Build a "Romantic Escape" package — champagne on arrival, a couples massage, and a private candlelit dinner.`,
+      ad: `Post title: "Two Nights, Just the Two of You". Content: a soft-lit Reel or photo set — champagne on a terrace, the suite, a candlelit table at dusk — captioned with the inclusions and price. Target couples 28–50, with an anniversary/Valentine's push. Romantic ads win on emotion, not detail.`,
     },
     lake: {
       faq: `Add an FAQ: "Does ${h} have lake views and lake access?" — specify which rooms have views, and any private beach, pontoon, or boat access.`,
       words: `Use these: "lakefront", "lake-view rooms", "private beach", "waterfront dining", "Lake Geneva".`,
-      campaign: `Add a "Lakeside Summer" experience — a private boat cruise with a lakefront lunch — under Optimise → Experiences. It directly strengthens lake-hotel query matching.`,
+      campaign: `Add a "Lakeside Summer" experience — a private boat cruise with a lakefront lunch.`,
+      ad: `Post title: "Wake Up to the Lake". Content: a sunrise or sunset Reel from a lake-view room or terrace, plus a still of waterfront dining, captioned with which rooms have the view. Run May–September when lake searches peak. Golden-hour water footage stops the scroll.`,
     },
     business: {
       faq: `Add an FAQ: "Is ${h} suitable for business travel and meetings?" — give meeting-room capacities, airport distance, and late check-out for corporate guests.`,
       words: `Use these: "conference facilities", "meeting rooms", "business centre", "airport transfer", "executive".`,
-      campaign: `Publish your meeting-room capacities and add a "Corporate Rate" booking benefit. AI cites concrete facilities and rates when answering business-hotel queries.`,
+      campaign: `Publish your meeting-room capacities and add a "Corporate Rate" booking benefit.`,
+      ad: `Post title: "Meetings That Run Themselves". Content: a LinkedIn post (not Instagram) — one clean photo of the meeting room set up, with text listing capacity, airport distance and the corporate rate. Target HR, EA and event-planner titles nearby. Business travel is decided on LinkedIn.`,
     },
     family: {
       faq: `Add an FAQ: "Is ${h} family-friendly?" — mention connecting rooms, kids' club, family activities, and babysitting.`,
       words: `Use these: "family suite", "kids club", "connecting rooms", "child-friendly", "family activities".`,
-      campaign: `Add a "Family Summer" package — connecting rooms, kids eat free, and one family activity — in Events. Family queries reward hotels with explicit family packages.`,
+      campaign: `Add a "Family Summer" package — connecting rooms, kids eat free, and one family activity.`,
+      ad: `Post title: "A Holiday the Kids Remember". Content: a warm Reel of families by the pool or at kids' activities, captioned with "kids eat free" and connecting rooms. Target parents 30–45 during school-holiday windows. Family ads sell the parents' ease as much as the kids' fun.`,
     },
     ski: {
       faq: `Add an FAQ: "Is ${h} ski-in/ski-out?" — state distance to the nearest lift, ski storage, and any ski concierge service.`,
       words: `Use these: "ski-in ski-out", "slopeside", "ski concierge", "boot room", "alpine".`,
-      campaign: `Add a "Ski Week" package with lift passes and ski storage, and publish your exact distance to the nearest lift. Ski queries rank proximity and named ski packages highly.`,
+      campaign: `Add a "Ski Week" package with lift passes and ski storage, and publish your exact distance to the nearest lift.`,
+      ad: `Post title: "Skis On, Straight to the Lift". Content: a fast-cut Reel — fresh snow, the boot room, someone clicking into skis at the door — captioned with exact distance to the lift and the Ski Week price. Run Nov–Feb. Ski buyers want proof of proximity, shown not told.`,
     },
   }
   return lib[cat] || lib.spa
@@ -1675,6 +1682,7 @@ function getQueryRec(query: string, hotelName: string) {
     faq: `Add an FAQ that directly answers "${query}" — use the exact phrasing of the question and give a specific, factual answer AI can quote.`,
     words: `Mirror the language of the search itself: include the key words from "${query}" naturally in your description and FAQs.`,
     campaign: `Add a time-limited Event or package themed around this search. Fresh, dated, specific content is what tips a "not appearing" query into appearing.`,
+    ad: `Post built around "${query}" — lead the title with that exact phrase. Content: one strong hero image or short Reel matching the search, captioned with those exact words. Post on Instagram and as a Google Business update so the language appears on indexed pages.`,
   }
 }
 
@@ -1802,7 +1810,8 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
           actions={[
             { label: 'Add this FAQ', text: weakCatRec.faq },
             { label: 'Use these words', text: weakCatRec.words },
-            { label: 'Run this campaign', text: weakCatRec.campaign },
+            { label: 'Run this package', text: weakCatRec.campaign },
+            { label: 'Advertise this', text: weakCatRec.ad },
           ]}
         />
       ) : (
@@ -1822,7 +1831,8 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
           actions={[
             { label: 'Add this FAQ', text: queryRec.faq },
             { label: 'Use these words', text: queryRec.words },
-            { label: 'Run this campaign', text: queryRec.campaign },
+            { label: 'Run this package', text: queryRec.campaign },
+            { label: 'Advertise this', text: queryRec.ad },
           ]}
         />
       ) : (
