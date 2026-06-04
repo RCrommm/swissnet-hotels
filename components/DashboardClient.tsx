@@ -2200,7 +2200,6 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
                   <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                     <div style={{ width: 18, height: 2, background: l.color, borderRadius: 2, opacity: 0.9 }} />
                     <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{l.label}</span>
-                    {l.label === 'Views' && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.48rem', color: 'rgba(55,138,221,0.5)', marginLeft: 2 }}>right axis</span>}
                   </div>
                 ))}
               </div>
