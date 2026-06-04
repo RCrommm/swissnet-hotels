@@ -1521,52 +1521,114 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
   const scoreLabel = overallScore >= 80 ? 'Strong' : overallScore >= 50 ? 'Good' : 'Needs Work'
   const missing = scoredFields.filter(f => !f.done)
 
+  // Group fields into knowledge themes for premium presentation
+  const themes = [
+    { key: 'identity', label: 'Identity & Story', desc: 'Who the hotel is', fields: ['Hotel Description', 'About Us', 'Star Rating'] },
+    { key: 'experience', label: 'The Experience', desc: 'What guests find', fields: ['Spa & Wellness', 'Restaurants & Dining', 'Experiences', 'Room Types'] },
+    { key: 'practical', label: 'Stay Details', desc: 'Practical guest answers', fields: ['FAQs', 'Languages Spoken', 'Check-in / Check-out', 'Cancellation Policy', 'Seasonal Notes', 'Accessibility', 'Airport Transfer'] },
+    { key: 'booking', label: 'Direct Booking', desc: 'The path to the guest', fields: ['Direct Booking Benefits', 'Direct Booking URL', 'Nightly Rate'] },
+  ]
+  const themeScore = (fieldLabels: string[]) => {
+    const fs = scoredFields.filter(f => fieldLabels.includes(f.label))
+    if (!fs.length) return 0
+    return Math.round(fs.reduce((s, f) => s + f.score, 0) / fs.length)
+  }
+
+  // Circular gauge geometry
+  const R = 54, C = 2 * Math.PI * R
+  const dash = (overallScore / 100) * C
+
   return (
     <div>
-      {/* Score card */}
-      <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.75rem 2rem', marginBottom: '1.5rem', display: 'flex', gap: '2rem', alignItems: 'center' }}>
-        <div style={{ textAlign: 'center', minWidth: 120 }}>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3.5rem', color: scoreColor, margin: 0, lineHeight: 1 }}>{overallScore}</p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, color: scoreColor, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0.25rem 0 0' }}>{scoreLabel}</p>
-        </div>
-        <div style={{ flex: 1 }}>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: TEXT, margin: '0 0 0.75rem' }}>AI Schema Health Score</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-            {[
-              { label: 'High Impact', completed: scoredFields.filter(f => f.impact === 'High').filter(f => f.done).length, total: scoredFields.filter(f => f.impact === 'High').length, color: RED },
-            { label: 'Medium Impact', completed: scoredFields.filter(f => f.impact === 'Medium').filter(f => f.done).length, total: scoredFields.filter(f => f.impact === 'Medium').length, color: GOLD },
-            { label: 'Low Impact', completed: scoredFields.filter(f => f.impact === 'Low').filter(f => f.done).length, total: scoredFields.filter(f => f.impact === 'Low').length, color: BLUE },
-            ].map(bar => (
-              <div key={bar.label} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, width: 100 }}>{bar.label}</span>
-                <div style={{ flex: 1, height: 4, background: BORDER, borderRadius: 2 }}>
-                  <div style={{ height: '100%', width: `${(bar.completed / bar.total) * 100}%`, background: bar.color, borderRadius: 2 }} />
-                </div>
-                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, width: 40 }}>{bar.completed}/{bar.total}</span>
-              </div>
-            ))}
+      {/* ── HERO: AI Knowledge Profile ── */}
+      <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 16, padding: '2.5rem', marginBottom: '1.5rem', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: -40, right: -40, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,169,76,0.08) 0%, transparent 70%)' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '3rem', position: 'relative' }}>
+          {/* Gauge */}
+          <div style={{ flexShrink: 0, position: 'relative', width: 140, height: 140 }}>
+            <svg width="140" height="140" viewBox="0 0 140 140" style={{ transform: 'rotate(-90deg)' }}>
+              <circle cx="70" cy="70" r={R} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="8" />
+              <circle cx="70" cy="70" r={R} fill="none" stroke={GOLD} strokeWidth="8" strokeLinecap="round" strokeDasharray={`${dash} ${C}`} style={{ transition: 'stroke-dasharray 1s ease' }} />
+            </svg>
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.75rem', fontWeight: 400, color: WHITE, lineHeight: 1 }}>{overallScore}</span>
+              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', marginTop: '0.2rem' }}>of 100</span>
+            </div>
           </div>
+          {/* Text */}
+          <div style={{ flex: 1 }}>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0 0 0.6rem' }}>AI Knowledge Profile</p>
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 300, color: WHITE, margin: '0 0 0.6rem', lineHeight: 1.3 }}>
+              {overallScore >= 80 ? 'AI systems understand your hotel in depth.' : overallScore >= 50 ? 'AI systems understand your hotel well — with room to deepen.' : 'AI systems have a partial picture of your hotel.'}
+            </p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.7, maxWidth: 480 }}>
+              This score reflects how completely the structured data behind your profile describes your hotel to AI assistants. The richer it is, the more confidently they can recommend you.
+            </p>
+          </div>
+        </div>
+        {/* Impact bars */}
+        <div style={{ display: 'flex', gap: '2rem', marginTop: '2rem', paddingTop: '1.75rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+          {[
+            { label: 'Essential', completed: scoredFields.filter(f => f.impact === 'High').filter(f => f.done).length, total: scoredFields.filter(f => f.impact === 'High').length },
+            { label: 'Enriching', completed: scoredFields.filter(f => f.impact === 'Medium').filter(f => f.done).length, total: scoredFields.filter(f => f.impact === 'Medium').length },
+            { label: 'Refining', completed: scoredFields.filter(f => f.impact === 'Low').filter(f => f.done).length, total: scoredFields.filter(f => f.impact === 'Low').length },
+          ].map(bar => (
+            <div key={bar.label} style={{ flex: 1 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.5rem' }}>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)' }}>{bar.label}</span>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: 'rgba(201,169,76,0.8)', fontWeight: 600 }}>{bar.completed}/{bar.total}</span>
+              </div>
+              <div style={{ height: 3, background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${(bar.completed / bar.total) * 100}%`, background: GOLD, borderRadius: 2, transition: 'width 0.8s ease' }} />
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Missing fields — recommendations */}
+      {/* ── KNOWLEDGE LAYERS ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
+        {themes.map(t => {
+          const sc = themeScore(t.fields)
+          const scColor = sc >= 80 ? GREEN : sc >= 50 ? GOLD : sc > 0 ? '#d97706' : TEXT_MUTED
+          return (
+            <div key={t.key} style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                <div>
+                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.05rem', color: TEXT, margin: '0 0 0.1rem', lineHeight: 1.2 }}>{t.label}</p>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', color: TEXT_MUTED, margin: 0 }}>{t.desc}</p>
+                </div>
+                <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: scColor, lineHeight: 1 }}>{sc}<span style={{ fontSize: '0.7rem', color: TEXT_MUTED }}>%</span></span>
+              </div>
+              <div style={{ height: 3, background: BORDER, borderRadius: 2, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${sc}%`, background: scColor, borderRadius: 2 }} />
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* ── COMPLETE YOUR PROFILE (recommendations) ── */}
       {missing.length > 0 && (
-        <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', marginBottom: '1.5rem' }}>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: TEXT, margin: '0 0 1rem' }}>Recommendations</p>
+        <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.75rem', marginBottom: '1.5rem' }}>
+          <div style={{ marginBottom: '1.25rem' }}>
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Complete Your Profile</p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED, margin: 0 }}>Each addition gives AI more to understand and recommend you for</p>
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
             {missing.map((f, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', background: BG, borderRadius: 8, border: '1px solid ' + BORDER }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: f.impact === 'High' ? RED : f.impact === 'Medium' ? GOLD : BLUE, flexShrink: 0 }} />
+              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.95rem 1.25rem', background: BG, borderRadius: 10, border: '1px solid ' + BORDER }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
+                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: f.impact === 'High' ? RED : f.impact === 'Medium' ? GOLD : BLUE, flexShrink: 0 }} />
                   <div>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, color: TEXT, margin: 0 }}>{f.label}</p>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: 0 }}>{f.impact} impact on AI visibility</p>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 600, color: TEXT, margin: 0 }}>{f.label}</p>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: '0.1rem 0 0' }}>{f.impact === 'High' ? 'Essential' : f.impact === 'Medium' ? 'Enriching' : 'Refining'} · {f.tip || 'Adds depth to your AI profile'}</p>
                   </div>
                 </div>
                 {f.fix ? (
-                  <button onClick={() => { onGoToOptimise(f.fix!); }} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: GOLD, background: GOLD_LIGHT, border: '1px solid ' + BORDER, borderRadius: 4, padding: '0.3rem 0.75rem', cursor: 'pointer' }}>Fix in Optimise →</button>
+                  <button onClick={() => { onGoToOptimise(f.fix!); }} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: GOLD, background: GOLD_LIGHT, border: '1px solid rgba(201,169,76,0.3)', borderRadius: 6, padding: '0.4rem 0.9rem', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, marginLeft: '1rem' }}>Complete →</button>
                 ) : (
-                  <a href="mailto:contact@swissnethotels.com" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, borderRadius: 4, padding: '0.3rem 0.75rem', textDecoration: 'none' }}>Contact SwissNet</a>
+                  <a href="mailto:contact@swissnethotels.com" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.4rem 0.9rem', textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0, marginLeft: '1rem' }}>Contact us</a>
                 )}
               </div>
             ))}
@@ -1574,45 +1636,36 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
         </div>
       )}
 
-      {/* All fields */}
-      <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, overflow: 'hidden' }}>
-        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid ' + BORDER }}>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: TEXT, margin: 0 }}>Full Schema Breakdown</p>
+      {/* ── WHAT AI UNDERSTANDS (full breakdown) ── */}
+      <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.5rem' }}>
+        <div style={{ padding: '1.5rem 1.75rem', borderBottom: '1px solid ' + BORDER }}>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>What AI Understands About Your Hotel</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED, margin: 0 }}>Every element of your structured profile, and how complete it is</p>
         </div>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ background: BG }}>
-              {['Field', 'AI Score', 'Detail', 'Impact', 'Tip'].map(h => (
-                <th key={h} style={{ textAlign: 'left', padding: '0.75rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, borderBottom: '1px solid ' + BORDER }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {scoredFields.map((f, i) => {
-              const sc = f.score
-              const scColor = sc >= 80 ? GREEN : sc >= 50 ? GOLD : RED
-              return (
-                <tr key={i} style={{ borderBottom: '1px solid ' + BORDER }}>
-                  <td style={{ padding: '0.875rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, color: TEXT }}>{f.label}</td>
-                  <td style={{ padding: '0.875rem 1.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <div style={{ width: 50, height: 4, background: BORDER, borderRadius: 2 }}>
-                        <div style={{ height: '100%', width: sc + '%', background: scColor, borderRadius: 2 }} />
-                      </div>
-                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: scColor }}>{sc}%</span>
-                    </div>
-                  </td>
-                  <td style={{ padding: '0.875rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED }}>{f.detail || '—'}</td>
-                  <td style={{ padding: '0.875rem 1.5rem' }}>
-                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, color: f.impact === 'High' ? RED : f.impact === 'Medium' ? GOLD : BLUE }}>{f.impact}</span>
-                  </td>
-                  <td style={{ padding: '0.875rem 1.5rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, fontStyle: 'italic', maxWidth: 200 }}>{f.tip || '—'}</td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+        <div>
+          {scoredFields.map((f, i) => {
+            const sc = f.score
+            const scColor = sc >= 80 ? GREEN : sc >= 50 ? GOLD : sc > 0 ? '#d97706' : RED
+            return (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', padding: '1rem 1.75rem', borderBottom: i < scoredFields.length - 1 ? '1px solid ' + BORDER : 'none' }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: f.done ? GREEN : scColor, flexShrink: 0, opacity: f.done ? 1 : 0.4 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: TEXT, margin: 0 }}>{f.label}</p>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: '0.1rem 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.detail || '—'}</p>
+                </div>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: f.impact === 'High' ? RED : f.impact === 'Medium' ? GOLD : BLUE, flexShrink: 0, width: 70, textAlign: 'right' }}>{f.impact === 'High' ? 'Essential' : f.impact === 'Medium' ? 'Enriching' : 'Refining'}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexShrink: 0, width: 90 }}>
+                  <div style={{ flex: 1, height: 4, background: BORDER, borderRadius: 2, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: sc + '%', background: scColor, borderRadius: 2 }} />
+                  </div>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: scColor, width: 30, textAlign: 'right' }}>{sc}%</span>
+                </div>
+              </div>
+            )
+          })}
+        </div>
       </div>
+
       <SchemaVisualizer hotelId={hotelId} hotelSlug={hotel?.slug || ''} />
     </div>
   )
