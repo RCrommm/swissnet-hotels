@@ -2127,13 +2127,39 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
           <div style={{ position: 'relative' }}>
             <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
               <select
-                value={customRange ? 'custom' : String(period)}
+                value={(() => {
+                  if (!customRange) return String(period)
+                  const n = new Date()
+                  const pad = (m: number) => String(m + 1).padStart(2, '0')
+                  const tmStart = `${n.getFullYear()}-${pad(n.getMonth())}-01`
+                  const tmEnd = n.toISOString().split('T')[0]
+                  if (customRange.start === tmStart && customRange.end === tmEnd) return 'thismonth'
+                  const lm = new Date(n.getFullYear(), n.getMonth() - 1, 1)
+                  const lmStart = `${lm.getFullYear()}-${pad(lm.getMonth())}-01`
+                  const lastDay = new Date(n.getFullYear(), n.getMonth(), 0).getDate()
+                  const lmEnd = `${lm.getFullYear()}-${pad(lm.getMonth())}-${String(lastDay).padStart(2, '0')}`
+                  if (customRange.start === lmStart && customRange.end === lmEnd) return 'lastmonth'
+                  return 'custom'
+                })()}
                 onChange={(e) => {
                   const v = e.target.value
+                  const pad = (m: number) => String(m + 1).padStart(2, '0')
                   if (v === 'custom') {
                     const end = new Date().toISOString().split('T')[0]
                     const start = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0]
                     setCustomRange({ start, end }); setShowRangePicker(true)
+                  } else if (v === 'thismonth') {
+                    const n = new Date()
+                    const start = `${n.getFullYear()}-${pad(n.getMonth())}-01`
+                    const end = n.toISOString().split('T')[0]
+                    setCustomRange({ start, end }); setShowRangePicker(false)
+                  } else if (v === 'lastmonth') {
+                    const n = new Date()
+                    const lm = new Date(n.getFullYear(), n.getMonth() - 1, 1)
+                    const start = `${lm.getFullYear()}-${pad(lm.getMonth())}-01`
+                    const lastDay = new Date(n.getFullYear(), n.getMonth(), 0).getDate()
+                    const end = `${lm.getFullYear()}-${pad(lm.getMonth())}-${String(lastDay).padStart(2, '0')}`
+                    setCustomRange({ start, end }); setShowRangePicker(false)
                   } else {
                     setCustomRange(null); setShowRangePicker(false); setPeriod(Number(v))
                   }
@@ -2141,7 +2167,9 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
                 style={{ padding: '0.4rem 0.75rem', borderRadius: 4, border: '1px solid ' + BORDER, background: WHITE, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, cursor: 'pointer', outline: 'none' }}
               >
                 <option value="7">Last week</option>
-                <option value="30">Last month</option>
+                <option value="30">Last 30 days</option>
+                <option value="thismonth">This month</option>
+                <option value="lastmonth">Last month</option>
                 <option value="90">Last 90 days</option>
                 <option value="custom">Custom range…</option>
               </select>
