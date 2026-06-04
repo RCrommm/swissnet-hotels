@@ -1742,33 +1742,37 @@ function getQueryRec(query: string, hotelName: string) {
 function GoalCard({ num, kicker, title, chips, actions }: any) {
   const chipStyle = (tone: string) => {
     if (tone === 'live') return { color: TEXT, background: WHITE, border: '1px solid ' + BORDER }
-    if (tone === 'goal') return { color: '#7a5e10', background: GOLD_LIGHT, border: '1px solid rgba(201,169,76,0.35)' }
+    if (tone === 'goal') return { color: '#7a5e10', background: GOLD_LIGHT, border: '1px solid rgba(201,169,76,0.4)' }
     if (tone === 'note') return { color: TEXT_MUTED, background: 'transparent', border: '1px dashed ' + BORDER }
     return { color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER }
   }
   return (
-    <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.85rem', marginBottom: '1.5rem', boxShadow: '0 2px 16px rgba(42,26,14,0.05)' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.1rem', marginBottom: chips && chips.length ? '1.4rem' : '1.25rem' }}>
-        <div style={{ width: 34, height: 34, borderRadius: '50%', background: `linear-gradient(135deg, ${GOLD} 0%, #b8923f 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 2px 8px rgba(201,169,76,0.3)' }}>
-          <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', fontWeight: 600, color: WHITE }}>{num}</span>
+    <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 16, marginBottom: '1.5rem', boxShadow: '0 2px 20px rgba(42,26,14,0.05)', overflow: 'hidden' }}>
+      {/* Header band */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.25rem', padding: '1.75rem 1.85rem', borderBottom: '1px solid ' + BORDER, background: `linear-gradient(180deg, ${GOLD_LIGHT} 0%, rgba(248,245,239,0) 100%)` }}>
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <div style={{ width: 42, height: 42, borderRadius: '50%', background: `linear-gradient(135deg, ${GOLD} 0%, #b8923f 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 3px 10px rgba(201,169,76,0.35)' }}>
+            <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', fontWeight: 600, color: WHITE }}>{num}</span>
+          </div>
         </div>
-        <div style={{ flex: 1 }}>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.35rem' }}>{kicker}</p>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.35rem', color: TEXT, margin: 0, lineHeight: 1.25 }}>{title}</p>
+        <div style={{ flex: 1, paddingTop: '0.1rem' }}>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.4rem' }}>{kicker}</p>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.45rem', color: TEXT, margin: 0, lineHeight: 1.25 }}>{title}</p>
           {chips && chips.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.9rem', flexWrap: 'wrap' }}>
               {chips.map((c: any, i: number) => (
-                <span key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, borderRadius: 20, padding: '0.3rem 0.75rem', ...chipStyle(c.tone) }}>{c.text}</span>
+                <span key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, borderRadius: 20, padding: '0.32rem 0.8rem', ...chipStyle(c.tone) }}>{c.text}</span>
               ))}
             </div>
           )}
         </div>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      {/* Actions */}
+      <div style={{ padding: '1.4rem 1.85rem', display: 'flex', flexDirection: 'column', gap: '0' }}>
         {actions.map((a: any, i: number) => (
-          <div key={i} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', padding: '0.95rem 1.1rem', background: BG, borderRadius: 10 }}>
-            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: GOLD, background: WHITE, border: '1px solid rgba(201,169,76,0.3)', borderRadius: 5, padding: '0.35rem 0', whiteSpace: 'nowrap', flexShrink: 0, width: 110, textAlign: 'center', marginTop: '0.05rem' }}>{a.label}</span>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT, margin: 0, lineHeight: 1.7 }}>{a.text}</p>
+          <div key={i} style={{ display: 'flex', gap: '1.1rem', alignItems: 'flex-start', padding: '0.95rem 0', borderBottom: i < actions.length - 1 ? '1px solid ' + BORDER : 'none' }}>
+            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: GOLD, background: GOLD_LIGHT, border: '1px solid rgba(201,169,76,0.3)', borderRadius: 6, padding: '0.45rem 0', whiteSpace: 'nowrap', flexShrink: 0, width: 116, textAlign: 'center', marginTop: '0.05rem' }}>{a.label}</span>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT, margin: 0, lineHeight: 1.75 }}>{a.text}</p>
           </div>
         ))}
       </div>
@@ -1827,9 +1831,24 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
 
   return (
     <div>
-      <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 14, padding: '1.9rem 2.1rem', marginBottom: '1.9rem' }}>
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.65)', margin: '0 0 0.7rem' }}>{monthName} {now.getFullYear()} · Your focus this month</p>
-        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', fontWeight: 300, color: WHITE, margin: 0, lineHeight: 1.45 }}>Three specific actions, each chosen from where {hotelName} is weakest right now. Complete them this month to climb the AI rankings.</p>
+      <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 16, padding: '2.5rem', marginBottom: '1.75rem', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: -50, right: -30, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,169,76,0.08) 0%, transparent 70%)' }} />
+        <div style={{ position: 'relative' }}>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0 0 0.9rem' }}>{monthName} {now.getFullYear()} · Your focus this month</p>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.65rem', fontWeight: 300, color: WHITE, margin: '0 0 1.5rem', lineHeight: 1.4, maxWidth: 560 }}>Three actions, each chosen from where {hotelName} is weakest right now.</p>
+          <div style={{ display: 'flex', gap: '2.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+            {[
+              { n: '1', label: 'Raise your score' },
+              { n: '2', label: 'Climb a category' },
+              { n: '3', label: 'Win a new search' },
+            ].map(s => (
+              <div key={s.n} style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <span style={{ width: 24, height: 24, borderRadius: '50%', border: '1px solid rgba(201,169,76,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Cormorant Garamond, serif', fontSize: '0.85rem', color: GOLD, flexShrink: 0 }}>{s.n}</span>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: 'rgba(255,255,255,0.6)' }}>{s.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* GOAL 1 */}
