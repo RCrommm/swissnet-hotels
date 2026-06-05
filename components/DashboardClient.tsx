@@ -2368,7 +2368,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
       { id: 'goals', label: 'Goals' },
     ] },
     { heading: 'Account', items: [
-      { id: 'reports', label: 'Reports' },
+      { id: 'reports', label: 'Monthly Reports' },
       { id: 'settings', label: 'Settings' },
     ] },
   ]
@@ -2386,7 +2386,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
         <div style={{ padding: '0.5rem 0', flex: 1 }}>
           {navGroups.map((group, gi) => (
             <div key={group.heading} style={{ marginTop: gi === 0 ? '0.5rem' : '1.25rem' }}>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(42,26,14,0.32)', margin: '0 0 0.4rem', padding: '0 1.5rem' }}>{group.heading}</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.5rem', padding: '0 1.5rem' }}>{group.heading}</p>
               {group.items.map(item => (
                 <button key={item.id} onClick={() => setTab(item.id)} style={{ width: '100%', display: 'flex', alignItems: 'center', padding: '0.6rem 1.5rem', background: tab === item.id ? GOLD_LIGHT : 'transparent', border: 'none', borderLeft: tab === item.id ? `3px solid ${GOLD}` : '3px solid transparent', cursor: 'pointer', textAlign: 'left' }}>
                   <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: tab === item.id ? 600 : 400, color: tab === item.id ? TEXT : TEXT_MUTED }}>{item.label}</span>
