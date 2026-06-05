@@ -1935,158 +1935,200 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
   )
 }
 
-// ── REPORTS CARD (in Settings) ────────────────────────────────────────────────
+// ── COMPARISON REPORT (Reports tab) ──────────────────────────────────────────
 
-function ReportsCard({ hotelName, hotelRegion, overviewRunData, googleAiScores, views, clicks, hotelCatScores, categoryLabels, hotelRank, regionCount }: any) {
-  const [sel, setSel] = useState('')
+function ComparisonReport({ hotelId, hotelName, hotelRegion, overviewRunData, googleAiScores, views, clicks, categoryLabels }: any) {
+  const [catHistory, setCatHistory] = useState<any[]>([])
+  const [loaded, setLoaded] = useState(false)
+  const [monthA, setMonthA] = useState('')
+  const [monthB, setMonthB] = useState('')
 
-  const monthReport = (year: number, month: number) => {
-    const pad = (m: number) => String(m + 1).padStart(2, '0')
-    const start = `${year}-${pad(month)}-01`
-    const end = month === 11 ? `${year + 1}-01-01` : `${year}-${pad(month + 1)}-01`
+  useEffect(() => {
+    if (!hotelId) return
+    const load = async () => {
+      const { createClient } = await import('@supabase/supabase-js')
+      const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+      const { data } = await sb.from('competitor_visibility')
+        .select('category, visibility_score, platform, checked_at')
+        .eq('competitor_name', hotelName)
+        .not('category', 'is', null)
+      setCatHistory(data || [])
+      setLoaded(true)
+    }
+    load()
+  }, [hotelId, hotelName])
+
+  const pad = (m: number) => String(m + 1).padStart(2, '0')
+  const winOf = (key: string) => { const [y, m] = key.split('-').map(Number); return { start: `${y}-${pad(m)}-01`, end: m === 11 ? `${y + 1}-01-01` : `${y}-${pad(m + 1)}-01` } }
+
+  // Overall + per-platform + appearances for a month key
+  const visMetrics = (key: string) => {
+    const { start, end } = winOf(key)
     const runs = (overviewRunData || []).filter((r: any) => { const d = r.run_date || r.checked_at?.split('T')[0]; return d >= start && d < end })
-    const uniqueDates = [...new Set(runs.map((r: any) => r.run_date || r.checked_at?.split('T')[0]).filter(Boolean))] as string[]
-    const dailyAvgs = uniqueDates.map(d => {
-      const day = runs.filter((r: any) => (r.run_date || r.checked_at?.split('T')[0]) === d)
-      const perPlat = ['chatgpt', 'perplexity'].map(p => {
-        const e = day.filter((s: any) => s.platform === p).sort((a: any, b: any) => new Date(b.checked_at).getTime() - new Date(a.checked_at).getTime())[0]
+    const dates = [...new Set(runs.map((r: any) => r.run_date || r.checked_at?.split('T')[0]).filter(Boolean))] as string[]
+    const platAvg = (plat: string) => {
+      const vals = dates.map(d => {
+        const e = runs.filter((s: any) => s.platform === plat && (s.run_date || s.checked_at?.split('T')[0]) === d).sort((a: any, b: any) => new Date(b.checked_at).getTime() - new Date(a.checked_at).getTime())[0]
+        if (!e) return null
+        return plat === 'chatgpt' ? Math.min(100, e.visibility_score + 8) : e.visibility_score
+      }).filter((s): s is number => s !== null)
+      return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null
+    }
+    const gByDate = (d: string) => { const g = (googleAiScores || []).filter((r: any) => r.checked_at?.split('T')[0] === d); return g.length ? Math.round((g.filter((r: any) => r.appeared).length / g.length) * 100) : null }
+    const gDates = [...new Set((googleAiScores || []).map((r: any) => r.checked_at?.split('T')[0]).filter((d: string) => d >= start && d < end))] as string[]
+    const gVals = gDates.map(gByDate).filter((s): s is number => s !== null)
+    const google = gVals.length ? Math.round(gVals.reduce((a, b) => a + b, 0) / gVals.length) : null
+    const chatgpt = platAvg('chatgpt'), perplexity = platAvg('perplexity')
+    const allDates = [...new Set([...dates, ...gDates])]
+    const overallVals = allDates.map(d => {
+      const cp = ['chatgpt', 'perplexity'].map(p => {
+        const e = runs.filter((s: any) => s.platform === p && (s.run_date || s.checked_at?.split('T')[0]) === d).sort((a: any, b: any) => new Date(b.checked_at).getTime() - new Date(a.checked_at).getTime())[0]
         if (!e) return null
         return p === 'chatgpt' ? Math.min(100, e.visibility_score + 8) : e.visibility_score
       }).filter((s): s is number => s !== null)
-      const g = (googleAiScores || []).filter((r: any) => r.checked_at?.split('T')[0] === d)
-      const gScore = g.length > 0 ? Math.round((g.filter((r: any) => r.appeared).length / g.length) * 100) : null
-      const all = [...perPlat, ...(gScore !== null ? [gScore] : [])]
-      return all.length > 0 ? Math.round(all.reduce((a, b) => a + b, 0) / all.length) : null
+      const g = gByDate(d)
+      const all = [...cp, ...(g !== null ? [g] : [])]
+      return all.length ? Math.round(all.reduce((a, b) => a + b, 0) / all.length) : null
     }).filter((s): s is number => s !== null)
-    const score = dailyAvgs.length > 0 ? Math.round(dailyAvgs.reduce((a, b) => a + b, 0) / dailyAvgs.length) : null
-    const appearG = (googleAiScores || []).filter((r: any) => { const d = r.checked_at?.split('T')[0]; return d >= start && d < end && r.appeared }).length
-    const appearCP = runs.reduce((s: number, r: any) => s + (r.appearances || 0), 0)
-    const inWin = (ds: string) => { const d = ds?.split('T')[0]; return d >= start && d < end }
-    const bookClicks = (clicks || []).filter((c: any) => c.utm_campaign === 'hotels_page_book' && inWin(c.clicked_at)).length
-    const WEBSITE = ['hotel_profile', 'rooms_page', 'dining_page', 'spa_page', 'experiences_page', 'events_page', 'hotels_page_website']
-    const webClicks = (clicks || []).filter((c: any) => WEBSITE.includes(c.utm_campaign) && inWin(c.clicked_at)).length
-    const monthViews = (views || []).filter((v: any) => inWin(v.viewed_at)).length
-    const hasData = uniqueDates.length > 0 || monthViews > 0
-    return { score, appearances: appearG + appearCP, bookClicks, webClicks, views: monthViews, hasData }
+    const overall = overallVals.length ? Math.round(overallVals.reduce((a, b) => a + b, 0) / overallVals.length) : null
+    const appearances = runs.reduce((s: number, r: any) => s + (r.appearances || 0), 0) + (googleAiScores || []).filter((r: any) => { const d = r.checked_at?.split('T')[0]; return d >= start && d < end && r.appeared }).length
+    return { overall, chatgpt, perplexity, google, appearances }
   }
 
-  const allDates = [
+  const engMetrics = (key: string) => {
+    const { start, end } = winOf(key)
+    const inWin = (ds: string) => { const d = ds?.split('T')[0]; return d >= start && d < end }
+    const WEBSITE = ['hotel_profile', 'rooms_page', 'dining_page', 'spa_page', 'experiences_page', 'events_page', 'hotels_page_website']
+    return {
+      bookClicks: (clicks || []).filter((c: any) => c.utm_campaign === 'hotels_page_book' && inWin(c.clicked_at)).length,
+      webClicks: (clicks || []).filter((c: any) => WEBSITE.includes(c.utm_campaign) && inWin(c.clicked_at)).length,
+      views: (views || []).filter((v: any) => inWin(v.viewed_at)).length,
+    }
+  }
+
+  const catScore = (key: string, category: string) => {
+    const { start, end } = winOf(key)
+    const rows = catHistory.filter((r: any) => r.category === category && r.checked_at?.split('T')[0] >= start && r.checked_at?.split('T')[0] < end)
+    if (!rows.length) return null
+    const adj = rows.map((r: any) => r.platform === 'chatgpt' ? Math.min(100, r.visibility_score + 8) : r.visibility_score)
+    return Math.round(adj.reduce((a: number, b: number) => a + b, 0) / adj.length)
+  }
+
+  // Months that have ANY data
+  const allDataDates = [
     ...(overviewRunData || []).map((r: any) => r.run_date || r.checked_at?.split('T')[0]),
     ...(googleAiScores || []).map((r: any) => r.checked_at?.split('T')[0]),
     ...(views || []).map((v: any) => v.viewed_at?.split('T')[0]),
+    ...catHistory.map((r: any) => r.checked_at?.split('T')[0]),
   ].filter(Boolean).sort()
-  const now = new Date()
-  const curY = now.getFullYear(), curM = now.getMonth()
-  const months: { year: number; month: number }[] = []
-  if (allDates.length > 0) {
-    const first = new Date(allDates[0])
+  const monthKeys: string[] = []
+  if (allDataDates.length) {
+    const first = new Date(allDataDates[0]); const last = new Date(allDataDates[allDataDates.length - 1])
     let y = first.getFullYear(), m = first.getMonth()
-    while (y < curY || (y === curY && m < curM)) {
-      if (monthReport(y, m).hasData) months.push({ year: y, month: m })
+    while (y < last.getFullYear() || (y === last.getFullYear() && m <= last.getMonth())) {
+      monthKeys.push(`${y}-${m}`)
       if (m === 11) { m = 0; y++ } else m++
     }
   }
-  months.reverse()
+  const monthKeysDesc = [...monthKeys].reverse()
+  const monthLabel = (key: string) => { const [y, m] = key.split('-').map(Number); return new Date(y, m, 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) }
 
-  const monthName = (y: number, m: number) => new Date(y, m, 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+  useEffect(() => {
+    if (monthKeysDesc.length && !monthB) {
+      setMonthB(monthKeysDesc[0])
+      setMonthA(monthKeysDesc[1] || monthKeysDesc[0])
+    }
+  }, [loaded, monthKeys.join(',')])
 
-  const download = () => {
-    if (!sel) return
-    const [year, month] = sel.split('-').map(Number)
-    const rep = monthReport(year, month)
-    const prev = month === 0 ? monthReport(year - 1, 11) : monthReport(year, month - 1)
-    const delta = rep.score !== null && prev.score !== null ? rep.score - prev.score : null
-    const mn = monthName(year, month)
-    const bar = (pct: number) => `<div style="height:5px;background:#efe9dc;border-radius:3px;overflow:hidden;width:120px"><div style="height:100%;width:${pct}%;background:#C9A84C;border-radius:3px"></div></div>`
-    const genDate = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
-    const topCatsRows = Object.entries(hotelCatScores || {})
-      .sort((a: any, b: any) => (b[1] as number) - (a[1] as number)).slice(0, 5)
-      .map(([k, v]) => `<tr><td style="padding:11px 0;border-bottom:1px solid #f0ece3;font-size:13.5px;color:#3a3128">${categoryLabels?.[k] || k}</td><td style="padding:11px 0;border-bottom:1px solid #f0ece3"><div style="display:flex;align-items:center;justify-content:flex-end;gap:14px">${bar(v as number)}<span style="font-family:Georgia,serif;font-size:16px;color:#2A1A0E;min-width:42px;text-align:right">${v}%</span></div></td></tr>`).join('')
+  if (!loaded) return <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>Loading report…</p>
+  if (monthKeys.length < 1) return (
+    <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}>
+      <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Not enough data yet</p>
+      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: 0 }}>Month-by-month comparison appears once you have data across at least one full month.</p>
+    </div>
+  )
 
-    const supportStat = (label: string, value: string, sub: string) =>
-      `<div style="flex:1"><p style="margin:0 0 7px;font-size:8.5px;letter-spacing:0.16em;text-transform:uppercase;color:#a89a7c;font-weight:600">${label}</p><p style="margin:0;font-family:Georgia,serif;font-size:27px;color:#2A1A0E;line-height:1">${value}</p><p style="margin:5px 0 0;font-size:10px;color:#9a9285">${sub}</p></div>`
+  const va = monthA ? visMetrics(monthA) : null
+  const vb = monthB ? visMetrics(monthB) : null
+  const ea = monthA ? engMetrics(monthA) : null
+  const eb = monthB ? engMetrics(monthB) : null
+  const cats = [...new Set(catHistory.map((r: any) => r.category))].sort()
 
-    const deltaLine = delta !== null
-      ? (delta >= 0
-        ? `<span style="color:#16a34a;font-weight:600">&#9650; ${delta} pts</span> <span style="color:#9a9285">vs ${month === 0 ? monthName(year - 1, 11) : monthName(year, month - 1)}</span>`
-        : `<span style="color:#dc2626;font-weight:600">&#9660; ${Math.abs(delta)} pts</span> <span style="color:#9a9285">vs ${month === 0 ? monthName(year - 1, 11) : monthName(year, month - 1)}</span>`)
-      : `<span style="color:#9a9285">First month of tracking</span>`
-
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${hotelName} — ${mn} Report</title>
-<style>
-@media print{@page{margin:0}body{padding:48px 56px !important}}
-body{font-family:'Helvetica Neue',Arial,sans-serif;color:#2A1A0E;max-width:780px;margin:0 auto;padding:56px;line-height:1.6;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.kicker{font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:#a89a7c;font-weight:600;margin:0 0 14px}
-</style></head><body>
-
-<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
-  <div>
-    <p style="margin:0;font-size:11px;letter-spacing:0.3em;text-transform:uppercase;color:#C9A84C;font-weight:700">SwissNet <span style="color:#2A1A0E;font-weight:400">Hotels</span></p>
-  </div>
-  <div style="text-align:right">
-    <p style="margin:0;font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:#a89a7c">AI Visibility Report</p>
-    <p style="margin:3px 0 0;font-size:11px;color:#9a9285">${hotelRegion}, Switzerland</p>
-  </div>
-</div>
-
-<div style="border-top:2px solid #C9A84C;margin:18px 0 34px;padding-top:26px">
-  <h1 style="margin:0;font-family:Georgia,serif;font-size:38px;font-weight:400;letter-spacing:-0.01em;line-height:1.05">${hotelName}</h1>
-  <p style="margin:10px 0 0;font-size:14px;color:#7a7064;letter-spacing:0.02em">Performance summary &middot; ${mn}</p>
-</div>
-
-<div style="background:#faf7f1;border:1px solid #efe9dc;border-radius:14px;padding:32px 36px;margin-bottom:34px;display:flex;align-items:center;justify-content:space-between">
-  <div>
-    <p class="kicker">AI Visibility Score</p>
-    <p style="margin:0;font-family:Georgia,serif;font-size:62px;font-weight:400;color:#2A1A0E;line-height:0.9">${rep.score !== null ? rep.score + '<span style=\"font-size:30px;color:#C9A84C\">%</span>' : '&mdash;'}</p>
-    <p style="margin:12px 0 0;font-size:12px">${deltaLine}</p>
-  </div>
-  <div style="text-align:right;border-left:1px solid #efe9dc;padding-left:36px">
-    <p class="kicker" style="margin-bottom:7px">Market Rank</p>
-    <p style="margin:0;font-family:Georgia,serif;font-size:40px;font-weight:400;color:#2A1A0E;line-height:1">#${hotelRank}</p>
-    <p style="margin:6px 0 0;font-size:10px;color:#9a9285">of ${regionCount} in ${hotelRegion}</p>
-  </div>
-</div>
-
-<p class="kicker">Reach &amp; Engagement</p>
-<div style="display:flex;gap:36px;padding:8px 4px 30px;margin-bottom:30px;border-bottom:1px solid #f0ece3">
-  ${supportStat('AI Appearances', String(rep.appearances), 'across tracked searches')}
-  ${supportStat('Booking Engine Clicks', String(rep.bookClicks), 'sent to book direct')}
-  ${supportStat('Website Clicks', String(rep.webClicks), 'to your official site')}
-  ${supportStat('Profile Views', String(rep.views), 'on SwissNet pages')}
-</div>
-
-${topCatsRows ? `<p class="kicker">Category Visibility</p>
-<table style="width:100%;border-collapse:collapse;margin-bottom:8px">${topCatsRows}</table>` : ''}
-
-<div style="margin-top:46px;padding-top:18px;border-top:1px solid #efe9dc;display:flex;justify-content:space-between;align-items:flex-end">
-  <p style="font-size:9.5px;color:#b3aa99;line-height:1.7;margin:0;max-width:520px">This report covers ${mn} and reflects data recorded during that period. Visibility is measured daily across ChatGPT, Perplexity and Google AI. Market rank reflects current standing in ${hotelRegion}.</p>
-  <p style="font-size:9px;color:#c4bcab;margin:0;white-space:nowrap;text-align:right">Generated ${genDate}<br/>swissnethotels.com</p>
-</div>
-
-<script>window.onload=function(){window.print()}</script></body></html>`
-    const w = window.open('', '_blank')
-    if (w) { w.document.write(html); w.document.close() }
+  const Change = ({ a, b, suffix = '' }: { a: number | null; b: number | null; suffix?: string }) => {
+    if (a === null || b === null) return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT_MUTED }}>—</span>
+    const d = b - a
+    if (d === 0) return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, fontWeight: 600 }}>No change</span>
+    const up = d > 0
+    return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 700, color: up ? GREEN : RED, background: (up ? GREEN : RED) + '14', padding: '2px 9px', borderRadius: 20 }}>{up ? '↑' : '↓'} {Math.abs(d)}{suffix}</span>
   }
+  const val = (v: number | null, suffix = '') => v === null ? <span style={{ color: TEXT_MUTED }}>—</span> : <>{v}{suffix}</>
+
+  const Row = ({ label, a, b, suffix = '' }: { label: string; a: number | null; b: number | null; suffix?: string }) => (
+    <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr 1fr', alignItems: 'center', padding: '0.85rem 1.5rem', borderBottom: '1px solid ' + BORDER }}>
+      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT, fontWeight: 500 }}>{label}</span>
+      <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', color: TEXT_MUTED, textAlign: 'center' }}>{val(a, suffix)}</span>
+      <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', color: TEXT, textAlign: 'center' }}>{val(b, suffix)}</span>
+      <span style={{ textAlign: 'right' }}><Change a={a} b={b} suffix={suffix} /></span>
+    </div>
+  )
+
+  const Section = ({ title, children }: { title: string; children: any }) => (
+    <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.25rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr 1fr', padding: '0.9rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG }}>
+        <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT }}>{title}</span>
+        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, textAlign: 'center' }}>{monthA ? monthLabel(monthA) : ''}</span>
+        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: GOLD, textAlign: 'center' }}>{monthB ? monthLabel(monthB) : ''}</span>
+        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, textAlign: 'right' }}>Change</span>
+      </div>
+      {children}
+    </div>
+  )
+
+  const selStyle = { padding: '0.5rem 0.75rem', borderRadius: 6, border: '1px solid ' + BORDER, background: WHITE, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, cursor: 'pointer', outline: 'none' } as any
 
   return (
-    <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, overflow: 'hidden', marginBottom: '1rem' }}>
-      <div style={{ padding: '1rem 1.5rem', background: BG, borderBottom: '1px solid ' + BORDER }}>
-        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: 0 }}>Monthly Reports</p>
-      </div>
-      <div style={{ padding: '1.25rem 1.5rem' }}>
-        {months.length === 0 ? (
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.7 }}>Your first report becomes available at the start of next month, covering the month just completed.</p>
-        ) : (
+    <div>
+      {/* Hero + pickers */}
+      <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 16, padding: '2.25rem 2.5rem', marginBottom: '1.5rem', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: -50, right: -30, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,169,76,0.08) 0%, transparent 70%)' }} />
+        <div style={{ position: 'relative' }}>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0 0 0.9rem' }}>Performance Report</p>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 300, color: WHITE, margin: '0 0 1.5rem', lineHeight: 1.4, maxWidth: 520 }}>Compare any two months and see exactly what moved.</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: 0, flex: 1, minWidth: 200, lineHeight: 1.6 }}>Download a PDF summary of any completed month — visibility score, appearances, clicks and rank.</p>
-            <select value={sel} onChange={e => setSel(e.target.value)} style={{ padding: '0.5rem 0.75rem', borderRadius: 6, border: '1px solid ' + BORDER, background: WHITE, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 600, cursor: 'pointer', outline: 'none' }}>
-              <option value="">Select month…</option>
-              {months.map(m => <option key={`${m.year}-${m.month}`} value={`${m.year}-${m.month}`}>{monthName(m.year, m.month)}</option>)}
+            <select value={monthA} onChange={e => setMonthA(e.target.value)} style={selStyle}>
+              {monthKeysDesc.map(k => <option key={k} value={k}>{monthLabel(k)}</option>)}
             </select>
-            <button onClick={download} disabled={!sel} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: TEXT, background: sel ? GOLD : BORDER, border: 'none', borderRadius: 6, padding: '0.55rem 1.25rem', cursor: sel ? 'pointer' : 'not-allowed', whiteSpace: 'nowrap' }}>Download PDF</button>
+            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)' }}>compared to</span>
+            <select value={monthB} onChange={e => setMonthB(e.target.value)} style={selStyle}>
+              {monthKeysDesc.map(k => <option key={k} value={k}>{monthLabel(k)}</option>)}
+            </select>
           </div>
-        )}
+        </div>
       </div>
+
+      <Section title="Visibility">
+        <Row label="Overall AI Visibility" a={va?.overall ?? null} b={vb?.overall ?? null} suffix="%" />
+        <Row label="ChatGPT" a={va?.chatgpt ?? null} b={vb?.chatgpt ?? null} suffix="%" />
+        <Row label="Perplexity" a={va?.perplexity ?? null} b={vb?.perplexity ?? null} suffix="%" />
+        <Row label="Google AI" a={va?.google ?? null} b={vb?.google ?? null} suffix="%" />
+        <Row label="AI Appearances" a={va?.appearances ?? null} b={vb?.appearances ?? null} />
+      </Section>
+
+      <Section title="Engagement">
+        <Row label="Booking Engine Clicks" a={ea?.bookClicks ?? null} b={eb?.bookClicks ?? null} />
+        <Row label="Website Clicks" a={ea?.webClicks ?? null} b={eb?.webClicks ?? null} />
+        <Row label="Profile Views" a={ea?.views ?? null} b={eb?.views ?? null} />
+      </Section>
+
+      {cats.length > 0 && (
+        <Section title="Category Visibility">
+          {cats.map((c: string) => (
+            <Row key={c} label={categoryLabels?.[c] || c} a={monthA ? catScore(monthA, c) : null} b={monthB ? catScore(monthB, c) : null} suffix="%" />
+          ))}
+        </Section>
+      )}
+
+      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, lineHeight: 1.6, margin: '0.5rem 0.5rem 0' }}>A dash (—) means no data was recorded for that metric in that month. Scores are monthly averages across daily measurements.</p>
     </div>
   )
 }
@@ -2319,6 +2361,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
   { id: 'schema', label: '✦ Schema' },
   { id: 'optimise', label: '✦ Optimise' },
   { id: 'goals', label: '✦ Goals' },
+  { id: 'reports', label: 'Reports' },
   { id: 'settings', label: 'Settings' },
 ]
 
@@ -2361,6 +2404,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
               {tab === 'schema' && '✦ Schema Health'}
 {tab === 'optimise' && '✦ Optimise'}
 {tab === 'goals' && '✦ Goals This Month'}
+{tab === 'reports' && 'Reports'}
 {tab === 'settings' && 'Settings'}
             </h1>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0 }}>
@@ -2371,6 +2415,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
               {tab === 'schema' && 'AI readiness score and content recommendations'}
 {tab === 'optimise' && 'Manage your content and FAQs'}
 {tab === 'goals' && 'Three focused actions to climb the AI rankings'}
+{tab === 'reports' && 'Compare your performance month over month'}
 {tab === 'settings' && 'Account and hotel settings'}
             </p>
           </div>
@@ -2951,21 +2996,23 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
           />
         )}
 
+        {/* ── REPORTS ── */}
+        {tab === 'reports' && (
+          <ComparisonReport
+            hotelId={hotel?.id}
+            hotelName={hotelName}
+            hotelRegion={hotelRegion}
+            overviewRunData={overviewRunData}
+            googleAiScores={googleAiScores}
+            views={views}
+            clicks={clicks}
+            categoryLabels={categoryLabels}
+          />
+        )}
+
         {/* ── SETTINGS ── */}
         {tab === 'settings' && (
           <div style={{ maxWidth: 680 }}>
-            <ReportsCard
-              hotelName={hotelName}
-              hotelRegion={hotelRegion}
-              overviewRunData={overviewRunData}
-              googleAiScores={googleAiScores}
-              views={views}
-              clicks={clicks}
-              hotelCatScores={hotelCatScores}
-              categoryLabels={categoryLabels}
-              hotelRank={hotelRank}
-              regionCount={allHotelsInRegion.length}
-            />
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, overflow: 'hidden', marginBottom: '1rem' }}>
               <div style={{ padding: '1rem 1.5rem', background: BG, borderBottom: '1px solid ' + BORDER, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: 0 }}>Hotel Profile</p>
