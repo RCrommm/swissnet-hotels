@@ -2148,6 +2148,7 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
   const [showRangePicker, setShowRangePicker] = useState(false)
   const [chartPeriod, setChartPeriod] = useState(7)
   const [chartPlatform, setChartPlatform] = useState('overall')
+  const [visHover, setVisHover] = useState<number | null>(null)
   const [competitorView, setCompetitorView] = useState('region')
   const [optimiseTab, setOptimiseTab] = useState('overview')
   const hotelName = hotel?.name || 'Your Hotel'
@@ -2760,17 +2761,40 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
                     </>}
                     {segments.map((s, i) => (<path key={i} d={`M${s.x1} ${s.y1} L${s.x2} ${s.y2} L${s.x2} ${pT + cH} L${s.x1} ${pT + cH} Z`} fill="url(#ag4)" />))}
                     {segments.map((s, i) => (<line key={i} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} stroke={GOLD} strokeWidth="2" strokeLinecap="round" opacity="0.9" />))}
-                    {realPoints.map((d, i) => {
-  const showLabel = chartPlatform === 'overall' && chartPeriod <= 30
-  return (
-    <g key={i}>
-      <circle cx={dateToX(d.date)} cy={py(d.score)} r="3" fill={WHITE} stroke={GOLD} strokeWidth="1.5" />
-      {showLabel && <text x={dateToX(d.date)} y={py(d.score) - 9} textAnchor="middle" fill={TEXT} fontSize="8" fontFamily="Montserrat, sans-serif" fontWeight="600">{d.score}%</text>}
-    </g>
-  )
-})}
+                    {realPoints.map((d, i) => (
+                      <circle key={i} cx={dateToX(d.date)} cy={py(d.score)} r={visHover === i ? 4.5 : 3} fill={visHover === i ? GOLD : WHITE} stroke={GOLD} strokeWidth="1.5" style={{ transition: 'r 0.12s ease' }} />
+                    ))}
                     <line x1={pL} y1={pT + cH} x2={pL + cW} y2={pT + cH} stroke="rgba(0,0,0,0.06)" strokeWidth="1" />
                     {xLabels.map((d, i) => (<text key={i} x={dateToX(d)} y={H - 4} textAnchor="middle" fill="rgba(42,26,14,0.3)" fontSize="7" fontFamily="Montserrat, sans-serif">{new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</text>))}
+                    <rect x={pL} y={pT} width={cW} height={cH} fill="transparent"
+                      onMouseMove={(e) => {
+                        const svg = e.currentTarget.ownerSVGElement
+                        if (!svg) return
+                        const r = svg.getBoundingClientRect()
+                        const svgX = ((e.clientX - r.left) / r.width) * W
+                        let best = 0, bestD = Infinity
+                        realPoints.forEach((p, i) => { const dx = Math.abs(dateToX(p.date) - svgX); if (dx < bestD) { bestD = dx; best = i } })
+                        setVisHover(best)
+                      }}
+                      onMouseLeave={() => setVisHover(null)}
+                    />
+                    {visHover !== null && realPoints[visHover] && (() => {
+                      const d = realPoints[visHover]
+                      const x = dateToX(d.date), yv = py(d.score)
+                      const boxW = 72, boxH = 36
+                      const bx = Math.min(Math.max(x - boxW / 2, pL), pL + cW - boxW)
+                      const above = yv > pT + 52
+                      const by = above ? yv - boxH - 13 : yv + 13
+                      return (
+                        <g style={{ pointerEvents: 'none' }}>
+                          <line x1={x} y1={pT} x2={x} y2={pT + cH} stroke="rgba(42,26,14,0.14)" strokeWidth="1" strokeDasharray="2 3" />
+                          <circle cx={x} cy={yv} r="6" fill={GOLD} opacity="0.12" />
+                          <rect x={bx} y={by} width={boxW} height={boxH} rx="7" fill={WHITE} stroke={BORDER} strokeWidth="1" style={{ filter: 'drop-shadow(0 3px 8px rgba(42,26,14,0.14))' }} />
+                          <text x={bx + boxW / 2} y={by + 14} textAnchor="middle" fill={TEXT_MUTED} fontSize="6.5" fontFamily="Montserrat, sans-serif" style={{ letterSpacing: '0.05em' }}>{new Date(d.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</text>
+                          <text x={bx + boxW / 2} y={by + 28} textAnchor="middle" fill={GOLD} fontSize="12" fontFamily="Cormorant Garamond, serif" fontWeight="600">{d.score}%</text>
+                        </g>
+                      )
+                    })()}
                   </svg>
                 )
               })()}
