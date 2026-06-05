@@ -9,6 +9,7 @@ export async function POST(request: NextRequest) {
     const referrer = request.headers.get('referer') || null
     const country = request.headers.get('x-vercel-ip-country') || null
     const city = request.headers.get('x-vercel-ip-city') || null
+    const userAgent = request.headers.get('user-agent') || null
 
     let source = 'direct'
     if (referrer) {
@@ -28,6 +29,7 @@ export async function POST(request: NextRequest) {
       source,
       country,
       city,
+      user_agent: userAgent,
       viewed_at: new Date().toISOString(),
     })
 
