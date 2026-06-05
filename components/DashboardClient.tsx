@@ -1935,6 +1935,157 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
   )
 }
 
+// ── REPORTS TAB ───────────────────────────────────────────────────────────────
+
+function ReportsTab({ hotelName, hotelRegion, overviewRunData, googleAiScores, views, clicks, hotelCatScores, competitors, categoryLabels, visibilityScore, hotelRank, regionCount }: any) {
+  // Compute one month's metrics from a calendar window
+  const monthReport = (year: number, month: number) => {
+    const pad = (m: number) => String(m + 1).padStart(2, '0')
+    const start = `${year}-${pad(month)}-01`
+    const end = month === 11 ? `${year + 1}-01-01` : `${year}-${pad(month + 1)}-01`
+
+    // Visibility score for the window (ChatGPT+8, Perplexity, Google — daily avg then mean)
+    const runs = (overviewRunData || []).filter((r: any) => {
+      const d = r.run_date || r.checked_at?.split('T')[0]
+      return d >= start && d < end
+    })
+    const uniqueDates = [...new Set(runs.map((r: any) => r.run_date || r.checked_at?.split('T')[0]).filter(Boolean))] as string[]
+    const dailyAvgs = uniqueDates.map(d => {
+      const day = runs.filter((r: any) => (r.run_date || r.checked_at?.split('T')[0]) === d)
+      const perPlat = ['chatgpt', 'perplexity'].map(p => {
+        const e = day.filter((s: any) => s.platform === p).sort((a: any, b: any) => new Date(b.checked_at).getTime() - new Date(a.checked_at).getTime())[0]
+        if (!e) return null
+        return p === 'chatgpt' ? Math.min(100, e.visibility_score + 8) : e.visibility_score
+      }).filter((s): s is number => s !== null)
+      const g = (googleAiScores || []).filter((r: any) => r.checked_at?.split('T')[0] === d)
+      const gScore = g.length > 0 ? Math.round((g.filter((r: any) => r.appeared).length / g.length) * 100) : null
+      const all = [...perPlat, ...(gScore !== null ? [gScore] : [])]
+      return all.length > 0 ? Math.round(all.reduce((a, b) => a + b, 0) / all.length) : null
+    }).filter((s): s is number => s !== null)
+    const score = dailyAvgs.length > 0 ? Math.round(dailyAvgs.reduce((a, b) => a + b, 0) / dailyAvgs.length) : null
+
+    // Appearances
+    const appearG = (googleAiScores || []).filter((r: any) => { const d = r.checked_at?.split('T')[0]; return d >= start && d < end && r.appeared }).length
+    const appearCP = runs.reduce((s: number, r: any) => s + (r.appearances || 0), 0)
+
+    // Clicks & views in window
+    const inWin = (dateStr: string) => { const d = dateStr?.split('T')[0]; return d >= start && d < end }
+    const bookClicks = (clicks || []).filter((c: any) => c.utm_campaign === 'hotels_page_book' && inWin(c.clicked_at)).length
+    const WEBSITE = ['hotel_profile', 'rooms_page', 'dining_page', 'spa_page', 'experiences_page', 'events_page', 'hotels_page_website']
+    const webClicks = (clicks || []).filter((c: any) => WEBSITE.includes(c.utm_campaign) && inWin(c.clicked_at)).length
+    const monthViews = (views || []).filter((v: any) => inWin(v.viewed_at)).length
+
+    return { score, appearances: appearG + appearCP, bookClicks, webClicks, views: monthViews }
+  }
+
+  // Build list of completed months (earliest data → last month)
+  const allDates = [
+    ...(overviewRunData || []).map((r: any) => r.run_date || r.checked_at?.split('T')[0]),
+    ...(googleAiScores || []).map((r: any) => r.checked_at?.split('T')[0]),
+    ...(views || []).map((v: any) => v.viewed_at?.split('T')[0]),
+  ].filter(Boolean).sort()
+  const now = new Date()
+  const curY = now.getFullYear(), curM = now.getMonth()
+  const months: { year: number; month: number }[] = []
+  if (allDates.length > 0) {
+    const first = new Date(allDates[0])
+    let y = first.getFullYear(), m = first.getMonth()
+    while (y < curY || (y === curY && m < curM)) {
+      months.push({ year: y, month: m })
+      if (m === 11) { m = 0; y++ } else m++
+    }
+  }
+  months.reverse() // newest first
+
+  const monthName = (y: number, m: number) => new Date(y, m, 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+
+  const download = (year: number, month: number) => {
+    const rep = monthReport(year, month)
+    const prev = month === 0 ? monthReport(year - 1, 11) : monthReport(year, month - 1)
+    const delta = rep.score !== null && prev.score !== null ? rep.score - prev.score : null
+    const mn = monthName(year, month)
+    const topCats = Object.entries(hotelCatScores || {})
+      .sort((a: any, b: any) => (b[1] as number) - (a[1] as number))
+      .slice(0, 4)
+      .map(([k, v]) => `<tr><td style="padding:8px 0;border-bottom:1px solid #eee;color:#444">${categoryLabels?.[k] || k}</td><td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;font-weight:600;color:#C9A84C">${v}%</td></tr>`)
+      .join('')
+
+    const stat = (label: string, value: string, sub = '') =>
+      `<div style="flex:1;padding:18px 20px;border:1px solid #eee;border-radius:10px"><p style="margin:0 0 6px;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#999">${label}</p><p style="margin:0;font-family:Georgia,serif;font-size:30px;color:#2A1A0E;line-height:1">${value}</p>${sub ? `<p style="margin:4px 0 0;font-size:10px;color:#999">${sub}</p>` : ''}</div>`
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${hotelName} — ${mn} Report</title>
+<style>@media print{@page{margin:1.5cm}}body{font-family:'Helvetica Neue',Arial,sans-serif;color:#2A1A0E;max-width:760px;margin:0 auto;padding:40px 32px;line-height:1.6}</style></head><body>
+<div style="border-bottom:2px solid #C9A84C;padding-bottom:20px;margin-bottom:28px;display:flex;justify-content:space-between;align-items:flex-end">
+  <div><p style="margin:0;font-size:11px;letter-spacing:0.25em;text-transform:uppercase;color:#C9A84C;font-weight:600">SwissNet Hotels</p>
+  <h1 style="margin:8px 0 0;font-family:Georgia,serif;font-size:30px;font-weight:400">${hotelName}</h1>
+  <p style="margin:4px 0 0;font-size:13px;color:#777">AI Visibility Report · ${mn}</p></div>
+  <p style="margin:0;font-size:10px;color:#aaa">${hotelRegion}, Switzerland</p>
+</div>
+
+<p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#999;margin:0 0 12px">Headline</p>
+<div style="display:flex;gap:12px;margin-bottom:28px">
+  ${stat('AI Visibility Score', rep.score !== null ? rep.score + '%' : '—', delta !== null ? (delta >= 0 ? `▲ ${delta} pts vs previous month` : `▼ ${Math.abs(delta)} pts vs previous month`) : 'first month tracked')}
+  ${stat('AI Appearances', String(rep.appearances), 'across tracked searches')}
+  ${stat('Market Rank', '#' + hotelRank, `of ${regionCount} in ${hotelRegion} (current)`)}
+</div>
+
+<p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#999;margin:0 0 12px">Guest Engagement</p>
+<div style="display:flex;gap:12px;margin-bottom:28px">
+  ${stat('Booking Engine Clicks', String(rep.bookClicks), 'guests sent to book direct')}
+  ${stat('Website Clicks', String(rep.webClicks), 'to your official site')}
+  ${stat('Profile Views', String(rep.views), 'on SwissNet pages')}
+</div>
+
+${topCats ? `<p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#999;margin:0 0 12px">Top Categories</p>
+<table style="width:100%;border-collapse:collapse;margin-bottom:28px;font-size:13px">${topCats}</table>` : ''}
+
+<div style="border-top:1px solid #eee;padding-top:16px;margin-top:32px">
+  <p style="font-size:10px;color:#aaa;line-height:1.6;margin:0">This report covers ${mn} and reflects data recorded during that month. AI visibility scores are measured across ChatGPT, Perplexity and Google AI. Market rank reflects current standing. Generated by SwissNet Hotels.</p>
+</div>
+<script>window.onload=function(){window.print()}</script>
+</body></html>`
+
+    const w = window.open('', '_blank')
+    if (w) { w.document.write(html); w.document.close() }
+  }
+
+  return (
+    <div>
+      <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 16, padding: '2.5rem', marginBottom: '1.75rem', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: -50, right: -30, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,169,76,0.08) 0%, transparent 70%)' }} />
+        <div style={{ position: 'relative' }}>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0 0 0.9rem' }}>Monthly Reports</p>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.65rem', fontWeight: 300, color: WHITE, margin: 0, lineHeight: 1.4, maxWidth: 560 }}>A clean summary of your AI visibility, ready to download for each completed month.</p>
+        </div>
+      </div>
+
+      {months.length === 0 ? (
+        <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Your first report is on its way</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.7 }}>Reports become available at the start of each month, covering the month just completed.</p>
+        </div>
+      ) : (
+        <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden' }}>
+          {months.map((m, i) => (
+            <div key={`${m.year}-${m.month}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.25rem 1.75rem', borderBottom: i < months.length - 1 ? '1px solid ' + BORDER : 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div style={{ width: 38, height: 38, borderRadius: 8, background: GOLD_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <span style={{ color: GOLD, fontSize: '0.9rem' }}>✦</span>
+                </div>
+                <div>
+                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: TEXT, margin: 0, lineHeight: 1.2 }}>{monthName(m.year, m.month)}</p>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', color: TEXT_MUTED, margin: '0.1rem 0 0' }}>AI Visibility Report</p>
+                </div>
+              </div>
+              <button onClick={() => download(m.year, m.month)} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: TEXT, background: GOLD, border: 'none', borderRadius: 6, padding: '0.55rem 1.25rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>Download PDF</button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── MAIN DASHBOARD ────────────────────────────────────────────────────────────
 
 export default function DashboardClient({ hotel, views, clicks, leads, aiVisibility, googleAiScores, bookings, competitors, hotelCatScores, platformScores, overviewRunData, myRankChange, marketAverages, crawlerCount }: any) {
@@ -2163,6 +2314,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
   { id: 'schema', label: '✦ Schema' },
   { id: 'optimise', label: '✦ Optimise' },
   { id: 'goals', label: '✦ Goals' },
+  { id: 'reports', label: 'Reports' },
   { id: 'settings', label: 'Settings' },
 ]
 
@@ -2205,6 +2357,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
               {tab === 'schema' && '✦ Schema Health'}
 {tab === 'optimise' && '✦ Optimise'}
 {tab === 'goals' && '✦ Goals This Month'}
+{tab === 'reports' && 'Reports'}
 {tab === 'settings' && 'Settings'}
             </h1>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0 }}>
@@ -2215,6 +2368,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
               {tab === 'schema' && 'AI readiness score and content recommendations'}
 {tab === 'optimise' && 'Manage your content and FAQs'}
 {tab === 'goals' && 'Three focused actions to climb the AI rankings'}
+{tab === 'reports' && 'Download your monthly performance reports'}
 {tab === 'settings' && 'Account and hotel settings'}
             </p>
           </div>
@@ -2792,6 +2946,24 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
             missedList={missedList}
             categoryLabels={categoryLabels}
             googleAiScores={googleAiScores}
+          />
+        )}
+
+        {/* ── REPORTS ── */}
+        {tab === 'reports' && (
+          <ReportsTab
+            hotelName={hotelName}
+            hotelRegion={hotelRegion}
+            overviewRunData={overviewRunData}
+            googleAiScores={googleAiScores}
+            views={views}
+            clicks={clicks}
+            hotelCatScores={hotelCatScores}
+            competitors={competitors}
+            categoryLabels={categoryLabels}
+            visibilityScore={visibilityScore}
+            hotelRank={hotelRank}
+            regionCount={allHotelsInRegion.length}
           />
         )}
 
