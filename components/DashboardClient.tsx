@@ -2498,7 +2498,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
                 {[
                   { label: 'AI Visibility Score', value: visibilityScore + '%', sub: `${appearedQueries} appearances` },
                   { label: 'Market Rank', value: '#' + hotelRank, sub: `of ${allHotelsInRegion.length} in ${hotelRegion}` },
-                  { label: 'Total Conversions', value: bookings?.length || 0, sub: 'all time' },
+                  { label: 'Total Conversions', value: bookings?.length ? bookings.length : '—', sub: 'all time' },
                   { label: 'Revenue Generated', value: bookings?.filter((b: any) => b.total_chf)?.reduce((sum: number, b: any) => sum + (b.total_chf || 0), 0) > 0 ? `CHF ${bookings.reduce((sum: number, b: any) => sum + (b.total_chf || 0), 0).toLocaleString()}` : '—', sub: 'from SwissNet Hotels' },
                 ].map((item, i) => (
                   <div key={i} style={{ padding: '1.25rem 0', paddingRight: '2rem', borderRight: i < 3 ? '1px solid rgba(255,255,255,0.06)' : 'none', paddingLeft: i > 0 ? '2rem' : 0 }}>
@@ -2511,7 +2511,6 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
             </div>
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
               <KPICard label="Official Website Clicks" value={websiteClicks.length} sub={`last ${period} days`} color={GOLD} spark={websiteClicksByDay} />
-              <KPICard label="Booking Engine Clicks" value={bookClicks.length} sub={`to hotel booking engine · last ${period} days`} color={GOLD} spark={bookClicksByDay} />
               <KPICard label="Profile Views" value={recentViews.length} sub={`last ${period} days`} color={BLUE} spark={viewsByDay} />
               <KPICard label="Direct Savings" value={recentBookings.length > 0 ? `CHF ${Math.round(recentBookings.reduce((sum: number, b: any) => sum + (b.total_chf || 0), 0) * 0.15).toLocaleString()}` : '—'} sub="vs OTA commissions" color={GREEN} />
             </div>
