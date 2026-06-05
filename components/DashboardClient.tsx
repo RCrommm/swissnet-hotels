@@ -2115,8 +2115,7 @@ function ComparisonReport({ hotelId, hotelName, hotelRegion, overviewRunData, go
       </Section>
 
       <Section title="Engagement">
-        <Row label="Booking Engine Clicks" a={ea?.bookClicks ?? null} b={eb?.bookClicks ?? null} />
-        <Row label="Website Clicks" a={ea?.webClicks ?? null} b={eb?.webClicks ?? null} />
+        <Row label="Sent to Official Site" a={ea?.webClicks ?? null} b={eb?.webClicks ?? null} />
         <Row label="Profile Views" a={ea?.views ?? null} b={eb?.views ?? null} />
       </Section>
 
