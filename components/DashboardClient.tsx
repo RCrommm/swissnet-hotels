@@ -2021,15 +2021,7 @@ function ComparisonReport({ hotelId, hotelName, hotelRegion, overviewRunData, go
     ...(views || []).map((v: any) => v.viewed_at?.split('T')[0]),
     ...catHistory.map((r: any) => r.checked_at?.split('T')[0]),
   ].filter(Boolean).sort()
-  const monthKeys: string[] = []
-  if (allDataDates.length) {
-    const first = new Date(allDataDates[0]); const last = new Date(allDataDates[allDataDates.length - 1])
-    let y = first.getFullYear(), m = first.getMonth()
-    while (y < last.getFullYear() || (y === last.getFullYear() && m <= last.getMonth())) {
-      monthKeys.push(`${y}-${m}`)
-      if (m === 11) { m = 0; y++ } else m++
-    }
-  }
+  const monthKeys: string[] = [...new Set(allDataDates.map((d: string) => { const dt = new Date(d); return `${dt.getFullYear()}-${dt.getMonth()}` }))].sort()
   const monthKeysDesc = [...monthKeys].reverse()
   const monthLabel = (key: string) => { const [y, m] = key.split('-').map(Number); return new Date(y, m, 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) }
 
