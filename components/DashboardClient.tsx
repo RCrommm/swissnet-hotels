@@ -2755,10 +2755,9 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
                   <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow: 'visible' }}>
                     <defs><linearGradient id="ag4" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={GOLD} stopOpacity="0.07" /><stop offset="100%" stopColor={GOLD} stopOpacity="0" /></linearGradient></defs>
                     {[0, 25, 50, 75, 100].map(v => (<g key={v}><line x1={pL} y1={py(v)} x2={pL + cW} y2={py(v)} stroke="rgba(0,0,0,0.03)" strokeWidth="1" /><text x={pL - 6} y={py(v) + 4} textAnchor="end" fill="rgba(42,26,14,0.3)" fontSize="7.5" fontFamily="Montserrat, sans-serif">{v}%</text></g>))}
-                    {marketAvg !== null && <>
+                    {marketAvg !== null && (
                       <line x1={pL} y1={py(marketAvg)} x2={pL + cW} y2={py(marketAvg)} stroke="rgba(42,26,14,0.08)" strokeWidth="1" strokeDasharray="3 6" />
-                      <text x={pL + cW - 4} y={py(marketAvg) - 5} textAnchor="end" fill="rgba(42,26,14,0.4)" fontSize="7" fontFamily="Montserrat, sans-serif" fontWeight="600">Market avg</text>
-                    </>}
+                    )}
                     {segments.map((s, i) => (<path key={i} d={`M${s.x1} ${s.y1} L${s.x2} ${s.y2} L${s.x2} ${pT + cH} L${s.x1} ${pT + cH} Z`} fill="url(#ag4)" />))}
                     {segments.map((s, i) => (<line key={i} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} stroke={GOLD} strokeWidth="2" strokeLinecap="round" opacity="0.9" />))}
                     {realPoints.map((d, i) => (
@@ -2791,7 +2790,7 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
                           <circle cx={x} cy={yv} r="6" fill={GOLD} opacity="0.12" />
                           <rect x={bx} y={by} width={boxW} height={boxH} rx="7" fill={WHITE} stroke={BORDER} strokeWidth="1" style={{ filter: 'drop-shadow(0 3px 8px rgba(42,26,14,0.14))' }} />
                           <text x={bx + boxW / 2} y={by + 14} textAnchor="middle" fill={TEXT_MUTED} fontSize="6.5" fontFamily="Montserrat, sans-serif" style={{ letterSpacing: '0.05em' }}>{new Date(d.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</text>
-                          <text x={bx + boxW / 2} y={by + 28} textAnchor="middle" fill={GOLD} fontSize="12" fontFamily="Cormorant Garamond, serif" fontWeight="600">{d.score}%</text>
+                          <text x={bx + boxW / 2} y={by + 27} textAnchor="middle" fill={TEXT} fontSize="9" fontFamily="Montserrat, sans-serif" fontWeight="700">{d.score}%</text>
                         </g>
                       )
                     })()}
