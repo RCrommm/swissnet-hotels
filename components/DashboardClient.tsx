@@ -1997,36 +1997,72 @@ function ReportsCard({ hotelName, hotelRegion, overviewRunData, googleAiScores, 
     const prev = month === 0 ? monthReport(year - 1, 11) : monthReport(year, month - 1)
     const delta = rep.score !== null && prev.score !== null ? rep.score - prev.score : null
     const mn = monthName(year, month)
-    const topCats = Object.entries(hotelCatScores || {})
-      .sort((a: any, b: any) => (b[1] as number) - (a[1] as number)).slice(0, 4)
-      .map(([k, v]) => `<tr><td style="padding:8px 0;border-bottom:1px solid #eee;color:#444">${categoryLabels?.[k] || k}</td><td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;font-weight:600;color:#C9A84C">${v}%</td></tr>`).join('')
-    const stat = (label: string, value: string, sub = '') =>
-      `<div style="flex:1;padding:18px 20px;border:1px solid #eee;border-radius:10px"><p style="margin:0 0 6px;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#999">${label}</p><p style="margin:0;font-family:Georgia,serif;font-size:30px;color:#2A1A0E;line-height:1">${value}</p>${sub ? `<p style="margin:4px 0 0;font-size:10px;color:#999">${sub}</p>` : ''}</div>`
+    const bar = (pct: number) => `<div style="height:5px;background:#efe9dc;border-radius:3px;overflow:hidden;width:120px"><div style="height:100%;width:${pct}%;background:#C9A84C;border-radius:3px"></div></div>`
+    const genDate = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+    const topCatsRows = Object.entries(hotelCatScores || {})
+      .sort((a: any, b: any) => (b[1] as number) - (a[1] as number)).slice(0, 5)
+      .map(([k, v]) => `<tr><td style="padding:11px 0;border-bottom:1px solid #f0ece3;font-size:13.5px;color:#3a3128">${categoryLabels?.[k] || k}</td><td style="padding:11px 0;border-bottom:1px solid #f0ece3"><div style="display:flex;align-items:center;justify-content:flex-end;gap:14px">${bar(v as number)}<span style="font-family:Georgia,serif;font-size:16px;color:#2A1A0E;min-width:42px;text-align:right">${v}%</span></div></td></tr>`).join('')
+
+    const supportStat = (label: string, value: string, sub: string) =>
+      `<div style="flex:1"><p style="margin:0 0 7px;font-size:8.5px;letter-spacing:0.16em;text-transform:uppercase;color:#a89a7c;font-weight:600">${label}</p><p style="margin:0;font-family:Georgia,serif;font-size:27px;color:#2A1A0E;line-height:1">${value}</p><p style="margin:5px 0 0;font-size:10px;color:#9a9285">${sub}</p></div>`
+
+    const deltaLine = delta !== null
+      ? (delta >= 0
+        ? `<span style="color:#16a34a;font-weight:600">&#9650; ${delta} pts</span> <span style="color:#9a9285">vs ${month === 0 ? monthName(year - 1, 11) : monthName(year, month - 1)}</span>`
+        : `<span style="color:#dc2626;font-weight:600">&#9660; ${Math.abs(delta)} pts</span> <span style="color:#9a9285">vs ${month === 0 ? monthName(year - 1, 11) : monthName(year, month - 1)}</span>`)
+      : `<span style="color:#9a9285">First month of tracking</span>`
+
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${hotelName} — ${mn} Report</title>
-<style>@media print{@page{margin:1.5cm}}body{font-family:'Helvetica Neue',Arial,sans-serif;color:#2A1A0E;max-width:760px;margin:0 auto;padding:40px 32px;line-height:1.6}</style></head><body>
-<div style="border-bottom:2px solid #C9A84C;padding-bottom:20px;margin-bottom:28px;display:flex;justify-content:space-between;align-items:flex-end">
-  <div><p style="margin:0;font-size:11px;letter-spacing:0.25em;text-transform:uppercase;color:#C9A84C;font-weight:600">SwissNet Hotels</p>
-  <h1 style="margin:8px 0 0;font-family:Georgia,serif;font-size:30px;font-weight:400">${hotelName}</h1>
-  <p style="margin:4px 0 0;font-size:13px;color:#777">AI Visibility Report · ${mn}</p></div>
-  <p style="margin:0;font-size:10px;color:#aaa">${hotelRegion}, Switzerland</p>
+<style>
+@media print{@page{margin:0}body{padding:48px 56px !important}}
+body{font-family:'Helvetica Neue',Arial,sans-serif;color:#2A1A0E;max-width:780px;margin:0 auto;padding:56px;line-height:1.6;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.kicker{font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:#a89a7c;font-weight:600;margin:0 0 14px}
+</style></head><body>
+
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+  <div>
+    <p style="margin:0;font-size:11px;letter-spacing:0.3em;text-transform:uppercase;color:#C9A84C;font-weight:700">SwissNet <span style="color:#2A1A0E;font-weight:400">Hotels</span></p>
+  </div>
+  <div style="text-align:right">
+    <p style="margin:0;font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:#a89a7c">AI Visibility Report</p>
+    <p style="margin:3px 0 0;font-size:11px;color:#9a9285">${hotelRegion}, Switzerland</p>
+  </div>
 </div>
-<p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#999;margin:0 0 12px">Headline</p>
-<div style="display:flex;gap:12px;margin-bottom:28px">
-  ${stat('AI Visibility Score', rep.score !== null ? rep.score + '%' : '—', delta !== null ? (delta >= 0 ? `▲ ${delta} pts vs previous month` : `▼ ${Math.abs(delta)} pts vs previous month`) : 'first month tracked')}
-  ${stat('AI Appearances', String(rep.appearances), 'across tracked searches')}
-  ${stat('Market Rank', '#' + hotelRank, `of ${regionCount} in ${hotelRegion} (current)`)}
+
+<div style="border-top:2px solid #C9A84C;margin:18px 0 34px;padding-top:26px">
+  <h1 style="margin:0;font-family:Georgia,serif;font-size:38px;font-weight:400;letter-spacing:-0.01em;line-height:1.05">${hotelName}</h1>
+  <p style="margin:10px 0 0;font-size:14px;color:#7a7064;letter-spacing:0.02em">Performance summary &middot; ${mn}</p>
 </div>
-<p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#999;margin:0 0 12px">Guest Engagement</p>
-<div style="display:flex;gap:12px;margin-bottom:28px">
-  ${stat('Booking Engine Clicks', String(rep.bookClicks), 'guests sent to book direct')}
-  ${stat('Website Clicks', String(rep.webClicks), 'to your official site')}
-  ${stat('Profile Views', String(rep.views), 'on SwissNet pages')}
+
+<div style="background:#faf7f1;border:1px solid #efe9dc;border-radius:14px;padding:32px 36px;margin-bottom:34px;display:flex;align-items:center;justify-content:space-between">
+  <div>
+    <p class="kicker">AI Visibility Score</p>
+    <p style="margin:0;font-family:Georgia,serif;font-size:62px;font-weight:400;color:#2A1A0E;line-height:0.9">${rep.score !== null ? rep.score + '<span style=\"font-size:30px;color:#C9A84C\">%</span>' : '&mdash;'}</p>
+    <p style="margin:12px 0 0;font-size:12px">${deltaLine}</p>
+  </div>
+  <div style="text-align:right;border-left:1px solid #efe9dc;padding-left:36px">
+    <p class="kicker" style="margin-bottom:7px">Market Rank</p>
+    <p style="margin:0;font-family:Georgia,serif;font-size:40px;font-weight:400;color:#2A1A0E;line-height:1">#${hotelRank}</p>
+    <p style="margin:6px 0 0;font-size:10px;color:#9a9285">of ${regionCount} in ${hotelRegion}</p>
+  </div>
 </div>
-${topCats ? `<p style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#999;margin:0 0 12px">Top Categories</p>
-<table style="width:100%;border-collapse:collapse;margin-bottom:28px;font-size:13px">${topCats}</table>` : ''}
-<div style="border-top:1px solid #eee;padding-top:16px;margin-top:32px">
-  <p style="font-size:10px;color:#aaa;line-height:1.6;margin:0">This report covers ${mn} and reflects data recorded during that month. AI visibility scores are measured across ChatGPT, Perplexity and Google AI. Market rank reflects current standing. Generated by SwissNet Hotels.</p>
+
+<p class="kicker">Reach &amp; Engagement</p>
+<div style="display:flex;gap:36px;padding:8px 4px 30px;margin-bottom:30px;border-bottom:1px solid #f0ece3">
+  ${supportStat('AI Appearances', String(rep.appearances), 'across tracked searches')}
+  ${supportStat('Booking Engine Clicks', String(rep.bookClicks), 'sent to book direct')}
+  ${supportStat('Website Clicks', String(rep.webClicks), 'to your official site')}
+  ${supportStat('Profile Views', String(rep.views), 'on SwissNet pages')}
 </div>
+
+${topCatsRows ? `<p class="kicker">Category Visibility</p>
+<table style="width:100%;border-collapse:collapse;margin-bottom:8px">${topCatsRows}</table>` : ''}
+
+<div style="margin-top:46px;padding-top:18px;border-top:1px solid #efe9dc;display:flex;justify-content:space-between;align-items:flex-end">
+  <p style="font-size:9.5px;color:#b3aa99;line-height:1.7;margin:0;max-width:520px">This report covers ${mn} and reflects data recorded during that period. Visibility is measured daily across ChatGPT, Perplexity and Google AI. Market rank reflects current standing in ${hotelRegion}.</p>
+  <p style="font-size:9px;color:#c4bcab;margin:0;white-space:nowrap;text-align:right">Generated ${genDate}<br/>swissnethotels.com</p>
+</div>
+
 <script>window.onload=function(){window.print()}</script></body></html>`
     const w = window.open('', '_blank')
     if (w) { w.document.write(html); w.document.close() }
