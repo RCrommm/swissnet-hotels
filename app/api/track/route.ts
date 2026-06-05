@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     utm_source: 'swissnet',
     utm_medium: medium,
     utm_campaign: campaign,
-    visitor_ip: request.headers.get('x-forwarded-for') || '',
+    visitor_ip: (request.headers.get('x-forwarded-for') || '').split(',')[0].trim().replace(/\.\d+$/, '.x').replace(/:[^:]+$/, ':x') || '',
     user_agent: request.headers.get('user-agent') || '',
   }])
 
