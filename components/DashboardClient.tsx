@@ -2355,17 +2355,23 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
     ? `General — ${hotelRegion}` 
     : `${competitorTabs.find(t => t.key === competitorView)?.label || ''} — ${hotelRegion}`
 
-  const navItems = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'ai-visibility', label: 'AI Visibility' },
-  { id: 'performance', label: 'Performance' },
-  { id: 'competitors', label: 'Competitors' },
-  { id: 'goals', label: 'Goals' },
-  { id: 'optimise', label: 'Optimise' },
-  { id: 'schema', label: 'Schema' },
-  { id: 'reports', label: 'Reports' },
-  { id: 'settings', label: 'Settings' },
-]
+  const navGroups = [
+    { heading: 'Monitor', items: [
+      { id: 'overview', label: 'Overview' },
+      { id: 'ai-visibility', label: 'AI Visibility' },
+      { id: 'performance', label: 'Performance' },
+      { id: 'competitors', label: 'Competitors' },
+    ] },
+    { heading: 'Improve', items: [
+      { id: 'schema', label: 'Schema' },
+      { id: 'optimise', label: 'Optimise' },
+      { id: 'goals', label: 'Goals' },
+    ] },
+    { heading: 'Account', items: [
+      { id: 'reports', label: 'Reports' },
+      { id: 'settings', label: 'Settings' },
+    ] },
+  ]
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: BG, fontFamily: 'Montserrat, sans-serif' }}>
@@ -2377,11 +2383,16 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: GOLD, margin: '0 0 0.15rem' }}>SwissNet <span style={{ fontStyle: 'italic', color: TEXT }}>Hotels</span></p>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: TEXT_MUTED, margin: 0 }}>AI Visibility Platform</p>
         </div>
-        <div style={{ padding: '0.75rem 0', flex: 1 }}>
-          {navItems.map(item => (
-            <button key={item.id} onClick={() => setTab(item.id)} style={{ width: '100%', display: 'flex', alignItems: 'center', padding: '0.65rem 1.5rem', background: tab === item.id ? GOLD_LIGHT : 'transparent', border: 'none', borderLeft: tab === item.id ? `3px solid ${GOLD}` : '3px solid transparent', cursor: 'pointer', textAlign: 'left' }}>
-              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: tab === item.id ? 600 : 400, color: tab === item.id ? TEXT : TEXT_MUTED }}>{item.label}</span>
-            </button>
+        <div style={{ padding: '0.5rem 0', flex: 1 }}>
+          {navGroups.map((group, gi) => (
+            <div key={group.heading} style={{ marginTop: gi === 0 ? '0.5rem' : '1.25rem' }}>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(42,26,14,0.32)', margin: '0 0 0.4rem', padding: '0 1.5rem' }}>{group.heading}</p>
+              {group.items.map(item => (
+                <button key={item.id} onClick={() => setTab(item.id)} style={{ width: '100%', display: 'flex', alignItems: 'center', padding: '0.6rem 1.5rem', background: tab === item.id ? GOLD_LIGHT : 'transparent', border: 'none', borderLeft: tab === item.id ? `3px solid ${GOLD}` : '3px solid transparent', cursor: 'pointer', textAlign: 'left' }}>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: tab === item.id ? 600 : 400, color: tab === item.id ? TEXT : TEXT_MUTED }}>{item.label}</span>
+                </button>
+              ))}
+            </div>
           ))}
         </div>
         <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid ' + BORDER }}>
