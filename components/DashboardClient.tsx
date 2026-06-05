@@ -2360,9 +2360,9 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
   { id: 'ai-visibility', label: 'AI Visibility' },
   { id: 'performance', label: 'Performance' },
   { id: 'competitors', label: 'Competitors' },
-  { id: 'schema', label: 'Schema' },
-  { id: 'optimise', label: 'Optimise' },
   { id: 'goals', label: 'Goals' },
+  { id: 'optimise', label: 'Optimise' },
+  { id: 'schema', label: 'Schema' },
   { id: 'reports', label: 'Reports' },
   { id: 'settings', label: 'Settings' },
 ]
