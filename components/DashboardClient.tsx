@@ -1760,7 +1760,7 @@ function getQueryRec(query: string, hotelName: string) {
   }
 }
 
-function GoalCard({ num, kicker, title, chips, actions }: any) {
+function GoalCard({ num, kicker, title, chips, actions, status }: any) {
   const chipStyle = (tone: string) => {
     if (tone === 'live') return { color: TEXT, background: WHITE, border: '1px solid ' + BORDER }
     if (tone === 'goal') return { color: '#7a5e10', background: GOLD_LIGHT, border: '1px solid rgba(201,169,76,0.4)' }
@@ -1787,6 +1787,22 @@ function GoalCard({ num, kicker, title, chips, actions }: any) {
             </div>
           )}
         </div>
+        {status && (
+          <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.75rem', minWidth: 200, paddingTop: '0.1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.2rem' }}>Now</p>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 400, color: TEXT, margin: 0, lineHeight: 1 }}>{status.current}</p>
+              </div>
+              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '1rem', color: status.reached ? GREEN : GOLD }}>→</span>
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.2rem' }}>Goal</p>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 400, color: GOLD, margin: 0, lineHeight: 1 }}>{status.goal}</p>
+              </div>
+            </div>
+            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.35rem 0.9rem', borderRadius: 20, color: status.reached ? GREEN : '#d97706', background: (status.reached ? GREEN : '#d97706') + '14', border: `1px solid ${(status.reached ? GREEN : '#d97706')}40` }}>{status.reached ? '✓ Goal reached' : '◷ In progress'}</span>
+          </div>
+        )}
       </div>
       {/* Actions */}
       <div style={{ padding: '1.4rem 1.85rem', display: 'flex', flexDirection: 'column', gap: '0' }}>
@@ -1879,9 +1895,8 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
         title="Raise your overall AI visibility score"
         chips={[
           prevScore !== null ? { text: `${prevMonthName}: ${prevScore}%`, tone: 'muted' } : null,
-          cur !== null ? { text: `${monthName} so far: ${cur}%`, tone: 'live' } : null,
-          scoreTarget !== null ? { text: `Goal: reach ${scoreTarget}%`, tone: 'goal' } : null,
         ].filter(Boolean)}
+        status={cur !== null && scoreTarget !== null ? { current: `${cur}%`, goal: `${scoreTarget}%`, reached: cur >= scoreTarget } : null}
         actions={[
           { label: 'Add FAQs', text: `Add 2 new guest FAQs this ${monthName}. Each one widens the questions AI can match you to — the single highest-impact move on your score.` },
           { label: 'Complete content', text: 'In Content, fill any field still marked "Missing" — about, cancellation policy, booking benefits. The more complete your profile, the more often AI quotes you.' },
@@ -1896,10 +1911,10 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
           kicker="Category to Improve"
           title={`Climb the ${weakCatLabel} ranking`}
           chips={[
-            { text: `Starting rank: #${weakCatRank.rank} of ${weakCatRank.total}`, tone: 'muted' },
-            targetRank ? { text: `Goal: climb to #${targetRank}`, tone: 'goal' } : null,
+            { text: `${weakCatRank.total} hotels tracked`, tone: 'muted' },
             weakCatRank.ahead ? { text: `Overtake ${weakCatRank.ahead.replace(' Geneva','').replace(' Hotel','')}`, tone: 'note' } : null,
           ].filter(Boolean)}
+          status={targetRank ? { current: `#${weakCatRank.rank}`, goal: `#${targetRank}`, reached: weakCatRank.rank <= targetRank } : null}
           actions={[
             { label: 'Add this FAQ', text: weakCatRec.faq },
             { label: 'Use these words', text: weakCatRec.words },
@@ -1918,9 +1933,9 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
           kicker="Query Coverage"
           title={`Start appearing for "${missedQuery}"`}
           chips={[
-            { text: 'Not appearing in Google AI', tone: 'muted' },
-            { text: 'Goal: appear in Google AI', tone: 'goal' },
+            { text: 'Google AI search', tone: 'muted' },
           ]}
+          status={{ current: 'Not yet', goal: 'Appear', reached: false }}
           actions={[
             { label: 'Add this FAQ', text: queryRec.faq },
             { label: 'Use these words', text: queryRec.words },
