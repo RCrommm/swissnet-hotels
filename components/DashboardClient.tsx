@@ -1593,8 +1593,16 @@ function SchemaTab({ hotel, hotelId, crawlerCount, onGoToOptimise }: { hotel: an
             <span style={{ color: GOLD, fontSize: '1.1rem' }}>✦</span>
           </div>
           <div style={{ flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: GREEN, flexShrink: 0, animation: 'pulse 2s infinite' }} />
+              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: GREEN }}>Live · tracking now</span>
+            </div>
             <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>AI systems are actively reading your pages</p>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6 }}>AI crawlers — including GPTBot, PerplexityBot and Google — have visited your profile <strong style={{ color: TEXT }}>{crawlerCount.toLocaleString()}</strong> {crawlerCount === 1 ? 'time' : 'times'}, reading the structured data behind your hotel.</p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6 }}>GPTBot, PerplexityBot and Google have crawled your profile, reading the structured data behind your hotel.</p>
+          </div>
+          <div style={{ textAlign: 'center', flexShrink: 0, paddingLeft: '1.5rem', borderLeft: '1px solid ' + BORDER, minWidth: 110 }}>
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 400, color: GOLD, margin: 0, lineHeight: 1 }}>{crawlerCount.toLocaleString()}</p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0.4rem 0 0' }}>{crawlerCount === 1 ? 'crawler visit' : 'crawler visits'}</p>
           </div>
         </div>
       )}
@@ -2160,6 +2168,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: BG, fontFamily: 'Montserrat, sans-serif' }}>
+      <style>{`@keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: 0.3 } }`}</style>
 
       {/* SIDEBAR */}
       <div style={{ width: 210, background: WHITE, borderRight: '1px solid ' + BORDER, display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 40 }}>
