@@ -2156,19 +2156,22 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
   const runDates = [...new Set((overviewRunData || []).map((r: any) => r.checked_at?.split('T')[0]))].sort() as string[]
 
   // For "Where You Appear" and "Queries to Improve" — use hotelSpecificScores
-  const periodStartDate = new Date(Date.now() - period * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-const myRunsInPeriod = (overviewRunData || []).filter((r: any) => {
-  const date = r.run_date || r.checked_at?.split('T')[0]
-  return date >= periodStartDate
-})
+  const rangeStartStr = customRange
+  ? customRange.start
+  : new Date(Date.now() - period * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+const rangeEndStr = customRange
+  ? customRange.end
+  : new Date().toISOString().split('T')[0]
+const inDateRange = (dateStr: string) => {
+  const d = (dateStr || '').split('T')[0]
+  return d >= rangeStartStr && d <= rangeEndStr
+}
+const myRunsInPeriod = (overviewRunData || []).filter((r: any) => inDateRange(r.run_date || r.checked_at))
 const totalQueriesChatPerp = myRunsInPeriod.reduce((sum: number, r: any) => sum + (r.total_queries || 0), 0)
 const appearedQueriesChatPerp = myRunsInPeriod.reduce((sum: number, r: any) => sum + (r.appearances || 0), 0)
 
 // Add Google AI queries in period
-const googleInPeriod = (googleAiScores || []).filter((r: any) => {
-  const date = r.checked_at?.split('T')[0]
-  return date >= periodStartDate
-})
+const googleInPeriod = (googleAiScores || []).filter((r: any) => inDateRange(r.checked_at))
 const totalQueriesGoogle = googleInPeriod.length
 const appearedQueriesGoogle = googleInPeriod.filter((r: any) => r.appeared).length
 
