@@ -20,7 +20,6 @@ export default function HotelCard({ hotel, slug, index, gold, border, bg, text, 
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.3rem' }}>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', fontWeight: 600, color: text, margin: 0 }}>{hotel.name}</p>
-            {hotel.is_partner && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, background: gold, color: '#1a0e06', padding: '2px 8px', borderRadius: 20 }}>✦ Partner</span>}
           </div>
           <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.5rem' }}>
             <span style={{ display: 'flex', gap: '0.1rem' }}>

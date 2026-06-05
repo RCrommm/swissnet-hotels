@@ -512,11 +512,7 @@ h.category === hotelB.category
                   <div style={{ position: 'relative', height: 200, overflow: 'hidden' }}>
                     <img src={hotel.images?.[0] || 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800'} alt={hotel.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%)' }} />
-                    {hotel.is_partner && (
-                      <div style={{ position: 'absolute', top: 12, right: 12 }}>
-                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 10, fontWeight: 700, background: gold, color: '#1a0e06', padding: '3px 10px', borderRadius: 20 }}>✦ Partner</span>
-                      </div>
-                    )}
+                    
                     <div style={{ position: 'absolute', bottom: 12, left: 12, right: 12 }}>
                       <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', fontWeight: 300, color: '#fff', margin: '0 0 0.25rem' }}>{hotel.name}</h2>
                       <div style={{ display: 'flex', gap: '0.15rem' }}>
