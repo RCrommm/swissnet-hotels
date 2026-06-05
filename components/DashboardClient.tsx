@@ -1320,7 +1320,7 @@ function SchemaVisualizer({ hotelId, hotelSlug }: { hotelId: string; hotelSlug: 
   )
 }
 
-function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: string; onGoToOptimise: (tab?: string) => void }) {
+function SchemaTab({ hotel, hotelId, crawlerCount, onGoToOptimise }: { hotel: any; hotelId: string; crawlerCount?: number; onGoToOptimise: (tab?: string) => void }) {
   const [data, setData] = useState<any>(null)
   const [loaded, setLoaded] = useState(false)
 
@@ -1585,6 +1585,19 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
           ))}
         </div>
       </div>
+
+      {/* ── AI CRAWLER PROOF ── */}
+      {crawlerCount !== undefined && crawlerCount > 0 && (
+        <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.5rem 1.75rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+          <div style={{ width: 48, height: 48, borderRadius: '50%', background: GOLD_LIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <span style={{ color: GOLD, fontSize: '1.1rem' }}>✦</span>
+          </div>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>AI systems are actively reading your pages</p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6 }}>AI crawlers — including GPTBot, PerplexityBot and Google — have visited your profile <strong style={{ color: TEXT }}>{crawlerCount.toLocaleString()}</strong> {crawlerCount === 1 ? 'time' : 'times'}, reading the structured data behind your hotel.</p>
+          </div>
+        </div>
+      )}
 
       {/* ── KNOWLEDGE LAYERS ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
@@ -1916,7 +1929,7 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
 
 // ── MAIN DASHBOARD ────────────────────────────────────────────────────────────
 
-export default function DashboardClient({ hotel, views, clicks, leads, aiVisibility, googleAiScores, bookings, competitors, hotelCatScores, platformScores, overviewRunData, myRankChange, marketAverages }: any) {
+export default function DashboardClient({ hotel, views, clicks, leads, aiVisibility, googleAiScores, bookings, competitors, hotelCatScores, platformScores, overviewRunData, myRankChange, marketAverages, crawlerCount }: any) {
   const [tab, setTab] = useState('overview')
   const [period, setPeriod] = useState(30)
   const [customRange, setCustomRange] = useState<{ start: string; end: string } | null>(null)
@@ -2750,7 +2763,7 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
 
         {/* ── SCHEMA ── */}
 {tab === 'schema' && (
-  <SchemaTab hotel={hotel} hotelId={hotel?.id} onGoToOptimise={(tab) => { setTab('optimise'); setOptimiseTab(tab || 'overview') }} />
+  <SchemaTab hotel={hotel} hotelId={hotel?.id} crawlerCount={crawlerCount} onGoToOptimise={(tab) => { setTab('optimise'); setOptimiseTab(tab || 'overview') }} />
 )}
 
         {/* ── OPTIMISE ── */}

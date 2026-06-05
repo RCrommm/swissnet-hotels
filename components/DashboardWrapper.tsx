@@ -56,6 +56,18 @@ const { data: allCompVisibility } = await supabase
         .eq('platform', 'google_ai')
         .order('checked_at', { ascending: false })
 
+      const { data: crawlerViews } = await supabase
+        .from('hotel_views')
+        .select('user_agent')
+        .eq('hotel_id', hotelId)
+        .not('user_agent', 'is', null)
+
+      const BOT_PATTERNS = ['gptbot', 'oai-searchbot', 'chatgpt', 'perplexitybot', 'claudebot', 'claude-web', 'anthropic', 'googlebot', 'google-extended', 'bingbot', 'applebot', 'ccbot', 'bytespider']
+      const crawlerCount = (crawlerViews || []).filter((v: any) => {
+        const ua = (v.user_agent || '').toLowerCase()
+        return BOT_PATTERNS.some(b => ua.includes(b))
+      }).length
+
       const { data: hotelSpecificScores } = await supabase
         .from('ai_visibility_scores')
         .select('*')
@@ -201,6 +213,7 @@ const myRankChange = myHasLatest && myHasPrev && myLatestRank > 0 && myPrevRank 
         myRankChange,
         myLatestRank,
         marketAverages,
+        crawlerCount,
       })
       setLoading(false)
     }
