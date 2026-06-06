@@ -10,7 +10,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/pricing`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
   ]
 
-  const destinations = ['zermatt', 'geneva', 'st-moritz', 'interlaken', 'zurich', 'gstaad', 'lucerne', 'verbier', 'davos', 'crans-montana', 'flims', 'bern', 'basel', 'lugano', 'ascona', 'andermatt', 'montreux'] 
+  const destinations = ['zermatt', 'geneva', 'st-moritz', 'interlaken', 'zurich', 'gstaad', 'lucerne', 'verbier', 'davos', 'crans-montana', 'flims', 'bern', 'basel', 'lugano', 'ascona', 'andermatt', 'montreux', 'lausanne', 'grindelwald']
    const destinationPages: MetadataRoute.Sitemap = destinations.map(slug => ({
     url: `${baseUrl}/destinations/${slug}`,
     lastModified: new Date(),
