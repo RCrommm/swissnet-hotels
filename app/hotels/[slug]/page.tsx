@@ -48,7 +48,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       description: hotel.description || `Discover ${hotel.name}, a luxury hotel in ${hotel.location}, Switzerland.`,
       url: `https://swissnethotels.com/hotels/${hotelUrl}`,
       siteName: 'SwissNet Hotels',
-      images: image ? [{ url: image }] : undefined,
+      images: image ? [{ url: image, width: 1200, height: 630, alt: hotel.name }] : undefined,
       type: 'website',
     },
   }
