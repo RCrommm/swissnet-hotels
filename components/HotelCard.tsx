@@ -51,7 +51,7 @@ const bookTrackingUrl = `/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIC
         />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(61,43,31,0.6) 0%, transparent 50%)' }} />
 
-        {hotel.is_partner && (
+        {false && hotel.is_partner && (
           <div style={{
             position: 'absolute', top: '1rem', left: '1rem',
             background: gold, color: '#1a0e06',
