@@ -2025,7 +2025,7 @@ function ComparisonReport({ hotelId, hotelName, hotelRegion, overviewRunData, go
     const { start, end } = winOf(key)
     const rows = catHistory.filter((r: any) => r.category === category && r.checked_at?.split('T')[0] >= start && r.checked_at?.split('T')[0] < end)
     if (!rows.length) return null
-    const adj = rows.map((r: any) => r.platform === 'chatgpt' ? Math.min(100, r.visibility_score + 8) : r.visibility_score)
+    const adj = rows.map((r: any) => r.visibility_score)
     return Math.round(adj.reduce((a: number, b: number) => a + b, 0) / adj.length)
   }
 
