@@ -89,7 +89,6 @@ export default async function HomePage() {
       <section style={{ background: bgLight, borderTop: '1px solid ' + border, borderBottom: '1px solid ' + border, padding: '2.5rem 0' }}>
         <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 2rem', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '2rem', textAlign: 'center' }} className="stats-grid">
           {[
-            { n: '10', label: 'Partner Hotels' },
             { n: '130+', label: 'Swiss Hotels' },
             { n: '15%+', label: 'Saved vs OTAs' },
             { n: 'AI', label: 'Powered Discovery' },
@@ -167,8 +166,8 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Official Partners */}
-      <section style={{ maxWidth: '1200px', margin: '0 auto', padding: '6rem 2rem' }}>
+      {/* Official Partners — hidden until partners sign; remove the `false &&` to restore */}
+      {false && <section style={{ maxWidth: '1200px', margin: '0 auto', padding: '6rem 2rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '1rem' }}>
             <span style={{ width: '30px', height: '1px', background: gold, display: 'inline-block' }} />
@@ -204,7 +203,7 @@ export default async function HomePage() {
         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.2)', textAlign: 'center', marginTop: '1.5rem' }}>
           Interested in joining? <a href="#contact" style={{ color: gold, textDecoration: 'none' }}>Get in touch →</a>
         </p>
-      </section>
+      </section>}
 
       {/* ChatGPT Preview */}
 <section style={{ background: bgLight, borderTop: '1px solid ' + border, borderBottom: '1px solid ' + border, padding: '6rem 0' }}>
