@@ -124,7 +124,7 @@ export default function HotelsClient({ hotels, initialRegion, initialCategory, i
                   <div style={{ position: 'relative', height: '230px', overflow: 'hidden' }}>
                     <img src={hotel.images[0] || 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800'} alt={hotel.name} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease', transform: isHovered ? 'scale(1.05)' : 'scale(1)' }} />
                     <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.15) 55%, transparent 100%)' }} />
-                    {hotel.is_partner && (
+                    {false && hotel.is_partner && (
                       <div style={{ position: 'absolute', top: '1rem', left: '1rem', background: gold, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase' as const, padding: '0.3rem 0.875rem', borderRadius: 20, zIndex: 2 }}>✦ Partner</div>
                     )}
                     <div style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 2, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(6px)', borderRadius: 20, padding: '0.3rem 0.625rem' }}>
