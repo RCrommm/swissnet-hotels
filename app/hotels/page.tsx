@@ -4,6 +4,8 @@ import Navigation from '@/components/Navigation'
 import { Suspense } from 'react'
 import HotelsClient from '@/components/HotelsClient'
 
+export const dynamic = 'force-dynamic'
+
 interface Props {
   searchParams: Promise<{ q?: string; region?: string; category?: string }>
 }
