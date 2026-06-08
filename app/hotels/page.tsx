@@ -5,6 +5,8 @@ import { Suspense } from 'react'
 import HotelsClient from '@/components/HotelsClient'
 
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export const fetchCache = 'force-no-store'
 
 interface Props {
   searchParams: Promise<{ q?: string; region?: string; category?: string }>
