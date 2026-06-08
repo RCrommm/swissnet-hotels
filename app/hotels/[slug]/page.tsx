@@ -348,7 +348,7 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, maxWidth: '1200px', margin: '0 auto', padding: '0 2.5rem 3.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
             <div style={{ maxWidth: 700 }}>
-              {hotel.is_partner && (
+              {false && hotel.is_partner && (
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(201,169,76,0.2)', border: '1px solid rgba(201,169,76,0.4)', padding: '4px 12px', borderRadius: 20, marginBottom: '1rem' }}>
                   <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: gold }}>✦ SwissNet Partner</span>
                 </div>
@@ -804,7 +804,7 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
             <div style={{ background: white, borderRadius: 4, padding: '2rem', marginBottom: '1.5rem', boxShadow: '0 2px 20px rgba(0,0,0,0.06)' }}>
               {hotel.is_partner && (
                 <div style={{ marginBottom: '1.25rem', paddingBottom: '1rem', borderBottom: `1px solid ${border}` }}>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: gold, margin: '0 0 0.75rem' }}>✦ SwissNet Partner Hotel</p>
+                  {false && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: gold, margin: '0 0 0.75rem' }}>✦ SwissNet Partner Hotel</p>}
                   {awards && awards.length > 0 && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                       {awards.slice(0, 3).map((award: any) => (
