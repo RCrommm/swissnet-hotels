@@ -60,7 +60,11 @@ export async function GET(request: Request) {
   const categoryParam = searchParams.get('category')
 
   // Block unauthorized requests
-  
+  const authHeader = request.headers.get('authorization')
+  const isVercelCron = authHeader === `Bearer ${process.env.CRON_SECRET}`
+  if (!isVercelCron) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
   if (!forceRun) {
     const { data: setting } = await supabase
@@ -196,6 +200,8 @@ export async function GET(request: Request) {
   // ── REGION MODE ──
 const today = new Date().toISOString().split('T')[0]
 const regionParam = searchParams.get('region')
+const debugMode = searchParams.get('debug') === 'true'
+const debugLog: any[] = []
 
 const { data: alreadyRanRows } = await supabase
   .from('competitor_visibility')
@@ -286,6 +292,17 @@ const { data: regionQueriesData } = await supabase
         }, { onConflict: 'competitor_name,platform,run_date,category', ignoreDuplicates: true })
       }
     }))
+
+    if (debugMode) {
+      for (const q of queries) {
+        debugLog.push({
+          region,
+          query: q,
+          chatgpt_matched_la_reserve: checkAppeared('La Réserve Genève', responseCache['chatgpt']?.[q] || ''),
+          chatgpt_response: (responseCache['chatgpt']?.[q] || '').slice(0, 300),
+        })
+      }
+    }
   }
   await supabase.from('cron_costs').insert({
     hotels_checked: competitors.length,
@@ -302,5 +319,6 @@ const { data: regionQueriesData } = await supabase
     total_appearances: results.length,
     estimated_cost_usd: Number(estimatedCost.toFixed(4)),
     month: currentMonth,
+    debug: debugMode ? debugLog : undefined,
   })
 }
