@@ -156,18 +156,10 @@ const { data: cronCosts } = await supabase
   // Clicks grouped by hotel (all of a hotel's pages combined, via slug)
   const slugToName: Record<string, string> = {}
   for (const h of hotelsList) { if (h.slug) slugToName[h.slug] = h.name }
-  const hotelPageClicks: Record<string, number> = {}
-  for (const c of clicksList) {
-    const page = cleanPage(c.source_page)
-    if (!page) continue
-    const m = page.match(/^\/hotels\/([^/]+)/)
-    if (!m) continue
-    hotelPageClicks[m[1]] = (hotelPageClicks[m[1]] || 0) + 1
-  }
-  const hotelPageClicksSorted = Object.entries(hotelPageClicks)
-    .map(([slug, n]) => ({ name: slugToName[slug] || slug, n }))
+  const viewsByHotelSorted = Object.entries(viewsByHotel)
+    .map(([name, n]) => ({ name, n }))
     .sort((a, b) => b.n - a.n)
-  const totalHotelPageClicks = hotelPageClicksSorted.reduce((s, x) => s + x.n, 0)
+  const totalHotelViews = viewsByHotelSorted.reduce((s, x) => s + x.n, 0)
 
   return (
     <div className="pt-20 min-h-screen bg-stone-50">
@@ -329,21 +321,21 @@ const { data: cronCosts } = await supabase
 {/* Clicks by hotel (all pages combined) */}
 <div style={{ background: '#fff', border: '1px solid #e7e5e4', borderRadius: 8, padding: '20px 24px', marginBottom: 28 }}>
   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-    <h3 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 700, color: '#78716c', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Clicks by Hotel</h3>
+    <h3 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 700, color: '#78716c', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Views by Hotel</h3>
     <div style={{ textAlign: 'right' }}>
-      <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 24, fontWeight: 400, color: '#C9A84C' }}>{totalHotelPageClicks}</span>
-      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: '#a8a29e', marginLeft: 6 }}>clicks across all hotel pages</span>
+      <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 24, fontWeight: 400, color: '#C9A84C' }}>{totalHotelViews}</span>
+      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: '#a8a29e', marginLeft: 6 }}>total hotel profile views</span>
     </div>
   </div>
-  {hotelPageClicksSorted.length === 0 ? (
-    <p style={{ fontSize: 13, color: '#a8a29e' }}>No hotel-page click data yet.</p>
+  {viewsByHotelSorted.length === 0 ? (
+    <p style={{ fontSize: 13, color: '#a8a29e' }}>No view data yet.</p>
   ) : (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {hotelPageClicksSorted.map(({ name, n }) => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 480, overflowY: 'auto' }}>
+      {viewsByHotelSorted.map(({ name, n }) => (
         <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: '#3D2B1F', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
           <div style={{ width: 160, height: 5, background: '#f5f5f4', borderRadius: 3, overflow: 'hidden', flexShrink: 0 }}>
-            <div style={{ height: '100%', width: Math.round((n / hotelPageClicksSorted[0].n) * 100) + '%', background: '#C9A84C', borderRadius: 3 }} />
+            <div style={{ height: '100%', width: Math.round((n / viewsByHotelSorted[0].n) * 100) + '%', background: '#C9A84C', borderRadius: 3 }} />
           </div>
           <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, color: '#C9A84C', minWidth: 28, textAlign: 'right', flexShrink: 0 }}>{n}</span>
         </div>
@@ -352,34 +344,7 @@ const { data: cronCosts } = await supabase
   )}
 </div>
 
-{/* Clicks by individual page */}
-<div style={{ background: '#fff', border: '1px solid #e7e5e4', borderRadius: 8, padding: '20px 24px', marginBottom: 28 }}>
-  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-    <h3 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 700, color: '#78716c', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Clicks by Page</h3>
-    <div style={{ textAlign: 'right' }}>
-      <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 24, fontWeight: 400, color: '#C9A84C' }}>{totalPageClicks}</span>
-      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: '#a8a29e', marginLeft: 6 }}>clicks with a recorded page</span>
-    </div>
-  </div>
-  {clicksByPageSorted.length === 0 ? (
-    <p style={{ fontSize: 13, color: '#a8a29e' }}>No page click data yet.</p>
-  ) : (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 420, overflowY: 'auto' }}>
-      {clicksByPageSorted.map(([page, count]) => (
-        <div key={page} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: '#3D2B1F', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{page}</span>
-          <div style={{ width: 160, height: 5, background: '#f5f5f4', borderRadius: 3, overflow: 'hidden', flexShrink: 0 }}>
-            <div style={{ height: '100%', width: Math.round((count / clicksByPageSorted[0][1]) * 100) + '%', background: '#C9A84C', borderRadius: 3 }} />
-          </div>
-          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, color: '#C9A84C', minWidth: 28, textAlign: 'right', flexShrink: 0 }}>{count}</span>
-        </div>
-      ))}
-    </div>
-  )}
-  {unknownPageClicks > 0 && (
-    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: '#a8a29e', margin: '12px 0 0' }}>{unknownPageClicks} additional clicks had no recorded source page.</p>
-  )}
-</div>
+
 
 
 
