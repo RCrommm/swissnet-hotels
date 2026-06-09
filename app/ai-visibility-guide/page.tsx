@@ -53,13 +53,13 @@ export default function AIVisibilityGuidePage() {
   )
 
   const P = ({ children }: { children: React.ReactNode }) => (
-    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: textMuted, fontWeight: 300, lineHeight: 1.9, margin: '0 0 1.25rem', maxWidth: 720 }}>{children}</p>
+    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.95rem', color: '#3D2B1F', fontWeight: 400, lineHeight: 1.85, margin: '0 0 1.5rem', maxWidth: 720 }}>{children}</p>
   )
 
   const Bullet = ({ children }: { children: React.ReactNode }) => (
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '0.85rem', maxWidth: 720 }}>
       <span style={{ color: gold, fontSize: '0.65rem', flexShrink: 0, marginTop: '0.3rem' }}>✦</span>
-      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: textMuted, lineHeight: 1.7, fontWeight: 300 }}>{children}</span>
+      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.92rem', color: '#3D2B1F', lineHeight: 1.75, fontWeight: 400 }}>{children}</span>
     </div>
   )
 
