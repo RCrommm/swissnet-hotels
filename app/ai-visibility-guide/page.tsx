@@ -72,7 +72,7 @@ export default function AIVisibilityGuidePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
       <Navigation />
 
-      <section style={{ background: bg, padding: '9rem 2rem 5rem', textAlign: 'center', borderBottom: '3px solid ' + gold }}>
+      <section style={{ background: bg, padding: '9rem 2rem 5rem', textAlign: 'center' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.3em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>AI Visibility Guide</p>
           <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(2.5rem, 6vw, 4.5rem)', fontWeight: 300, color: heroText, lineHeight: 1.1, margin: '0 0 1.5rem', letterSpacing: '-0.02em' }}>
@@ -118,7 +118,7 @@ export default function AIVisibilityGuidePage() {
           </P>
           <Bullet><strong style={{ color: text, fontWeight: 500 }}>ChatGPT</strong> leans heavily on its underlying web-search partner and on third-party sources — directories, review platforms, editorial coverage. Being well-described off your own site matters as much as your own pages.</Bullet>
           <Bullet><strong style={{ color: text, fontWeight: 500 }}>Google&rsquo;s AI Overviews and AI Mode</strong> draw on Google&rsquo;s own index. Strong, well-structured content plus a complete, current Google Business Profile carry real weight — and the hotel cited isn&rsquo;t always the one ranked first; it&rsquo;s often the one that gives the clearest answer.</Bullet>
-          <Bullet><strong style={{ color: text, fontWeight: 500 }}>Perplexity</strong> retrieves in real time and weights freshness and community discussion. Recency and being talked about across the wider web matter more here than elsewhere.</Bullet>
+          <Bullet><strong style={{ color: text, fontWeight: 500 }}>Perplexity</strong> retrieves in real time, drawing on its own crawler alongside major search indexes like Bing. It places unusual weight on freshness and on how widely a hotel is discussed across the web — recent coverage and an active presence matter more here than on any other platform.</Bullet>
 
           <Divider />
 
