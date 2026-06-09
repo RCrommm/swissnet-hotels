@@ -19,10 +19,12 @@ export const metadata = {
 export default function AIVisibilityGuidePage() {
   const gold = '#C9A84C'
   const bg = '#492816'
-  const bgLight = '#3D2010'
-  const border = 'rgba(201,169,110,0.3)'
-  const text = '#FFFFFF'
-  const textMuted = 'rgba(255,255,255,0.6)'
+  const bgLight = '#FAF7F1'
+  const border = 'rgba(0,0,0,0.1)'
+  const text = '#2A1208'
+  const textMuted = 'rgba(42,18,8,0.7)'
+  const heroText = '#FFFFFF'
+  const heroMuted = 'rgba(255,255,255,0.7)'
 
   const articleSchema = {
     '@context': 'https://schema.org',
@@ -66,17 +68,17 @@ export default function AIVisibilityGuidePage() {
   )
 
   return (
-    <div style={{ background: bg, minHeight: '100vh' }}>
+    <div style={{ background: bgLight, minHeight: '100vh' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
       <Navigation />
 
-      <section style={{ borderBottom: '1px solid ' + border, padding: '10rem 2rem 5rem' }}>
+      <section style={{ background: bg, padding: '9rem 2rem 5rem', textAlign: 'center' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <Label>AI Visibility Guide</Label>
-          <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(2.5rem, 6vw, 4.5rem)', fontWeight: 300, color: text, lineHeight: 1.1, margin: '0 0 1.5rem', letterSpacing: '-0.02em' }}>
-            How hotels rank<br /><span style={{ fontStyle: 'italic', color: gold }}>in AI search.</span>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.3em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>AI Visibility Guide</p>
+          <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(2.5rem, 6vw, 4.5rem)', fontWeight: 300, color: heroText, lineHeight: 1.1, margin: '0 0 1.5rem', letterSpacing: '-0.02em' }}>
+            How hotels rank <span style={{ fontStyle: 'italic', color: gold }}>in AI search.</span>
           </h1>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', fontWeight: 300, lineHeight: 1.8, maxWidth: 640, margin: 0 }}>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', color: heroMuted, fontWeight: 300, lineHeight: 1.8, maxWidth: 640, margin: '0 auto' }}>
             Why reputation alone no longer guarantees a recommendation — and the structured way for a luxury hotel to become visible in ChatGPT, Perplexity and Google AI.
           </p>
         </div>
@@ -174,12 +176,12 @@ export default function AIVisibilityGuidePage() {
         </div>
       </section>
 
-      <section style={{ background: bgLight, borderTop: '1px solid ' + border, padding: '5rem 2rem', textAlign: 'center' }}>
+      <section style={{ background: bg, borderTop: '1px solid ' + border, padding: '5rem 2rem', textAlign: 'center' }}>
         <div style={{ maxWidth: 640, margin: '0 auto' }}>
-          <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(1.8rem, 4vw, 2.5rem)', fontWeight: 300, color: text, margin: '0 0 1rem' }}>
+          <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(1.8rem, 4vw, 2.5rem)', fontWeight: 300, color: heroText, margin: '0 0 1rem' }}>
             See how your hotel appears in AI search.
           </h2>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: textMuted, fontWeight: 300, lineHeight: 1.8, margin: '0 0 2rem' }}>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: heroMuted, fontWeight: 300, lineHeight: 1.8, margin: '0 0 2rem' }}>
             SwissNet tracks how Swiss luxury hotels appear across ChatGPT, Perplexity and Google AI — and shows exactly where visibility is being lost to competitors.
           </p>
           <Link href="/#contact" style={{ display: 'inline-block', background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.875rem 2.5rem', textDecoration: 'none' }}>
