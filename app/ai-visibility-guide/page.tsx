@@ -72,7 +72,7 @@ export default function AIVisibilityGuidePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
       <Navigation />
 
-      <section style={{ background: bg, padding: '9rem 2rem 5rem', textAlign: 'center' }}>
+      <section style={{ background: bg, padding: '9rem 2rem 5rem', textAlign: 'center', borderBottom: '3px solid ' + gold }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.3em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>AI Visibility Guide</p>
           <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 'clamp(2.5rem, 6vw, 4.5rem)', fontWeight: 300, color: heroText, lineHeight: 1.1, margin: '0 0 1.5rem', letterSpacing: '-0.02em' }}>
