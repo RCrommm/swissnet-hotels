@@ -59,7 +59,7 @@ export default async function AdminPage({
     .from('referral_clicks')
     .select('*')
     .order('clicked_at', { ascending: false })
-    .limit(100)
+    .limit(2000)
 
   const { data: views } = await supabase
     .from('hotel_views')
@@ -135,6 +135,23 @@ const { data: cronCosts } = await supabase
     const src = v.utm_source || 'direct'
     viewsBySource[src] = (viewsBySource[src] || 0) + 1
   }
+
+  // Clicks by individual page (normalised source_page)
+  const cleanPage = (raw: string) => {
+    if (!raw || !raw.trim()) return null
+    let p = raw.trim().replace(/^https?:\/\/(www\.)?swissnethotels\.com/i, '').split('?')[0]
+    if (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1)
+    return p || '/'
+  }
+  const clicksByPage: Record<string, number> = {}
+  let unknownPageClicks = 0
+  for (const c of clicksList) {
+    const page = cleanPage(c.source_page)
+    if (!page) { unknownPageClicks++; continue }
+    clicksByPage[page] = (clicksByPage[page] || 0) + 1
+  }
+  const clicksByPageSorted = Object.entries(clicksByPage).sort((a, b) => b[1] - a[1])
+  const totalPageClicks = clicksByPageSorted.reduce((s, [, n]) => s + n, 0)
 
   return (
     <div className="pt-20 min-h-screen bg-stone-50">
@@ -291,6 +308,35 @@ const { data: cronCosts } = await supabase
       )
     })}
   </div>
+</div>
+
+{/* Clicks by individual page */}
+<div style={{ background: '#fff', border: '1px solid #e7e5e4', borderRadius: 8, padding: '20px 24px', marginBottom: 28 }}>
+  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+    <h3 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 700, color: '#78716c', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Clicks by Page</h3>
+    <div style={{ textAlign: 'right' }}>
+      <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 24, fontWeight: 400, color: '#C9A84C' }}>{totalPageClicks}</span>
+      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: '#a8a29e', marginLeft: 6 }}>clicks with a recorded page</span>
+    </div>
+  </div>
+  {clicksByPageSorted.length === 0 ? (
+    <p style={{ fontSize: 13, color: '#a8a29e' }}>No page click data yet.</p>
+  ) : (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 420, overflowY: 'auto' }}>
+      {clicksByPageSorted.map(([page, count]) => (
+        <div key={page} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: '#3D2B1F', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{page}</span>
+          <div style={{ width: 160, height: 5, background: '#f5f5f4', borderRadius: 3, overflow: 'hidden', flexShrink: 0 }}>
+            <div style={{ height: '100%', width: Math.round((count / clicksByPageSorted[0][1]) * 100) + '%', background: '#C9A84C', borderRadius: 3 }} />
+          </div>
+          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, color: '#C9A84C', minWidth: 28, textAlign: 'right', flexShrink: 0 }}>{count}</span>
+        </div>
+      ))}
+    </div>
+  )}
+  {unknownPageClicks > 0 && (
+    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: '#a8a29e', margin: '12px 0 0' }}>{unknownPageClicks} additional clicks had no recorded source page.</p>
+  )}
 </div>
 
 {/* Views by source */}
