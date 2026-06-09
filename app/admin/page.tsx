@@ -153,6 +153,22 @@ const { data: cronCosts } = await supabase
   const clicksByPageSorted = Object.entries(clicksByPage).sort((a, b) => b[1] - a[1])
   const totalPageClicks = clicksByPageSorted.reduce((s, [, n]) => s + n, 0)
 
+  // Clicks grouped by hotel (all of a hotel's pages combined, via slug)
+  const slugToName: Record<string, string> = {}
+  for (const h of hotelsList) { if (h.slug) slugToName[h.slug] = h.name }
+  const hotelPageClicks: Record<string, number> = {}
+  for (const c of clicksList) {
+    const page = cleanPage(c.source_page)
+    if (!page) continue
+    const m = page.match(/^\/hotels\/([^/]+)/)
+    if (!m) continue
+    hotelPageClicks[m[1]] = (hotelPageClicks[m[1]] || 0) + 1
+  }
+  const hotelPageClicksSorted = Object.entries(hotelPageClicks)
+    .map(([slug, n]) => ({ name: slugToName[slug] || slug, n }))
+    .sort((a, b) => b.n - a.n)
+  const totalHotelPageClicks = hotelPageClicksSorted.reduce((s, x) => s + x.n, 0)
+
   return (
     <div className="pt-20 min-h-screen bg-stone-50">
       <div className="max-w-6xl mx-auto px-6 py-10">
@@ -308,6 +324,32 @@ const { data: cronCosts } = await supabase
       )
     })}
   </div>
+</div>
+
+{/* Clicks by hotel (all pages combined) */}
+<div style={{ background: '#fff', border: '1px solid #e7e5e4', borderRadius: 8, padding: '20px 24px', marginBottom: 28 }}>
+  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+    <h3 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, fontWeight: 700, color: '#78716c', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Clicks by Hotel</h3>
+    <div style={{ textAlign: 'right' }}>
+      <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 24, fontWeight: 400, color: '#C9A84C' }}>{totalHotelPageClicks}</span>
+      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, color: '#a8a29e', marginLeft: 6 }}>clicks across all hotel pages</span>
+    </div>
+  </div>
+  {hotelPageClicksSorted.length === 0 ? (
+    <p style={{ fontSize: 13, color: '#a8a29e' }}>No hotel-page click data yet.</p>
+  ) : (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {hotelPageClicksSorted.map(({ name, n }) => (
+        <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: '#3D2B1F', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+          <div style={{ width: 160, height: 5, background: '#f5f5f4', borderRadius: 3, overflow: 'hidden', flexShrink: 0 }}>
+            <div style={{ height: '100%', width: Math.round((n / hotelPageClicksSorted[0].n) * 100) + '%', background: '#C9A84C', borderRadius: 3 }} />
+          </div>
+          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, color: '#C9A84C', minWidth: 28, textAlign: 'right', flexShrink: 0 }}>{n}</span>
+        </div>
+      ))}
+    </div>
+  )}
 </div>
 
 {/* Clicks by individual page */}
