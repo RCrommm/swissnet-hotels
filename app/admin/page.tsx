@@ -65,7 +65,7 @@ export default async function AdminPage({
     .from('hotel_views')
     .select('*')
     .order('viewed_at', { ascending: false })
-    .limit(200)
+    .limit(5000)
 
   const { data: cronSetting } = await supabase
     .from('settings')
