@@ -590,6 +590,8 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
         isPartOf: { '@id': 'https://swissnethotels.com#website' },
         breadcrumb: { '@id': `${pageUrl}#breadcrumb` },
         mainEntity: { '@id': `${pageUrl}#list` },
+        author: { '@type': 'Organization', name: 'SwissNet Hotels', url: 'https://swissnethotels.com' },
+        publisher: { '@id': 'https://swissnethotels.com#organization' },
         dateModified: new Date().toISOString().split('T')[0],
       },
       {
@@ -618,6 +620,15 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
             url: `https://swissnethotels.com/hotels/${(h as any).slug || h.id}`,
             priceRange: `CHF ${h.nightly_rate_chf}+`,
             starRating: { '@type': 'Rating', ratingValue: (h as any).star_classification || 5 },
+            ...((h as any).rating_value && (h as any).rating_count ? {
+              aggregateRating: {
+                '@type': 'AggregateRating',
+                ratingValue: (h as any).rating_value,
+                reviewCount: (h as any).rating_count,
+                bestRating: 5,
+                worstRating: 1,
+              },
+            } : {}),
             address: { '@type': 'PostalAddress', addressLocality: h.location, addressCountry: 'CH' },
           }
         }))
