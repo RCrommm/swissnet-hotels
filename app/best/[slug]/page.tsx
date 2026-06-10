@@ -781,9 +781,13 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
         url: pageUrl,
         name: page.title + ' | SwissNet Hotels',
         description: page.description.replace(/\n\n/g, ' '),
+        ...(page.verdict ? { 'abstract': page.verdict } : {}),
         isPartOf: { '@id': 'https://swissnethotels.com#website' },
         breadcrumb: { '@id': `${pageUrl}#breadcrumb` },
         mainEntity: { '@id': `${pageUrl}#list` },
+        author: { '@type': 'Organization', name: 'SwissNet Hotels', url: 'https://swissnethotels.com' },
+        publisher: { '@id': 'https://swissnethotels.com#organization' },
+        datePublished: '2026-01-01',
         dateModified: new Date().toISOString().split('T')[0],
       },
       {
@@ -812,6 +816,15 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
             url: `https://swissnethotels.com/hotels/${h.slug || h.id}`,
             priceRange: h.nightly_rate_chf ? `CHF ${h.nightly_rate_chf}+` : undefined,
             starRating: { '@type': 'Rating', ratingValue: h.star_classification || 5 },
+            ...(h.rating_value && h.rating_count ? {
+              aggregateRating: {
+                '@type': 'AggregateRating',
+                ratingValue: h.rating_value,
+                reviewCount: h.rating_count,
+                bestRating: 5,
+                worstRating: 1,
+              },
+            } : {}),
             address: { '@type': 'PostalAddress', addressLocality: h.location, addressCountry: 'CH' },
           }
         }))
