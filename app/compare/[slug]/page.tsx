@@ -454,8 +454,33 @@ h.category === hotelB.category
         description: opening,
         isPartOf: { '@id': 'https://swissnethotels.com#website' },
         breadcrumb: { '@id': `${pageUrl}#breadcrumb` },
+        about: [
+          { '@id': `https://swissnethotels.com/hotels/${hotelA.slug || hotelA.id}#hotel` },
+          { '@id': `https://swissnethotels.com/hotels/${hotelB.slug || hotelB.id}#hotel` },
+        ],
+        author: { '@type': 'Organization', name: 'SwissNet Hotels', url: 'https://swissnethotels.com' },
+        publisher: { '@id': 'https://swissnethotels.com#organization' },
         dateModified: new Date().toISOString().split('T')[0],
       },
+      ...[hotelA, hotelB].map((h: any) => ({
+        '@type': 'Hotel',
+        '@id': `https://swissnethotels.com/hotels/${h.slug || h.id}#hotel`,
+        name: h.name,
+        url: `https://swissnethotels.com/hotels/${h.slug || h.id}`,
+        ...(h.description ? { description: h.description } : {}),
+        priceRange: h.nightly_rate_chf ? `CHF ${h.nightly_rate_chf}+` : undefined,
+        starRating: { '@type': 'Rating', ratingValue: h.star_classification || 5 },
+        ...(h.rating_value && h.rating_count ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: h.rating_value,
+            reviewCount: h.rating_count,
+            bestRating: 5,
+            worstRating: 1,
+          },
+        } : {}),
+        address: { '@type': 'PostalAddress', addressLocality: h.location, addressRegion: h.region, addressCountry: 'CH' },
+      })),
       {
         '@type': 'BreadcrumbList',
         '@id': `${pageUrl}#breadcrumb`,
