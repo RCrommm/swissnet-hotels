@@ -1608,7 +1608,7 @@ function SchemaTab({ hotel, hotelId, crawlerCount, onGoToOptimise }: { hotel: an
       )}
 
       {/* ── KNOWLEDGE LAYERS ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
         {themes.map(t => {
           const sc = themeScore(t.fields)
           const scColor = sc >= 80 ? GREEN : sc >= 50 ? GOLD : sc > 0 ? '#d97706' : TEXT_MUTED
