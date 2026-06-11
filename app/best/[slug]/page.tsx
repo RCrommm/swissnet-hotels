@@ -816,6 +816,8 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
             url: `https://swissnethotels.com/hotels/${h.slug || h.id}`,
             priceRange: h.nightly_rate_chf ? `CHF ${h.nightly_rate_chf}+` : undefined,
             starRating: { '@type': 'Rating', ratingValue: h.star_classification || 5 },
+            ...(h.images?.[0] ? { image: h.images[0] } : {}),
+            ...(h.telephone ? { telephone: h.telephone } : {}),
             ...(h.rating_value && h.rating_count ? {
               aggregateRating: {
                 '@type': 'AggregateRating',
@@ -825,7 +827,13 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
                 worstRating: 1,
               },
             } : {}),
-            address: { '@type': 'PostalAddress', addressLocality: h.location, addressCountry: 'CH' },
+            address: {
+              '@type': 'PostalAddress',
+              ...(h.street_address ? { streetAddress: h.street_address } : {}),
+              ...(h.postal_code ? { postalCode: h.postal_code } : {}),
+              addressLocality: h.location,
+              addressCountry: 'CH',
+            },
           }
         }))
       },
