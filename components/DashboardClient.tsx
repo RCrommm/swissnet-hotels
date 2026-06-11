@@ -539,7 +539,7 @@ const saveHotelInfo = async () => {
     setFaqs(prev => { const updated = [...(prev[page] || [])]; updated[idx] = { ...updated[idx], [field]: value }; return { ...prev, [page]: updated } })
   }
   const addFaq = (page: string) => {
-    const limit = page === 'overview' ? 8 : 6
+    const limit = 12
     if ((faqs[page] || []).length >= limit) return
     setFaqs(prev => ({ ...prev, [page]: [...(prev[page] || []), { q: '', a: '' }] }))
   }
@@ -551,11 +551,11 @@ const saveHotelInfo = async () => {
   const faqPageKey = mainTab === 'events' ? 'events' : mainTab
   const mainTabs = [
   { key: 'hotel-info', label: 'Hotel Info', count: '' },
-  { key: 'overview', label: 'Overview', count: `${(faqs.overview || []).length}/8` },
+  { key: 'overview', label: 'Overview', count: `${(faqs.overview || []).length}/12` },
   { key: 'events', label: 'Events & Offers', count: `${activeOffers.length}/3` },
-  { key: 'rooms', label: 'Rooms', count: `${(faqs.rooms || []).length}/6` },
-  { key: 'dining', label: 'Dining', count: `${(faqs.dining || []).length}/6` },
-  { key: 'spa', label: 'Spa', count: `${(faqs.spa || []).length}/6` },
+  { key: 'rooms', label: 'Rooms', count: `${(faqs.rooms || []).length}/12` },
+  { key: 'dining', label: 'Dining', count: `${(faqs.dining || []).length}/12` },
+  { key: 'spa', label: 'Spa', count: `${(faqs.spa || []).length}/12` },
   { key: 'experiences', label: 'Experiences', count: `${experiences.length}` },
 ]
   const inp: any = { width: '100%', fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.55rem 0.875rem', background: BG, outline: 'none', boxSizing: 'border-box' }
@@ -574,7 +574,7 @@ const saveHotelInfo = async () => {
       {/* Sub tabs */}
       {mainTab !== 'overview' && mainTab !== 'hotel-info' && (
         <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '1.5rem' }}>
-          {[{ key: 'content', label: 'Content' }, { key: 'faqs', label: `FAQs (${(faqs[faqPageKey] || []).length}/6)` }].map(s => (
+          {[{ key: 'content', label: 'Content' }, { key: 'faqs', label: `FAQs (${(faqs[faqPageKey] || []).length}/12)` }].map(s => (
             <button key={s.key} onClick={() => setSubTab(s.key as any)} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, padding: '0.4rem 1rem', borderRadius: 4, cursor: 'pointer', background: subTab === s.key ? TEXT : WHITE, color: subTab === s.key ? WHITE : TEXT_MUTED, border: '1px solid ' + (subTab === s.key ? TEXT : BORDER) }}>{s.label}</button>
           ))}
         </div>
@@ -876,9 +876,9 @@ const saveHotelInfo = async () => {
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>
                 {mainTab === 'overview' ? 'Overview FAQs' : mainTab === 'events' ? 'Events & Offers FAQs' : `${mainTab.charAt(0).toUpperCase() + mainTab.slice(1)} FAQs`}
               </p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Changes go live immediately · Max {faqPageKey === 'overview' ? 8 : 6} per page · Appear in FAQPage schema</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Changes go live immediately · Max 12 per page · Appear in FAQPage schema</p>
             </div>
-            {(faqs[faqPageKey] || []).length < (faqPageKey === 'overview' ? 8 : 6) && (
+            {(faqs[faqPageKey] || []).length < 12 && (
               <button onClick={() => addFaq(faqPageKey)} style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer', flexShrink: 0, marginLeft: '1rem' }}>+ Add FAQ</button>
             )}
           </div>
