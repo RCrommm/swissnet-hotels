@@ -56,9 +56,9 @@ export default async function ExperiencesPage({ params }: { params: Promise<{ sl
     value?.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || ''
 
   const category = (value?: string) => value?.toLowerCase() || ''
-  const outdoorExperiences = (experiences || []).filter((e: any) => ['outdoor', 'adventure', 'ski'].includes(category(e.category)))
+  const outdoorExperiences = (experiences || []).filter((e: any) => ['outdoor', 'adventure', 'ski', 'sports', 'water'].includes(category(e.category)))
   const wellnessExperiences = (experiences || []).filter((e: any) => ['wellness', 'spa'].includes(category(e.category)))
-  const culturalExperiences = (experiences || []).filter((e: any) => ['cultural', 'private'].includes(category(e.category)))
+  const culturalExperiences = (experiences || []).filter((e: any) => ['cultural', 'private', 'culture'].includes(category(e.category)))
 
   const faqs = (dbFaqs || []).map((f: any) => ({ q: f.question, a: f.answer }))
 
@@ -87,7 +87,7 @@ export default async function ExperiencesPage({ params }: { params: Promise<{ sl
         ]
       },
       ...(experiences || []).map((e: any) => ({
-        '@type': ['outdoor', 'adventure', 'ski'].includes(category(e.category)) ? 'TouristAttraction' : 'Service',
+        '@type': ['outdoor', 'adventure', 'ski', 'sports', 'water'].includes(category(e.category)) ? 'TouristAttraction' : 'Service',
         '@id': `${pageUrl}#experience-${slugify(e.name || e.id)}`,
         name: e.name,
         description: e.description || undefined,
