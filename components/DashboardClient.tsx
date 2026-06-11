@@ -2412,7 +2412,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
       </div>
 
       {/* MAIN */}
-      <div style={{ marginLeft: 210, flex: 1, padding: '2.5rem 3rem' }}>
+      <div style={{ marginLeft: 210, flex: 1, padding: '2.5rem 3rem', minWidth: 0, maxWidth: '100%', overflowX: 'hidden' }}>
 
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2.5rem' }}>
