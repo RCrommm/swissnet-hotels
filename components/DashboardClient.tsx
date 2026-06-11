@@ -1851,19 +1851,40 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
     ski: ['ski', 'slope', 'alpine'],
   }
   const usedWords = weakestCat ? (catKeywords[weakestCat] || []) : []
-  // For each query, find the single most recent row, then keep only those whose latest = not appeared
-  const byQuery: Record<string, any> = {}
+
+  // Monthly-locked selection: pick a query that was MISSED as of the start of this month
+  // (its last run before the current month, or its first-ever run if tracking began this month).
+  // That anchor is immutable, so the chosen query stays fixed all month. We then check whether
+  // the hotel appears NOW → goal achieved. Next calendar month, a fresh miss is selected.
+  const g3Now = new Date()
+  const g3MonthStart = `${g3Now.getFullYear()}-${String(g3Now.getMonth() + 1).padStart(2, '0')}-01`
+
+  const runsByQuery: Record<string, any[]> = {}
   for (const r of (googleAiScores || [])) {
     if (!r.query) continue
-    const t = new Date(r.checked_at).getTime()
-    if (!byQuery[r.query] || t > new Date(byQuery[r.query].checked_at).getTime()) byQuery[r.query] = r
+    if (!runsByQuery[r.query]) runsByQuery[r.query] = []
+    runsByQuery[r.query].push(r)
   }
-  const latestMissed = Object.values(byQuery).filter((r: any) => r.appeared === false)
-  const distinctMissed = latestMissed.filter((m: any) => {
-    const q = (m.query || '').toLowerCase()
-    return !usedWords.some(w => q.includes(w))
-  })
-  const missedQuery = (distinctMissed[0] || latestMissed[0])?.query || null
+  for (const q of Object.keys(runsByQuery)) {
+    runsByQuery[q].sort((a, b) => new Date(a.checked_at).getTime() - new Date(b.checked_at).getTime())
+  }
+  const baselineMissed = (q: string) => {
+    const runs = runsByQuery[q] || []
+    if (!runs.length) return false
+    const before = runs.filter(r => (r.checked_at || '').split('T')[0] < g3MonthStart)
+    const anchor = before.length ? before[before.length - 1] : runs[0]
+    return anchor.appeared === false
+  }
+  const appearsNow = (q: string) => {
+    const runs = runsByQuery[q] || []
+    return runs.length ? runs[runs.length - 1].appeared === true : false
+  }
+  const baselineMissedQueries = Object.keys(runsByQuery)
+    .filter(q => baselineMissed(q))
+    .sort((a, b) => a.localeCompare(b))
+  const distinctG3 = baselineMissedQueries.filter(q => !usedWords.some(w => q.toLowerCase().includes(w)))
+  const missedQuery = (distinctG3[0] || baselineMissedQueries[0]) || null
+  const g3Achieved = missedQuery ? appearsNow(missedQuery) : false
   const queryRec = missedQuery ? getQueryRec(missedQuery, hotelName) : null
 
   return (
@@ -1931,11 +1952,11 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
         <GoalCard
           num={3}
           kicker="Query Coverage"
-          title={`Start appearing for "${missedQuery}"`}
+          title={g3Achieved ? `Now appearing for "${missedQuery}"` : `Start appearing for "${missedQuery}"`}
           chips={[
             { text: 'Google AI search', tone: 'muted' },
           ]}
-          status={{ current: 'Not yet', goal: 'Appear', reached: false }}
+          status={{ current: g3Achieved ? 'Appearing' : 'Not yet', goal: 'Appear', reached: g3Achieved }}
           actions={[
             { label: 'Add this FAQ', text: queryRec.faq },
             { label: 'Use these words', text: queryRec.words },
