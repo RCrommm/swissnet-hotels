@@ -68,6 +68,50 @@ export async function POST(req: Request) {
     if (!beeKey) return NextResponse.json({ error: 'Scraping not configured.' }, { status: 500 })
     const openaiKey = process.env.OPENAI_API_KEY
     if (!openaiKey) return NextResponse.json({ error: 'AI analysis not configured.' }, { status: 500 })
+    // ---- Fetch verified profile facts for this hotel (so GPT uses truth, never invents) ----
+    let verifiedFacts = ''
+    if (hotelId) {
+      try {
+        const { createClient } = await import('@supabase/supabase-js')
+        const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+        const [{ data: h }, { data: rooms }, { data: restaurants }, { data: spa }, { data: experiences }, { data: content }, { data: faqSugg }] = await Promise.all([
+          sb.from('hotels').select('name, location, region, rating, nightly_rate_chf, about_us, languages, check_in_time, check_out_time, parking, pet_friendly, family_friendly, private_transfer, cancellation_policy, accessibility, seasonal_notes, booking_benefits, direct_booking_url').eq('id', hotelId).single(),
+          sb.from('room_types').select('name, size_sqm, base_rate_chf, bed_type, max_occupancy').eq('hotel_id', hotelId),
+          sb.from('hotel_restaurants').select('name, cuisine_type, michelin_stars, description').eq('hotel_id', hotelId).eq('is_available', true),
+          sb.from('hotel_spa').select('name, size_sqm, treatments, price_from, pool, sauna, hammam, opening_hours').eq('hotel_id', hotelId).eq('is_available', true),
+          sb.from('hotel_experiences').select('name, category, duration, price_from').eq('hotel_id', hotelId).eq('is_available', true),
+          sb.from('hotel_content').select('faqs').eq('hotel_id', hotelId).single(),
+          sb.from('hotel_faq_suggestions').select('question, page_type').eq('hotel_id', hotelId),
+        ])
+        const parts: string[] = []
+        if (h) {
+          parts.push(`Hotel: ${h.name}${h.location ? ', ' + h.location : ''}${h.region ? ' (' + h.region + ')' : ''}`)
+          if (h.rating) parts.push(`Star rating: ${h.rating}`)
+          if (h.nightly_rate_chf) parts.push(`Nightly rate from: CHF ${h.nightly_rate_chf}`)
+          if (h.about_us) parts.push(`About: ${h.about_us}`)
+          if (h.languages) parts.push(`Languages spoken: ${h.languages}`)
+          if (h.check_in_time) parts.push(`Check-in: ${h.check_in_time}`)
+          if (h.check_out_time) parts.push(`Check-out: ${h.check_out_time}`)
+          if (h.parking) parts.push(`Parking: ${h.parking}`)
+          if (h.cancellation_policy) parts.push(`Cancellation policy: ${h.cancellation_policy}`)
+          if (h.accessibility) parts.push(`Accessibility: ${h.accessibility}`)
+          if (h.seasonal_notes) parts.push(`Seasonal notes: ${h.seasonal_notes}`)
+          if (h.booking_benefits) parts.push(`Direct booking benefits: ${h.booking_benefits}`)
+          const flags = [h.pet_friendly && 'pet friendly', h.family_friendly && 'family friendly', h.private_transfer && 'airport transfer available'].filter(Boolean)
+          if (flags.length) parts.push(`Features: ${flags.join(', ')}`)
+        }
+        if (rooms?.length) parts.push(`Room types: ${rooms.map((r: any) => `${r.name}${r.size_sqm ? ' ' + r.size_sqm + 'm²' : ''}${r.bed_type ? ', ' + r.bed_type : ''}${r.max_occupancy ? ', sleeps ' + r.max_occupancy : ''}${r.base_rate_chf ? ', from CHF ' + r.base_rate_chf : ''}`).join('; ')}`)
+        if (restaurants?.length) parts.push(`Restaurants: ${restaurants.map((r: any) => `${r.name}${r.cuisine_type ? ' (' + r.cuisine_type + ')' : ''}${r.michelin_stars ? ', ' + r.michelin_stars + ' Michelin star(s)' : ''}`).join('; ')}`)
+        if (spa?.length) parts.push(`Spa/wellness: ${spa.map((s: any) => `${s.name}${s.size_sqm ? ' ' + s.size_sqm + 'm²' : ''}${s.price_from ? ', from CHF ' + s.price_from : ''}${[s.pool && 'pool', s.sauna && 'sauna', s.hammam && 'hammam'].filter(Boolean).length ? ', ' + [s.pool && 'pool', s.sauna && 'sauna', s.hammam && 'hammam'].filter(Boolean).join('/') : ''}`).join('; ')}`)
+        if (experiences?.length) parts.push(`Experiences: ${experiences.map((e: any) => e.name).join('; ')}`)
+        const ovFaqs = (content?.faqs || []).map((f: any) => f.question)
+        const allFaqQ = [...ovFaqs, ...((faqSugg || []).map((f: any) => f.question))]
+        if (allFaqQ.length) parts.push(`FAQs already written in SwissNet profile (${allFaqQ.length}): ${allFaqQ.slice(0, 20).join(' | ')}`)
+        verifiedFacts = parts.join('\n')
+      } catch (e) {
+        verifiedFacts = ''
+      }
+    }
 
     const origin = new URL(target).origin
     const host = new URL(target).hostname.replace('www.', '')
@@ -156,6 +200,9 @@ SITE: ${host}
 HOMEPAGE TITLE: ${homeTitle}
 HOMEPAGE META DESCRIPTION: ${homeMeta || 'NONE'}
 
+VERIFIED FACTS ABOUT THIS HOTEL (from SwissNet's own database — these are TRUE and confirmed):
+${verifiedFacts || 'No verified profile data available.'}
+
 ALL STRUCTURED DATA (JSON-LD) FOUND ACROSS PAGES:
 ${allSchema || 'NONE FOUND'}
 
@@ -163,6 +210,8 @@ CONTENT FROM CRAWLED PAGES:
 ${combinedContent}
 
 CRITICAL INSTRUCTIONS:
+- NEVER invent facts, names, awards, chef names, numbers, or figures. If you suggest adding something, use ONLY the VERIFIED FACTS above. If a relevant fact is NOT in the verified facts and NOT on the site, instruct the hotel to "add your actual [chef name / award / figure]" — do NOT make one up. For example, never write a fake award like "Best Hotel 2023"; instead say "add any real awards you hold."
+- When the website is MISSING something that IS in the VERIFIED FACTS, that is your most valuable finding: tell them to put that real fact on their site, and quote the actual value from the verified facts. Example: "Your profile shows your check-in time and cancellation policy, but your website doesn't state them — add them so AI can quote you."
 - Be ruthlessly specific. Every finding must reference what is ACTUALLY on the site — quote an exact phrase, name the exact element/page, or state explicitly it is absent everywhere. Never write a sentence that could apply to any hotel.
 - For each fix, write a precise, actionable instruction WITH EXAMPLE WORDING the hotel could paste onto their page. Write fixes as if your only goal is maximising this hotel's AI citation rate.
 - Judge QUALITY, not just presence: content written in clear, factual, quotable sentences ("102 rooms and suites, 3 minutes from Geneva Airport, Spa Nescens 2,500m²") is strong for AI; vague marketing prose ("an extraordinary haven beyond time") is weak — call this out specifically and show how to rewrite it.
