@@ -109,15 +109,64 @@ export async function POST(req: Request) {
         redirect: 'follow',
       })
       clearTimeout(timeout)
-      if (!res.ok) {
-        return NextResponse.json({ error: `Site returned status ${res.status}`, reachable: false }, { status: 200 })
+      if (res.ok) {
+        html = await res.text()
       }
-      html = await res.text()
+      var pageStatus = res.status
     } catch (e: any) {
       clearTimeout(timeout)
-      return NextResponse.json({ error: 'Could not reach the site (it may be slow or blocking automated visits).', reachable: false }, { status: 200 })
+      var pageStatus = 0
+    }
+    // Page couldn't be read directly (blocked, challenged, or unreachable)
+    if (!html) {
+      const findings: any[] = [
+        {
+          key: 'page_access',
+          label: 'Direct page access',
+          ok: false,
+          detail: (pageStatus === 403 || pageStatus === 401)
+            ? 'Your website blocked our automated scan (it uses bot protection such as Cloudflare). This is common and protects your site — but it is worth confirming the major AI crawlers are explicitly allowed, since they rely on automated access too.'
+            : 'We could not read your homepage directly. The site may be slow, down, or blocking automated visits. A live person can still browse it normally.',
+          priority: 'High',
+        },
+      ]
+      if (robotsResult.checked && robotsResult.found) {
+        const blocked = robotsResult.anyBlocked
+        const names = (robotsResult.blockedBots || []).map((b: any) => b.name)
+        findings.push({
+          key: 'ai_crawlers',
+          label: 'AI crawler access (robots.txt)',
+          ok: !blocked,
+          detail: blocked
+            ? (robotsResult.wildcardBlocksAll
+                ? 'Your robots.txt blocks all crawlers from the whole site (Disallow: / for *). This can stop AI assistants reading your pages. Worth confirming this is intended.'
+                : `Your robots.txt specifically blocks these AI crawlers: ${names.join(', ')}. Worth confirming this is intended.`)
+            : 'Your robots.txt does not block the major AI crawlers (GPTBot, PerplexityBot, Google-Extended) — they are allowed at that level.',
+          priority: 'High',
+        })
+      } else if (robotsResult.checked && !robotsResult.found) {
+        findings.push({
+          key: 'ai_crawlers',
+          label: 'AI crawler access (robots.txt)',
+          ok: true,
+          detail: 'No robots.txt found — nothing is blocked at that level.',
+          priority: 'Low',
+        })
+      }
+      const passed = findings.filter(f => f.ok).length
+      return NextResponse.json({
+        reachable: false,
+        blocked: pageStatus === 403 || pageStatus === 401,
+        url: target,
+        score: Math.round((passed / findings.length) * 100),
+        passed,
+        total: findings.length,
+        findings,
+        robots: robotsResult,
+      })
     }
 
+    const lower = html.toLowerCase()
     const lower = html.toLowerCase()
 
     // Strip tags to get readable text (what a simple crawler "sees")

@@ -2181,7 +2181,7 @@ function WebsiteTab({ hotel, hotelName, googleAiScores, hotelCatScores, category
         body: JSON.stringify({ url: officialUrl }),
       })
       const data = await res.json()
-      if (data.error && !data.reachable) { setError(data.error) }
+      if (data.error && data.reachable === undefined) { setError(data.error) }
       else { setAudit(data) }
     } catch (e: any) {
       setError('Could not run the audit. Please try again.')
