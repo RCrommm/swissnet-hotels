@@ -2160,6 +2160,128 @@ function ComparisonReport({ hotelId, hotelName, hotelRegion, overviewRunData, go
   )
 }
 
+// ── YOUR WEBSITE TAB ──────────────────────────────────────────────────────────
+function WebsiteTab({ hotel, hotelName, googleAiScores, hotelCatScores, categoryLabels, missedList }: any) {
+  const officialUrl = hotel?.direct_booking_url || ''
+  const domain = (() => {
+    try { return officialUrl ? new URL(officialUrl).hostname.replace('www.', '') : '' } catch { return '' }
+  })()
+
+  const byQuery: Record<string, any> = {}
+  for (const r of (googleAiScores || [])) {
+    if (!r.query) continue
+    const t = new Date(r.checked_at).getTime()
+    if (!byQuery[r.query] || t > new Date(byQuery[r.query].checked_at).getTime()) byQuery[r.query] = r
+  }
+  const missedQueries = Object.values(byQuery).filter((r: any) => r.appeared === false).map((r: any) => r.query)
+  const appearingQueries = Object.values(byQuery).filter((r: any) => r.appeared === true).map((r: any) => r.query)
+
+  const cats = Object.entries(hotelCatScores || {}) as [string, number][]
+  const weakest = cats.length ? cats.sort((a, b) => a[1] - b[1])[0] : null
+  const weakestLabel = weakest ? (categoryLabels?.[weakest[0]] || weakest[0]) : null
+
+  const checklist = [
+    {
+      title: 'Add an FAQ section to your website',
+      why: 'AI assistants pull direct answers from FAQ content. Hotels with FAQ pages get quoted far more often than those without.',
+      how: missedQueries.length
+        ? `Start with the exact questions you are NOT yet appearing for: ${missedQueries.slice(0, 3).map((q: string) => `"${q}"`).join(', ')}. Write a clear, factual answer for each on your own site.`
+        : 'Cover the questions guests actually ask AI: location, spa, dining, family, cancellation, parking, check-in times.',
+      priority: 'High',
+    },
+    {
+      title: 'Write a factual "About" paragraph with specifics',
+      why: 'AI quotes concrete facts, not marketing language. Numbers, distances and named features are what get retrieved.',
+      how: 'On your homepage or About page, state specifics: number of rooms and suites, spa size in m², distance to airport and city centre, named restaurants and any Michelin stars, the designer or history.',
+      priority: 'High',
+    },
+    {
+      title: 'Publish your practical details as plain text',
+      why: 'Guests increasingly ask AI "what time is check-in" or "is there parking" instead of reading the site. AI can only answer if the fact exists in readable text.',
+      how: 'Make sure check-in/out times, cancellation policy, parking, languages spoken, pet and family policies, and accessibility are written in plain text on your site — not buried in a PDF or image.',
+      priority: 'Medium',
+    },
+    {
+      title: 'Strengthen your off-site reputation',
+      why: 'AI heavily references TripAdvisor, review sites and editorial articles when recommending hotels. Your own site alone is not enough.',
+      how: weakestLabel
+        ? `Your weakest category right now is ${weakestLabel}. Encourage recent guest reviews mentioning it, and aim for one online article or listing that positions you for ${weakestLabel.toLowerCase()}.`
+        : 'Keep TripAdvisor and Google reviews recent and detailed, and pursue online press (not only print PR) — AI favours hotels with a strong, current online footprint.',
+      priority: 'Medium',
+    },
+    {
+      title: 'Pursue online press over print PR',
+      why: 'Traditional print PR is invisible to AI. Online articles that mention your hotel become sources AI can cite.',
+      how: 'Ask your PR contacts for online coverage and digital listings. A single well-placed online article naming your hotel can tip a query from "not appearing" to "appearing".',
+      priority: 'Low',
+    },
+  ]
+
+  const prColor = (p: string) => p === 'High' ? RED : p === 'Medium' ? GOLD : BLUE
+  const prLabel = (p: string) => p === 'High' ? 'Do first' : p === 'Medium' ? 'Then this' : 'When you can'
+
+  return (
+    <div>
+      <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 16, padding: '2.5rem', marginBottom: '1.5rem', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: -40, right: -40, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,169,76,0.08) 0%, transparent 70%)' }} />
+        <div style={{ position: 'relative' }}>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0 0 0.6rem' }}>Your Own Website</p>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 300, color: WHITE, margin: '0 0 0.6rem', lineHeight: 1.3, maxWidth: 560 }}>
+            Build AI visibility on {domain ? domain : 'your own domain'} — so it stays yours.
+          </p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.7, maxWidth: 520 }}>
+            Your SwissNet profile gives you visibility now. These steps build the same strength into your official website, so AI assistants recommend you directly — independent of any platform.
+          </p>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(0, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
+        {[
+          { label: 'Appearing for', value: appearingQueries.length, sub: appearingQueries.length === 1 ? 'tracked search' : 'tracked searches', color: GREEN, small: false },
+          { label: 'Still missing', value: missedQueries.length, sub: 'searches to win on your site', color: missedQueries.length > 0 ? '#d97706' : GREEN, small: false },
+          { label: 'Focus area', value: weakestLabel || '—', sub: 'weakest category', color: GOLD, small: true },
+        ].map((s, i) => (
+          <div key={i} style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1.25rem' }}>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.5rem' }}>{s.label}</p>
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: s.small ? '1.25rem' : '2rem', fontWeight: 400, color: s.color, margin: '0 0 0.15rem', lineHeight: 1.1 }}>{s.value}</p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: 0 }}>{s.sub}</p>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.5rem' }}>
+        <div style={{ padding: '1.5rem 1.75rem', borderBottom: '1px solid ' + BORDER }}>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Your Website Action Plan</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED, margin: 0 }}>Concrete steps to make AI assistants recommend your official site directly</p>
+        </div>
+        <div>
+          {checklist.map((item, i) => (
+            <div key={i} style={{ padding: '1.4rem 1.75rem', borderBottom: i < checklist.length - 1 ? '1px solid ' + BORDER : 'none', display: 'flex', gap: '1.25rem', alignItems: 'flex-start' }}>
+              <div style={{ flexShrink: 0, width: 84, textAlign: 'center', paddingTop: '0.15rem' }}>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: prColor(item.priority), background: prColor(item.priority) + '14', border: '1px solid ' + prColor(item.priority) + '33', borderRadius: 6, padding: '0.35rem 0.5rem', display: 'inline-block', lineHeight: 1.2 }}>{prLabel(item.priority)}</span>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT, margin: '0 0 0.4rem', lineHeight: 1.25 }}>{item.title}</p>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: TEXT_MUTED, margin: '0 0 0.6rem', lineHeight: 1.65 }}>{item.why}</p>
+                <div style={{ background: BG, borderRadius: 8, padding: '0.75rem 1rem', borderLeft: '3px solid ' + GOLD }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.3rem' }}>How to do it</p>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT, margin: 0, lineHeight: 1.7 }}>{item.how}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ background: GOLD_LIGHT, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${GOLD}`, borderRadius: 10, padding: '1.25rem 1.5rem' }}>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT, margin: 0, lineHeight: 1.7 }}>
+          <strong style={{ color: TEXT }}>Want help putting this in place?</strong> Your SwissNet specialist can walk through this plan with you each month and prioritise the steps that will move your AI visibility fastest. Reach us at <a href="mailto:contact@swissnethotels.com" style={{ color: GOLD, textDecoration: 'none', fontWeight: 600 }}>contact@swissnethotels.com</a>.
+        </p>
+      </div>
+    </div>
+  )
+}
+
 // ── MAIN DASHBOARD ────────────────────────────────────────────────────────────
 
 export default function DashboardClient({ hotel, views, clicks, leads, aiVisibility, googleAiScores, bookings, competitors, hotelCatScores, platformScores, overviewRunData, myRankChange, marketAverages, crawlerCount }: any) {
@@ -2394,6 +2516,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
     { heading: 'Improve', items: [
       { id: 'schema', label: 'Schema' },
       { id: 'optimise', label: 'Optimise' },
+      { id: 'website', label: 'Your Website' },
       { id: 'goals', label: 'Goals' },
     ] },
     { heading: 'Account', items: [
@@ -2445,6 +2568,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
               {tab === 'competitors' && 'Competitors'}
               {tab === 'schema' && '✦ Schema Health'}
 {tab === 'optimise' && '✦ Optimise'}
+{tab === 'website' && '✦ Your Website'}
 {tab === 'goals' && '✦ Goals This Month'}
 {tab === 'reports' && 'Reports'}
 {tab === 'settings' && 'Settings'}
@@ -2456,6 +2580,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
               {tab === 'competitors' && 'AI visibility rankings across categories'}
               {tab === 'schema' && 'AI readiness score and content recommendations'}
 {tab === 'optimise' && 'Manage your content and FAQs'}
+{tab === 'website' && 'Build AI visibility on your own official site'}
 {tab === 'goals' && 'Three focused actions to climb the AI rankings'}
 {tab === 'reports' && 'Compare your performance month over month'}
 {tab === 'settings' && 'Account and hotel settings'}
@@ -3054,6 +3179,16 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
             missedList={missedList}
             categoryLabels={categoryLabels}
             googleAiScores={googleAiScores}
+          />
+        )}
+        {tab === 'website' && (
+          <WebsiteTab
+            hotel={hotel}
+            hotelName={hotelName}
+            googleAiScores={googleAiScores}
+            hotelCatScores={hotelCatScores}
+            categoryLabels={categoryLabels}
+            missedList={missedList}
           />
         )}
 
