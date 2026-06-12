@@ -2241,7 +2241,7 @@ function WebsiteTab({ hotel, hotelName, googleAiScores, hotelCatScores, category
                 {audit.score >= 70 ? 'Your site is in good shape for AI' : audit.score >= 40 ? 'A few important gaps to close' : 'Big opportunities to improve'}
               </p>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6 }}>
-                We scanned your homepage at {domain}. Below is what AI assistants can and can't currently find. Fixing the high-impact items first will move you fastest.
+                {audit.summary || `We analysed ${domain}. Below is what AI assistants can and can't currently find. Fixing the high-impact items first will move you fastest.`}
               </p>
             </div>
           </div>
