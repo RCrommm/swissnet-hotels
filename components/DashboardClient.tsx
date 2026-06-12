@@ -2170,6 +2170,41 @@ function WebsiteTab({ hotel, hotelName, googleAiScores, hotelCatScores, category
   const [audit, setAudit] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [loadingSaved, setLoadingSaved] = useState(true)
+
+  useEffect(() => {
+    if (!hotel?.id) { setLoadingSaved(false); return }
+    const loadSaved = async () => {
+      try {
+        const { createClient } = await import('@supabase/supabase-js')
+        const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+        const { data } = await sb.from('website_audits')
+          .select('*')
+          .eq('hotel_id', hotel.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single()
+        if (data) {
+          setAudit({
+            reachable: true,
+            url: data.url,
+            score: data.score,
+            summary: data.summary,
+            passed: data.passed,
+            total: data.total,
+            findings: data.findings,
+            pagesScanned: data.pages_scanned,
+            savedAt: data.created_at,
+          })
+        }
+      } catch (e) {
+        // no saved audit yet
+      } finally {
+        setLoadingSaved(false)
+      }
+    }
+    loadSaved()
+  }, [hotel?.id])
 
   const runAudit = async () => {
     if (!officialUrl) { setError('No official website on file for this hotel.'); return }
@@ -2243,6 +2278,7 @@ function WebsiteTab({ hotel, hotelName, googleAiScores, hotelCatScores, category
             <div style={{ flexShrink: 0, textAlign: 'center' }}>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 400, color: audit.score >= 70 ? GREEN : audit.score >= 45 ? '#d97706' : RED, margin: 0, lineHeight: 1 }}>{audit.score}%</p>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: '0.3rem 0 0', letterSpacing: '0.05em' }}>AI-readiness score</p>
+              {audit.savedAt && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', color: TEXT_MUTED, margin: '0.2rem 0 0' }}>{new Date(audit.savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>}
             </div>
             <div style={{ flex: 1, minWidth: 0, borderLeft: '1px solid ' + BORDER, paddingLeft: '1.75rem' }}>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', color: TEXT, margin: '0 0 0.4rem' }}>
@@ -2300,11 +2336,16 @@ function WebsiteTab({ hotel, hotelName, googleAiScores, hotelCatScores, category
         </>
       )}
 
-      {!audit && !loading && !error && (
+      {!audit && !loading && !error && loadingSaved && (
+        <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: 0 }}>Loading your latest audit…</p>
+        </div>
+      )}
+      {!audit && !loading && !error && !loadingSaved && (
         <div style={{ background: WHITE, border: '1px dashed ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.4rem' }}>Ready when you are</p>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.4rem' }}>Your AI visibility audit is being prepared</p>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6, maxWidth: 420, marginLeft: 'auto', marginRight: 'auto' }}>
-            Click "Run full audit" and we'll read {domain || 'your official site'} across its key pages, then give you a precise, expert AI-visibility action plan.
+            Your SwissNet specialist runs a full audit of {domain || 'your official site'} each month. Your latest results will appear here.
           </p>
         </div>
       )}

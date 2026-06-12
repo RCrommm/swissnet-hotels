@@ -12,10 +12,11 @@ export async function GET(req: Request) {
   }
   if (!url) return NextResponse.json({ error: 'Add ?url=https://hotel.com to the link' }, { status: 400 })
   // Reuse the POST logic by faking a request body
+  const hotelId = searchParams.get('hotelId')
   return POST(new Request(req.url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url }),
+    body: JSON.stringify({ url, hotelId }),
   }))
 }
 
@@ -57,7 +58,7 @@ function extractSchema(html: string): string {
 
 export async function POST(req: Request) {
   try {
-    const { url } = await req.json()
+    const { url, hotelId } = await req.json()
     if (!url) return NextResponse.json({ error: 'No URL provided' }, { status: 400 })
 
     let target = url.trim()
@@ -220,7 +221,7 @@ Provide 10-14 findings ordered most damaging first. Be the most precise, useful 
     const passed = findings.filter((f: any) => f.ok).length
     const score = typeof ai.score === 'number' ? Math.round(ai.score) : Math.round((passed / Math.max(findings.length, 1)) * 100)
 
-    return NextResponse.json({
+    const result = {
       reachable: true,
       url: target,
       score,
@@ -229,7 +230,29 @@ Provide 10-14 findings ordered most damaging first. Be the most precise, useful 
       total: findings.length,
       findings,
       pagesScanned: pagesScannedList.filter(p => p.ok),
-    })
+    }
+
+    // Save to database if a hotelId was provided
+    if (hotelId) {
+      try {
+        const { createClient } = await import('@supabase/supabase-js')
+        const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+        await sb.from('website_audits').insert({
+          hotel_id: hotelId,
+          url: target,
+          score,
+          summary: ai.summary || '',
+          passed,
+          total: findings.length,
+          findings,
+          pages_scanned: pagesScannedList.filter(p => p.ok),
+        })
+      } catch (e) {
+        // saving failed but we still return the result
+      }
+    }
+
+    return NextResponse.json(result)
   } catch (e: any) {
     return NextResponse.json({ error: 'Audit failed: ' + (e?.message || 'unknown error') }, { status: 500 })
   }
