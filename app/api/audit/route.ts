@@ -167,7 +167,6 @@ export async function POST(req: Request) {
     }
 
     const lower = html.toLowerCase()
-    const lower = html.toLowerCase()
 
     // Strip tags to get readable text (what a simple crawler "sees")
     const text = html
