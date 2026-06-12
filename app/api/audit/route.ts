@@ -11,6 +11,81 @@ export async function POST(req: Request) {
     let target = url.trim()
     if (!/^https?:\/\//i.test(target)) target = 'https://' + target
 
+    // ---- robots.txt check for AI crawlers ----
+    let robotsResult: any = { checked: false }
+    try {
+      const u = new URL(target)
+      const robotsUrl = `${u.protocol}//${u.host}/robots.txt`
+      const rController = new AbortController()
+      const rTimeout = setTimeout(() => rController.abort(), 8000)
+      const rRes = await fetch(robotsUrl, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36' },
+        signal: rController.signal,
+        redirect: 'follow',
+      })
+      clearTimeout(rTimeout)
+      if (rRes.ok) {
+        const robotsTxt = await rRes.text()
+        const aiBots = [
+          { name: 'GPTBot', label: 'OpenAI (ChatGPT training)' },
+          { name: 'OAI-SearchBot', label: 'ChatGPT Search' },
+          { name: 'ChatGPT-User', label: 'ChatGPT (live browsing)' },
+          { name: 'PerplexityBot', label: 'Perplexity' },
+          { name: 'Perplexity-User', label: 'Perplexity (live)' },
+          { name: 'Google-Extended', label: 'Google Gemini / AI' },
+          { name: 'ClaudeBot', label: 'Anthropic Claude' },
+          { name: 'anthropic-ai', label: 'Anthropic (legacy)' },
+          { name: 'CCBot', label: 'Common Crawl (feeds many AIs)' },
+          { name: 'Bytespider', label: 'TikTok / ByteDance' },
+          { name: 'Applebot-Extended', label: 'Apple Intelligence' },
+        ]
+        // Parse robots.txt into user-agent blocks
+        const lines = robotsTxt.split('\n').map(l => l.trim())
+        const blocks: { agents: string[]; disallows: string[] }[] = []
+        let current: { agents: string[]; disallows: string[] } | null = null
+        for (const line of lines) {
+          if (/^#/.test(line) || !line) continue
+          const uaMatch = line.match(/^user-agent:\s*(.+)$/i)
+          const disMatch = line.match(/^disallow:\s*(.*)$/i)
+          if (uaMatch) {
+            if (!current || current.disallows.length > 0) { current = { agents: [], disallows: [] }; blocks.push(current) }
+            current.agents.push(uaMatch[1].trim().toLowerCase())
+          } else if (disMatch && current) {
+            current.disallows.push(disMatch[1].trim())
+          }
+        }
+        const isBlocked = (botName: string) => {
+          const bn = botName.toLowerCase()
+          for (const b of blocks) {
+            if (b.agents.includes(bn)) {
+              return b.disallows.some(d => d === '/')
+            }
+          }
+          return false
+        }
+        const wildcardBlocksAll = blocks.some(b => b.agents.includes('*') && b.disallows.some(d => d === '/'))
+        const botStatus = aiBots.map(bot => ({
+          name: bot.name,
+          label: bot.label,
+          blocked: isBlocked(bot.name),
+          mentioned: blocks.some(b => b.agents.includes(bot.name.toLowerCase())),
+        }))
+        const blockedBots = botStatus.filter(b => b.blocked)
+        robotsResult = {
+          checked: true,
+          found: true,
+          wildcardBlocksAll,
+          blockedBots,
+          blockedCount: blockedBots.length,
+          anyBlocked: blockedBots.length > 0 || wildcardBlocksAll,
+        }
+      } else {
+        robotsResult = { checked: true, found: false }
+      }
+    } catch {
+      robotsResult = { checked: true, found: false }
+    }
+
     // Fetch the page like a normal browser, with a timeout
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 12000)
@@ -153,6 +228,31 @@ export async function POST(req: Request) {
       },
     ]
 
+    // Add AI-crawler access finding from robots.txt
+    if (robotsResult.checked && robotsResult.found) {
+      const blocked = robotsResult.anyBlocked
+      const names = (robotsResult.blockedBots || []).map((b: any) => b.name)
+      findings.push({
+        key: 'ai_crawlers',
+        label: 'AI crawler access (robots.txt)',
+        ok: !blocked,
+        detail: blocked
+          ? (robotsResult.wildcardBlocksAll
+              ? 'Your robots.txt blocks all crawlers from the whole site (Disallow: / for *). This can prevent AI assistants from reading your pages. Worth confirming this is intended.'
+              : `Your robots.txt specifically blocks these AI crawlers from your whole site: ${names.join(', ')}. They will not be able to read your content. Worth confirming this is intended.`)
+          : 'Your robots.txt does not block the major AI crawlers (GPTBot, PerplexityBot, Google-Extended). They are free to read your site.',
+        priority: 'High',
+      })
+    } else if (robotsResult.checked && !robotsResult.found) {
+      findings.push({
+        key: 'ai_crawlers',
+        label: 'AI crawler access (robots.txt)',
+        ok: true,
+        detail: 'No robots.txt found, which means no crawlers are blocked at that level — AI assistants can access your site. (Having a robots.txt is optional.)',
+        priority: 'Low',
+      })
+    }
+
     const score = Math.round((findings.filter(f => f.ok).length / findings.length) * 100)
 
     return NextResponse.json({
@@ -162,6 +262,7 @@ export async function POST(req: Request) {
       passed: findings.filter(f => f.ok).length,
       total: findings.length,
       findings,
+      robots: robotsResult,
     })
   } catch (e: any) {
     return NextResponse.json({ error: 'Audit failed: ' + (e?.message || 'unknown error') }, { status: 500 })
