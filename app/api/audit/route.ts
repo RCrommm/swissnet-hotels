@@ -2,7 +2,43 @@ import { NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-export const maxDuration = 60
+export const maxDuration = 120
+
+const AI_RELEVANT = [
+  'room', 'suite', 'accommodation', 'chambre', 'villa',
+  'dining', 'restaurant', 'bar', 'gastronom', 'cuisine',
+  'spa', 'wellness', 'fitness', 'nescens',
+  'family', 'famille', 'kids',
+  'offer', 'package', 'offre', 'deal',
+  'experience', 'experiences', 'activit',
+  'location', 'meeting', 'event',
+]
+
+async function scrape(url: string, beeKey: string): Promise<string> {
+  try {
+    const beeUrl = `https://app.scrapingbee.com/api/v1/?api_key=${beeKey}&url=${encodeURIComponent(url)}&render_js=true&premium_proxy=true&country_code=ch`
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 40000)
+    const res = await fetch(beeUrl, { signal: controller.signal })
+    clearTimeout(timeout)
+    if (res.ok) return await res.text()
+    return ''
+  } catch { return '' }
+}
+
+function extractText(html: string): string {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function extractSchema(html: string): string {
+  const blocks = [...html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)].map(m => m[1].trim())
+  return blocks.join('\n\n')
+}
 
 export async function POST(req: Request) {
   try {
@@ -14,82 +50,125 @@ export async function POST(req: Request) {
 
     const beeKey = process.env.SCRAPINGBEE_API_KEY
     if (!beeKey) return NextResponse.json({ error: 'Scraping not configured.' }, { status: 500 })
-
-    // ---- Fetch the fully-rendered page via ScrapingBee ----
-    let html = ''
-    try {
-      const beeUrl = `https://app.scrapingbee.com/api/v1/?api_key=${beeKey}&url=${encodeURIComponent(target)}&render_js=true&premium_proxy=true&country_code=ch`
-      const controller = new AbortController()
-      const timeout = setTimeout(() => controller.abort(), 50000)
-      const res = await fetch(beeUrl, { signal: controller.signal })
-      clearTimeout(timeout)
-      if (res.ok) {
-        html = await res.text()
-      } else {
-        return NextResponse.json({ error: `Could not read the site (scraper status ${res.status}).`, reachable: false }, { status: 200 })
-      }
-    } catch (e: any) {
-      return NextResponse.json({ error: 'Could not read the site (timed out or blocked).', reachable: false }, { status: 200 })
-    }
-
-    if (!html || html.length < 500) {
-      return NextResponse.json({ error: 'The site returned almost no content.', reachable: false }, { status: 200 })
-    }
-
-    // ---- Extract readable text + schema for the AI ----
-    const schemaBlocks = [...html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)]
-      .map(m => m[1].trim())
-    const schemaText = schemaBlocks.length ? schemaBlocks.join('\n\n').slice(0, 6000) : 'NONE FOUND'
-
-    const metaDesc = (html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']*)["']/i)?.[1] || '').slice(0, 300)
-    const title = (html.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1] || '').slice(0, 200)
-
-    const visibleText = html
-      .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-      .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim()
-      .slice(0, 14000)
-
-    // ---- Ask GPT for an expert assessment ----
     const openaiKey = process.env.OPENAI_API_KEY
     if (!openaiKey) return NextResponse.json({ error: 'AI analysis not configured.' }, { status: 500 })
 
-    const prompt = `You are the world's leading consultant on AI Search Visibility (GEO/AEO) for luxury hotels — you know exactly how ChatGPT, Perplexity, and Google AI Overviews decide which hotels to cite and recommend. A hotel has asked you to audit ONE page of their official website and tell them, with total precision, what is helping or hurting their chances of being recommended by AI, and exactly how to fix each issue to maximise AI visibility.
+    const origin = new URL(target).origin
+    const host = new URL(target).hostname.replace('www.', '')
 
-PAGE TITLE: ${title}
-META DESCRIPTION: ${metaDesc || 'NONE'}
+    // ---- 1. Scrape homepage ----
+    const homeHtml = await scrape(target, beeKey)
+    if (!homeHtml || homeHtml.length < 500) {
+      return NextResponse.json({ error: 'Could not read your homepage (it may be blocking automated visits).', reachable: false }, { status: 200 })
+    }
 
-STRUCTURED DATA (JSON-LD schema) FOUND ON PAGE:
-${schemaText}
+    // ---- 2. Find internal AI-relevant links ----
+    const linkMatches = [...homeHtml.matchAll(/<a[^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)]
+    const seen = new Set<string>([target.replace(/\/$/, '')])
+    const candidates: { url: string; label: string }[] = []
+    for (const m of linkMatches) {
+      let href = m[1].trim()
+      const linkText = extractText(m[2]).toLowerCase()
+      if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) continue
+      // Normalise to absolute URL
+      try {
+        if (href.startsWith('/')) href = origin + href
+        else if (!/^https?:\/\//i.test(href)) href = origin + '/' + href
+      } catch { continue }
+      // Same domain only
+      try { if (new URL(href).hostname.replace('www.', '') !== host) continue } catch { continue }
+      const clean = href.split('#')[0].replace(/\/$/, '')
+      if (seen.has(clean)) continue
+      const haystack = (clean + ' ' + linkText).toLowerCase()
+      if (AI_RELEVANT.some(k => haystack.includes(k))) {
+        seen.add(clean)
+        candidates.push({ url: clean, label: linkText.slice(0, 40) || clean.split('/').filter(Boolean).pop() || 'page' })
+      }
+    }
 
-VISIBLE PAGE TEXT:
-${visibleText}
+    // De-dupe by "page type" so we don't scan 3 room pages; cap at 8
+    const pickedTypes = new Set<string>()
+    const typeOf = (s: string) => {
+      const l = s.toLowerCase()
+      if (/room|suite|accommodation|chambre/.test(l)) return 'rooms'
+      if (/villa/.test(l)) return 'villa'
+      if (/dining|restaurant|bar|gastronom|cuisine/.test(l)) return 'dining'
+      if (/spa|wellness|fitness|nescens/.test(l)) return 'spa'
+      if (/family|famille|kids/.test(l)) return 'family'
+      if (/offer|package|offre|deal/.test(l)) return 'offers'
+      if (/experience|activit/.test(l)) return 'experiences'
+      if (/location/.test(l)) return 'location'
+      if (/meeting|event/.test(l)) return 'meetings'
+      return 'other'
+    }
+    const toScan: { url: string; label: string; type: string }[] = []
+    for (const c of candidates) {
+      const t = typeOf(c.url + ' ' + c.label)
+      if (pickedTypes.has(t)) continue
+      pickedTypes.add(t)
+      toScan.push({ ...c, type: t })
+      if (toScan.length >= 8) break
+    }
 
-CRITICAL INSTRUCTIONS FOR YOUR ANALYSIS:
-- Be ruthlessly specific. Every finding must reference what is ACTUALLY on this page — quote the exact phrase, name the exact element, or state explicitly that it is absent. Never write a sentence that could apply to any hotel.
-- For each fix, write it as a precise instruction the hotel can act on immediately, ideally with example wording they could literally paste onto their page. Write fixes the way an expert would if their only goal were to maximise this hotel's AI visibility.
-- Judge not just presence but QUALITY: is the content written in a clear, factual, quotable style that an AI can lift directly into an answer? Vague marketing prose ("an extraordinary haven") is weak for AI; concrete factual statements ("102 rooms and suites, 3 minutes from Geneva Airport") are strong. Call this out specifically.
-- When something appears absent, note if it may simply live on another page, but still flag it as a gap for THIS page.
+    // ---- 3. Scrape the picked pages in parallel ----
+    const scraped = await Promise.all(toScan.map(async p => ({ ...p, html: await scrape(p.url, beeKey) })))
 
-SCORING (be strict and meaningful):
-Weight the score by importance. The HIGH-impact factors (structured data richness, FAQ content/schema, concrete factual data, named entities, machine-readable quotable content) should dominate the score. A page can have nice geo-data and clean HTML but still score low if it lacks FAQs and concrete facts. Reserve scores above 80 for pages genuinely well-optimised for AI citation. Be honest — most luxury hotel sites score 40-65 because they prioritise visual marketing over machine-readable facts.
+    // ---- 4. Build combined content for the AI ----
+    const homeTitle = (homeHtml.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1] || '').slice(0, 200)
+    const homeMeta = (homeHtml.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']*)["']/i)?.[1] || '').slice(0, 300)
+
+    const allSchema = [extractSchema(homeHtml), ...scraped.map(s => extractSchema(s.html))].filter(Boolean).join('\n\n').slice(0, 8000)
+
+    const pageSections: string[] = []
+    pageSections.push(`=== HOMEPAGE (${target}) ===\n${extractText(homeHtml).slice(0, 6000)}`)
+    const pagesScannedList: { type: string; url: string; ok: boolean }[] = [{ type: 'home', url: target, ok: true }]
+    for (const s of scraped) {
+      const ok = !!(s.html && s.html.length > 500)
+      pagesScannedList.push({ type: s.type, url: s.url, ok })
+      if (ok) {
+        pageSections.push(`=== ${s.type.toUpperCase()} PAGE (${s.url}) ===\n${extractText(s.html).slice(0, 4000)}`)
+      }
+    }
+    const combinedContent = pageSections.join('\n\n').slice(0, 28000)
+
+    // ---- 5. Expert GPT audit ----
+    const prompt = `You are the world's leading consultant on AI Search Visibility (GEO/AEO) for luxury hotels — you know precisely how ChatGPT, Perplexity, and Google AI Overviews decide which hotels to cite and recommend. A hotel has asked you to audit their official website (multiple key pages have been crawled for you) and tell them, with total precision, exactly what is helping or hurting their chances of being recommended by AI — and exactly how to fix each issue to maximise AI visibility.
+
+You have been given the homepage plus several key pages (rooms, dining, spa, etc.). Judge the site AS A WHOLE — if a fact appears on any page, credit it; only flag something as missing if it is absent across all crawled pages.
+
+SITE: ${host}
+HOMEPAGE TITLE: ${homeTitle}
+HOMEPAGE META DESCRIPTION: ${homeMeta || 'NONE'}
+
+ALL STRUCTURED DATA (JSON-LD) FOUND ACROSS PAGES:
+${allSchema || 'NONE FOUND'}
+
+CONTENT FROM CRAWLED PAGES:
+${combinedContent}
+
+CRITICAL INSTRUCTIONS:
+- Be ruthlessly specific. Every finding must reference what is ACTUALLY on the site — quote an exact phrase, name the exact element/page, or state explicitly it is absent everywhere. Never write a sentence that could apply to any hotel.
+- For each fix, write a precise, actionable instruction WITH EXAMPLE WORDING the hotel could paste onto their page. Write fixes as if your only goal is maximising this hotel's AI citation rate.
+- Judge QUALITY, not just presence: content written in clear, factual, quotable sentences ("102 rooms and suites, 3 minutes from Geneva Airport, Spa Nescens 2,500m²") is strong for AI; vague marketing prose ("an extraordinary haven beyond time") is weak — call this out specifically and show how to rewrite it.
+- Note which page each strength/gap relates to.
+
+SCORING — be strict and weighted by importance. HIGH-impact factors (rich structured data, FAQ content/schema, concrete factual data, named entities, quotable machine-readable writing) dominate the score. Clean HTML and geo-data alone cannot lift a page that lacks FAQs and concrete facts. Reserve 80+ for sites genuinely optimised for AI citation. Most luxury hotels score 40-65 because they prioritise visual marketing over machine-readable facts. Be honest.
 
 Respond ONLY with valid JSON, no markdown, exactly this shape:
 {
-  "score": <0-100 integer, weighted by importance as described>,
-  "summary": "<3-4 sentence expert verdict, specific to THIS hotel: name its biggest AI-visibility strengths and its most damaging gaps, and what fixing them would achieve>",
+  "score": <0-100 integer, weighted by importance>,
+  "summary": "<3-4 sentence expert verdict specific to THIS hotel: biggest AI-visibility strengths, most damaging gaps, and what fixing them achieves>",
   "findings": [
     {
       "label": "<short specific title>",
-      "ok": <true only if genuinely strong for AI; false if missing, weak, or merely adequate>,
+      "ok": <true only if genuinely strong for AI; false if missing/weak/merely adequate>,
       "priority": "<High|Medium|Low>",
-      "detail": "<2-4 sentences. First: precisely what you found on this page (quote/name it, or state it's absent). Then: exactly how to fix it to maximise AI visibility, with example wording or specific fields where possible. Write like an expert whose sole goal is getting this hotel cited by AI.>"
+      "category": "<Structured Data|Content|Facts|Booking|Authority|Readability>",
+      "detail": "<2-4 sentences. First: precisely what you found and on which page (quote/name it) or state it's absent everywhere. Then: exactly how to fix it with example wording. Expert tone, AI-visibility focused.>"
     }
   ]
 }
-Provide 8-12 findings ordered most damaging first. Prioritise the high-impact issues. Be the most precise, useful AI-visibility audit this hotel has ever seen.`
+Provide 10-14 findings ordered most damaging first. Be the most precise, useful AI-visibility audit this hotel has ever received.`
 
     let ai: any = null
     try {
@@ -106,7 +185,7 @@ Provide 8-12 findings ordered most damaging first. Prioritise the high-impact is
       const aiData = await aiRes.json()
       const content = aiData?.choices?.[0]?.message?.content
       if (content) ai = JSON.parse(content)
-    } catch (e: any) {
+    } catch {
       return NextResponse.json({ error: 'AI analysis failed. Please try again.', reachable: true }, { status: 200 })
     }
 
@@ -119,6 +198,7 @@ Provide 8-12 findings ordered most damaging first. Prioritise the high-impact is
       label: f.label || 'Finding',
       ok: !!f.ok,
       priority: ['High', 'Medium', 'Low'].includes(f.priority) ? f.priority : 'Medium',
+      category: f.category || 'Content',
       detail: f.detail || '',
     }))
 
@@ -133,7 +213,7 @@ Provide 8-12 findings ordered most damaging first. Prioritise the high-impact is
       passed,
       total: findings.length,
       findings,
-      schemaFound: schemaBlocks.length > 0,
+      pagesScanned: pagesScannedList.filter(p => p.ok),
     })
   } catch (e: any) {
     return NextResponse.json({ error: 'Audit failed: ' + (e?.message || 'unknown error') }, { status: 500 })

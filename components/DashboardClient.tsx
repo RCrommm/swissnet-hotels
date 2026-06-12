@@ -2182,6 +2182,7 @@ function WebsiteTab({ hotel, hotelName, googleAiScores, hotelCatScores, category
       })
       const data = await res.json()
       if (data.error && data.reachable === undefined) { setError(data.error) }
+      else if (data.error && data.reachable === false) { setError(data.error) }
       else { setAudit(data) }
     } catch (e: any) {
       setError('Could not run the audit. Please try again.')
@@ -2192,6 +2193,18 @@ function WebsiteTab({ hotel, hotelName, googleAiScores, hotelCatScores, category
 
   const prColor = (p: string) => p === 'High' ? RED : p === 'Medium' ? GOLD : BLUE
   const prLabel = (p: string) => p === 'High' ? 'High impact' : p === 'Medium' ? 'Worth doing' : 'Nice to have'
+  const prRank = (p: string) => p === 'High' ? 0 : p === 'Medium' ? 1 : 2
+
+  // Sort findings: failed High → failed Medium → failed Low → passed
+  const sortedFindings = audit?.findings ? [...audit.findings].sort((a: any, b: any) => {
+    if (a.ok !== b.ok) return a.ok ? 1 : -1
+    return prRank(a.priority) - prRank(b.priority)
+  }) : []
+
+  const pageTypeLabel = (t: string) => ({
+    home: 'Homepage', rooms: 'Rooms', villa: 'Villas', dining: 'Dining', spa: 'Spa & Wellness',
+    family: 'Family', offers: 'Offers', experiences: 'Experiences', location: 'Location', meetings: 'Meetings',
+  } as any)[t] || t
 
   return (
     <div>
@@ -2199,68 +2212,82 @@ function WebsiteTab({ hotel, hotelName, googleAiScores, hotelCatScores, category
       <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 16, padding: '2.5rem', marginBottom: '1.5rem', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: -40, right: -40, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,169,76,0.08) 0%, transparent 70%)' }} />
         <div style={{ position: 'relative' }}>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0 0 0.6rem' }}>Your Own Website</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0 0 0.6rem' }}>Your Own Website · AI Visibility Audit</p>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 300, color: WHITE, margin: '0 0 0.6rem', lineHeight: 1.3, maxWidth: 560 }}>
             Is {domain || 'your website'} ready for AI?
           </p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.55)', margin: '0 0 1.25rem', lineHeight: 1.7, maxWidth: 520 }}>
-            We scan your official website the way an AI assistant would, and show you exactly what helps you get recommended — and what's missing.
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.55)', margin: '0 0 1.25rem', lineHeight: 1.7, maxWidth: 540 }}>
+            We read your key pages the way an AI assistant would — rooms, dining, spa, offers and more — then an AI-visibility expert tells you exactly what helps you get recommended and precisely how to fix what's missing.
           </p>
           <button onClick={runAudit} disabled={loading} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.05em', color: '#2A1A0E', background: loading ? 'rgba(201,169,76,0.5)' : GOLD, border: 'none', borderRadius: 8, padding: '0.7rem 1.5rem', cursor: loading ? 'default' : 'pointer' }}>
-            {loading ? 'Scanning your site…' : audit ? 'Scan again' : 'Scan my website'}
+            {loading ? 'Reading your site…' : audit ? 'Scan again' : 'Run full audit'}
           </button>
         </div>
       </div>
 
-      {/* ERROR */}
       {error && (
         <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '1rem 1.25rem', marginBottom: '1.5rem' }}>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: '#b91c1c', margin: 0, lineHeight: 1.6 }}>{error}</p>
         </div>
       )}
 
-      {/* LOADING */}
       {loading && (
         <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center', marginBottom: '1.5rem' }}>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.4rem' }}>Reading {domain}…</p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: 0 }}>Checking the same signals AI assistants look for. This takes a few seconds.</p>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.4rem' }}>Reading {domain} across its key pages…</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: 0 }}>Crawling rooms, dining, spa and more, then running the expert AI analysis. This takes up to a minute.</p>
         </div>
       )}
 
-      {/* RESULTS */}
       {audit && !loading && (
         <>
-          {/* SCORE */}
-          <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.75rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.75rem' }}>
+          {/* SCORE + SUMMARY */}
+          <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.75rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '1.75rem' }}>
             <div style={{ flexShrink: 0, textAlign: 'center' }}>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 400, color: audit.score >= 70 ? GREEN : audit.score >= 40 ? '#d97706' : RED, margin: 0, lineHeight: 1 }}>{audit.score}%</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: '0.3rem 0 0', letterSpacing: '0.05em' }}>{audit.passed} of {audit.total} checks passed</p>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 400, color: audit.score >= 70 ? GREEN : audit.score >= 45 ? '#d97706' : RED, margin: 0, lineHeight: 1 }}>{audit.score}%</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: '0.3rem 0 0', letterSpacing: '0.05em' }}>AI-readiness score</p>
             </div>
             <div style={{ flex: 1, minWidth: 0, borderLeft: '1px solid ' + BORDER, paddingLeft: '1.75rem' }}>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.3rem' }}>
-                {audit.score >= 70 ? 'Your site is in good shape for AI' : audit.score >= 40 ? 'A few important gaps to close' : 'Big opportunities to improve'}
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', color: TEXT, margin: '0 0 0.4rem' }}>
+                {audit.score >= 70 ? 'Strong foundation for AI visibility' : audit.score >= 45 ? 'A few important gaps to close' : 'Major opportunities to improve'}
               </p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6 }}>
-                {audit.summary || `We analysed ${domain}. Below is what AI assistants can and can't currently find. Fixing the high-impact items first will move you fastest.`}
-              </p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.7 }}>{audit.summary}</p>
             </div>
           </div>
 
+          {/* PAGES SCANNED */}
+          {audit.pagesScanned && audit.pagesScanned.length > 0 && (
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1rem 1.5rem', marginBottom: '1.25rem' }}>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.6rem' }}>Pages analysed ({audit.pagesScanned.length})</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                {audit.pagesScanned.map((p: any, i: number) => (
+                  <span key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, color: TEXT, background: BG, border: '1px solid ' + BORDER, borderRadius: 20, padding: '0.3rem 0.75rem' }}>{pageTypeLabel(p.type)}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* FINDINGS */}
           <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.5rem' }}>
-            {audit.findings.map((f: any, i: number) => (
-              <div key={f.key} style={{ padding: '1.25rem 1.75rem', borderBottom: i < audit.findings.length - 1 ? '1px solid ' + BORDER : 'none', display: 'flex', gap: '1.25rem', alignItems: 'flex-start' }}>
+            <div style={{ padding: '1.25rem 1.75rem', borderBottom: '1px solid ' + BORDER }}>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Your AI Visibility Action Plan</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED, margin: 0 }}>{audit.passed} of {audit.total} checks strong · ordered by impact, fix the top items first</p>
+            </div>
+            {sortedFindings.map((f: any, i: number) => (
+              <div key={f.key + i} style={{ padding: '1.4rem 1.75rem', borderBottom: i < sortedFindings.length - 1 ? '1px solid ' + BORDER : 'none', display: 'flex', gap: '1.25rem', alignItems: 'flex-start', background: f.ok ? 'transparent' : 'rgba(220,38,38,0.015)' }}>
                 <div style={{ flexShrink: 0, width: 28, height: 28, borderRadius: '50%', background: f.ok ? GREEN + '18' : RED + '14', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '0.1rem' }}>
                   <span style={{ color: f.ok ? GREEN : RED, fontSize: '0.85rem', fontWeight: 700 }}>{f.ok ? '✓' : '✗'}</span>
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.3rem', flexWrap: 'wrap' }}>
-                    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: TEXT, margin: 0 }}>{f.label}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
+                    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT, margin: 0 }}>{f.label}</p>
+                    {f.category && (
+                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.46rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, borderRadius: 5, padding: '0.25rem 0.45rem' }}>{f.category}</span>
+                    )}
                     {!f.ok && (
-                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.45rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: prColor(f.priority), background: prColor(f.priority) + '14', border: '1px solid ' + prColor(f.priority) + '33', borderRadius: 5, padding: '0.25rem 0.45rem' }}>{prLabel(f.priority)}</span>
+                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.46rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: prColor(f.priority), background: prColor(f.priority) + '14', border: '1px solid ' + prColor(f.priority) + '33', borderRadius: 5, padding: '0.25rem 0.45rem' }}>{prLabel(f.priority)}</span>
                     )}
                   </div>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.65 }}>{f.detail}</p>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: f.ok ? TEXT_MUTED : TEXT, margin: 0, lineHeight: 1.75 }}>{f.detail}</p>
                 </div>
               </div>
             ))}
@@ -2269,18 +2296,17 @@ function WebsiteTab({ hotel, hotelName, googleAiScores, hotelCatScores, category
           {/* SUPPORT */}
           <div style={{ background: GOLD_LIGHT, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${GOLD}`, borderRadius: 10, padding: '1.25rem 1.5rem' }}>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT, margin: 0, lineHeight: 1.7 }}>
-              <strong style={{ color: TEXT }}>Want help fixing these?</strong> Your SwissNet specialist can walk through this scan with you each month and help you close the gaps that matter most. Reach us at <a href="mailto:contact@swissnethotels.com" style={{ color: GOLD, textDecoration: 'none', fontWeight: 600 }}>contact@swissnethotels.com</a>.
+              <strong style={{ color: TEXT }}>Want us to implement these?</strong> Your SwissNet specialist can work through this plan with you each month and put the high-impact fixes in place. Reach us at <a href="mailto:contact@swissnethotels.com" style={{ color: GOLD, textDecoration: 'none', fontWeight: 600 }}>contact@swissnethotels.com</a>.
             </p>
           </div>
         </>
       )}
 
-      {/* EMPTY STATE */}
       {!audit && !loading && !error && (
         <div style={{ background: WHITE, border: '1px dashed ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.4rem' }}>Ready when you are</p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6, maxWidth: 380, marginLeft: 'auto', marginRight: 'auto' }}>
-            Click "Scan my website" above and we'll read {domain || 'your official site'} and show you exactly what AI assistants can find.
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6, maxWidth: 420, marginLeft: 'auto', marginRight: 'auto' }}>
+            Click "Run full audit" and we'll read {domain || 'your official site'} across its key pages, then give you a precise, expert AI-visibility action plan.
           </p>
         </div>
       )}
