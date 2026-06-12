@@ -2585,9 +2585,9 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
       { id: 'competitors', label: 'Competitors' },
     ] },
     { heading: 'Improve', items: [
-      { id: 'schema', label: 'Schema' },
+      { id: 'schema', label: 'SwissNet Profile' },
+      { id: 'website', label: 'Official Website' },
       { id: 'optimise', label: 'Optimise' },
-      { id: 'website', label: 'Your Website' },
       { id: 'goals', label: 'Goals' },
     ] },
     { heading: 'Account', items: [
@@ -2637,9 +2637,9 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
               {tab === 'ai-visibility' && 'AI Visibility'}
               {tab === 'performance' && 'Performance'}
               {tab === 'competitors' && 'Competitors'}
-              {tab === 'schema' && '✦ Schema Health'}
+              {tab === 'schema' && '✦ SwissNet Profile'}
 {tab === 'optimise' && '✦ Optimise'}
-{tab === 'website' && '✦ Your Website'}
+{tab === 'website' && '✦ Official Website'}
 {tab === 'goals' && '✦ Goals This Month'}
 {tab === 'reports' && 'Reports'}
 {tab === 'settings' && 'Settings'}
