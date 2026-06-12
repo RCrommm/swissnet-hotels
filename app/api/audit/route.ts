@@ -30,11 +30,11 @@ const AI_RELEVANT = [
   'location', 'meeting', 'event',
 ]
 
-async function scrape(url: string, beeKey: string): Promise<string> {
+async function scrape(url: string, beeKey: string, timeoutMs = 22000): Promise<string> {
   try {
     const beeUrl = `https://app.scrapingbee.com/api/v1/?api_key=${beeKey}&url=${encodeURIComponent(url)}&render_js=true&premium_proxy=true&country_code=ch`
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 40000)
+    const timeout = setTimeout(() => controller.abort(), timeoutMs)
     const res = await fetch(beeUrl, { signal: controller.signal })
     clearTimeout(timeout)
     if (res.ok) return await res.text()
@@ -123,7 +123,7 @@ export async function POST(req: Request) {
       if (pickedTypes.has(t)) continue
       pickedTypes.add(t)
       toScan.push({ ...c, type: t })
-      if (toScan.length >= 8) break
+      if (toScan.length >= 4) break
     }
 
     // ---- 3. Scrape the picked pages in parallel ----
