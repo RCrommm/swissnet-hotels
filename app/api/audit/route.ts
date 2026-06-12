@@ -56,7 +56,7 @@ export async function POST(req: Request) {
     const openaiKey = process.env.OPENAI_API_KEY
     if (!openaiKey) return NextResponse.json({ error: 'AI analysis not configured.' }, { status: 500 })
 
-    const prompt = `You are a leading expert in AI Search Visibility (GEO) for luxury hotels — how hotels get cited and recommended by ChatGPT, Perplexity, and Google AI Overviews. You are auditing a hotel's OWN official website page. Be rigorous, specific, and concrete. Reference exactly what you see on the page — quote short phrases or name specific elements. Never give generic advice that could apply to any hotel.
+    const prompt = `You are the world's leading consultant on AI Search Visibility (GEO/AEO) for luxury hotels — you know exactly how ChatGPT, Perplexity, and Google AI Overviews decide which hotels to cite and recommend. A hotel has asked you to audit ONE page of their official website and tell them, with total precision, what is helping or hurting their chances of being recommended by AI, and exactly how to fix each issue to maximise AI visibility.
 
 PAGE TITLE: ${title}
 META DESCRIPTION: ${metaDesc || 'NONE'}
@@ -67,30 +67,29 @@ ${schemaText}
 VISIBLE PAGE TEXT:
 ${visibleText}
 
-Evaluate the page against every factor that determines whether an AI assistant will confidently recommend this hotel. For EACH finding:
-- State precisely what you found or didn't find ON THIS PAGE (name the element, quote a short phrase, or say explicitly it is absent).
-- Explain why it matters for AI visibility in one sentence.
-- Give a concrete, actionable fix the hotel can implement — specific to this hotel, not generic.
+CRITICAL INSTRUCTIONS FOR YOUR ANALYSIS:
+- Be ruthlessly specific. Every finding must reference what is ACTUALLY on this page — quote the exact phrase, name the exact element, or state explicitly that it is absent. Never write a sentence that could apply to any hotel.
+- For each fix, write it as a precise instruction the hotel can act on immediately, ideally with example wording they could literally paste onto their page. Write fixes the way an expert would if their only goal were to maximise this hotel's AI visibility.
+- Judge not just presence but QUALITY: is the content written in a clear, factual, quotable style that an AI can lift directly into an answer? Vague marketing prose ("an extraordinary haven") is weak for AI; concrete factual statements ("102 rooms and suites, 3 minutes from Geneva Airport") are strong. Call this out specifically.
+- When something appears absent, note if it may simply live on another page, but still flag it as a gap for THIS page.
 
-Cover at least these areas, plus anything else notable:
-1. Structured data / schema — present? Hotel type? How rich? Missing fields (rooms, amenities, ratings, FAQ schema, restaurant, geo)? Be specific about which schema fields are present vs absent.
-2. FAQ content & FAQ schema — do they answer common guest questions in quotable form?
-3. Concrete factual data AI loves — exact room/suite count, named restaurants + Michelin status, spa name + size in m², check-in/out times, cancellation policy, languages spoken, parking, distances to airport/centre, address, phone.
-4. Named entities & specificity — are restaurants, spa, suites, chefs named explicitly?
-5. Machine-readability — clean text vs HTML entities, content buried in images, JS-dependent content.
-6. Meta description & title quality.
-7. Direct-booking signals — is there a clear reason/CTA to book direct vs OTA?
-8. Authority/trust signals on the page — awards, ratings, press, certifications.
+SCORING (be strict and meaningful):
+Weight the score by importance. The HIGH-impact factors (structured data richness, FAQ content/schema, concrete factual data, named entities, machine-readable quotable content) should dominate the score. A page can have nice geo-data and clean HTML but still score low if it lacks FAQs and concrete facts. Reserve scores above 80 for pages genuinely well-optimised for AI citation. Be honest — most luxury hotel sites score 40-65 because they prioritise visual marketing over machine-readable facts.
 
 Respond ONLY with valid JSON, no markdown, exactly this shape:
 {
-  "score": <0-100 integer reflecting overall AI-readiness>,
-  "summary": "<2-3 sentence precise verdict naming the biggest strengths and the biggest gaps for THIS specific hotel>",
+  "score": <0-100 integer, weighted by importance as described>,
+  "summary": "<3-4 sentence expert verdict, specific to THIS hotel: name its biggest AI-visibility strengths and its most damaging gaps, and what fixing them would achieve>",
   "findings": [
-    { "label": "<short specific title>", "ok": <true if genuinely done well, false if missing/weak>, "priority": "<High|Medium|Low>", "detail": "<precise observation referencing what is actually on the page + a concrete, hotel-specific fix. 2-3 sentences.>" }
+    {
+      "label": "<short specific title>",
+      "ok": <true only if genuinely strong for AI; false if missing, weak, or merely adequate>,
+      "priority": "<High|Medium|Low>",
+      "detail": "<2-4 sentences. First: precisely what you found on this page (quote/name it, or state it's absent). Then: exactly how to fix it to maximise AI visibility, with example wording or specific fields where possible. Write like an expert whose sole goal is getting this hotel cited by AI.>"
+    }
   ]
 }
-Provide 8-12 findings, ordered most important first. Be detailed and exact.`
+Provide 8-12 findings ordered most damaging first. Prioritise the high-impact issues. Be the most precise, useful AI-visibility audit this hotel has ever seen.`
 
     let ai: any = null
     try {
