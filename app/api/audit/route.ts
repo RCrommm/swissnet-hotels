@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     if (!/^https?:\/\//i.test(target)) target = 'https://' + target
 
     const beeKey = process.env.SCRAPINGBEE_API_KEY
-    if (!beeKey) return NextResponse.json({ error: 'Scraping not configured.' }, { status: 500 })
+    if (!beeKey) return NextResponse.json({ error: 'DEBUG: key missing. All SCRAP keys seen: ' + JSON.stringify(Object.keys(process.env).filter(k => k.toUpperCase().includes('SCRAP'))) }, { status: 500 })
 
     // ---- Fetch the fully-rendered page via ScrapingBee ----
     let html = ''
