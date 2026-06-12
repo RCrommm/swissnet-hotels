@@ -76,7 +76,7 @@ export async function POST(req: Request) {
         const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
         const [{ data: h }, { data: rooms }, { data: restaurants }, { data: spa }, { data: experiences }, { data: content }, { data: faqSugg }] = await Promise.all([
           sb.from('hotels').select('name, location, region, rating, nightly_rate_chf, about_us, languages, check_in_time, check_out_time, parking, pet_friendly, family_friendly, private_transfer, cancellation_policy, accessibility, seasonal_notes, booking_benefits, direct_booking_url').eq('id', hotelId).single(),
-          sb.from('room_types').select('name, size_sqm, base_rate_chf, bed_type, max_occupancy').eq('hotel_id', hotelId),
+          sb.from('room_types').select('name, size_sqm, base_rate_chf, bed_type, max_occupancy').eq('hotel_id', hotelId).eq('is_available', true),
           sb.from('hotel_restaurants').select('name, cuisine_type, michelin_stars, description').eq('hotel_id', hotelId).eq('is_available', true),
           sb.from('hotel_spa').select('name, size_sqm, treatments, price_from, pool, sauna, hammam, opening_hours').eq('hotel_id', hotelId).eq('is_available', true),
           sb.from('hotel_experiences').select('name, category, duration, price_from').eq('hotel_id', hotelId).eq('is_available', true),
