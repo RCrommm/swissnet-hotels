@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     if (!/^https?:\/\//i.test(target)) target = 'https://' + target
 
     const beeKey = process.env.SCRAPINGBEE_API_KEY
-    if (!beeKey) return NextResponse.json({ error: 'DEBUG: key missing. All SCRAP keys seen: ' + JSON.stringify(Object.keys(process.env).filter(k => k.toUpperCase().includes('SCRAP'))) }, { status: 500 })
+    if (!beeKey) return NextResponse.json({ error: 'Scraping not configured.' }, { status: 500 })
 
     // ---- Fetch the fully-rendered page via ScrapingBee ----
     let html = ''
@@ -50,13 +50,13 @@ export async function POST(req: Request) {
       .replace(/<[^>]+>/g, ' ')
       .replace(/\s+/g, ' ')
       .trim()
-      .slice(0, 9000)
+      .slice(0, 14000)
 
     // ---- Ask GPT for an expert assessment ----
     const openaiKey = process.env.OPENAI_API_KEY
     if (!openaiKey) return NextResponse.json({ error: 'AI analysis not configured.' }, { status: 500 })
 
-    const prompt = `You are an expert in AI search visibility (how hotels get recommended by ChatGPT, Perplexity, and Google AI) specialising in luxury hotels. Analyse this hotel's OWN website page and judge how well it is set up to be found and recommended by AI assistants.
+    const prompt = `You are a leading expert in AI Search Visibility (GEO) for luxury hotels — how hotels get cited and recommended by ChatGPT, Perplexity, and Google AI Overviews. You are auditing a hotel's OWN official website page. Be rigorous, specific, and concrete. Reference exactly what you see on the page — quote short phrases or name specific elements. Never give generic advice that could apply to any hotel.
 
 PAGE TITLE: ${title}
 META DESCRIPTION: ${metaDesc || 'NONE'}
@@ -67,22 +67,30 @@ ${schemaText}
 VISIBLE PAGE TEXT:
 ${visibleText}
 
-Assess the page on the factors that make AI assistants cite and recommend a hotel:
-- Structured data / schema (is it present, is it the Hotel type, is it rich or thin)
-- FAQ content (do they answer common guest questions in a way AI can quote)
-- Concrete facts AI loves (number of rooms/suites, named restaurants, Michelin, spa size, distances, check-in/out times, cancellation policy, languages, parking)
-- Clarity and machine-readability of the content
-- Anything notably missing that would help AI recommend them
+Evaluate the page against every factor that determines whether an AI assistant will confidently recommend this hotel. For EACH finding:
+- State precisely what you found or didn't find ON THIS PAGE (name the element, quote a short phrase, or say explicitly it is absent).
+- Explain why it matters for AI visibility in one sentence.
+- Give a concrete, actionable fix the hotel can implement — specific to this hotel, not generic.
 
-Respond ONLY with valid JSON, no markdown, in exactly this shape:
+Cover at least these areas, plus anything else notable:
+1. Structured data / schema — present? Hotel type? How rich? Missing fields (rooms, amenities, ratings, FAQ schema, restaurant, geo)? Be specific about which schema fields are present vs absent.
+2. FAQ content & FAQ schema — do they answer common guest questions in quotable form?
+3. Concrete factual data AI loves — exact room/suite count, named restaurants + Michelin status, spa name + size in m², check-in/out times, cancellation policy, languages spoken, parking, distances to airport/centre, address, phone.
+4. Named entities & specificity — are restaurants, spa, suites, chefs named explicitly?
+5. Machine-readability — clean text vs HTML entities, content buried in images, JS-dependent content.
+6. Meta description & title quality.
+7. Direct-booking signals — is there a clear reason/CTA to book direct vs OTA?
+8. Authority/trust signals on the page — awards, ratings, press, certifications.
+
+Respond ONLY with valid JSON, no markdown, exactly this shape:
 {
-  "score": <0-100 integer, how AI-ready this page is>,
-  "summary": "<one or two sentence plain-English verdict>",
+  "score": <0-100 integer reflecting overall AI-readiness>,
+  "summary": "<2-3 sentence precise verdict naming the biggest strengths and the biggest gaps for THIS specific hotel>",
   "findings": [
-    { "label": "<short title>", "ok": <true if this is done well, false if missing/weak>, "priority": "<High|Medium|Low>", "detail": "<specific observation about THIS page and a concrete fix>" }
+    { "label": "<short specific title>", "ok": <true if genuinely done well, false if missing/weak>, "priority": "<High|Medium|Low>", "detail": "<precise observation referencing what is actually on the page + a concrete, hotel-specific fix. 2-3 sentences.>" }
   ]
 }
-Give 6-10 findings. Base every finding on what is actually present or absent in the content above — do not give generic advice. Be specific and reference what you actually saw.`
+Provide 8-12 findings, ordered most important first. Be detailed and exact.`
 
     let ai: any = null
     try {
@@ -90,7 +98,7 @@ Give 6-10 findings. Base every finding on what is actually present or absent in 
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: 'gpt-4o',
           messages: [{ role: 'user', content: prompt }],
           temperature: 0.3,
           response_format: { type: 'json_object' },
