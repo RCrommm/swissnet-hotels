@@ -3,6 +3,21 @@ import { NextResponse } from 'next/server'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 120
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url)
+  const key = searchParams.get('key')
+  const url = searchParams.get('url')
+  if (key !== process.env.AUDIT_SECRET) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  if (!url) return NextResponse.json({ error: 'Add ?url=https://hotel.com to the link' }, { status: 400 })
+  // Reuse the POST logic by faking a request body
+  return POST(new Request(req.url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url }),
+  }))
+}
 
 const AI_RELEVANT = [
   'room', 'suite', 'accommodation', 'chambre', 'villa',

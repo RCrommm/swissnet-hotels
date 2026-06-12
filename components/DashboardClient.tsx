@@ -2219,9 +2219,7 @@ function WebsiteTab({ hotel, hotelName, googleAiScores, hotelCatScores, category
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.55)', margin: '0 0 1.25rem', lineHeight: 1.7, maxWidth: 540 }}>
             We read your key pages the way an AI assistant would — rooms, dining, spa, offers and more — then an AI-visibility expert tells you exactly what helps you get recommended and precisely how to fix what's missing.
           </p>
-          <button onClick={runAudit} disabled={loading} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.05em', color: '#2A1A0E', background: loading ? 'rgba(201,169,76,0.5)' : GOLD, border: 'none', borderRadius: 8, padding: '0.7rem 1.5rem', cursor: loading ? 'default' : 'pointer' }}>
-            {loading ? 'Reading your site…' : audit ? 'Scan again' : 'Run full audit'}
-          </button>
+          
         </div>
       </div>
 
