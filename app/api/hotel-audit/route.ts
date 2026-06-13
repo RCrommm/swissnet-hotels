@@ -522,11 +522,21 @@ export async function POST(req: Request) {
 
     const verdict = overall >= 75 ? 'Strong AI foundation' : overall >= 50 ? 'A solid base with clear gaps' : 'Major gaps limiting AI visibility'
 
-    return NextResponse.json({
+    const result = {
       url, city: C, overall, verdict, areas, checklist,
       recommendations: recs, opportunities: opps, missingQuestions, enriched: !!hotelId && (dash.missedQueries.length > 0 || Object.keys(dash.catScores).length > 0),
       robots, pagesScraped: detected.map(p => p.url),
-    })
+    }
+
+    // save for known hotels so it shows inside their dashboard (non-blocking)
+    if (hotelId) {
+      try {
+        const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+        await sb.from('hotel_audits').insert({ hotel_id: hotelId, url, overall, result })
+      } catch {}
+    }
+
+    return NextResponse.json(result)
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Audit failed' }, { status: 500 })
   }
