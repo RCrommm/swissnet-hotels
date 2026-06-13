@@ -268,7 +268,7 @@ export default async function HomePage() {
 
       {/* ESSENTIAL */}
       <div style={{ background: '#FFFFFF', border: '1px solid ' + border, padding: '2.5rem', display: 'flex', flexDirection: 'column' }}>
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: gold, margin: '0 0 0.75rem' }}>Essential</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: gold, margin: '0 0 0.75rem' }}>Partner</p>
         <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 300, color: '#2A1208', margin: '0 0 1.5rem', lineHeight: 1.5 }}>
           Get listed, structured and tracked for AI search.
         </p>
