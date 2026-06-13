@@ -62,12 +62,17 @@ async function callOpenAI(system: string, user: string, schema: any) {
     body: JSON.stringify({
       model: 'gpt-4o',
       temperature: 0.2,
+      max_tokens: 16000,
       response_format: { type: 'json_schema', json_schema: { name: schema.name, strict: true, schema: schema.schema } },
       messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
     }),
   })
   const data = await res.json()
-  try { return JSON.parse(data.choices[0].message.content) } catch { return { _error: 'parse', raw: data?.choices?.[0]?.message?.content || JSON.stringify(data).slice(0, 500) } }
+  if (data?.error) return { _error: 'api', raw: data.error.message || JSON.stringify(data.error) }
+  const content = data?.choices?.[0]?.message?.content
+  const finish = data?.choices?.[0]?.finish_reason
+  if (!content) return { _error: 'empty', raw: 'finish_reason=' + finish + ' ' + JSON.stringify(data).slice(0, 400) }
+  try { return JSON.parse(content) } catch { return { _error: 'parse', raw: 'finish_reason=' + finish + ' | ' + content.slice(0, 400) } }
 }
 
 // ── PASS 1: EXTRACTION (what is literally present, with evidence) ──────
