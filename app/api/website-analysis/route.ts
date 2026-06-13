@@ -211,13 +211,27 @@ export async function POST(req: Request) {
     const urlsFailed = pageData.filter(p => p.error).map(p => p.url)
     if (scraped.length === 0) return NextResponse.json({ error: 'Could not scrape any of the URLs — site may block scrapers or credits ran out.' }, { status: 502 })
 
-    // PASS 1 — extract only what's present
-    const extraction = await callOpenAI(
-      EXTRACT_SYSTEM,
-      `Extract what is literally present on these pages. Quote evidence for every present:true.\n\n${JSON.stringify(scraped, null, 2)}`,
-      EXTRACT_SCHEMA,
-    )
-    if (extraction?._error) return NextResponse.json({ error: 'Extraction step failed to parse', detail: extraction.raw }, { status: 502 })
+    // PASS 1 — extract per page (keeps each call small so strict JSON never truncates)
+    const perPage: any[] = []
+    const allFacts: any[] = []
+    for (const pg of scraped) {
+      const ex = await callOpenAI(
+        EXTRACT_SYSTEM,
+        `Extract what is literally present on THIS ONE page. Quote evidence for every present:true.\n\n${JSON.stringify(pg, null, 2)}`,
+        EXTRACT_SCHEMA,
+      )
+      if (ex?._error) return NextResponse.json({ error: 'Extraction step failed to parse', detail: ex.raw }, { status: 502 })
+      if (Array.isArray(ex.pages)) perPage.push(...ex.pages)
+      if (Array.isArray(ex.facts)) allFacts.push(...ex.facts)
+    }
+    // de-duplicate facts by name, preferring present:true
+    const factMap = new Map<string, any>()
+    for (const f of allFacts) {
+      const key = (f.fact || '').toLowerCase()
+      const existing = factMap.get(key)
+      if (!existing || (f.present && !existing.present)) factMap.set(key, f)
+    }
+    const extraction = { facts: [...factMap.values()], pages: perPage }
 
     // PASS 2 — recommend from extraction only
     const recommendation = await callOpenAI(
