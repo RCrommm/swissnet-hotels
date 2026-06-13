@@ -17,7 +17,7 @@ For EACH page:
 5. FIXES — for schema, WRITE the actual JSON-LD block to paste with real values (use [PLACEHOLDER] only where genuinely unknown); for FAQs, WRITE the actual Q&A; say exactly where on the page each goes.
 FAQs ARE CRITICAL for AI visibility — AI engines pull answers directly from FAQ content. For EVERY page, you MUST propose a set of real FAQs (questions + full answers) appropriate to that page, written the way real guests would ask AI (e.g. "Does La Réserve Genève have a Michelin-starred restaurant?", "How far is La Réserve Genève from Geneva airport?", "Does the spa offer couples treatments?"). Never skip FAQs for a page. These go in the actionPlan for each page.
 
-At the END, you MUST produce a consolidated actionPlan: one entry per page, each listing the major gaps in plain language, the specific schema to add, the actual FAQs to add (written out), and any other concrete actions. Also write a marketerSummary that a non-technical person can act on. This is the part the hotel's marketing team will follow step by step — make it complete and specific.
+At the END, you MUST produce a consolidated actionPlan: one entry per page, each listing the major gaps in plain language, the specific schema to add, the actual FAQs to add (written out), and any other concrete actions. Also write a marketerSummary that a non-technical person can act on. This is the part the hotel's marketing team will follow step by step — make it complete and specific. For EACH page in the actionPlan, include a checklist covering the important schema types and content elements that page should have (FAQPage, the page-specific business schema like Restaurant/Spa/Offer/Event, aggregateRating, detailed HotelRoom fields, key on-page content). Mark present:true for what the page already has and present:false for what is missing, so the hotel sees exactly what to fix.
 Also analyse INTERNAL LINKING across the pages provided: which pages link to which, and whether any provided page is not linked to by the others (orphaned), since poor internal linking hurts AI crawlability.
 
 Return ONLY valid JSON, no markdown:
@@ -42,6 +42,7 @@ Return ONLY valid JSON, no markdown:
     {
       "page": "the page URL or name this group of actions is for",
       "majorGaps": ["the key missing things on this page, plain language, most important first", "..."],
+      "checklist": [ { "item": "the schema type or content element, e.g. FAQPage schema, Restaurant schema, aggregateRating, room amenities in schema", "present": true } ],
       "schemaToAdd": ["specific schema to add on this page and what fields, e.g. 'Restaurant schema for Le Loti with servesCuisine, menu, openingHours'", "..."],
       "faqsToAdd": [ { "question": "a real FAQ question targeting how guests actually search", "answer": "a real, specific answer to paste, using the page's facts; [PLACEHOLDER] where a fact is unknown" } ],
       "otherActions": ["any other concrete improvement for this page: content to add, headings to fix, internal links to add", "..."]

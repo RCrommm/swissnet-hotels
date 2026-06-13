@@ -2272,6 +2272,19 @@ function WebsiteTab({ hotel, hotelName }: any) {
                         </ul>
                       </>
                     )}
+                    {(ap.checklist || []).length > 0 && (
+                      <>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Checklist for this page</p>
+                        <div style={{ marginBottom: '0.9rem' }}>
+                          {ap.checklist.map((c: any, j: number) => (
+                            <div key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', padding: '0.35rem 0', borderBottom: '1px solid ' + BORDER }}>
+                              <span style={{ color: c.present ? GREEN : RED, fontWeight: 700, fontSize: '0.75rem', flexShrink: 0, lineHeight: 1.4 }}>{c.present ? '✓' : '✗'}</span>
+                              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: c.present ? TEXT_MUTED : TEXT, lineHeight: 1.5 }}>{c.item}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
 
                     {(ap.schemaToAdd || []).length > 0 && (
                       <>
