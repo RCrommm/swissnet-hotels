@@ -2386,7 +2386,12 @@ function WebsiteTab({ hotel, hotelName }: any) {
                       <>
                         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.4rem' }}>Content to add</p>
                         <ul style={{ margin: '0 0 0.9rem', paddingLeft: '1.1rem' }}>
-                          {ap.faqsToAdd.map((q: any, j: number) => <li key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT, margin: '0 0 0.25rem', lineHeight: 1.6 }}>An FAQ answering: {q.question}</li>)}
+                          {ap.faqsToAdd.map((q: any, j: number) => (
+  <li key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.6 }}>
+    <strong>{q.question}</strong>
+    {q.answer && <span style={{ display: 'block', color: TEXT_MUTED, marginTop: '0.15rem' }}>{q.answer}</span>}
+  </li>
+))}
                         </ul>
                       </>
                     )}
