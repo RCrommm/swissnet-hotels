@@ -85,7 +85,35 @@ export default function WebsiteAnalysisPage() {
             <p style={{ color: MUTED, margin: '0 0 1rem', fontSize: '0.7rem' }}>Scraped: {(result.urlsScraped || []).join(', ')}{(result.urlsFailed || []).length > 0 && <span style={{ color: RED }}> · Failed: {result.urlsFailed.join(', ')}</span>}</p>
 
             <p style={{ margin: '0 0 0.5rem' }}><strong>AI-readability score: {a.overallScore}/100</strong> — {a.scoreReason}</p>
+
+            {(a.scoreBreakdown || []).length > 0 && (
+              <div style={{ margin: '0.75rem 0 1.25rem' }}>
+                {a.scoreBreakdown.map((s: any, i: number) => (
+                  <div key={i} style={{ marginBottom: '0.45rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', marginBottom: '0.18rem' }}>
+                      <span>{s.label}</span><span style={{ color: MUTED }}>{s.score}/{s.max}</span>
+                    </div>
+                    <div style={{ height: 6, background: BG, borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${Math.round((s.score / s.max) * 100)}%`, background: GOLD }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <p style={{ margin: '0 0 1rem' }}>{a.summary}</p>
+
+            {(a.answersCheck || []).length > 0 && <>
+              <h2 style={{ fontSize: '1rem', margin: '1.5rem 0 0.5rem', borderTop: '1px solid ' + BORDER, paddingTop: '1rem' }}>What a guest can ask AI — and whether your site answers it</h2>
+              <ul style={{ margin: '0 0 1rem', padding: 0, listStyle: 'none' }}>
+                {a.answersCheck.map((q: any, i: number) => (
+                  <li key={i} style={{ marginBottom: '0.4rem', display: 'flex', gap: '0.55rem' }}>
+                    <span style={{ color: q.answerable ? '#15803d' : RED, fontWeight: 700, flexShrink: 0 }}>{q.answerable ? '✓' : '✗'}</span>
+                    <span><strong>{q.question}</strong>{q.note ? ` — ${q.note}` : ''}</span>
+                  </li>
+                ))}
+              </ul>
+            </>}
 
             {a.linkingAnalysis && <>
               <h2 style={{ fontSize: '1rem', margin: '1.5rem 0 0.5rem', borderTop: '1px solid ' + BORDER, paddingTop: '1rem' }}>Internal linking</h2>
