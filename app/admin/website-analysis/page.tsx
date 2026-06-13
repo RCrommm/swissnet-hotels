@@ -63,6 +63,40 @@ export default function WebsiteAnalysisPage() {
               <h2 style={{ fontSize: '1rem', margin: '1.5rem 0 0.5rem', borderTop: '1px solid ' + BORDER, paddingTop: '1rem' }}>What to change or add — whole site</h2>
               <ol style={{ margin: '0 0 1rem', paddingLeft: '1.2rem' }}>{a.siteWideReport.map((p: string, i: number) => <li key={i} style={{ marginBottom: '0.4rem' }}>{p}</li>)}</ol>
             </>}
+            {a.marketerSummary && <>
+              <h2 style={{ fontSize: '1rem', margin: '1.5rem 0 0.5rem', borderTop: '1px solid ' + BORDER, paddingTop: '1rem' }}>Summary for the marketing team</h2>
+              <p style={{ margin: '0 0 1rem' }}>{a.marketerSummary}</p>
+            </>}
+
+            {(a.actionPlan || []).length > 0 && <>
+              <h2 style={{ fontSize: '1.05rem', margin: '1.5rem 0 0.5rem', borderTop: '2px solid ' + GOLD, paddingTop: '1rem' }}>Action plan — exactly what to do, page by page</h2>
+              {a.actionPlan.map((ap: any, i: number) => (
+                <div key={i} style={{ marginBottom: '1.5rem' }}>
+                  <h3 style={{ fontSize: '0.9rem', margin: '1rem 0 0.4rem', wordBreak: 'break-all' }}>{ap.page}</h3>
+                  {(ap.majorGaps || []).length > 0 && <>
+                    <p style={{ margin: '0.5rem 0 0.2rem', fontWeight: 700 }}>Major gaps:</p>
+                    <ul style={{ margin: '0 0 0.5rem', paddingLeft: '1.2rem' }}>{ap.majorGaps.map((g: string, j: number) => <li key={j} style={{ marginBottom: '0.2rem' }}>{g}</li>)}</ul>
+                  </>}
+                  {(ap.schemaToAdd || []).length > 0 && <>
+                    <p style={{ margin: '0.5rem 0 0.2rem', fontWeight: 700 }}>Schema to add:</p>
+                    <ul style={{ margin: '0 0 0.5rem', paddingLeft: '1.2rem' }}>{ap.schemaToAdd.map((s: string, j: number) => <li key={j} style={{ marginBottom: '0.2rem' }}>{s}</li>)}</ul>
+                  </>}
+                  {(ap.faqsToAdd || []).length > 0 && <>
+                    <p style={{ margin: '0.5rem 0 0.2rem', fontWeight: 700 }}>FAQs to add:</p>
+                    {ap.faqsToAdd.map((q: any, j: number) => (
+                      <div key={j} style={{ marginBottom: '0.4rem' }}>
+                        <p style={{ margin: '0 0 0.15rem' }}><strong>Q:</strong> {q.question}</p>
+                        <p style={{ margin: 0 }}><strong>A:</strong> {q.answer}</p>
+                      </div>
+                    ))}
+                  </>}
+                  {(ap.otherActions || []).length > 0 && <>
+                    <p style={{ margin: '0.5rem 0 0.2rem', fontWeight: 700 }}>Other actions:</p>
+                    <ul style={{ margin: '0 0 0.5rem', paddingLeft: '1.2rem' }}>{ap.otherActions.map((s: string, j: number) => <li key={j} style={{ marginBottom: '0.2rem' }}>{s}</li>)}</ul>
+                  </>}
+                </div>
+              ))}
+            </>}
 
             {(a.pages || []).map((pg: any, i: number) => (
               <div key={i}>

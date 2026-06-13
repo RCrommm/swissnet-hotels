@@ -14,7 +14,9 @@ For EACH page:
 3. WHAT AI CANNOT SEE — every important fact that is NOT extractable; for each, WHY (absent / image-only / JS / in text but not schema) and WHERE it should be added (which schema type + field, or which part of the page).
 4. PRESENT BUT WEAK — facts in text but not in schema, heading/structure problems, thin content.
 5. FIXES — for schema, WRITE the actual JSON-LD block to paste with real values (use [PLACEHOLDER] only where genuinely unknown); for FAQs, WRITE the actual Q&A; say exactly where on the page each goes.
+FAQs ARE CRITICAL for AI visibility — AI engines pull answers directly from FAQ content. For EVERY page, you MUST propose a set of real FAQs (questions + full answers) appropriate to that page, written the way real guests would ask AI (e.g. "Does La Réserve Genève have a Michelin-starred restaurant?", "How far is La Réserve Genève from Geneva airport?", "Does the spa offer couples treatments?"). Never skip FAQs for a page. These go in the actionPlan for each page.
 
+At the END, you MUST produce a consolidated actionPlan: one entry per page, each listing the major gaps in plain language, the specific schema to add, the actual FAQs to add (written out), and any other concrete actions. Also write a marketerSummary that a non-technical person can act on. This is the part the hotel's marketing team will follow step by step — make it complete and specific.
 Also analyse INTERNAL LINKING across the pages provided: which pages link to which, and whether any provided page is not linked to by the others (orphaned), since poor internal linking hurts AI crawlability.
 
 Return ONLY valid JSON, no markdown:
@@ -34,9 +36,18 @@ Return ONLY valid JSON, no markdown:
       "fixes": [ { "title": "", "priority": "High|Medium|Low", "instruction": "", "schemaType": "", "schemaBlock": "full JSON-LD or empty", "faqsToAdd": [ { "question": "", "answer": "" } ] } ]
     }
   ],
-  "siteWideReport": ["the consolidated list of everything to change or add across the whole site, highest impact first, each with the reason it matters for AI ranking"]
+  "siteWideReport": ["the consolidated list of everything to change or add across the whole site, highest impact first, each with the reason it matters for AI ranking"],
+  "actionPlan": [
+    {
+      "page": "the page URL or name this group of actions is for",
+      "majorGaps": ["the key missing things on this page, plain language, most important first", "..."],
+      "schemaToAdd": ["specific schema to add on this page and what fields, e.g. 'Restaurant schema for Le Loti with servesCuisine, menu, openingHours'", "..."],
+      "faqsToAdd": [ { "question": "a real FAQ question targeting how guests actually search", "answer": "a real, specific answer to paste, using the page's facts; [PLACEHOLDER] where a fact is unknown" } ],
+      "otherActions": ["any other concrete improvement for this page: content to add, headings to fix, internal links to add", "..."]
+    }
+  ],
+  "marketerSummary": "a clear plain-language paragraph a non-technical marketer can read and understand: what is wrong overall, why it limits their AI visibility and direct bookings, and the handful of things that will make the biggest difference"
 }`
-
 function extractSchema(html: string): string[] {
   const blocks: string[] = []
   const re = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
