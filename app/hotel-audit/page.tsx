@@ -87,6 +87,23 @@ export default function HotelAuditPage() {
             </div>
           </div>
 
+          {/* TOP AI QUESTIONS THE SITE CAN'T ANSWER */}
+          {(r.missingQuestions || []).length > 0 && <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.25rem' }}>
+            <div style={{ padding: '1.25rem 1.75rem', background: '#fef2f2', borderBottom: '1px solid #fecaca' }}>
+              <p style={{ fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: RED, margin: '0 0 0.3rem' }}>The core problem</p>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: TEXT, margin: 0 }}>Questions guests ask AI that your site can't answer</p>
+              <p style={{ fontSize: '0.62rem', color: MUTED, margin: '0.35rem 0 0' }}>When AI can't find the answer on your site, it recommends a competitor who provides it.</p>
+            </div>
+            <div style={{ padding: '1rem 1.75rem 1.25rem' }}>
+              {r.missingQuestions.map((qq: string, i: number) => (
+                <div key={i} style={{ display: 'flex', gap: '0.7rem', padding: '0.5rem 0', borderBottom: i < r.missingQuestions.length - 1 ? '1px solid ' + BORDER : 'none' }}>
+                  <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', color: RED, flexShrink: 0, width: 22 }}>{i + 1}</span>
+                  <span style={{ fontSize: '0.72rem', color: TEXT, lineHeight: 1.5 }}>{qq}</span>
+                </div>
+              ))}
+            </div>
+          </div>}
+
           {/* LEVEL 3 — AI DEMAND OPPORTUNITIES */}
           {(r.opportunities || []).length > 0 && <div style={{ marginBottom: '1.25rem' }}>
             <div style={{ marginBottom: '0.75rem' }}>

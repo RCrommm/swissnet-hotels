@@ -499,11 +499,32 @@ export async function POST(req: Request) {
     // sort: fitting + lowest readiness first (biggest real opportunities on top)
     opps.sort((a, b) => (Number(b.fits) - Number(a.fits)) || (a.readiness - b.readiness))
 
+    // ── Top AI questions the site can't answer (grounded in failed checks) ──
+    const missingQuestions: string[] = []
+    const q = (cond: boolean, text: string) => { if (cond) missingQuestions.push(text) }
+    q(!s.parking, 'Does the hotel have parking?')
+    q(s.parking && !s.parking_detail, 'How much does parking cost and is it valet or self?')
+    q(!s.check_in_out, 'What are the check-in and check-out times?')
+    q(!s.breakfast, 'Is breakfast included, and what are the hours?')
+    q(!s.pets, 'Are pets allowed?')
+    q(!s.accessibility, 'Are wheelchair-accessible rooms available?')
+    q(!s.cancellation, 'What is the cancellation policy?')
+    q(!s.airport_transfer, 'How far is the hotel from the airport, and is transfer available?')
+    q(!s.languages, 'What languages does the staff speak?')
+    q(s.fitCouples && !s.couples_intent, 'Is the hotel good for couples or a honeymoon?')
+    q(s.fitFamily && !s.family_intent, 'Is the hotel family-friendly, and are family rooms available?')
+    q(s.fitBusiness && !s.business_intent, 'Does the hotel have meeting rooms, and what capacity?')
+    q(s.fitSpa && !s.wellness_spa, 'What does the spa offer and is it open to non-residents?')
+    q(s.fitDining && !s.dining_content, 'What restaurants are at the hotel?')
+    q(!s.location_nearby, 'What attractions are near the hotel?')
+    q(!s.room_detail, 'Which room type is best for my stay?')
+    q(!s.hasFAQ, 'Where can guests find quick answers to common questions?')
+
     const verdict = overall >= 75 ? 'Strong AI foundation' : overall >= 50 ? 'A solid base with clear gaps' : 'Major gaps limiting AI visibility'
 
     return NextResponse.json({
       url, city: C, overall, verdict, areas, checklist,
-      recommendations: recs, opportunities: opps, enriched: !!hotelId && (dash.missedQueries.length > 0 || Object.keys(dash.catScores).length > 0),
+      recommendations: recs, opportunities: opps, missingQuestions, enriched: !!hotelId && (dash.missedQueries.length > 0 || Object.keys(dash.catScores).length > 0),
       robots, pagesScraped: detected.map(p => p.url),
     })
   } catch (e: any) {
