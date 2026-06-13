@@ -103,6 +103,9 @@ const CONTENT_CHECKS = [
   'location_nearby_attractions', 'languages', 'cancellation_policy', 'couples_intent',
   'family_intent', 'business_intent', 'wellness_spa_content', 'dining_content',
   'booking_cta', 'direct_booking_benefit',
+  // facility presence — used to decide which categories FIT this hotel (not type-picked)
+  'has_spa_facility', 'has_meeting_facility', 'has_kids_facility', 'has_notable_dining',
+  'has_lakefront_or_view', 'is_luxury_or_5star',
 ]
 const EXTRACT_SYSTEM = `You are a detection engine for hotel websites. For ONE page you report only what is literally present in the data given (visible text, headings, meta, JSON-LD). You NEVER infer or guess. For each content check return present true/false; if true, include a SHORT exact quote as evidence. "Intent" checks (couples_intent, family_intent, business_intent) mean the page has assembled content that directly addresses that traveller type — not just isolated facts. This is detection only — give NO advice.`
 function extractSchemaSpec() {
@@ -156,7 +159,7 @@ function pct(got: number, max: number) { return max ? Math.round((got / max) * 1
 
 export async function POST(req: Request) {
   try {
-    const { url, city, hotelType, password } = await req.json()
+    const { url, city, password } = await req.json()
     if (password !== (process.env.ADMIN_REPORT_PASSWORD || 'RCrom2004Romeo')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     if (!url) return NextResponse.json({ error: 'Enter a website URL' }, { status: 400 })
     const apiKey = process.env.SCRAPINGBEE_API_KEY
@@ -240,6 +243,13 @@ export async function POST(req: Request) {
       hasRoomsPage: pageTypesFound.has('rooms'), hasSpaPage: pageTypesFound.has('spa'),
       hasDiningPage: pageTypesFound.has('dining'), hasLocationPage: pageTypesFound.has('location'),
       hasFamilyPage: pageTypesFound.has('family'),
+      // which categories this hotel genuinely FITS (detected, not picked)
+      fitSpa: has('has_spa_facility') || has('wellness_spa_content') || pageTypesFound.has('spa'),
+      fitFamily: has('has_kids_facility') || has('family_suitability'),
+      fitBusiness: has('has_meeting_facility') || pageTypesFound.has('meetings'),
+      fitDining: has('has_notable_dining') || has('dining_content'),
+      fitCouples: has('has_lakefront_or_view') || has('has_spa_facility') || has('is_luxury_or_5star'),
+      fitLuxury: has('is_luxury_or_5star'),
     }
 
     // 6. score the 5 weighted areas (each 0-100)
@@ -296,7 +306,6 @@ export async function POST(req: Request) {
     ]
 
     // 8. rule-based recommendations (deterministic IF/THEN; never invents values)
-    const t = (hotelType || 'hotel').toLowerCase()
     const C = city || 'the city'
     const recs: any[] = []
     const add = (priority: string, area: string, title: string, why: string, include: string[]) => recs.push({ priority, area, title, why, include })
@@ -307,10 +316,10 @@ export async function POST(req: Request) {
     if (!s.parking) add('High', 'Content', `Answer parking clearly` + (s.hasLocationPage ? '' : ` (add to a location page)`), `Parking is one of the most common hotel questions AI is asked and the site doesn't answer it.`, ['Whether parking is available', 'Price and reservation rules', 'Valet, EV charging, height limit', 'Nearby alternatives'])
     else if (!s.parking_detail) add('Medium', 'Content', `Expand parking detail`, `Parking is mentioned but lacks the specifics AI needs to answer confidently.`, ['Price', 'Valet / self', 'EV charging', 'Height limit'])
     if (!s.check_in_out) add('High', 'Content', `State check-in and check-out times`, `A top-asked factual question AI currently can't answer from the site.`, ['Check-in time', 'Check-out time', 'Early check-in / late check-out options'])
-    if (!s.couples_intent && /lux|spa|resort|boutique|romantic/.test(t)) add('High', 'AI readiness', `Create couples / honeymoon content`, `The hotel fits romantic searches ("romantic hotel ${C}", "honeymoon ${C}") but the site never assembles an answer for them.`, ['A dedicated section or FAQ "Is [hotel] good for couples?"', 'Name the suites, dining and spa that support it', 'Target the romantic search phrasing'])
-    if (!s.family_intent) add(/family|resort/.test(t) ? 'High' : 'Medium', 'AI readiness', `Create family content`, `Family searches ("family hotel ${C}") need an assembled answer the site doesn't give.`, ['Family rooms / connecting rooms', 'Kids facilities and activities', 'An "Is [hotel] family-friendly?" FAQ'])
-    if (!s.business_intent && /business|city|lux/.test(t)) add('Medium', 'AI readiness', `Create business-traveller content`, `Business searches need meeting and practical detail assembled in one place.`, ['Meeting room capacities', 'Distance to airport / station', 'Business amenities and rates'])
-    if (!s.wellness_spa && /spa|wellness|lux|resort/.test(t)) add('High', 'Content', `Create a dedicated spa page targeting "hotel with spa in ${C}"`, `The hotel type implies a spa but the site lacks dedicated, extractable spa content.`, ['Treatments and signature experiences', 'Opening hours and prices', 'Pool / sauna / hammam', 'FAQs and booking CTA'])
+    if (s.fitCouples && !s.couples_intent) add('High', 'AI readiness', `Create couples / honeymoon content`, `This hotel has the ingredients for romantic searches ("romantic hotel ${C}", "honeymoon ${C}") but never assembles them into an answer AI can quote.`, ['A dedicated section or FAQ "Is [hotel] good for couples?"', 'Name the suites, dining and spa that support it', 'Target the romantic search phrasing'])
+    if (s.fitFamily && !s.family_intent) add('High', 'AI readiness', `Create family content`, `The hotel has family facilities but no assembled answer for "family hotel ${C}" searches.`, ['Family rooms / connecting rooms', 'Kids facilities and activities', 'An "Is [hotel] family-friendly?" FAQ'])
+    if (s.fitBusiness && !s.business_intent) add('Medium', 'AI readiness', `Create business-traveller content`, `Meeting facilities exist but business searches need them assembled with practical detail.`, ['Meeting room capacities', 'Distance to airport / station', 'Business amenities and rates'])
+    if (s.fitSpa && !s.wellness_spa) add('High', 'Content', `Create a dedicated spa page targeting "hotel with spa in ${C}"`, `The hotel has a spa but the site lacks dedicated, extractable spa content.`, ['Treatments and signature experiences', 'Opening hours and prices', 'Pool / sauna / hammam', 'FAQs and booking CTA'])
     if (!s.location_nearby) add('High', 'Content', `Strengthen the location page`, `AI can't tie the hotel to ${C} landmarks and "near X" searches without explicit nearby-attraction content.`, ['Distance to airport / station / centre', 'Named nearby attractions', 'Getting-here directions'])
     if (!s.room_detail) add('High', 'Content', `Add detailed room pages`, `Room searches need each room type described for AI to match guests to the right room.`, ['Room types with size, bed, view', 'Per-room descriptions', 'HotelRoom schema'])
     if (!s.roomSchema && s.hasRoomsPage) add('Medium', 'Schema', `Add HotelRoom schema`, `Room pages exist but aren't marked up, so AI extracts them weakly.`, ['HotelRoom type per room', 'bed, occupancy, image'])
@@ -329,7 +338,7 @@ export async function POST(req: Request) {
     const verdict = overall >= 75 ? 'Strong AI foundation' : overall >= 50 ? 'A solid base with clear gaps' : 'Major gaps limiting AI visibility'
 
     return NextResponse.json({
-      url, city: C, hotelType: t, overall, verdict, areas, checklist,
+      url, city: C, overall, verdict, areas, checklist,
       recommendations: recs, robots, pagesScraped: detected.map(p => p.url),
     })
   } catch (e: any) {

@@ -2,12 +2,9 @@
 import { useState } from 'react'
 
 const GOLD = '#C9A84C', GOLD_LIGHT = 'rgba(201,169,76,0.10)', BG = '#F8F5EF', WHITE = '#FFFFFF', TEXT = '#2A1A0E', MUTED = 'rgba(42,26,14,0.5)', BORDER = 'rgba(201,169,76,0.2)', GREEN = '#15803d', AMBER = '#b45309', RED = '#dc2626'
-const HOTEL_TYPES = ['Luxury', 'Spa & wellness', 'Family', 'Business / city', 'Boutique', 'Resort', 'Ski', 'Other']
-
 export default function HotelAuditPage() {
   const [url, setUrl] = useState('')
   const [city, setCity] = useState('')
-  const [hotelType, setHotelType] = useState('Luxury')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -17,7 +14,7 @@ export default function HotelAuditPage() {
     if (!url.trim()) return
     setLoading(true); setError(''); setR(null)
     try {
-      const res = await fetch('/api/hotel-audit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url, city, hotelType, password }) })
+      const res = await fetch('/api/hotel-audit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url, city, password }) })
       const data = await res.json()
       if (data.error) setError(data.error); else setR(data)
     } catch { setError('Request failed (the audit may have timed out — try fewer pages).') } finally { setLoading(false) }
@@ -36,10 +33,9 @@ export default function HotelAuditPage() {
         <p style={{ fontSize: '0.72rem', color: MUTED, margin: '0 0 1.5rem' }}>Enter a hotel website. It crawls the key pages, checks them against a fixed AI-visibility checklist, scores the site, and tells you exactly what to add.</p>
 
         <div className="no-print" style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', marginBottom: '1.5rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
             <div><label style={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED, display: 'block', marginBottom: '0.3rem' }}>Website URL</label><input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://hotel.com" style={inp} /></div>
-            <div><label style={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED, display: 'block', marginBottom: '0.3rem' }}>City</label><input value={city} onChange={e => setCity(e.target.value)} placeholder="Geneva" style={inp} /></div>
-            <div><label style={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED, display: 'block', marginBottom: '0.3rem' }}>Type</label><select value={hotelType} onChange={e => setHotelType(e.target.value)} style={inp}>{HOTEL_TYPES.map(t => <option key={t}>{t}</option>)}</select></div>
+            <div><label style={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED, display: 'block', marginBottom: '0.3rem' }}>City <span style={{ textTransform: 'none', fontWeight: 400 }}>(optional)</span></label><input value={city} onChange={e => setCity(e.target.value)} placeholder="auto-detected" style={inp} /></div>
           </div>
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
             <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="password" style={{ ...inp, width: 160 }} />
