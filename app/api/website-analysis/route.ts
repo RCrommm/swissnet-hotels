@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 
 export const maxDuration = 300
 
@@ -113,7 +114,15 @@ export async function POST(req: Request) {
     let analysis: any = null
     try { analysis = JSON.parse(aiData.choices[0].message.content) } catch { analysis = { error: 'Could not parse AI output', raw: aiData?.choices?.[0]?.message?.content || '' } }
 
-    return NextResponse.json({ urlsScraped: scraped.map(p => p.url), urlsFailed: pageData.filter(p => p.error).map(p => p.url), analysis })
+    const urlsScraped = scraped.map(p => p.url)
+    const urlsFailed = pageData.filter(p => p.error).map(p => p.url)
+
+    try {
+      const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+      await sb.from('website_analyses').insert({ urls_scraped: urlsScraped, urls_failed: urlsFailed, analysis })
+    } catch {}
+
+    return NextResponse.json({ urlsScraped, urlsFailed, analysis })
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Failed' }, { status: 500 })
   }

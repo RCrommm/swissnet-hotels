@@ -12,6 +12,18 @@ export default function WebsiteAnalysisPage() {
 
   useEffect(() => {
     const p = new URLSearchParams(window.location.search).get('password'); if (p) setPassword(p)
+    const loadLast = async () => {
+      try {
+        const { createClient } = await import('@supabase/supabase-js')
+        const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+        const { data } = await sb.from('website_analyses').select('urls_scraped, urls_failed, analysis').order('created_at', { ascending: false }).limit(1).single()
+        if (data) {
+          setResult({ urlsScraped: data.urls_scraped, urlsFailed: data.urls_failed, analysis: data.analysis })
+          if (Array.isArray(data.urls_scraped)) setUrls(data.urls_scraped.join('\n'))
+        }
+      } catch {}
+    }
+    loadLast()
   }, [])
 
   const run = async () => {
