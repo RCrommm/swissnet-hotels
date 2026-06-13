@@ -178,13 +178,14 @@ ${ANSWER_QUESTIONS.map((q, i) => `${i + 1}. ${q}`).join('\n')}
 6. siteWideReport — the highest-impact changes across the whole site, ordered by impact, framed as gaps and opportunities (never guarantees).
 7. actionPlan — per page: majorGaps, schemaToAdd (only where it gives a real AI benefit), faqsToAdd (real questions; use [VERIFY] for any fact not in the extraction), otherActions.
 8. entityPositioning — how strongly AI can associate this hotel with each positioning category, judged ONLY from the extraction. Use EXACTLY these five entities, in this order: Luxury Hotel, Spa & Wellness, Family, Business & Meetings, Fine Dining. For each return strength (Strong / Medium / Weak) and a one-line why citing what is present or absent.
-9. contentGaps — the missing content blocks that would most improve AI understanding. Tag each Critical (AI cannot extract core facts without it), Important (improves recommendation potential), or Nice-to-have (minor). List Critical first.`
+9. contentGaps — the missing content blocks that would most improve AI understanding. Tag each Critical (AI cannot extract core facts without it), Important (improves recommendation potential), or Nice-to-have (minor). List Critical first.
+10. recommendationReadiness — for each of these five traveller types, judge how READY this hotel's site is for AI to confidently put it forward (NOT a ranking vs competitors — you cannot see them — only whether the site gives AI enough to recommend it for this need). Use EXACTLY these five, in this order: Luxury traveller, Family traveller, Business traveller, Spa & wellness traveller, Wedding / events. For each return readiness (High / Medium / Low) and a one-line why citing what the site provides or lacks for that traveller.`
 
 const RECOMMEND_SCHEMA = {
   name: 'recommendation',
   schema: {
     type: 'object', additionalProperties: false,
-    required: ['summary', 'marketerSummary', 'entityClarityScore', 'scoreNarrative', 'answersCheck', 'entityPositioning', 'contentGaps', 'siteWideReport', 'actionPlan'],
+    required: ['summary', 'marketerSummary', 'entityClarityScore', 'scoreNarrative', 'answersCheck', 'entityPositioning', 'recommendationReadiness', 'contentGaps', 'siteWideReport', 'actionPlan'],
     properties: {
       summary: { type: 'string' },
       marketerSummary: { type: 'string' },
@@ -218,6 +219,18 @@ const RECOMMEND_SCHEMA = {
           properties: {
             area: { type: 'string' },
             tier: { type: 'string', enum: ['Critical', 'Important', 'Nice-to-have'] },
+            why: { type: 'string' },
+          },
+        },
+      },
+      recommendationReadiness: {
+        type: 'array',
+        items: {
+          type: 'object', additionalProperties: false,
+          required: ['traveller', 'readiness', 'why'],
+          properties: {
+            traveller: { type: 'string' },
+            readiness: { type: 'string', enum: ['High', 'Medium', 'Low'] },
             why: { type: 'string' },
           },
         },

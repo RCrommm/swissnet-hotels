@@ -120,6 +120,17 @@ export default function WebsiteAnalysisPage() {
               <p style={{ margin: '0 0 1rem' }}>{a.linkingAnalysis}</p>
             </>}
 
+            {(a.factsCheck || []).filter((f: any) => !f.present).length > 0 && <>
+              <h2 style={{ fontSize: '1rem', margin: '1.5rem 0 0.5rem', borderTop: '1px solid ' + BORDER, paddingTop: '1rem' }}>Facts AI cannot find on your site</h2>
+              <ul style={{ margin: '0 0 1rem', padding: 0, listStyle: 'none', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.3rem 1rem' }}>
+                {a.factsCheck.filter((f: any) => !f.present).map((f: any, i: number) => (
+                  <li key={i} style={{ display: 'flex', gap: '0.5rem', fontSize: '0.72rem' }}>
+                    <span style={{ color: RED, fontWeight: 700, flexShrink: 0 }}>✗</span><span>{f.fact}</span>
+                  </li>
+                ))}
+              </ul>
+            </>}
+
             {(a.entityPositioning || []).length > 0 && <>
               <h2 style={{ fontSize: '1rem', margin: '1.5rem 0 0.5rem', borderTop: '1px solid ' + BORDER, paddingTop: '1rem' }}>How strongly AI associates this hotel with…</h2>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.6rem', margin: '0 0 1rem' }}>
@@ -132,6 +143,24 @@ export default function WebsiteAnalysisPage() {
                         <span style={{ fontSize: '0.58rem', fontWeight: 700, color: c, border: '1px solid ' + c, borderRadius: 4, padding: '0.1rem 0.4rem' }}>{e.strength}</span>
                       </div>
                       <p style={{ fontSize: '0.66rem', color: MUTED, margin: 0, lineHeight: 1.5 }}>{e.why}</p>
+                    </div>
+                  )
+                })}
+              </div>
+            </>}
+
+            {(a.recommendationReadiness || []).length > 0 && <>
+              <h2 style={{ fontSize: '1rem', margin: '1.5rem 0 0.5rem', borderTop: '1px solid ' + BORDER, paddingTop: '1rem' }}>Would AI recommend this hotel for…</h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.6rem', margin: '0 0 1rem' }}>
+                {a.recommendationReadiness.map((r: any, i: number) => {
+                  const c = r.readiness === 'High' ? '#15803d' : r.readiness === 'Medium' ? '#b45309' : RED
+                  return (
+                    <div key={i} style={{ border: '1px solid ' + BORDER, borderRadius: 8, padding: '0.7rem 0.8rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
+                        <span style={{ fontWeight: 700, fontSize: '0.72rem' }}>{r.traveller}</span>
+                        <span style={{ fontSize: '0.58rem', fontWeight: 700, color: c, border: '1px solid ' + c, borderRadius: 4, padding: '0.1rem 0.4rem' }}>{r.readiness}</span>
+                      </div>
+                      <p style={{ fontSize: '0.66rem', color: MUTED, margin: 0, lineHeight: 1.5 }}>{r.why}</p>
                     </div>
                   )
                 })}
