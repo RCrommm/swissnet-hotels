@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 
 export const maxDuration = 300
 
@@ -159,12 +160,43 @@ function pct(got: number, max: number) { return max ? Math.round((got / max) * 1
 
 export async function POST(req: Request) {
   try {
-    const { url, city, password } = await req.json()
+    const { url, city, password, hotelId } = await req.json()
     if (password !== (process.env.ADMIN_REPORT_PASSWORD || 'RCrom2004Romeo')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     if (!url) return NextResponse.json({ error: 'Enter a website URL' }, { status: 400 })
     const apiKey = process.env.SCRAPINGBEE_API_KEY
     const openaiKey = process.env.OPENAI_API_KEY
     if (!apiKey || !openaiKey) return NextResponse.json({ error: 'API keys not set' }, { status: 500 })
+
+    // optional Supabase enrichment — real competitor + missed-query data for known hotels
+    // dashboard categories: spa, dining, family, lake, romantic, business, ski
+    const dash: { missedQueries: string[]; catScores: Record<string, number>; competitorsByCat: Record<string, string[]> } = { missedQueries: [], catScores: {}, competitorsByCat: {} }
+    if (hotelId) {
+      try {
+        const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+        const { data: g } = await sb.from('ai_visibility_scores').select('query, appeared, checked_at').eq('hotel_id', hotelId).eq('platform', 'google_ai').order('checked_at', { ascending: false }).limit(1000)
+        const latest = new Map<string, any>()
+        for (const r of g || []) if (r.query && !latest.has(r.query)) latest.set(r.query, r)
+        dash.missedQueries = [...latest.values()].filter(r => r.appeared === false).map(r => r.query)
+        const { data: hotelRow } = await sb.from('hotels').select('name').eq('id', hotelId).single()
+        const myName = hotelRow?.name
+        if (myName) {
+          const { data: cv } = await sb.from('competitor_visibility').select('competitor_name, category, visibility_score, run_date').not('category', 'is', null).order('run_date', { ascending: false }).limit(3000)
+          const myByCat: Record<string, number[]> = {}
+          const compByCat: Record<string, Record<string, number[]>> = {}
+          for (const r of cv || []) {
+            if (!r.category) continue
+            if (r.competitor_name === myName) { (myByCat[r.category] ||= []).push(r.visibility_score) }
+            else { (compByCat[r.category] ||= {}); (compByCat[r.category][r.competitor_name] ||= []).push(r.visibility_score) }
+          }
+          for (const [cat, arr] of Object.entries(myByCat)) dash.catScores[cat] = Math.round(arr.reduce((a, b) => a + b, 0) / arr.length)
+          for (const [cat, comps] of Object.entries(compByCat)) {
+            dash.competitorsByCat[cat] = Object.entries(comps)
+              .map(([name, arr]) => ({ name, avg: arr.reduce((a, b) => a + b, 0) / arr.length }))
+              .sort((a, b) => b.avg - a.avg).slice(0, 3).map(c => c.name)
+          }
+        }
+      } catch {}
+    }
 
     let origin = ''
     try { origin = new URL(url).origin } catch { return NextResponse.json({ error: 'Invalid URL' }, { status: 400 }) }
@@ -335,11 +367,140 @@ export async function POST(req: Request) {
     const order: Record<string, number> = { Critical: 0, High: 1, Medium: 2, Low: 3 }
     recs.sort((a, b) => order[a.priority] - order[b.priority])
 
+    // ── LEVEL 3: rich per-category opportunity cards ──────────────────────
+    // map dashboard categories → audit categories for enrichment
+    const catMap: Record<string, string[]> = {
+      'Couples & honeymoon': ['romantic'], 'Spa & wellness': ['spa'], 'Family': ['family'],
+      'Business & meetings': ['business'], 'Fine dining': ['dining'], 'Lake & location': ['lake'],
+    }
+    const missedFor = (labels: string[]) => {
+      const kw: Record<string, string[]> = {
+        'Couples & honeymoon': ['romantic', 'couple', 'honeymoon'], 'Spa & wellness': ['spa', 'wellness'],
+        'Family': ['family', 'kids', 'children'], 'Business & meetings': ['business', 'meeting', 'conference', 'congress'],
+        'Fine dining': ['dining', 'restaurant', 'michelin', 'food'], 'Lake & location': ['lake', 'view', 'airport', 'centre', 'center'],
+      }
+      const words = labels.flatMap(l => kw[l] || [])
+      return dash.missedQueries.filter(q => words.some(w => q.toLowerCase().includes(w))).slice(0, 5)
+    }
+    const dashCatScore = (label: string) => {
+      const cats = catMap[label] || []
+      const vals = cats.map(c => dash.catScores[c]).filter((v): v is number => v !== undefined)
+      return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null
+    }
+    const competitorsFor = (label: string) => {
+      const cats = catMap[label] || []
+      const names = new Set<string>()
+      for (const c of cats) for (const n of (dash.competitorsByCat[c] || [])) names.add(n)
+      return [...names].slice(0, 3)
+    }
+
+    type Opp = {
+      category: string; fits: boolean; readiness: number; status: string
+      evidence: string; gaps: string[]; whyItMatters: string
+      suggestedPage: string; suggestedH2s: string[]; suggestedFAQs: string[]
+      schemaNeeded: string[]; priority: string; difficulty: string; impact: string
+      competitorsAppearing: string[]; missedSearches: string[]
+    }
+    const opps: Opp[] = []
+    const pagesList = detected.map(p => { try { return new URL(p.url).pathname } catch { return p.url } }).join(', ')
+
+    const buildOpp = (o: {
+      category: string; fits: boolean; have: boolean; supportingPresent: string[]; gaps: string[]
+      whyItMatters: string; suggestedPage: string; suggestedH2s: string[]; suggestedFAQs: string[]
+      schemaNeeded: string[]; difficulty: string;
+    }) => {
+      // readiness: starts from supporting facilities present, minus assembled-content gaps
+      const base = o.fits ? 55 : 25
+      const supportBonus = Math.min(25, o.supportingPresent.length * 8)
+      const gapPenalty = Math.min(45, o.gaps.length * 12)
+      let readiness = Math.max(5, Math.min(100, base + supportBonus - gapPenalty + (o.have ? 25 : 0)))
+      const dscore = dashCatScore(o.category)
+      if (dscore !== null) readiness = Math.round((readiness + dscore) / 2) // blend with real visibility when known
+      const priority = !o.fits ? 'Low' : o.have ? 'Low' : readiness < 45 ? 'High' : 'Medium'
+      const impact = !o.fits ? 'Low' : readiness < 45 ? 'High' : 'Medium'
+      const status = !o.fits ? 'Not a fit for this hotel' : o.have ? 'Covered' : 'Opportunity — ingredients exist, content missing'
+      opps.push({
+        category: o.category, fits: o.fits, readiness, status,
+        evidence: o.supportingPresent.length
+          ? `Across ${detected.length} crawled pages (${pagesList}), found: ${o.supportingPresent.join('; ')}.`
+          : `Across ${detected.length} crawled pages (${pagesList}), no assembled content for this intent was found.`,
+        gaps: o.gaps, whyItMatters: o.whyItMatters,
+        suggestedPage: o.suggestedPage, suggestedH2s: o.suggestedH2s, suggestedFAQs: o.suggestedFAQs,
+        schemaNeeded: o.schemaNeeded, priority, difficulty: o.difficulty, impact,
+        competitorsAppearing: competitorsFor(o.category), missedSearches: missedFor([o.category]),
+      })
+    }
+
+    buildOpp({
+      category: 'Couples & honeymoon', fits: s.fitCouples, have: s.couples_intent,
+      supportingPresent: [s.fitLuxury && 'luxury positioning', s.wellness_spa && 'spa content', has('has_lakefront_or_view') && 'lake/view', s.dining_content && 'notable dining'].filter(Boolean) as string[],
+      gaps: ['No assembled "good for couples / honeymoon" content', 'Romantic suites not tied to the intent', 'No couples FAQ'],
+      whyItMatters: `Guests ask AI "romantic hotel ${C}", "honeymoon ${C}", "couples getaway" — AI can only recommend you if one passage answers it.`,
+      suggestedPage: `A "Romantic & Honeymoon" section (or page) targeting "romantic hotel ${C}"`,
+      suggestedH2s: ['Why couples choose [hotel]', 'Romantic suites & views', 'Couples spa & dining', 'Honeymoon packages', 'FAQ'],
+      suggestedFAQs: [`Is [hotel] good for couples and honeymoons?`, `Which rooms are best for a romantic stay?`, `Are there couples spa treatments?`],
+      schemaNeeded: ['FAQPage'], difficulty: 'Low',
+    })
+    buildOpp({
+      category: 'Spa & wellness', fits: s.fitSpa, have: s.wellness_spa,
+      supportingPresent: [has('has_spa_facility') && 'spa facility', s.hasSpaPage && 'spa page'].filter(Boolean) as string[],
+      gaps: [!s.hasSpaPage && 'No dedicated spa page', 'Treatments/hours/prices not assembled', 'No spa FAQ'].filter(Boolean) as string[],
+      whyItMatters: `"spa hotel ${C}", "wellness retreat", "best spa ${C}" are high-intent searches a spa hotel should own.`,
+      suggestedPage: `A dedicated spa page targeting "hotel with spa in ${C}"`,
+      suggestedH2s: ['The spa experience', 'Treatments & signature rituals', 'Facilities (pool, sauna, hammam)', 'Opening hours & prices', 'FAQ'],
+      suggestedFAQs: [`What treatments does the spa offer?`, `What are the spa opening hours?`, `Is the spa open to non-residents?`],
+      schemaNeeded: ['FAQPage'], difficulty: 'Medium',
+    })
+    buildOpp({
+      category: 'Family', fits: s.fitFamily, have: s.family_intent,
+      supportingPresent: [has('has_kids_facility') && 'kids facilities', s.hasFamilyPage && 'family page/offer'].filter(Boolean) as string[],
+      gaps: ['No children age policy', 'No family-room comparison', 'No family FAQ', 'No nearby family attractions'],
+      whyItMatters: `"family hotel ${C}", "kid-friendly hotel ${C}" need an assembled family answer to be recommended.`,
+      suggestedPage: `A "Family-Friendly Hotel in ${C}" section`,
+      suggestedH2s: ['Family rooms & suites', "Children's amenities", 'Nearby family attractions', 'Family dining', 'FAQ'],
+      suggestedFAQs: [`Is [hotel] family-friendly?`, `Are there connecting or family rooms?`, `What is there for children to do?`],
+      schemaNeeded: ['FAQPage'], difficulty: 'Medium',
+    })
+    buildOpp({
+      category: 'Business & meetings', fits: s.fitBusiness, have: s.business_intent,
+      supportingPresent: [has('has_meeting_facility') && 'meeting/event facilities', s.airport_transfer && 'airport distance'].filter(Boolean) as string[],
+      gaps: ['Meeting-room capacities not stated', 'No business-traveller FAQ', 'Corporate practicalities not assembled'],
+      whyItMatters: `"business hotel ${C}", "conference hotel ${C}", "hotel near ${C} airport" are decided on concrete meeting detail.`,
+      suggestedPage: `A "Meetings & Business" section`,
+      suggestedH2s: ['Meeting & event spaces', 'Capacities & layouts', 'Business amenities', 'Getting here', 'FAQ'],
+      suggestedFAQs: [`Does [hotel] have meeting rooms and what capacity?`, `How far is [hotel] from the airport?`, `Are there corporate rates?`],
+      schemaNeeded: ['FAQPage'], difficulty: 'Medium',
+    })
+    buildOpp({
+      category: 'Fine dining', fits: s.fitDining, have: s.dining_content,
+      supportingPresent: [has('has_notable_dining') && 'notable dining', s.hasDiningPage && 'dining page'].filter(Boolean) as string[],
+      gaps: [!s.hasDiningPage && 'No dedicated dining content', 'Cuisine/awards not stated for AI', 'No dining FAQ'].filter(Boolean) as string[],
+      whyItMatters: `"best restaurant hotel ${C}", "Michelin hotel ${C}" reward explicit, named dining content.`,
+      suggestedPage: `A dining section per restaurant`,
+      suggestedH2s: ['The restaurants', 'Cuisine & chef', 'Awards & recognition', 'Reservations', 'FAQ'],
+      suggestedFAQs: [`What restaurants are at [hotel]?`, `Is there fine dining or a Michelin restaurant?`, `Can non-guests dine here?`],
+      schemaNeeded: ['FAQPage', 'Restaurant'], difficulty: 'Low',
+    })
+    buildOpp({
+      category: 'Lake & location', fits: true, have: s.location_nearby,
+      supportingPresent: [s.hasLocationPage && 'location page', has('has_lakefront_or_view') && 'lake/view', s.airport_transfer && 'airport distance'].filter(Boolean) as string[],
+      gaps: [!s.location_nearby && 'Nearby attractions not named', 'Distances not all stated', '"near X" content thin'].filter(Boolean) as string[],
+      whyItMatters: `"hotel near [landmark]", "lake view hotel ${C}", "hotel near ${C} airport" need explicit place + distance content.`,
+      suggestedPage: `A strengthened Location page`,
+      suggestedH2s: ['Where we are', 'Distances (airport, station, centre)', 'Nearby attractions', 'Getting here', 'FAQ'],
+      suggestedFAQs: [`How far is [hotel] from the airport?`, `What is near [hotel]?`, `Does [hotel] have lake views?`],
+      schemaNeeded: ['FAQPage'], difficulty: 'Low',
+    })
+
+    // sort: fitting + lowest readiness first (biggest real opportunities on top)
+    opps.sort((a, b) => (Number(b.fits) - Number(a.fits)) || (a.readiness - b.readiness))
+
     const verdict = overall >= 75 ? 'Strong AI foundation' : overall >= 50 ? 'A solid base with clear gaps' : 'Major gaps limiting AI visibility'
 
     return NextResponse.json({
       url, city: C, overall, verdict, areas, checklist,
-      recommendations: recs, robots, pagesScraped: detected.map(p => p.url),
+      recommendations: recs, opportunities: opps, enriched: !!hotelId && (dash.missedQueries.length > 0 || Object.keys(dash.catScores).length > 0),
+      robots, pagesScraped: detected.map(p => p.url),
     })
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Audit failed' }, { status: 500 })

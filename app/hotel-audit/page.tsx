@@ -1,11 +1,26 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const GOLD = '#C9A84C', GOLD_LIGHT = 'rgba(201,169,76,0.10)', BG = '#F8F5EF', WHITE = '#FFFFFF', TEXT = '#2A1A0E', MUTED = 'rgba(42,26,14,0.5)', BORDER = 'rgba(201,169,76,0.2)', GREEN = '#15803d', AMBER = '#b45309', RED = '#dc2626'
 export default function HotelAuditPage() {
   const [url, setUrl] = useState('')
   const [city, setCity] = useState('')
   const [password, setPassword] = useState('')
+  const [hotelId, setHotelId] = useState('')
+  const [hotels, setHotels] = useState<any[]>([])
+
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search).get('password'); if (p) setPassword(p)
+    const load = async () => {
+      try {
+        const { createClient } = await import('@supabase/supabase-js')
+        const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+        const { data } = await sb.from('hotels').select('id, name, region, direct_booking_url').eq('is_active', true).order('name')
+        if (data) setHotels(data)
+      } catch {}
+    }
+    load()
+  }, [])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [r, setR] = useState<any>(null)
@@ -14,7 +29,7 @@ export default function HotelAuditPage() {
     if (!url.trim()) return
     setLoading(true); setError(''); setR(null)
     try {
-      const res = await fetch('/api/hotel-audit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url, city, password }) })
+      const res = await fetch('/api/hotel-audit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url, city, password, hotelId: hotelId || undefined }) })
       const data = await res.json()
       if (data.error) setError(data.error); else setR(data)
     } catch { setError('Request failed (the audit may have timed out — try fewer pages).') } finally { setLoading(false) }
@@ -33,6 +48,13 @@ export default function HotelAuditPage() {
         <p style={{ fontSize: '0.72rem', color: MUTED, margin: '0 0 1.5rem' }}>Enter a hotel website. It crawls the key pages, checks them against a fixed AI-visibility checklist, scores the site, and tells you exactly what to add.</p>
 
         <div className="no-print" style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', marginBottom: '1.5rem' }}>
+          <div style={{ marginBottom: '0.75rem' }}>
+            <label style={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED, display: 'block', marginBottom: '0.3rem' }}>Your hotel <span style={{ textTransform: 'none', fontWeight: 400 }}>(optional — connects real competitor & search data)</span></label>
+            <select value={hotelId} onChange={e => { const h = hotels.find(x => x.id === e.target.value); setHotelId(e.target.value); if (h?.direct_booking_url) setUrl(h.direct_booking_url) }} style={inp}>
+              <option value="">External hotel (no database link)</option>
+              {hotels.map(h => <option key={h.id} value={h.id}>{h.name} — {h.region}</option>)}
+            </select>
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
             <div><label style={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED, display: 'block', marginBottom: '0.3rem' }}>Website URL</label><input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://hotel.com" style={inp} /></div>
             <div><label style={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED, display: 'block', marginBottom: '0.3rem' }}>City <span style={{ textTransform: 'none', fontWeight: 400 }}>(optional)</span></label><input value={city} onChange={e => setCity(e.target.value)} placeholder="auto-detected" style={inp} /></div>
@@ -64,6 +86,62 @@ export default function HotelAuditPage() {
               ))}
             </div>
           </div>
+
+          {/* LEVEL 3 — AI DEMAND OPPORTUNITIES */}
+          {(r.opportunities || []).length > 0 && <div style={{ marginBottom: '1.25rem' }}>
+            <div style={{ marginBottom: '0.75rem' }}>
+              <p style={{ fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.3rem' }}>AI demand opportunities</p>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', color: TEXT, margin: 0 }}>Where you can win AI searches — and exactly how</p>
+              {!r.enriched && <p style={{ fontSize: '0.62rem', color: MUTED, margin: '0.3rem 0 0' }}>Tip: pick your hotel above to add real competitor and missed-search data.</p>}
+            </div>
+            {r.opportunities.map((o: any, i: number) => {
+              const rc = o.readiness >= 70 ? GREEN : o.readiness >= 45 ? AMBER : RED
+              const pc = o.priority === 'High' ? AMBER : o.priority === 'Medium' ? GOLD : MUTED
+              return (
+                <div key={i} style={{ background: WHITE, border: '1px solid ' + BORDER, borderLeft: `3px solid ${o.fits ? rc : MUTED}`, borderRadius: 12, padding: '1.25rem 1.5rem', marginBottom: '0.85rem', opacity: o.fits ? 1 : 0.65 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', marginBottom: '0.5rem' }}>
+                    <div>
+                      <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.15rem' }}>{o.category}</p>
+                      <p style={{ fontSize: '0.62rem', color: o.fits ? MUTED : MUTED, margin: 0 }}>{o.status}</p>
+                    </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.6rem', color: rc, margin: 0, lineHeight: 1 }}>{o.readiness}<span style={{ fontSize: '0.7rem', color: MUTED }}>/100</span></p>
+                      <p style={{ fontSize: '0.5rem', color: MUTED, letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0.15rem 0 0' }}>Readiness</p>
+                    </div>
+                  </div>
+
+                  {o.fits && <>
+                    <p style={{ fontSize: '0.64rem', color: MUTED, margin: '0 0 0.6rem', lineHeight: 1.55 }}><strong style={{ color: TEXT }}>Evidence:</strong> {o.evidence}</p>
+                    <p style={{ fontSize: '0.64rem', color: MUTED, margin: '0 0 0.6rem', lineHeight: 1.55 }}><strong style={{ color: TEXT }}>Why it matters:</strong> {o.whyItMatters}</p>
+
+                    {(o.competitorsAppearing || []).length > 0 && <p style={{ fontSize: '0.64rem', color: MUTED, margin: '0 0 0.5rem', lineHeight: 1.55 }}><strong style={{ color: TEXT }}>Competitors appearing:</strong> {o.competitorsAppearing.join(', ')}</p>}
+                    {(o.missedSearches || []).length > 0 && <p style={{ fontSize: '0.64rem', color: RED, margin: '0 0 0.5rem', lineHeight: 1.55 }}><strong>You don't appear for:</strong> {o.missedSearches.join(' · ')}</p>}
+
+                    {(o.gaps || []).length > 0 && <>
+                      <p style={{ fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: RED, margin: '0.5rem 0 0.25rem' }}>Your gaps</p>
+                      <ul style={{ margin: '0 0 0.6rem', paddingLeft: '1.1rem' }}>{o.gaps.map((g: string, j: number) => <li key={j} style={{ fontSize: '0.64rem', color: TEXT, marginBottom: '0.12rem' }}>{g}</li>)}</ul>
+                    </>}
+
+                    <div style={{ background: BG, borderRadius: 8, padding: '0.75rem 0.9rem', marginBottom: '0.6rem' }}>
+                      <p style={{ fontSize: '0.66rem', fontWeight: 700, color: TEXT, margin: '0 0 0.35rem' }}>Recommended: {o.suggestedPage}</p>
+                      <p style={{ fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: MUTED, margin: '0 0 0.2rem' }}>Suggested sections (H2)</p>
+                      <p style={{ fontSize: '0.64rem', color: TEXT, margin: '0 0 0.4rem' }}>{o.suggestedH2s.join('  ·  ')}</p>
+                      <p style={{ fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: MUTED, margin: '0 0 0.2rem' }}>FAQs to add</p>
+                      <ul style={{ margin: 0, paddingLeft: '1.1rem' }}>{o.suggestedFAQs.map((q: string, j: number) => <li key={j} style={{ fontSize: '0.64rem', color: TEXT, marginBottom: '0.12rem' }}>{q}</li>)}</ul>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '0.56rem', fontWeight: 700, color: pc, border: '1px solid ' + pc, borderRadius: 4, padding: '0.12rem 0.5rem' }}>Priority: {o.priority}</span>
+                      <span style={{ fontSize: '0.56rem', fontWeight: 700, color: MUTED, border: '1px solid ' + BORDER, borderRadius: 4, padding: '0.12rem 0.5rem' }}>Difficulty: {o.difficulty}</span>
+                      <span style={{ fontSize: '0.56rem', fontWeight: 700, color: MUTED, border: '1px solid ' + BORDER, borderRadius: 4, padding: '0.12rem 0.5rem' }}>Impact: {o.impact}</span>
+                      {(o.schemaNeeded || []).length > 0 && <span style={{ fontSize: '0.56rem', fontWeight: 700, color: MUTED, border: '1px solid ' + BORDER, borderRadius: 4, padding: '0.12rem 0.5rem' }}>Schema: {o.schemaNeeded.join(', ')}</span>}
+                    </div>
+                  </>}
+                  {!o.fits && <p style={{ fontSize: '0.62rem', color: MUTED, margin: 0 }}>Not a natural fit for this hotel from its site content — skip rather than force it.</p>}
+                </div>
+              )
+            })}
+          </div>}
 
           {/* TOP RECOMMENDATIONS */}
           {r.recommendations.length > 0 && <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.25rem' }}>
