@@ -177,15 +177,19 @@ export async function POST(req: Request) {
         const latest = new Map<string, any>()
         for (const r of g || []) if (r.query && !latest.has(r.query)) latest.set(r.query, r)
         dash.missedQueries = [...latest.values()].filter(r => r.appeared === false).map(r => r.query)
-        const { data: hotelRow } = await sb.from('hotels').select('name').eq('id', hotelId).single()
+        const { data: hotelRow } = await sb.from('hotels').select('name, region').eq('id', hotelId).single()
         const myName = hotelRow?.name
+        const myRegion = hotelRow?.region
         if (myName) {
-          const { data: cv } = await sb.from('competitor_visibility').select('competitor_name, category, visibility_score, run_date').not('category', 'is', null).order('run_date', { ascending: false }).limit(3000)
+          let cvQuery = sb.from('competitor_visibility').select('competitor_name, category, visibility_score, run_date, region').not('category', 'is', null)
+          if (myRegion) cvQuery = cvQuery.eq('region', myRegion)
+          const { data: cv } = await cvQuery.order('run_date', { ascending: false }).limit(3000)
           const myByCat: Record<string, number[]> = {}
           const compByCat: Record<string, Record<string, number[]>> = {}
           for (const r of cv || []) {
             if (!r.category) continue
-            if (r.competitor_name === myName) { (myByCat[r.category] ||= []).push(r.visibility_score) }
+            const isMe = r.competitor_name === myName || (r.competitor_name || '').toLowerCase().includes((myName || '').toLowerCase().split(' ')[0])
+            if (isMe) { (myByCat[r.category] ||= []).push(r.visibility_score) }
             else { (compByCat[r.category] ||= {}); (compByCat[r.category][r.competitor_name] ||= []).push(r.visibility_score) }
           }
           for (const [cat, arr] of Object.entries(myByCat)) dash.catScores[cat] = Math.round(arr.reduce((a, b) => a + b, 0) / arr.length)
