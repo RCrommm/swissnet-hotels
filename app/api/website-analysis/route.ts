@@ -168,6 +168,8 @@ You are given a STRICT EXTRACTION of what a hotel's website literally contains �
 
 Do NOT assess third-party authority (Tripadvisor, Booking, Michelin listings, social, reviews) — you cannot see it, so never mention it as present or missing. Do NOT assess imagery beyond alt text you were given.
 
+If DASHBOARD GAPS are provided, treat them as the priority: the missed searches and weak categories are where this hotel most needs to improve, so your siteWideReport and positioning FAQs should directly target them — but still only using entities and facts confirmed in the extraction, never invented ones.
+
 You will produce:
 1. summary — 2-3 sentences, plain language, what AI understands about this hotel and the single biggest gap.
 2. marketerSummary — a short paragraph a hotel marketing team can act on, no jargon.
@@ -299,6 +301,33 @@ export async function POST(req: Request) {
     const urlsFailed = pageData.filter(p => p.error).map(p => p.url)
     if (scraped.length === 0) return NextResponse.json({ error: 'Could not scrape any of the URLs — site may block scrapers or credits ran out.' }, { status: 502 })
 
+    // ── pull this hotel's dashboard gaps to target recommendations ──
+    let missedQueries: string[] = []
+    let weakCategories: string[] = []
+    if (hotelId) {
+      try {
+        const sbGaps = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+        const { data: gScores } = await sbGaps.from('ai_visibility_scores')
+          .select('query, appeared, checked_at').eq('hotel_id', hotelId).eq('platform', 'google_ai')
+          .order('checked_at', { ascending: false }).limit(500)
+        const latestPerQuery = new Map<string, any>()
+        for (const r of gScores || []) { if (r.query && !latestPerQuery.has(r.query)) latestPerQuery.set(r.query, r) }
+        missedQueries = [...latestPerQuery.values()].filter(r => r.appeared === false).map(r => r.query).slice(0, 12)
+
+        const { data: hotelRow } = await sbGaps.from('hotels').select('name, region').eq('id', hotelId).single()
+        if (hotelRow?.name) {
+          const { data: catRows } = await sbGaps.from('competitor_visibility')
+            .select('category, visibility_score, run_date').eq('competitor_name', hotelRow.name).not('category', 'is', null)
+            .order('run_date', { ascending: false }).limit(500)
+          const catScores: Record<string, number[]> = {}
+          for (const r of catRows || []) { if (r.category) { (catScores[r.category] ||= []).push(r.visibility_score) } }
+          weakCategories = Object.entries(catScores)
+            .map(([cat, scores]) => ({ cat, avg: scores.reduce((a, b) => a + b, 0) / scores.length }))
+            .filter(c => c.avg < 50).sort((a, b) => a.avg - b.avg).map(c => c.cat).slice(0, 4)
+        }
+      } catch {}
+    }
+
     // PASS 1 — extract per page against the fixed checklist (keeps each call small)
     const perPage: any[] = []
     const allFacts: any[] = []
@@ -322,9 +351,12 @@ export async function POST(req: Request) {
     const extraction = { facts: [...factMap.values()], pages: perPage }
 
     // PASS 2 — recommend from extraction only
+    const gapContext = (missedQueries.length || weakCategories.length)
+      ? `\n\nDASHBOARD GAPS — this hotel is currently NOT appearing in AI for these searches: ${missedQueries.join('; ') || 'none recorded'}. Its weakest visibility categories are: ${weakCategories.join(', ') || 'none recorded'}. PRIORITISE positioning FAQs and recommendations that directly target these specific searches and categories, using only entities confirmed in the extraction.`
+      : ''
     const recommendation = await callOpenAI(
       RECOMMEND_SYSTEM,
-      `Here is the strict extraction of the hotel website. Base all advice ONLY on this. Use [VERIFY] for any fact not present.\n\n${JSON.stringify(extraction, null, 2)}`,
+      `Here is the strict extraction of the hotel website. Base all advice ONLY on this. Use [VERIFY] for any fact not present.${gapContext}\n\n${JSON.stringify(extraction, null, 2)}`,
       RECOMMEND_SCHEMA,
     )
     if (recommendation?._error) return NextResponse.json({ error: 'Recommendation step failed to parse', detail: recommendation.raw }, { status: 502 })
