@@ -802,13 +802,13 @@ export default async function PromptPage({ params }: { params: Promise<{ slug: s
       {
         '@type': 'ItemList',
         '@id': `${pageUrl}#list`,
+        itemListOrder: 'https://schema.org/ItemListUnordered',
         name: page.title,
         description: page.description.replace(/\n\n/g, ' '),
         url: pageUrl,
         numberOfItems: hotelsList.length,
-        itemListElement: hotelsList.map((h: any, i: number) => ({
+        itemListElement: hotelsList.map((h: any) => ({
           '@type': 'ListItem',
-          position: i + 1,
           item: {
             '@type': 'Hotel',
             '@id': `https://swissnethotels.com/hotels/${h.slug || h.id}#hotel`,

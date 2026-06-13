@@ -17,9 +17,7 @@ export default function BestHotelCard({ hotel, slug, gold, border, bg, text, tex
 
   return (
     <div style={{ background: '#FFFFFF', border: `1px solid ${border}`, borderRadius: 8, overflow: 'hidden', display: 'flex', gap: 0 }}>
-      <div style={{ width: 56, flexShrink: 0, background: hotel.index === 0 ? gold : bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 600, color: hotel.index === 0 ? '#1a0e06' : textMuted }}>#{hotel.index + 1}</span>
-      </div>
+      <div style={{ width: 6, flexShrink: 0, background: isPartner ? gold : 'transparent' }} />
       {hotel.images?.[0] && (
         <div style={{ width: 140, flexShrink: 0, overflow: 'hidden' }}>
           <img src={hotel.images[0]} alt={hotel.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />

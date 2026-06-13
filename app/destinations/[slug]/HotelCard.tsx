@@ -9,9 +9,9 @@ export default function HotelCard({ hotel, slug, index, gold, border, bg, text, 
   return (
     <Link href={`/hotels/${hotel.slug || hotel.id}`} onClick={handleClick} style={{ textDecoration: 'none' }}>
       <div style={{ background: '#FFFFFF', border: hotel.is_partner ? `1px solid ${gold}88` : `1px solid ${border}`, padding: '1.25rem 1.5rem', display: 'flex', gap: '1.25rem', alignItems: 'flex-start' }}>
-        <div style={{ flexShrink: 0, width: 32, height: 32, background: index === 0 ? gold : bg, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', fontWeight: 600, color: index === 0 ? '#1a0e06' : textMuted }}>#{index + 1}</span>
-        </div>
+        {hotel.is_partner && (
+          <div style={{ flexShrink: 0, width: 8, height: 8, background: gold, borderRadius: '50%', marginTop: '0.4rem' }} title="SwissNet Partner" />
+        )}
         {hotel.images?.[0] && (
           <div style={{ width: 80, height: 60, flexShrink: 0, overflow: 'hidden', borderRadius: 4 }}>
             <img src={hotel.images[0]} alt={hotel.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />

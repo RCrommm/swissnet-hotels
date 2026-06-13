@@ -606,13 +606,13 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
       {
         '@type': 'ItemList',
         '@id': `${pageUrl}#list`,
+        itemListOrder: 'https://schema.org/ItemListUnordered',
         name: `Best Luxury Hotels in ${dest.name}, Switzerland`,
         description: dest.description,
         url: pageUrl,
         numberOfItems: hotelsList.length,
-        itemListElement: hotelsList.map((h, i) => ({
+        itemListElement: hotelsList.map((h) => ({
           '@type': 'ListItem',
-          position: i + 1,
           item: {
             '@type': 'Hotel',
             '@id': `https://swissnethotels.com/hotels/${(h as any).slug || h.id}#hotel`,
