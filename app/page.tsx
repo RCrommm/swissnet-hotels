@@ -339,7 +339,7 @@ export default async function HomePage() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2.5rem', flex: 1 }}>
           {[
-            'Everything in Essential',
+            'Everything in Partner',
             'Featured in AI comparison & best-of pages',
             'Competitor benchmarking by category',
             'Official website AI-visibility audit',
