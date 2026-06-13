@@ -120,6 +120,41 @@ export default function WebsiteAnalysisPage() {
               <p style={{ margin: '0 0 1rem' }}>{a.linkingAnalysis}</p>
             </>}
 
+            {(a.entityPositioning || []).length > 0 && <>
+              <h2 style={{ fontSize: '1rem', margin: '1.5rem 0 0.5rem', borderTop: '1px solid ' + BORDER, paddingTop: '1rem' }}>How strongly AI associates this hotel with…</h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.6rem', margin: '0 0 1rem' }}>
+                {a.entityPositioning.map((e: any, i: number) => {
+                  const c = e.strength === 'Strong' ? '#15803d' : e.strength === 'Medium' ? '#b45309' : RED
+                  return (
+                    <div key={i} style={{ border: '1px solid ' + BORDER, borderRadius: 8, padding: '0.7rem 0.8rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
+                        <span style={{ fontWeight: 700, fontSize: '0.72rem' }}>{e.entity}</span>
+                        <span style={{ fontSize: '0.58rem', fontWeight: 700, color: c, border: '1px solid ' + c, borderRadius: 4, padding: '0.1rem 0.4rem' }}>{e.strength}</span>
+                      </div>
+                      <p style={{ fontSize: '0.66rem', color: MUTED, margin: 0, lineHeight: 1.5 }}>{e.why}</p>
+                    </div>
+                  )
+                })}
+              </div>
+            </>}
+
+            {(a.contentGaps || []).length > 0 && <>
+              <h2 style={{ fontSize: '1rem', margin: '1.5rem 0 0.5rem', borderTop: '1px solid ' + BORDER, paddingTop: '1rem' }}>Content gaps by priority</h2>
+              {['Critical', 'Important', 'Nice-to-have'].map(tier => {
+                const items = (a.contentGaps || []).filter((g: any) => g.tier === tier)
+                if (items.length === 0) return null
+                const c = tier === 'Critical' ? RED : tier === 'Important' ? '#b45309' : MUTED
+                return (
+                  <div key={tier} style={{ marginBottom: '0.75rem' }}>
+                    <p style={{ fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: c, margin: '0 0 0.3rem' }}>{tier}</p>
+                    <ul style={{ margin: 0, paddingLeft: '1.2rem' }}>
+                      {items.map((g: any, j: number) => <li key={j} style={{ marginBottom: '0.25rem' }}><strong>{g.area}</strong> — {g.why}</li>)}
+                    </ul>
+                  </div>
+                )
+              })}
+            </>}
+
             {(a.siteWideReport || []).length > 0 && <>
               <h2 style={{ fontSize: '1rem', margin: '1.5rem 0 0.5rem', borderTop: '1px solid ' + BORDER, paddingTop: '1rem' }}>What to change or add — whole site</h2>
               <ol style={{ margin: '0 0 1rem', paddingLeft: '1.2rem' }}>{a.siteWideReport.map((p: string, i: number) => <li key={i} style={{ marginBottom: '0.4rem' }}>{p}</li>)}</ol>

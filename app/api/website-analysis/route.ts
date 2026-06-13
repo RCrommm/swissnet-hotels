@@ -176,13 +176,15 @@ You will produce:
 5. answersCheck — evaluate EXACTLY these guest questions, in this order, returning the question text verbatim, whether the SITE answers it (answerable true/false), and a short note citing what is present or what is missing:
 ${ANSWER_QUESTIONS.map((q, i) => `${i + 1}. ${q}`).join('\n')}
 6. siteWideReport — the highest-impact changes across the whole site, ordered by impact, framed as gaps and opportunities (never guarantees).
-7. actionPlan — per page: majorGaps, schemaToAdd (only where it gives a real AI benefit), faqsToAdd (real questions; use [VERIFY] for any fact not in the extraction), otherActions.`
+7. actionPlan — per page: majorGaps, schemaToAdd (only where it gives a real AI benefit), faqsToAdd (real questions; use [VERIFY] for any fact not in the extraction), otherActions.
+8. entityPositioning — how strongly AI can associate this hotel with each positioning category, judged ONLY from the extraction. Use EXACTLY these five entities, in this order: Luxury Hotel, Spa & Wellness, Family, Business & Meetings, Fine Dining. For each return strength (Strong / Medium / Weak) and a one-line why citing what is present or absent.
+9. contentGaps — the missing content blocks that would most improve AI understanding. Tag each Critical (AI cannot extract core facts without it), Important (improves recommendation potential), or Nice-to-have (minor). List Critical first.`
 
 const RECOMMEND_SCHEMA = {
   name: 'recommendation',
   schema: {
     type: 'object', additionalProperties: false,
-    required: ['summary', 'marketerSummary', 'entityClarityScore', 'scoreNarrative', 'answersCheck', 'siteWideReport', 'actionPlan'],
+    required: ['summary', 'marketerSummary', 'entityClarityScore', 'scoreNarrative', 'answersCheck', 'entityPositioning', 'contentGaps', 'siteWideReport', 'actionPlan'],
     properties: {
       summary: { type: 'string' },
       marketerSummary: { type: 'string' },
@@ -194,6 +196,30 @@ const RECOMMEND_SCHEMA = {
           type: 'object', additionalProperties: false,
           required: ['question', 'answerable', 'note'],
           properties: { question: { type: 'string' }, answerable: { type: 'boolean' }, note: { type: 'string' } },
+        },
+      },
+      entityPositioning: {
+        type: 'array',
+        items: {
+          type: 'object', additionalProperties: false,
+          required: ['entity', 'strength', 'why'],
+          properties: {
+            entity: { type: 'string' },
+            strength: { type: 'string', enum: ['Strong', 'Medium', 'Weak'] },
+            why: { type: 'string' },
+          },
+        },
+      },
+      contentGaps: {
+        type: 'array',
+        items: {
+          type: 'object', additionalProperties: false,
+          required: ['area', 'tier', 'why'],
+          properties: {
+            area: { type: 'string' },
+            tier: { type: 'string', enum: ['Critical', 'Important', 'Nice-to-have'] },
+            why: { type: 'string' },
+          },
         },
       },
       siteWideReport: { type: 'array', items: { type: 'string' } },
