@@ -186,12 +186,13 @@ ${ANSWER_QUESTIONS.map((q, i) => `${i + 1}. ${q}`).join('\n')}
 9. contentGaps — the missing content blocks that would most improve AI understanding. Tag each Critical (AI cannot extract core facts without it), Important (improves recommendation potential), or Nice-to-have (minor). List Critical first.
 10. recommendationReadiness — for each of these five traveller types, judge how READY this hotel's site is for AI to confidently put it forward (NOT a ranking vs competitors — you cannot see them — only whether the site gives AI enough to recommend it for this need). Use EXACTLY these five, in this order: Luxury traveller, Family traveller, Business traveller, Spa & wellness traveller, Wedding / events. For each return readiness (High / Medium / Low) and a one-line why citing what the site provides or lacks for that traveller.
 11. visibilityOpportunities — the report's HEADLINE: the highest-impact CONTENT opportunities that would make AI RECOMMEND this hotel (distinct from operational gaps, which only help AI ANSWER once asked). Use EXACTLY these six themes, in this order: Couples & Honeymoons, Wellness & Spa Retreats, Family Holidays, Business & Meetings, Weddings & Private Events, Location & Destination Escapes. For each return: targetSearches (2-4 phrases a guest would type into an AI assistant for that intent, localised to the hotel's CONFIRMED city/region, e.g. "romantic hotel Geneva", "best spa hotel Switzerland"); status — "Strong" if the site already has assembled content directly answering this intent, "Weak" if the supporting entities exist in the extraction but are NOT assembled into intent-specific content, "Missing" if the site offers little for it; recommendation — a CONCRETE instruction for the content to create (e.g. "Create an FAQ + homepage block answering 'Is [hotel] good for couples?', using the lake-view suites, Michelin dining and spa as proof points"). Name ONLY entities confirmed in the extraction; never invent amenities, prices or services. If DASHBOARD GAPS were provided, the matching themes are the top priority.
-12. headlineInsight — ONE memorable sentence for a marketing director: state plainly what AI already understands this hotel to be (from the confirmed entities), then name the single biggest opportunity as creating intent content for the themes where it is weak. Shape: "AI already identifies [hotel] as [confirmed positioning]; the biggest opportunity is content that makes AI recommend it for specific traveller intents — [weak themes] — rather than only describing its facilities." Use only what the extraction confirms; invent nothing.`
+12. headlineInsight — ONE memorable sentence for a marketing director: state plainly what AI already understands this hotel to be (from the confirmed entities), then name the single biggest opportunity as creating intent content for the themes where it is weak. Shape: "AI already identifies [hotel] as [confirmed positioning]; the biggest opportunity is content that makes AI recommend it for specific traveller intents — [weak themes] — rather than only describing its facilities." Use only what the extraction confirms; invent nothing.
+13. searchVisibility — THE CORE OF THE REPORT. You are given DASHBOARD DATA listing the real AI searches tracked for this hotel and whether it appears. Group those searches into intent categories (e.g. Luxury / 5-star, Spa & wellness, Lake & lakefront, Romantic & couples, Family, Fine dining & Michelin, Business & meetings, plus any the data shows). For EACH category return: category; exampleSearches (3-5 of the REAL tracked queries in it, verbatim from the data); appears ("Yes" if it appears for most, "Partial" for some, "No" for none); fit ("Pursue" if the category matches this hotel's real identity from the extraction, "Skip" if it does not — a large lakefront resort SKIPS "boutique/small hotel", an inland city hotel SKIPS "ski", and ALL hotels SKIP rival-brand searches like "Four Seasons" or "Ritz Carlton"); diagnosis (if not fully appearing, the precise on-site reason AI cannot answer these searches — usually that the confirmed entities exist but are scattered and never assembled into one extractable passage answering the intent); pageToFix (the exact existing page URL from the extraction where the fix belongs, or "NEW PAGE" if a dedicated page should be created); fix (the EXACT paste-ready passage to add — a direct, factual, AI-retrievable paragraph built ONLY from entities the extraction confirms, naming specific rooms/restaurants/spa/location features; [VERIFY] for any unknown number; never invented); faq (one grounded question + answer). For "Skip" categories set diagnosis to why it is the wrong identity and leave fix and faq empty — never invent content to chase a search the hotel should not own. Order searchVisibility with "Pursue" categories the hotel does NOT appear for first.`
 const RECOMMEND_SCHEMA = {
   name: 'recommendation',
   schema: {
     type: 'object', additionalProperties: false,
-    required: ['summary', 'headlineInsight', 'marketerSummary', 'entityClarityScore', 'scoreNarrative', 'answersCheck', 'visibilityOpportunities', 'entityPositioning', 'recommendationReadiness', 'contentGaps', 'siteWideReport', 'actionPlan'],
+    required: ['summary', 'headlineInsight', 'marketerSummary', 'entityClarityScore', 'scoreNarrative', 'answersCheck', 'searchVisibility', 'visibilityOpportunities', 'entityPositioning', 'recommendationReadiness', 'contentGaps', 'siteWideReport', 'actionPlan'],
     properties: {
       summary: { type: 'string' },
       marketerSummary: { type: 'string' },
@@ -230,6 +231,27 @@ const RECOMMEND_SCHEMA = {
         },
       },
       headlineInsight: { type: 'string' },
+      searchVisibility: {
+        type: 'array',
+        items: {
+          type: 'object', additionalProperties: false,
+          required: ['category', 'exampleSearches', 'appears', 'fit', 'diagnosis', 'pageToFix', 'fix', 'faq'],
+          properties: {
+            category: { type: 'string' },
+            exampleSearches: { type: 'array', items: { type: 'string' } },
+            appears: { type: 'string', enum: ['Yes', 'Partial', 'No'] },
+            fit: { type: 'string', enum: ['Pursue', 'Skip'] },
+            diagnosis: { type: 'string' },
+            pageToFix: { type: 'string' },
+            fix: { type: 'string' },
+            faq: {
+              type: 'object', additionalProperties: false,
+              required: ['question', 'answer'],
+              properties: { question: { type: 'string' }, answer: { type: 'string' } },
+            },
+          },
+        },
+      },
       visibilityOpportunities: {
         type: 'array',
         items: {
@@ -319,29 +341,31 @@ export async function POST(req: Request) {
     const urlsFailed = pageData.filter(p => p.error).map(p => p.url)
     if (scraped.length === 0) return NextResponse.json({ error: 'Could not scrape any of the URLs — site may block scrapers or credits ran out.' }, { status: 502 })
 
-    // ── pull this hotel's dashboard gaps to target recommendations ──
+    // ── pull this hotel's real tracked searches + category scores ──
     let missedQueries: string[] = []
     let weakCategories: string[] = []
+    let queryStatus: { query: string; appeared: boolean }[] = []
+    let categoryScores: { category: string; avg: number }[] = []
     if (hotelId) {
       try {
         const sbGaps = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
         const { data: gScores } = await sbGaps.from('ai_visibility_scores')
           .select('query, appeared, checked_at').eq('hotel_id', hotelId).eq('platform', 'google_ai')
-          .order('checked_at', { ascending: false }).limit(500)
+          .order('checked_at', { ascending: false }).limit(1000)
         const latestPerQuery = new Map<string, any>()
         for (const r of gScores || []) { if (r.query && !latestPerQuery.has(r.query)) latestPerQuery.set(r.query, r) }
-        missedQueries = [...latestPerQuery.values()].filter(r => r.appeared === false).map(r => r.query).slice(0, 12)
+        queryStatus = [...latestPerQuery.values()].map(r => ({ query: r.query, appeared: r.appeared === true }))
+        missedQueries = queryStatus.filter(r => !r.appeared).map(r => r.query).slice(0, 12)
 
         const { data: hotelRow } = await sbGaps.from('hotels').select('name, region').eq('id', hotelId).single()
         if (hotelRow?.name) {
           const { data: catRows } = await sbGaps.from('competitor_visibility')
             .select('category, visibility_score, run_date').eq('competitor_name', hotelRow.name).not('category', 'is', null)
             .order('run_date', { ascending: false }).limit(500)
-          const catScores: Record<string, number[]> = {}
-          for (const r of catRows || []) { if (r.category) { (catScores[r.category] ||= []).push(r.visibility_score) } }
-          weakCategories = Object.entries(catScores)
-            .map(([cat, scores]) => ({ cat, avg: scores.reduce((a, b) => a + b, 0) / scores.length }))
-            .filter(c => c.avg < 50).sort((a, b) => a.avg - b.avg).map(c => c.cat).slice(0, 4)
+          const catMap: Record<string, number[]> = {}
+          for (const r of catRows || []) { if (r.category) { (catMap[r.category] ||= []).push(r.visibility_score) } }
+          categoryScores = Object.entries(catMap).map(([category, scores]) => ({ category, avg: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) }))
+          weakCategories = categoryScores.filter(c => c.avg < 50).sort((a, b) => a.avg - b.avg).map(c => c.category).slice(0, 4)
         }
       } catch {}
     }
@@ -369,8 +393,8 @@ export async function POST(req: Request) {
     const extraction = { facts: [...factMap.values()], pages: perPage }
 
     // PASS 2 — recommend from extraction only
-    const gapContext = (missedQueries.length || weakCategories.length)
-      ? `\n\nDASHBOARD GAPS — this hotel is currently NOT appearing in AI for these searches: ${missedQueries.join('; ') || 'none recorded'}. Its weakest visibility categories are: ${weakCategories.join(', ') || 'none recorded'}. PRIORITISE positioning FAQs and recommendations that directly target these specific searches and categories, using only entities confirmed in the extraction.`
+    const gapContext = (queryStatus.length || categoryScores.length)
+      ? `\n\nDASHBOARD DATA — the REAL AI searches tracked for this hotel and whether it currently appears (Google AI Overviews):\n${queryStatus.map(q => `- "${q.query}" → ${q.appeared ? 'APPEARS' : 'DOES NOT APPEAR'}`).join('\n') || '- none recorded'}\nCompetitor-comparison category scores (0-100, higher = more visible than rivals): ${categoryScores.map(c => `${c.category} ${c.avg}`).join(', ') || 'none recorded'}.\nUse this REAL data to build searchVisibility. Prioritise the searches it does NOT appear for and the lowest-scoring categories. Every fix must be built ONLY from entities confirmed in the extraction.`
       : ''
     const recommendation = await callOpenAI(
       RECOMMEND_SYSTEM,
