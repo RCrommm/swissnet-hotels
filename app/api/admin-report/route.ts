@@ -4,32 +4,37 @@ import { createClient } from '@supabase/supabase-js'
 const ADMIN_PASSWORD = process.env.ADMIN_REPORT_PASSWORD || 'RCrom2004Romeo'
 export const maxDuration = 60
 
-const SYSTEM_PROMPT = `You are SwissNet's senior AI-visibility strategist. You write a detailed internal monthly intelligence report on ONE partner hotel, for the SwissNet founder to read before a monthly client call.
+const SYSTEM_PROMPT = `You are SwissNet's senior AI-visibility strategist writing a DETAILED internal monthly working report on ONE partner hotel, for the founder to act on and discuss with the hotel.
 
-You receive real data covering two fronts:
-1. THE HOTEL ON SWISSNET — their AI visibility this month vs last month (overall and per platform), the exact search queries they appeared in vs missed, and their score and rank in each category vs competitors.
-2. THE HOTEL'S OWN OFFICIAL WEBSITE — the latest audit of their real website, with its score and the specific failed checks.
+This is an internal working document. It must be SPECIFIC and ACTIONABLE, never vague. Bad: "improve your romantic content." Good: "Romantic is your weakest category at 42% (#6 of 9). The rooms page has only 5 FAQs and none target romantic stays. Add these 4 FAQs to the rooms page: [actual question + actual answer]."
 
-Your report must give detailed, specific recommendations to improve BOTH fronts:
-- How to improve their SwissNet AI visibility (win missed queries, climb weak categories, fill profile gaps).
-- How to improve their own official website (from the audit findings).
-
-Be concrete. Cite the actual numbers, the actual missed queries, the actual category ranks, the actual audit findings. No generic filler. Every recommendation ties to a specific data point and says exactly what to do.
+Rules:
+- Recommendations MUST target the hotel's ACTUAL weak spots given in the data: the weakest categories and the EXACT missed queries listed. Never recommend improving a category that is already strong. If romantic is weak and dining is strong, you work on romantic.
+- DO NOT give advice like "add FAQs". WRITE the actual FAQs — real question and a real, specific, factual answer the hotel can paste in. Base answers on the hotel facts provided; if a fact is unknown, write the answer with a clear [PLACEHOLDER] for the hotel to fill (e.g. "[confirm exact distance]").
+- Tie content to the exact missed queries. If they miss "romantic hotel Geneva lake view", produce an FAQ whose question and answer use that language.
+- For the official website, use the audit's failed findings: name the specific page and the specific fix.
+- Structured, dense, plain. Substance over polish.
 
 Return ONLY valid JSON, no markdown, in this exact shape:
 {
-  "headline": "one punchy sentence on where this hotel stands this month",
-  "summary": "3-4 sentences: visibility trend this month, biggest win, biggest opportunity across both their SwissNet presence and their own website",
-  "visibilityRecap": "2-3 sentences specifically on the month's AI visibility movement and what drove it",
-  "missedQueries": ["the exact missed query", "..."],
-  "wonQueries": ["the exact won query", "..."],
-  "swissnetRecommendations": [
-    { "title": "short action", "priority": "High|Medium|Low", "rationale": "why — cite the data", "action": "exactly what to do" }
+  "headline": "one sentence on where this hotel stands this month",
+  "visibilityRecap": "3-4 sentences: did overall/per-platform visibility go up or down vs last month, by how much, and the likely reason (cite the numbers).",
+  "weakestAreas": ["the specific weak category with its score and rank", "..."],
+  "swissnetActions": [
+    {
+      "title": "specific action e.g. 'Add 4 romantic FAQs to the rooms page'",
+      "priority": "High|Medium|Low",
+      "targetsQuery": "the exact missed query this addresses, or category",
+      "rationale": "why — cite the actual score/rank/gap",
+      "page": "which page: rooms | dining | spa | experiences | overview | hotel-info",
+      "faqsToAdd": [ { "question": "exact question", "answer": "exact answer to paste" } ],
+      "otherInstruction": "any non-FAQ instruction, else empty string"
+    }
   ],
-  "websiteRecommendations": [
-    { "title": "short action", "priority": "High|Medium|Low", "rationale": "why — cite the audit finding", "action": "exactly what to do on their own site" }
+  "websiteActions": [
+    { "title": "specific fix", "priority": "High|Medium|Low", "page": "which page of their own site", "rationale": "cite the audit finding", "action": "exactly what to change" }
   ],
-  "callScript": "4-5 sentences the founder says on the call: open with a real win from the data, name the visibility focus, name the website focus, end with the one thing SwissNet will do this month"
+  "callScript": "4-5 sentences: open with the real visibility movement, name the one category focus, name the one website fix, end with what SwissNet will do this month"
 }`
 
 function adjust(platform: string, score: number) {
@@ -51,32 +56,32 @@ export async function POST(req: Request) {
     if (!hotel) return NextResponse.json({ error: 'Hotel not found' }, { status: 404 })
     const region = hotel.region || 'Geneva'
 
-    // ── Website audit (their own site) ──
     const { data: auditRows } = await sb.from('website_audits').select('*').eq('hotel_id', hotelId).order('created_at', { ascending: false }).limit(1)
     const audit = auditRows?.[0] || null
 
-    // ── Profile completeness ──
     const [{ data: rooms }, { data: restaurants }, { data: spa }, { data: experiences }, { data: content }, { data: faqSug }] = await Promise.all([
-      sb.from('room_types').select('name, size_sqm, base_rate_chf').eq('hotel_id', hotelId),
-      sb.from('hotel_restaurants').select('name, cuisine_type, michelin_stars').eq('hotel_id', hotelId).eq('is_available', true),
-      sb.from('hotel_spa').select('name, size_sqm').eq('hotel_id', hotelId).eq('is_available', true),
+      sb.from('room_types').select('name, size_sqm, base_rate_chf, bed_type').eq('hotel_id', hotelId),
+      sb.from('hotel_restaurants').select('name, cuisine_type, michelin_stars, description').eq('hotel_id', hotelId).eq('is_available', true),
+      sb.from('hotel_spa').select('name, size_sqm, treatments').eq('hotel_id', hotelId).eq('is_available', true),
       sb.from('hotel_experiences').select('name').eq('hotel_id', hotelId).eq('is_available', true),
       sb.from('hotel_content').select('faqs').eq('hotel_id', hotelId).single(),
-      sb.from('hotel_faq_suggestions').select('question').eq('hotel_id', hotelId),
+      sb.from('hotel_faq_suggestions').select('page_type, question').eq('hotel_id', hotelId),
     ])
-    const faqCount = (content?.faqs?.length || 0) + (faqSug?.length || 0)
+
+    // FAQ count per page
+    const faqByPage: Record<string, number> = { overview: content?.faqs?.length || 0, rooms: 0, dining: 0, spa: 0, experiences: 0, events: 0 }
+    for (const f of faqSug || []) { if (faqByPage[f.page_type] !== undefined) faqByPage[f.page_type]++ }
+
     const missingFields: string[] = []
     const check = (label: string, val: any) => { if (!val) missingFields.push(label) }
     check('About Us (AI schema)', hotel.about_us)
     check('Languages spoken', hotel.languages)
-    check('Check-in/out times', hotel.check_in_time)
     check('Cancellation policy', hotel.cancellation_policy)
     check('Direct booking benefits', hotel.booking_benefits)
     check('Accessibility', hotel.accessibility)
     check('Seasonal notes', hotel.seasonal_notes)
-    check('Parking', hotel.parking)
 
-    // ── Google AI per-query (keywords won/missed), latest per query ──
+    // Google AI per-query
     const { data: googleRows } = await sb.from('ai_visibility_scores')
       .select('query, appeared, checked_at')
       .eq('hotel_id', hotelId).eq('platform', 'google_ai')
@@ -85,7 +90,7 @@ export async function POST(req: Request) {
     const wonQueries = latestPerQuery.filter((r: any) => r.appeared).map((r: any) => r.query)
     const missedQueries = latestPerQuery.filter((r: any) => !r.appeared).map((r: any) => r.query)
 
-    // ── Monthly visibility trend (this month vs last) from competitor_visibility ──
+    // Monthly visibility from competitor_visibility
     const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
     const { data: comp } = await sb.from('competitor_visibility')
       .select('competitor_name, category, platform, visibility_score, checked_at, run_date')
@@ -96,18 +101,9 @@ export async function POST(req: Request) {
     const curStart = `${now.getFullYear()}-${pad(now.getMonth())}-01`
     const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1)
     const lastStart = `${lm.getFullYear()}-${pad(lm.getMonth())}-01`
-    const lastEnd = curStart
     const inMonth = (d: string, s: string, e: string) => d >= s && d < e
 
     const mineOverview = (comp || []).filter((r: any) => r.competitor_name === hotel.name && r.category === null)
-    const monthAvg = (rows: any[]) => {
-      const byPlat: Record<string, number[]> = {}
-      for (const r of rows) (byPlat[r.platform] ||= []).push(adjust(r.platform, r.visibility_score))
-      const plats = Object.entries(byPlat).map(([p, arr]) => Math.round(arr.reduce((a, b) => a + b, 0) / arr.length))
-      // include google ratio for the month
-      const gRows = (googleRows || []).filter((r: any) => true)
-      return plats.length ? Math.round(plats.reduce((a, b) => a + b, 0) / plats.length) : null
-    }
     const platMonthAvg = (rows: any[], plat: string) => {
       const arr = rows.filter((r: any) => r.platform === plat).map((r: any) => adjust(plat, r.visibility_score))
       return arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : null
@@ -119,33 +115,22 @@ export async function POST(req: Request) {
       const daily = Object.values(byDate).map((day: any[]) => Math.round((day.filter(r => r.appeared).length / day.length) * 100))
       return daily.length ? Math.round(daily.reduce((a, b) => a + b, 0) / daily.length) : null
     }
-
     const curRows = mineOverview.filter((r: any) => inMonth(r.run_date || r.checked_at?.split('T')[0], curStart, '9999'))
-    const lastRows = mineOverview.filter((r: any) => inMonth(r.run_date || r.checked_at?.split('T')[0], lastStart, lastEnd))
-
-    const monthlyVisibility = {
-      thisMonth: {
-        chatgpt: platMonthAvg(curRows, 'chatgpt'),
-        perplexity: platMonthAvg(curRows, 'perplexity'),
-        googleAi: googleMonthAvg(curStart, '9999-12-31'),
-      },
-      lastMonth: {
-        chatgpt: platMonthAvg(lastRows, 'chatgpt'),
-        perplexity: platMonthAvg(lastRows, 'perplexity'),
-        googleAi: googleMonthAvg(lastStart, lastEnd),
-      },
-    }
+    const lastRows = mineOverview.filter((r: any) => inMonth(r.run_date || r.checked_at?.split('T')[0], lastStart, curStart))
     const overallOf = (m: any) => { const v = [m.chatgpt, m.perplexity, m.googleAi].filter((x: any) => x !== null); return v.length ? Math.round(v.reduce((a: number, b: number) => a + b, 0) / v.length) : null }
-    ;(monthlyVisibility.thisMonth as any).overall = overallOf(monthlyVisibility.thisMonth)
-    ;(monthlyVisibility.lastMonth as any).overall = overallOf(monthlyVisibility.lastMonth)
+    const monthlyVisibility: any = {
+      thisMonth: { chatgpt: platMonthAvg(curRows, 'chatgpt'), perplexity: platMonthAvg(curRows, 'perplexity'), googleAi: googleMonthAvg(curStart, '9999-12-31') },
+      lastMonth: { chatgpt: platMonthAvg(lastRows, 'chatgpt'), perplexity: platMonthAvg(lastRows, 'perplexity'), googleAi: googleMonthAvg(lastStart, curStart) },
+    }
+    monthlyVisibility.thisMonth.overall = overallOf(monthlyVisibility.thisMonth)
+    monthlyVisibility.lastMonth.overall = overallOf(monthlyVisibility.lastMonth)
 
-    // ── Category scores + ranks (latest per platform per hotel) ──
+    // Categories + ranks
     const latestScore = (rows: any[]) => {
       const byPlat: Record<string, any> = {}
       for (const r of rows) {
-        const key = r.platform
         const stamp = r.run_date || r.checked_at || ''
-        if (!byPlat[key] || stamp > (byPlat[key].run_date || byPlat[key].checked_at || '')) byPlat[key] = r
+        if (!byPlat[r.platform] || stamp > (byPlat[r.platform].run_date || byPlat[r.platform].checked_at || '')) byPlat[r.platform] = r
       }
       const vals = Object.values(byPlat).map((r: any) => adjust(r.platform, r.visibility_score))
       return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null
@@ -158,40 +143,42 @@ export async function POST(req: Request) {
       if (!catRows.length) continue
       const names = [...new Set(catRows.map((r: any) => r.competitor_name))]
       const ranked = names.map((n: any) => ({ name: n, score: latestScore(catRows.filter((r: any) => r.competitor_name === n)) }))
-        .filter(h => h.score !== null).sort((a: any, b: any) => b.score - a.score)
+        .filter(h => h.score !== null).sort((a: any, b: any) => (b.score as number) - (a.score as number))
       const idx = ranked.findIndex(h => h.name === hotel.name)
       if (idx !== -1) {
         categoryScores[cat] = ranked[idx].score as number
-        categoryRanks[cat] = { rank: idx + 1, total: ranked.length, leader: ranked[0]?.name, leaderScore: ranked[0]?.score, ahead: ranked[idx - 1]?.name }
+        categoryRanks[cat] = { rank: idx + 1, total: ranked.length, leader: ranked[0]?.name, ahead: ranked[idx - 1]?.name }
       }
+    }
+    const weakestCategories = Object.entries(categoryScores).sort((a, b) => a[1] - b[1]).slice(0, 2).map(([cat, score]) => ({ category: cat, score, rank: categoryRanks[cat]?.rank, total: categoryRanks[cat]?.total, ahead: categoryRanks[cat]?.ahead }))
+
+    const hotelFacts = {
+      name: hotel.name, region, location: hotel.location, category: hotel.category, stars: hotel.star_classification,
+      nightlyRate: hotel.nightly_rate_chf, description: hotel.description, aboutUs: hotel.about_us,
+      rooms: (rooms || []).map((r: any) => ({ name: r.name, sqm: r.size_sqm, bed: r.bed_type, rate: r.base_rate_chf })),
+      restaurants: (restaurants || []).map((r: any) => ({ name: r.name, cuisine: r.cuisine_type, michelin: r.michelin_stars })),
+      spa: (spa || []).map((s: any) => ({ name: s.name, sqm: s.size_sqm })),
+      experiences: (experiences || []).map((e: any) => e.name),
     }
 
     const dataBlock = {
-      hotel: { name: hotel.name, region, location: hotel.location, category: hotel.category, stars: hotel.star_classification, nightly_rate_chf: hotel.nightly_rate_chf },
+      hotel: hotelFacts,
       monthlyVisibility,
       keywords: { won: wonQueries, missed: missedQueries },
-      categories: { scores: categoryScores, ranks: categoryRanks },
-      profile: {
-        descriptionWords: hotel.description ? String(hotel.description).split(' ').length : 0,
-        rooms: rooms?.length || 0, restaurants: restaurants?.length || 0,
-        michelinRestaurants: (restaurants || []).filter((r: any) => r.michelin_stars > 0).length,
-        spaVenues: spa?.length || 0, experiences: experiences?.length || 0, faqs: faqCount,
-        missingFields,
-      },
-      websiteAudit: audit ? {
-        score: audit.score, summary: audit.summary,
-        failedFindings: (audit.findings || []).filter((f: any) => !f.ok).map((f: any) => ({ label: f.label, priority: f.priority, detail: f.detail })),
-      } : null,
+      categories: { scores: categoryScores, ranks: categoryRanks, weakest: weakestCategories },
+      faqsPerPage: faqByPage,
+      missingProfileFields: missingFields,
+      websiteAudit: audit ? { score: audit.score, summary: audit.summary, failedFindings: (audit.findings || []).filter((f: any) => !f.ok).map((f: any) => ({ label: f.label, priority: f.priority, detail: f.detail })) } : null,
     }
 
     const aiRes = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
       body: JSON.stringify({
-        model: 'gpt-4o', temperature: 0.4, response_format: { type: 'json_object' },
+        model: 'gpt-4o', temperature: 0.3, response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: `Produce the internal monthly report for this hotel.\n\nDATA:\n${JSON.stringify(dataBlock, null, 2)}` },
+          { role: 'user', content: `Write the detailed monthly working report. Target the weakest categories and the exact missed queries. Write real FAQs to paste.\n\nDATA:\n${JSON.stringify(dataBlock, null, 2)}` },
         ],
       }),
     })
