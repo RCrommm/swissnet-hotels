@@ -2260,9 +2260,42 @@ function WebsiteTab({ hotel, hotelName }: any) {
               {a.actionPlan.map((ap: any, i: number) => {
                 let path = ap.page
                 try { path = new URL(ap.page).pathname || ap.page } catch {}
+                const pageAudit = (a.pages || []).find((pg: any) => {
+                  if (!pg.url) return false
+                  if (pg.url === ap.page) return true
+                  try { return new URL(pg.url).pathname === path } catch { return pg.url === ap.page }
+                })
                 return (
                   <div key={i} style={{ padding: '1.4rem 1.75rem', borderBottom: i < a.actionPlan.length - 1 ? '1px solid ' + BORDER : 'none' }}>
                     <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT, margin: '0 0 0.75rem', wordBreak: 'break-all' }}>{path}</p>
+
+                    {pageAudit && (pageAudit.schemaAudit || []).length > 0 && (
+                      <>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.5rem' }}>Schema checklist</p>
+                        <div style={{ marginBottom: '0.9rem' }}>
+                          {pageAudit.schemaAudit.map((s: any, j: number) => (
+                            <div key={j} style={{ background: BG, borderRadius: 8, padding: '0.7rem 0.95rem', marginBottom: '0.4rem' }}>
+                              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 700, color: TEXT, margin: '0 0 0.4rem' }}>
+                                <span style={{ color: GREEN }}>✓</span> {s.type} <span style={{ fontWeight: 400, color: TEXT_MUTED }}>— present</span>
+                              </p>
+                              {(s.present || []).map((f: string, k: number) => (
+                                <p key={'p' + k} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: TEXT_MUTED, margin: '0 0 0.15rem 1rem', lineHeight: 1.5 }}><span style={{ color: GREEN }}>✓</span> {(f || '').split(':')[0]}</p>
+                              ))}
+                              {(s.missing || []).map((f: string, k: number) => (
+                                <p key={'m' + k} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: TEXT, margin: '0 0 0.15rem 1rem', lineHeight: 1.5 }}><span style={{ color: RED }}>✗</span> {f} <span style={{ color: TEXT_MUTED }}>— missing</span></p>
+                              ))}
+                            </div>
+                          ))}
+                          {(pageAudit.missingSchemaTypes || []).map((t: string, j: number) => (
+                            <div key={'mt' + j} style={{ background: BG, borderRadius: 8, padding: '0.6rem 0.95rem', marginBottom: '0.4rem' }}>
+                              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 700, color: TEXT, margin: 0 }}>
+                                <span style={{ color: RED }}>✗</span> {t} <span style={{ fontWeight: 400, color: TEXT_MUTED }}>— entirely missing, add this schema</span>
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
 
                     {(ap.majorGaps || []).length > 0 && (
                       <>
