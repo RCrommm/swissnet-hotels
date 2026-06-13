@@ -2173,23 +2173,22 @@ function WebsiteTab({ hotel, hotelName }: any) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!domain) { setLoading(false); return }
+    if (!hotel?.id) { setLoading(false); return }
     const load = async () => {
       try {
         const { createClient } = await import('@supabase/supabase-js')
         const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-        const { data } = await sb.from('website_analyses')
+        const { data: match } = await sb.from('website_analyses')
           .select('urls_scraped, analysis, created_at')
+          .eq('hotel_id', hotel.id)
           .order('created_at', { ascending: false })
-          .limit(50)
-        if (data) {
-          const match = data.find((row: any) => Array.isArray(row.urls_scraped) && row.urls_scraped.some((u: string) => (u || '').includes(domain)))
-          if (match) { setAnalysis(match.analysis); setScraped(match.urls_scraped || []); setSavedAt(match.created_at) }
-        }
+          .limit(1)
+          .maybeSingle()
+        if (match) { setAnalysis(match.analysis); setScraped(match.urls_scraped || []); setSavedAt(match.created_at) }
       } catch {} finally { setLoading(false) }
     }
     load()
-  }, [domain])
+  }, [hotel?.id])
 
   const a = analysis
 

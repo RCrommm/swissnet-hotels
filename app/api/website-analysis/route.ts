@@ -80,7 +80,7 @@ async function scrape(url: string, apiKey: string): Promise<string | null> {
 
 export async function POST(req: Request) {
   try {
-    const { urls, password } = await req.json()
+    const { urls, password, hotelId } = await req.json()
     if (password !== (process.env.ADMIN_REPORT_PASSWORD || 'RCrom2004Romeo')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const list: string[] = (urls || '').split('\n').map((u: string) => u.trim()).filter(Boolean)
     if (list.length === 0) return NextResponse.json({ error: 'Paste at least one URL' }, { status: 400 })
@@ -119,7 +119,7 @@ export async function POST(req: Request) {
 
     try {
       const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-      await sb.from('website_analyses').insert({ urls_scraped: urlsScraped, urls_failed: urlsFailed, analysis })
+      await sb.from('website_analyses').insert({ hotel_id: hotelId || null, urls_scraped: urlsScraped, urls_failed: urlsFailed, analysis })
     } catch {}
 
     return NextResponse.json({ urlsScraped, urlsFailed, analysis })
