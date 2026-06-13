@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 
 export const maxDuration = 300
 
-const PAGES = ['', '/rooms', '/spa', '/dining', '/about', '/contact']
+const PAGES = ['']
 
 const SYSTEM_PROMPT = `You ARE an AI crawler — the engine behind ChatGPT, Perplexity and Google AI Overviews. You only "see" what is in the raw HTML: text content, headings, and JSON-LD structured data (schema). You do NOT see images, design, or anything rendered by JavaScript after load.
 
