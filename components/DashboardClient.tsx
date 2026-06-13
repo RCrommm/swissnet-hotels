@@ -2273,17 +2273,21 @@ function WebsiteTab({ hotel, hotelName }: any) {
                       </>
                     )}
 
+                    {(ap.schemaToAdd || []).length > 0 && (
+                      <>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.4rem' }}>Schema to add</p>
+                        <ul style={{ margin: '0 0 0.9rem', paddingLeft: '1.1rem' }}>
+                          {ap.schemaToAdd.map((s: string, j: number) => <li key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT, margin: '0 0 0.25rem', lineHeight: 1.6 }}>{s}</li>)}
+                        </ul>
+                      </>
+                    )}
+
                     {(ap.faqsToAdd || []).length > 0 && (
                       <>
-                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.4rem' }}>FAQs to add to this page</p>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.9rem' }}>
-                          {ap.faqsToAdd.map((q: any, j: number) => (
-                            <div key={j} style={{ background: BG, borderRadius: 8, padding: '0.7rem 0.95rem' }}>
-                              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', fontWeight: 700, color: TEXT, margin: '0 0 0.25rem', lineHeight: 1.5 }}>Q: {q.question}</p>
-                              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6 }}>A: {q.answer}</p>
-                            </div>
-                          ))}
-                        </div>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.4rem' }}>Content to add</p>
+                        <ul style={{ margin: '0 0 0.9rem', paddingLeft: '1.1rem' }}>
+                          {ap.faqsToAdd.map((q: any, j: number) => <li key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT, margin: '0 0 0.25rem', lineHeight: 1.6 }}>An FAQ answering: {q.question}</li>)}
+                        </ul>
                       </>
                     )}
 
