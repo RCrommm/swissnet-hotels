@@ -60,41 +60,23 @@ export default function WebsiteAnalysisPage() {
         {loading && <div className="no-print" style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', marginBottom: '1rem', textAlign: 'center' }}><p style={{ fontSize: '0.7rem', color: MUTED, margin: 0 }}>Scraping each page and analysing what AI can read… can take a few minutes, keep this tab open.</p></div>}
 
         {a && !a.error && (
-          <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '2rem', fontSize: '0.8rem', color: TEXT, lineHeight: 1.7 }}>
-            <p style={{ color: MUTED, margin: '0 0 1rem', fontSize: '0.7rem' }}>Scraped: {(result.urlsScraped || []).join(', ')}{(result.urlsFailed || []).length > 0 && <span style={{ color: RED }}> · Failed: {result.urlsFailed.join(', ')}</span>}</p>
+          <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '2rem', fontSize: '0.85rem', color: TEXT, lineHeight: 1.7 }}>
+            <p style={{ color: MUTED, margin: '0 0 1rem', fontSize: '0.7rem' }}>Pages reviewed: {(result.urlsScraped || []).join(', ')}</p>
 
-            <p style={{ margin: '0 0 0.5rem' }}><strong>AI-readability score: {a.overallScore}/100</strong> — {a.scoreReason}</p>
-            <p style={{ margin: '0 0 1rem' }}>{a.summary}</p>
-
-            {a.linkingAnalysis && <>
-              <h2 style={{ fontSize: '1rem', margin: '1.5rem 0 0.5rem', borderTop: '1px solid ' + BORDER, paddingTop: '1rem' }}>Internal linking</h2>
-              <p style={{ margin: '0 0 1rem' }}>{a.linkingAnalysis}</p>
-            </>}
-
-            {(a.siteWideReport || []).length > 0 && <>
-              <h2 style={{ fontSize: '1rem', margin: '1.5rem 0 0.5rem', borderTop: '1px solid ' + BORDER, paddingTop: '1rem' }}>What to change or add — whole site</h2>
-              <ol style={{ margin: '0 0 1rem', paddingLeft: '1.2rem' }}>{a.siteWideReport.map((p: string, i: number) => <li key={i} style={{ marginBottom: '0.4rem' }}>{p}</li>)}</ol>
-            </>}
-            {a.marketerSummary && <>
-              <h2 style={{ fontSize: '1rem', margin: '1.5rem 0 0.5rem', borderTop: '1px solid ' + BORDER, paddingTop: '1rem' }}>Summary for the marketing team</h2>
-              <p style={{ margin: '0 0 1rem' }}>{a.marketerSummary}</p>
-            </>}
+            <p style={{ margin: '0 0 0.5rem' }}><strong>AI-readability score: {a.overallScore}/100</strong></p>
+            <p style={{ margin: '0 0 1rem' }}>{a.marketerSummary || a.summary}</p>
 
             {(a.actionPlan || []).length > 0 && <>
-              <h2 style={{ fontSize: '1.05rem', margin: '1.5rem 0 0.5rem', borderTop: '2px solid ' + GOLD, paddingTop: '1rem' }}>Action plan — exactly what to do, page by page</h2>
+              <h2 style={{ fontSize: '1.1rem', margin: '1.5rem 0 0.75rem', borderTop: '2px solid ' + GOLD, paddingTop: '1rem' }}>What to change — page by page</h2>
               {a.actionPlan.map((ap: any, i: number) => (
                 <div key={i} style={{ marginBottom: '1.5rem' }}>
-                  <h3 style={{ fontSize: '0.9rem', margin: '1rem 0 0.4rem', wordBreak: 'break-all' }}>{ap.page}</h3>
+                  <h3 style={{ fontSize: '0.95rem', margin: '1rem 0 0.4rem', wordBreak: 'break-all' }}>{ap.page}</h3>
                   {(ap.majorGaps || []).length > 0 && <>
-                    <p style={{ margin: '0.5rem 0 0.2rem', fontWeight: 700 }}>Major gaps:</p>
+                    <p style={{ margin: '0.5rem 0 0.2rem', fontWeight: 700 }}>What's missing:</p>
                     <ul style={{ margin: '0 0 0.5rem', paddingLeft: '1.2rem' }}>{ap.majorGaps.map((g: string, j: number) => <li key={j} style={{ marginBottom: '0.2rem' }}>{g}</li>)}</ul>
                   </>}
-                  {(ap.schemaToAdd || []).length > 0 && <>
-                    <p style={{ margin: '0.5rem 0 0.2rem', fontWeight: 700 }}>Schema to add:</p>
-                    <ul style={{ margin: '0 0 0.5rem', paddingLeft: '1.2rem' }}>{ap.schemaToAdd.map((s: string, j: number) => <li key={j} style={{ marginBottom: '0.2rem' }}>{s}</li>)}</ul>
-                  </>}
                   {(ap.faqsToAdd || []).length > 0 && <>
-                    <p style={{ margin: '0.5rem 0 0.2rem', fontWeight: 700 }}>FAQs to add:</p>
+                    <p style={{ margin: '0.5rem 0 0.2rem', fontWeight: 700 }}>FAQs to add to this page:</p>
                     {ap.faqsToAdd.map((q: any, j: number) => (
                       <div key={j} style={{ marginBottom: '0.4rem' }}>
                         <p style={{ margin: '0 0 0.15rem' }}><strong>Q:</strong> {q.question}</p>
@@ -103,63 +85,12 @@ export default function WebsiteAnalysisPage() {
                     ))}
                   </>}
                   {(ap.otherActions || []).length > 0 && <>
-                    <p style={{ margin: '0.5rem 0 0.2rem', fontWeight: 700 }}>Other actions:</p>
+                    <p style={{ margin: '0.5rem 0 0.2rem', fontWeight: 700 }}>Other improvements:</p>
                     <ul style={{ margin: '0 0 0.5rem', paddingLeft: '1.2rem' }}>{ap.otherActions.map((s: string, j: number) => <li key={j} style={{ marginBottom: '0.2rem' }}>{s}</li>)}</ul>
                   </>}
                 </div>
               ))}
             </>}
-
-            {(a.pages || []).map((pg: any, i: number) => (
-              <div key={i}>
-                <h2 style={{ fontSize: '1.05rem', margin: '2rem 0 0.5rem', borderTop: '2px solid ' + GOLD, paddingTop: '1rem', wordBreak: 'break-all' }}>{pg.url}</h2>
-
-                {(pg.schemaAudit || []).length > 0 && <>
-                  <h3 style={{ fontSize: '0.85rem', margin: '1rem 0 0.3rem' }}>Schema audit</h3>
-                  {pg.schemaAudit.map((s: any, j: number) => (
-                    <div key={j} style={{ marginBottom: '0.6rem' }}>
-                      <p style={{ margin: '0 0 0.15rem' }}><strong>{s.type}</strong></p>
-                      {(s.present || []).length > 0 && <p style={{ margin: '0 0 0.15rem' }}>Present: {s.present.join(' · ')}</p>}
-                      {(s.missing || []).length > 0 && <p style={{ margin: '0 0 0.15rem', color: RED }}>Missing: {s.missing.join(', ')}</p>}
-                      {s.note && <p style={{ margin: 0, fontStyle: 'italic', color: MUTED }}>{s.note}</p>}
-                    </div>
-                  ))}
-                  {(pg.missingSchemaTypes || []).length > 0 && <p style={{ color: RED, margin: '0 0 0.5rem' }}>Entirely missing: {pg.missingSchemaTypes.join(', ')}</p>}
-                </>}
-
-                {(pg.aiSees || []).length > 0 && <>
-                  <h3 style={{ fontSize: '0.85rem', margin: '1rem 0 0.3rem' }}>What AI sees</h3>
-                  <ul style={{ margin: '0 0 0.5rem', paddingLeft: '1.2rem' }}>{pg.aiSees.map((s: string, j: number) => <li key={j} style={{ marginBottom: '0.2rem' }}>{s}</li>)}</ul>
-                </>}
-
-                {(pg.aiCannotSee || []).length > 0 && <>
-                  <h3 style={{ fontSize: '0.85rem', margin: '1rem 0 0.3rem', color: RED }}>What AI cannot see (why / where to add)</h3>
-                  <ul style={{ margin: '0 0 0.5rem', paddingLeft: '1.2rem' }}>{pg.aiCannotSee.map((s: string, j: number) => <li key={j} style={{ marginBottom: '0.2rem' }}>{s}</li>)}</ul>
-                </>}
-
-                {(pg.weak || []).length > 0 && <>
-                  <h3 style={{ fontSize: '0.85rem', margin: '1rem 0 0.3rem' }}>Present but weak</h3>
-                  <ul style={{ margin: '0 0 0.5rem', paddingLeft: '1.2rem' }}>{pg.weak.map((s: string, j: number) => <li key={j} style={{ marginBottom: '0.2rem' }}>{s}</li>)}</ul>
-                </>}
-
-                {(pg.fixes || []).length > 0 && <>
-                  <h3 style={{ fontSize: '0.85rem', margin: '1rem 0 0.3rem' }}>Fixes</h3>
-                  {pg.fixes.map((f: any, j: number) => (
-                    <div key={j} style={{ marginBottom: '1rem' }}>
-                      <p style={{ margin: '0 0 0.2rem' }}><strong>{f.title}</strong> [{f.priority}{f.schemaType ? ' · ' + f.schemaType : ''}]</p>
-                      <p style={{ margin: '0 0 0.3rem' }}>{f.instruction}</p>
-                      {f.schemaBlock && <pre style={{ fontSize: '0.65rem', background: BG, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.6rem', overflowX: 'auto', whiteSpace: 'pre-wrap', lineHeight: 1.5, margin: '0 0 0.4rem' }}>{f.schemaBlock}</pre>}
-                      {(f.faqsToAdd || []).map((q: any, k: number) => (
-                        <div key={k} style={{ marginBottom: '0.4rem' }}>
-                          <p style={{ margin: '0 0 0.15rem' }}><strong>Q:</strong> {q.question}</p>
-                          <p style={{ margin: 0 }}><strong>A:</strong> {q.answer}</p>
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </>}
-              </div>
-            ))}
           </div>
         )}
         {a?.error && <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem' }}><p style={{ fontSize: '0.7rem', color: RED, margin: 0 }}>{a.error}</p></div>}

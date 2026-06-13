@@ -2161,193 +2161,153 @@ function ComparisonReport({ hotelId, hotelName, hotelRegion, overviewRunData, go
 }
 
 // ── YOUR WEBSITE TAB ──────────────────────────────────────────────────────────
-function WebsiteTab({ hotel, hotelName, googleAiScores, hotelCatScores, categoryLabels, missedList }: any) {
+function WebsiteTab({ hotel, hotelName }: any) {
   const officialUrl = hotel?.direct_booking_url || ''
   const domain = (() => {
     try { return officialUrl ? new URL(officialUrl).hostname.replace('www.', '') : '' } catch { return '' }
   })()
 
-  const [audit, setAudit] = useState<any>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [loadingSaved, setLoadingSaved] = useState(true)
+  const [analysis, setAnalysis] = useState<any>(null)
+  const [scraped, setScraped] = useState<string[]>([])
+  const [savedAt, setSavedAt] = useState<string>('')
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!hotel?.id) { setLoadingSaved(false); return }
-    const loadSaved = async () => {
+    if (!domain) { setLoading(false); return }
+    const load = async () => {
       try {
         const { createClient } = await import('@supabase/supabase-js')
         const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-        const { data } = await sb.from('website_audits')
-          .select('*')
-          .eq('hotel_id', hotel.id)
+        const { data } = await sb.from('website_analyses')
+          .select('urls_scraped, analysis, created_at')
           .order('created_at', { ascending: false })
-          .limit(1)
-          .single()
+          .limit(50)
         if (data) {
-          setAudit({
-            reachable: true,
-            url: data.url,
-            score: data.score,
-            summary: data.summary,
-            passed: data.passed,
-            total: data.total,
-            findings: data.findings,
-            pagesScanned: data.pages_scanned,
-            savedAt: data.created_at,
-          })
+          const match = data.find((row: any) => Array.isArray(row.urls_scraped) && row.urls_scraped.some((u: string) => (u || '').includes(domain)))
+          if (match) { setAnalysis(match.analysis); setScraped(match.urls_scraped || []); setSavedAt(match.created_at) }
         }
-      } catch (e) {
-        // no saved audit yet
-      } finally {
-        setLoadingSaved(false)
-      }
+      } catch {} finally { setLoading(false) }
     }
-    loadSaved()
-  }, [hotel?.id])
+    load()
+  }, [domain])
 
-  const runAudit = async () => {
-    if (!officialUrl) { setError('No official website on file for this hotel.'); return }
-    setLoading(true); setError(''); setAudit(null)
-    try {
-      const res = await fetch('/api/audit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: officialUrl }),
-      })
-      const data = await res.json()
-      if (data.error && data.reachable === undefined) { setError(data.error) }
-      else if (data.error && data.reachable === false) { setError(data.error) }
-      else { setAudit(data) }
-    } catch (e: any) {
-      setError('Could not run the audit. Please try again.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const prColor = (p: string) => p === 'High' ? RED : p === 'Medium' ? GOLD : BLUE
-  const prLabel = (p: string) => p === 'High' ? 'High impact' : p === 'Medium' ? 'Worth doing' : 'Nice to have'
-  const prRank = (p: string) => p === 'High' ? 0 : p === 'Medium' ? 1 : 2
-
-  // Sort findings: failed High → failed Medium → failed Low → passed
-  const sortedFindings = audit?.findings ? [...audit.findings].sort((a: any, b: any) => {
-    if (a.ok !== b.ok) return a.ok ? 1 : -1
-    return prRank(a.priority) - prRank(b.priority)
-  }) : []
-
-  const pageTypeLabel = (t: string) => ({
-    home: 'Homepage', rooms: 'Rooms', villa: 'Villas', dining: 'Dining', spa: 'Spa & Wellness',
-    family: 'Family', offers: 'Offers', experiences: 'Experiences', location: 'Location', meetings: 'Meetings',
-  } as any)[t] || t
+  const a = analysis
 
   return (
     <div>
-      {/* HERO */}
       <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 16, padding: '2.5rem', marginBottom: '1.5rem', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: -40, right: -40, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,169,76,0.08) 0%, transparent 70%)' }} />
         <div style={{ position: 'relative' }}>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0 0 0.6rem' }}>Your Own Website · AI Visibility Audit</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0 0 0.6rem' }}>Your Own Website · AI Visibility Review</p>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 300, color: WHITE, margin: '0 0 0.6rem', lineHeight: 1.3, maxWidth: 560 }}>
-            Is {domain || 'your website'} ready for AI?
+            How {domain || 'your website'} reads to AI
           </p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.55)', margin: '0 0 1.25rem', lineHeight: 1.7, maxWidth: 540 }}>
-            We read your key pages the way an AI assistant would — rooms, dining, spa, offers and more — then an AI-visibility expert tells you exactly what helps you get recommended and precisely how to fix what's missing.
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.7, maxWidth: 540 }}>
+            We read your key pages the way ChatGPT, Perplexity and Google AI do, then your SwissNet specialist turns it into a clear plan. Here is your latest review.
           </p>
-          
         </div>
       </div>
 
-      {error && (
-        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '1rem 1.25rem', marginBottom: '1.5rem' }}>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: '#b91c1c', margin: 0, lineHeight: 1.6 }}>{error}</p>
-        </div>
-      )}
-
       {loading && (
-        <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center', marginBottom: '1.5rem' }}>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.4rem' }}>Reading {domain} across its key pages…</p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: 0 }}>Crawling rooms, dining, spa and more, then running the expert AI analysis. This takes up to a minute.</p>
+        <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: 0 }}>Loading your latest review…</p>
         </div>
       )}
 
-      {audit && !loading && (
+      {!loading && !a && (
+        <div style={{ background: WHITE, border: '1px dashed ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.4rem' }}>Your website review is being prepared</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6, maxWidth: 420, marginLeft: 'auto', marginRight: 'auto' }}>
+            Your SwissNet specialist runs a full AI-readability review of {domain || 'your official site'}. Your latest results will appear here.
+          </p>
+        </div>
+      )}
+
+      {!loading && a && (
         <>
-          {/* SCORE + SUMMARY */}
           <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.75rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '1.75rem' }}>
             <div style={{ flexShrink: 0, textAlign: 'center' }}>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 400, color: audit.score >= 70 ? GREEN : audit.score >= 45 ? '#d97706' : RED, margin: 0, lineHeight: 1 }}>{audit.score}%</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: '0.3rem 0 0', letterSpacing: '0.05em' }}>AI-readiness score</p>
-              {audit.savedAt && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', color: TEXT_MUTED, margin: '0.2rem 0 0' }}>{new Date(audit.savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>}
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 400, color: a.overallScore >= 70 ? GREEN : a.overallScore >= 45 ? '#d97706' : RED, margin: 0, lineHeight: 1 }}>{a.overallScore}<span style={{ fontSize: '1rem', color: TEXT_MUTED }}>/100</span></p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: '0.3rem 0 0', letterSpacing: '0.05em' }}>AI-readability score</p>
+              {savedAt && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', color: TEXT_MUTED, margin: '0.2rem 0 0' }}>{new Date(savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>}
             </div>
             <div style={{ flex: 1, minWidth: 0, borderLeft: '1px solid ' + BORDER, paddingLeft: '1.75rem' }}>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', color: TEXT, margin: '0 0 0.4rem' }}>
-                {audit.score >= 70 ? 'Strong foundation for AI visibility' : audit.score >= 45 ? 'A few important gaps to close' : 'Major opportunities to improve'}
+                {a.overallScore >= 70 ? 'Strong foundation for AI visibility' : a.overallScore >= 45 ? 'A few important gaps to close' : 'Major opportunities to improve'}
               </p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.7 }}>{audit.summary}</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.7 }}>{a.marketerSummary || a.summary}</p>
             </div>
           </div>
 
-          {/* PAGES SCANNED */}
-          {audit.pagesScanned && audit.pagesScanned.length > 0 && (
+          {scraped.length > 0 && (
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1rem 1.5rem', marginBottom: '1.25rem' }}>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.6rem' }}>Pages analysed ({audit.pagesScanned.length})</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.6rem' }}>Pages reviewed ({scraped.length})</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                {audit.pagesScanned.map((p: any, i: number) => (
-                  <span key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, color: TEXT, background: BG, border: '1px solid ' + BORDER, borderRadius: 20, padding: '0.3rem 0.75rem' }}>{pageTypeLabel(p.type)}</span>
-                ))}
+                {scraped.map((u: string, i: number) => {
+                  let path = u
+                  try { path = new URL(u).pathname || u } catch {}
+                  return <span key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, color: TEXT, background: BG, border: '1px solid ' + BORDER, borderRadius: 20, padding: '0.3rem 0.75rem' }}>{path}</span>
+                })}
               </div>
             </div>
           )}
 
-          {/* FINDINGS */}
-          <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.5rem' }}>
-            <div style={{ padding: '1.25rem 1.75rem', borderBottom: '1px solid ' + BORDER }}>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Your AI Visibility Action Plan</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED, margin: 0 }}>{audit.passed} of {audit.total} checks strong · ordered by impact, fix the top items first</p>
-            </div>
-            {sortedFindings.map((f: any, i: number) => (
-              <div key={f.key + i} style={{ padding: '1.4rem 1.75rem', borderBottom: i < sortedFindings.length - 1 ? '1px solid ' + BORDER : 'none', display: 'flex', gap: '1.25rem', alignItems: 'flex-start', background: f.ok ? 'transparent' : 'rgba(220,38,38,0.015)' }}>
-                <div style={{ flexShrink: 0, width: 28, height: 28, borderRadius: '50%', background: f.ok ? GREEN + '18' : RED + '14', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '0.1rem' }}>
-                  <span style={{ color: f.ok ? GREEN : RED, fontSize: '0.85rem', fontWeight: 700 }}>{f.ok ? '✓' : '✗'}</span>
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
-                    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT, margin: 0 }}>{f.label}</p>
-                    {f.category && (
-                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.46rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, borderRadius: 5, padding: '0.25rem 0.45rem' }}>{f.category}</span>
+          {(a.actionPlan || []).length > 0 && (
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.5rem' }}>
+              <div style={{ padding: '1.25rem 1.75rem', borderBottom: '1px solid ' + BORDER }}>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Your AI Visibility Action Plan</p>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED, margin: 0 }}>Page by page — what to add to get recommended more often</p>
+              </div>
+              {a.actionPlan.map((ap: any, i: number) => {
+                let path = ap.page
+                try { path = new URL(ap.page).pathname || ap.page } catch {}
+                return (
+                  <div key={i} style={{ padding: '1.4rem 1.75rem', borderBottom: i < a.actionPlan.length - 1 ? '1px solid ' + BORDER : 'none' }}>
+                    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT, margin: '0 0 0.75rem', wordBreak: 'break-all' }}>{path}</p>
+
+                    {(ap.majorGaps || []).length > 0 && (
+                      <>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: RED, margin: '0 0 0.4rem' }}>What&apos;s missing</p>
+                        <ul style={{ margin: '0 0 0.9rem', paddingLeft: '1.1rem' }}>
+                          {ap.majorGaps.map((g: string, j: number) => <li key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT, margin: '0 0 0.25rem', lineHeight: 1.6 }}>{g}</li>)}
+                        </ul>
+                      </>
                     )}
-                    {!f.ok && (
-                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.46rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: prColor(f.priority), background: prColor(f.priority) + '14', border: '1px solid ' + prColor(f.priority) + '33', borderRadius: 5, padding: '0.25rem 0.45rem' }}>{prLabel(f.priority)}</span>
+
+                    {(ap.faqsToAdd || []).length > 0 && (
+                      <>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.4rem' }}>FAQs to add to this page</p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.9rem' }}>
+                          {ap.faqsToAdd.map((q: any, j: number) => (
+                            <div key={j} style={{ background: BG, borderRadius: 8, padding: '0.7rem 0.95rem' }}>
+                              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', fontWeight: 700, color: TEXT, margin: '0 0 0.25rem', lineHeight: 1.5 }}>Q: {q.question}</p>
+                              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6 }}>A: {q.answer}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+
+                    {(ap.otherActions || []).length > 0 && (
+                      <>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Other improvements</p>
+                        <ul style={{ margin: 0, paddingLeft: '1.1rem' }}>
+                          {ap.otherActions.map((s: string, j: number) => <li key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT, margin: '0 0 0.25rem', lineHeight: 1.6 }}>{s}</li>)}
+                        </ul>
+                      </>
                     )}
                   </div>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: f.ok ? TEXT_MUTED : TEXT, margin: 0, lineHeight: 1.75 }}>{f.detail}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+                )
+              })}
+            </div>
+          )}
 
-          {/* SUPPORT */}
           <div style={{ background: GOLD_LIGHT, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${GOLD}`, borderRadius: 10, padding: '1.25rem 1.5rem' }}>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT, margin: 0, lineHeight: 1.7 }}>
               <strong style={{ color: TEXT }}>Want us to implement these?</strong> Your SwissNet specialist can work through this plan with you each month and put the high-impact fixes in place. Reach us at <a href="mailto:contact@swissnethotels.com" style={{ color: GOLD, textDecoration: 'none', fontWeight: 600 }}>contact@swissnethotels.com</a>.
             </p>
           </div>
         </>
-      )}
-
-      {!audit && !loading && !error && loadingSaved && (
-        <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: 0 }}>Loading your latest audit…</p>
-        </div>
-      )}
-      {!audit && !loading && !error && !loadingSaved && (
-        <div style={{ background: WHITE, border: '1px dashed ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.4rem' }}>Your AI visibility audit is being prepared</p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6, maxWidth: 420, marginLeft: 'auto', marginRight: 'auto' }}>
-            Your SwissNet specialist runs a full audit of {domain || 'your official site'} each month. Your latest results will appear here.
-          </p>
-        </div>
       )}
     </div>
   )
