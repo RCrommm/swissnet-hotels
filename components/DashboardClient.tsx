@@ -2244,6 +2244,44 @@ function WebsiteTab({ hotel, hotelName }: any) {
             </div>
           )}
 
+          {(a.searchVisibility || []).length > 0 && (
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.25rem' }}>
+              <div style={{ padding: '1.5rem 1.75rem', background: `linear-gradient(180deg, ${GOLD_LIGHT} 0%, rgba(248,245,239,0) 100%)`, borderBottom: '1px solid ' + BORDER }}>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.4rem' }}>AI Search Coverage</p>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: TEXT, margin: '0 0 0.2rem', lineHeight: 1.25 }}>The searches you're losing — and the exact fix</p>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0 }}>Each is a real AI search we track for {domain || 'your hotel'}. For the ones you don't win, here's why — and the exact words to add, on the exact page.</p>
+              </div>
+              <div style={{ padding: '1.25rem 1.75rem' }}>
+                {a.searchVisibility.map((s: any, i: number) => {
+                  const appearC = s.appears === 'Yes' ? '#1f7a4d' : s.appears === 'Partial' ? '#b45309' : '#b3261e'
+                  const skip = s.fit === 'Skip'
+                  return (
+                    <div key={i} style={{ border: '1px solid ' + BORDER, borderLeft: `3px solid ${skip ? TEXT_MUTED : appearC}`, borderRadius: 10, padding: '1rem 1.1rem', marginBottom: i < a.searchVisibility.length - 1 ? '0.75rem' : 0, opacity: skip ? 0.7 : 1 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', marginBottom: '0.45rem' }}>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', fontWeight: 700, color: TEXT }}>{s.category}</span>
+                        {skip
+                          ? <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEXT_MUTED, border: '1px solid ' + BORDER, borderRadius: 4, padding: '0.12rem 0.4rem', flexShrink: 0 }}>Not your fit</span>
+                          : <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: appearC, border: '1px solid ' + appearC, borderRadius: 4, padding: '0.12rem 0.4rem', flexShrink: 0 }}>{s.appears === 'Yes' ? 'Appearing' : s.appears === 'Partial' ? 'Partial' : 'Not appearing'}</span>}
+                      </div>
+                      {(s.exampleSearches || []).length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED, fontStyle: 'italic', margin: '0 0 0.45rem' }}>{s.exampleSearches.join(' · ')}</p>}
+                      {s.diagnosis && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT, margin: '0 0 0.55rem', lineHeight: 1.6 }}>{s.diagnosis}</p>}
+                      {!skip && s.fix && <>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.25rem' }}>Add this{s.pageToFix ? ` → ${s.pageToFix}` : ''}</p>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT, background: BG, borderRadius: 6, padding: '0.6rem 0.8rem', margin: '0 0 0.5rem', lineHeight: 1.65 }}>{s.fix}</p>
+                      </>}
+                      {!skip && s.faq?.question && (
+                        <div style={{ background: BG, borderRadius: 6, padding: '0.55rem 0.8rem' }}>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', fontWeight: 700, color: TEXT, margin: '0 0 0.2rem' }}>Q: {s.faq.question}</p>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6 }}>A: {s.faq.answer}</p>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           {(a.visibilityOpportunities || []).length > 0 && (
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.25rem' }}>
               <div style={{ padding: '1.5rem 1.75rem', background: `linear-gradient(180deg, ${GOLD_LIGHT} 0%, rgba(248,245,239,0) 100%)`, borderBottom: '1px solid ' + BORDER }}>

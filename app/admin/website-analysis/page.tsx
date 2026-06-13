@@ -109,6 +109,39 @@ export default function WebsiteAnalysisPage() {
               </div>
             )}
 
+            {(a.searchVisibility || []).length > 0 && <>
+              <h2 style={{ fontSize: '1.05rem', margin: '1.5rem 0 0.25rem', borderTop: '2px solid ' + GOLD, paddingTop: '1rem' }}>The searches you're losing — and the exact fix</h2>
+              <p style={{ fontSize: '0.72rem', color: MUTED, margin: '0 0 0.9rem' }}>Each is a real AI search tracked for this hotel. For the ones it doesn't win, here's why — and the exact passage to add, on the exact page.</p>
+              {a.searchVisibility.map((s: any, i: number) => {
+                const appearC = s.appears === 'Yes' ? '#15803d' : s.appears === 'Partial' ? '#b45309' : RED
+                const skip = s.fit === 'Skip'
+                return (
+                  <div key={i} style={{ border: '1px solid ' + BORDER, borderLeft: `3px solid ${skip ? MUTED : appearC}`, borderRadius: 8, padding: '0.9rem 1.1rem', margin: '0 0 0.7rem', opacity: skip ? 0.7 : 1 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                      <span style={{ fontWeight: 700, fontSize: '0.8rem' }}>{s.category}</span>
+                      <span style={{ display: 'flex', gap: '0.35rem', flexShrink: 0 }}>
+                        {skip
+                          ? <span style={{ fontSize: '0.56rem', fontWeight: 700, color: MUTED, border: '1px solid ' + BORDER, borderRadius: 4, padding: '0.1rem 0.4rem' }}>NOT YOUR FIT</span>
+                          : <span style={{ fontSize: '0.56rem', fontWeight: 700, color: appearC, border: '1px solid ' + appearC, borderRadius: 4, padding: '0.1rem 0.4rem' }}>{s.appears === 'Yes' ? 'APPEARING' : s.appears === 'Partial' ? 'PARTIAL' : 'NOT APPEARING'}</span>}
+                      </span>
+                    </div>
+                    {(s.exampleSearches || []).length > 0 && <p style={{ fontSize: '0.64rem', color: MUTED, fontStyle: 'italic', margin: '0 0 0.4rem' }}>{s.exampleSearches.join(' · ')}</p>}
+                    {s.diagnosis && <p style={{ fontSize: '0.68rem', margin: '0 0 0.5rem', lineHeight: 1.55 }}>{s.diagnosis}</p>}
+                    {!skip && s.fix && <>
+                      <p style={{ fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.25rem' }}>Add this {s.pageToFix ? `→ ${s.pageToFix}` : ''}</p>
+                      <p style={{ fontSize: '0.68rem', background: BG, borderRadius: 6, padding: '0.6rem 0.8rem', margin: '0 0 0.5rem', lineHeight: 1.6 }}>{s.fix}</p>
+                    </>}
+                    {!skip && s.faq?.question && (
+                      <div style={{ background: BG, borderRadius: 6, padding: '0.55rem 0.8rem' }}>
+                        <p style={{ fontSize: '0.66rem', fontWeight: 700, margin: '0 0 0.2rem' }}>Q: {s.faq.question}</p>
+                        <p style={{ fontSize: '0.64rem', color: MUTED, margin: 0, lineHeight: 1.55 }}>A: {s.faq.answer}</p>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </>}
+
             {(a.visibilityOpportunities || []).length > 0 && <>
               <h2 style={{ fontSize: '1rem', margin: '1.5rem 0 0.25rem', borderTop: '1px solid ' + BORDER, paddingTop: '1rem' }}>High-impact AI visibility opportunities</h2>
               <p style={{ fontSize: '0.72rem', color: MUTED, margin: '0 0 0.75rem' }}>Closing operational gaps helps AI answer questions about you. This content is what makes AI recommend you in the first place.</p>
