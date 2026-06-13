@@ -184,13 +184,14 @@ ${ANSWER_QUESTIONS.map((q, i) => `${i + 1}. ${q}`).join('\n')}
    Also per page: majorGaps, schemaToAdd (only where it gives a real AI benefit), otherActions.
 8. entityPositioning — how strongly AI can associate this hotel with each positioning category, judged ONLY from the extraction. Use EXACTLY these five entities, in this order: Luxury Hotel, Spa & Wellness, Family, Business & Meetings, Fine Dining. For each return strength (Strong / Medium / Weak) and a one-line why citing what is present or absent.
 9. contentGaps — the missing content blocks that would most improve AI understanding. Tag each Critical (AI cannot extract core facts without it), Important (improves recommendation potential), or Nice-to-have (minor). List Critical first.
-10. recommendationReadiness — for each of these five traveller types, judge how READY this hotel's site is for AI to confidently put it forward (NOT a ranking vs competitors — you cannot see them — only whether the site gives AI enough to recommend it for this need). Use EXACTLY these five, in this order: Luxury traveller, Family traveller, Business traveller, Spa & wellness traveller, Wedding / events. For each return readiness (High / Medium / Low) and a one-line why citing what the site provides or lacks for that traveller.`
-
+10. recommendationReadiness — for each of these five traveller types, judge how READY this hotel's site is for AI to confidently put it forward (NOT a ranking vs competitors — you cannot see them — only whether the site gives AI enough to recommend it for this need). Use EXACTLY these five, in this order: Luxury traveller, Family traveller, Business traveller, Spa & wellness traveller, Wedding / events. For each return readiness (High / Medium / Low) and a one-line why citing what the site provides or lacks for that traveller.
+11. visibilityOpportunities — the report's HEADLINE: the highest-impact CONTENT opportunities that would make AI RECOMMEND this hotel (distinct from operational gaps, which only help AI ANSWER once asked). Use EXACTLY these six themes, in this order: Couples & Honeymoons, Wellness & Spa Retreats, Family Holidays, Business & Meetings, Weddings & Private Events, Location & Destination Escapes. For each return: targetSearches (2-4 phrases a guest would type into an AI assistant for that intent, localised to the hotel's CONFIRMED city/region, e.g. "romantic hotel Geneva", "best spa hotel Switzerland"); status — "Strong" if the site already has assembled content directly answering this intent, "Weak" if the supporting entities exist in the extraction but are NOT assembled into intent-specific content, "Missing" if the site offers little for it; recommendation — a CONCRETE instruction for the content to create (e.g. "Create an FAQ + homepage block answering 'Is [hotel] good for couples?', using the lake-view suites, Michelin dining and spa as proof points"). Name ONLY entities confirmed in the extraction; never invent amenities, prices or services. If DASHBOARD GAPS were provided, the matching themes are the top priority.
+12. headlineInsight — ONE memorable sentence for a marketing director: state plainly what AI already understands this hotel to be (from the confirmed entities), then name the single biggest opportunity as creating intent content for the themes where it is weak. Shape: "AI already identifies [hotel] as [confirmed positioning]; the biggest opportunity is content that makes AI recommend it for specific traveller intents — [weak themes] — rather than only describing its facilities." Use only what the extraction confirms; invent nothing.`
 const RECOMMEND_SCHEMA = {
   name: 'recommendation',
   schema: {
     type: 'object', additionalProperties: false,
-    required: ['summary', 'marketerSummary', 'entityClarityScore', 'scoreNarrative', 'answersCheck', 'entityPositioning', 'recommendationReadiness', 'contentGaps', 'siteWideReport', 'actionPlan'],
+    required: ['summary', 'headlineInsight', 'marketerSummary', 'entityClarityScore', 'scoreNarrative', 'answersCheck', 'visibilityOpportunities', 'entityPositioning', 'recommendationReadiness', 'contentGaps', 'siteWideReport', 'actionPlan'],
     properties: {
       summary: { type: 'string' },
       marketerSummary: { type: 'string' },
@@ -225,6 +226,20 @@ const RECOMMEND_SCHEMA = {
             area: { type: 'string' },
             tier: { type: 'string', enum: ['Critical', 'Important', 'Nice-to-have'] },
             why: { type: 'string' },
+          },
+        },
+      },
+      headlineInsight: { type: 'string' },
+      visibilityOpportunities: {
+        type: 'array',
+        items: {
+          type: 'object', additionalProperties: false,
+          required: ['theme', 'targetSearches', 'status', 'recommendation'],
+          properties: {
+            theme: { type: 'string' },
+            targetSearches: { type: 'array', items: { type: 'string' } },
+            status: { type: 'string', enum: ['Strong', 'Weak', 'Missing'] },
+            recommendation: { type: 'string' },
           },
         },
       },

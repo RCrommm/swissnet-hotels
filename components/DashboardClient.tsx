@@ -2238,6 +2238,37 @@ function WebsiteTab({ hotel, hotelName }: any) {
             </div>
           </div>
 
+          {a.headlineInsight && (
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderLeft: '3px solid ' + GOLD, borderRadius: 14, padding: '1.25rem 1.75rem', marginBottom: '1.25rem' }}>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: 0, lineHeight: 1.4 }}>{a.headlineInsight}</p>
+            </div>
+          )}
+
+          {(a.visibilityOpportunities || []).length > 0 && (
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.25rem' }}>
+              <div style={{ padding: '1.5rem 1.75rem', background: `linear-gradient(180deg, ${GOLD_LIGHT} 0%, rgba(248,245,239,0) 100%)`, borderBottom: '1px solid ' + BORDER }}>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.4rem' }}>Biggest Opportunity</p>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: TEXT, margin: '0 0 0.2rem', lineHeight: 1.25 }}>High-impact AI visibility opportunities</p>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0 }}>Operational fixes help AI answer questions about you. This content is what makes AI recommend {domain || 'your hotel'} in the first place.</p>
+              </div>
+              <div style={{ padding: '1.25rem 1.75rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.85rem' }}>
+                {a.visibilityOpportunities.map((o: any, i: number) => {
+                  const c = o.status === 'Strong' ? '#1f7a4d' : o.status === 'Weak' ? '#b45309' : '#b3261e'
+                  return (
+                    <div key={i} style={{ border: '1px solid ' + BORDER, borderRadius: 10, padding: '0.9rem 1rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 700, color: TEXT }}>{o.theme}</span>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: c, border: '1px solid ' + c, borderRadius: 4, padding: '0.12rem 0.4rem' }}>{o.status}</span>
+                      </div>
+                      {(o.targetSearches || []).length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED, fontStyle: 'italic', margin: '0 0 0.45rem' }}>Wins searches like: {o.targetSearches.join(' · ')}</p>}
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT, margin: 0, lineHeight: 1.65 }}>{o.recommendation}</p>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           {(a.siteWideReport || []).length > 0 && (
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.25rem' }}>
               <div style={{ padding: '1.5rem 1.75rem', background: `linear-gradient(180deg, ${GOLD_LIGHT} 0%, rgba(248,245,239,0) 100%)`, borderBottom: '1px solid ' + BORDER }}>

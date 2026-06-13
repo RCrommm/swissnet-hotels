@@ -103,6 +103,32 @@ export default function WebsiteAnalysisPage() {
 
             <p style={{ margin: '0 0 1rem' }}>{a.summary}</p>
 
+            {a.headlineInsight && (
+              <div style={{ borderLeft: '3px solid ' + GOLD, background: BG, borderRadius: 6, padding: '0.8rem 1rem', margin: '0 0 1.25rem' }}>
+                <p style={{ fontSize: '0.82rem', fontWeight: 600, margin: 0, lineHeight: 1.6 }}>{a.headlineInsight}</p>
+              </div>
+            )}
+
+            {(a.visibilityOpportunities || []).length > 0 && <>
+              <h2 style={{ fontSize: '1rem', margin: '1.5rem 0 0.25rem', borderTop: '1px solid ' + BORDER, paddingTop: '1rem' }}>High-impact AI visibility opportunities</h2>
+              <p style={{ fontSize: '0.72rem', color: MUTED, margin: '0 0 0.75rem' }}>Closing operational gaps helps AI answer questions about you. This content is what makes AI recommend you in the first place.</p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.7rem', margin: '0 0 1rem' }}>
+                {a.visibilityOpportunities.map((o: any, i: number) => {
+                  const c = o.status === 'Strong' ? '#15803d' : o.status === 'Weak' ? '#b45309' : RED
+                  return (
+                    <div key={i} style={{ border: '1px solid ' + BORDER, borderRadius: 8, padding: '0.8rem 0.9rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                        <span style={{ fontWeight: 700, fontSize: '0.74rem' }}>{o.theme}</span>
+                        <span style={{ fontSize: '0.58rem', fontWeight: 700, color: c, border: '1px solid ' + c, borderRadius: 4, padding: '0.1rem 0.4rem' }}>{o.status}</span>
+                      </div>
+                      {(o.targetSearches || []).length > 0 && <p style={{ fontSize: '0.62rem', color: MUTED, margin: '0 0 0.4rem', fontStyle: 'italic' }}>Wins searches like: {o.targetSearches.join(' · ')}</p>}
+                      <p style={{ fontSize: '0.66rem', margin: 0, lineHeight: 1.5 }}>{o.recommendation}</p>
+                    </div>
+                  )
+                })}
+              </div>
+            </>}
+
             {(a.answersCheck || []).length > 0 && <>
               <h2 style={{ fontSize: '1rem', margin: '1.5rem 0 0.5rem', borderTop: '1px solid ' + BORDER, paddingTop: '1rem' }}>What a guest can ask AI — and whether your site answers it</h2>
               <ul style={{ margin: '0 0 1rem', padding: 0, listStyle: 'none' }}>
@@ -168,7 +194,7 @@ export default function WebsiteAnalysisPage() {
             </>}
 
             {(a.contentGaps || []).length > 0 && <>
-              <h2 style={{ fontSize: '1rem', margin: '1.5rem 0 0.5rem', borderTop: '1px solid ' + BORDER, paddingTop: '1rem' }}>Content gaps by priority</h2>
+              <h2 style={{ fontSize: '1rem', margin: '1.5rem 0 0.5rem', borderTop: '1px solid ' + BORDER, paddingTop: '1rem' }}>Foundational fixes — operational facts to add</h2>
               {['Critical', 'Important', 'Nice-to-have'].map(tier => {
                 const items = (a.contentGaps || []).filter((g: any) => g.tier === tier)
                 if (items.length === 0) return null
