@@ -2251,6 +2251,42 @@ function WebsiteTab({ hotel, hotelName }: any) {
             </div>
           )}
 
+          {(a.factsCheck || []).length > 0 && (
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.25rem' }}>
+              <div style={{ padding: '1.25rem 1.75rem', borderBottom: '1px solid ' + BORDER }}>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Facts AI Can Read About You</p>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED, margin: 0 }}>The key facts AI assistants look for — ✓ found on your site, ✗ missing</p>
+              </div>
+              <div style={{ padding: '0.75rem 1.75rem 1.25rem' }}>
+                {a.factsCheck.map((f: any, i: number) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', padding: '0.45rem 0', borderBottom: i < a.factsCheck.length - 1 ? '1px solid ' + BORDER : 'none' }}>
+                    <span style={{ color: f.present ? GREEN : RED, fontWeight: 700, fontSize: '0.8rem', flexShrink: 0, lineHeight: 1.4 }}>{f.present ? '✓' : '✗'}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: f.present ? TEXT_MUTED : TEXT }}>{f.fact}</span>
+                      {f.note && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, marginLeft: '0.5rem' }}>— {f.note}</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {(a.answersCheck || []).length > 0 && (
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.5rem' }}>
+              <div style={{ padding: '1.25rem 1.75rem', borderBottom: '1px solid ' + BORDER }}>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Questions AI Can Answer About You</p>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED, margin: 0 }}>What a guest asking ChatGPT could learn from your site — ✓ answerable, ✗ not yet</p>
+              </div>
+              <div style={{ padding: '0.75rem 1.75rem 1.25rem' }}>
+                {a.answersCheck.map((q: any, i: number) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', padding: '0.45rem 0', borderBottom: i < a.answersCheck.length - 1 ? '1px solid ' + BORDER : 'none' }}>
+                    <span style={{ color: q.answerable ? GREEN : RED, fontWeight: 700, fontSize: '0.8rem', flexShrink: 0, lineHeight: 1.4 }}>{q.answerable ? '✓' : '✗'}</span>
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: q.answerable ? TEXT_MUTED : TEXT, lineHeight: 1.5 }}>{q.question}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           {(a.actionPlan || []).length > 0 && (
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.5rem' }}>
               <div style={{ padding: '1.25rem 1.75rem', borderBottom: '1px solid ' + BORDER }}>
