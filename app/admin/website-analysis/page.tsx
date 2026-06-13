@@ -71,7 +71,20 @@ export default function WebsiteAnalysisPage() {
               <p style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.75)', margin: 0, lineHeight: 1.7 }}>{a.summary}</p>
               <p style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.4)', margin: '0.75rem 0 0' }}>Pages analysed: {(result.pagesScraped || []).join(', ')}</p>
             </div>
-
+            {(a.schemaAudit || []).length > 0 && (
+              <div style={card}>
+                <p style={label}>Schema Audit — field by field</p>
+                {a.schemaAudit.map((s: any, i: number) => (
+                  <div key={i} style={{ padding: '0.6rem 0', borderBottom: '1px solid ' + BORDER }}>
+                    <p style={{ fontSize: '0.72rem', fontWeight: 700, color: TEXT, margin: '0 0 0.3rem' }}>{s.type}</p>
+                    {(s.present || []).length > 0 && <p style={{ fontSize: '0.62rem', color: GREEN, margin: '0 0 0.2rem', lineHeight: 1.5 }}>Present: {s.present.join(' · ')}</p>}
+                    {(s.missing || []).length > 0 && <p style={{ fontSize: '0.62rem', color: RED, margin: '0 0 0.2rem', lineHeight: 1.5 }}>Missing: {s.missing.join(', ')}</p>}
+                    {s.note && <p style={{ fontSize: '0.6rem', color: MUTED, margin: 0, fontStyle: 'italic' }}>{s.note}</p>}
+                  </div>
+                ))}
+                {(a.missingSchemaTypes || []).length > 0 && <p style={{ fontSize: '0.64rem', color: RED, margin: '0.75rem 0 0', lineHeight: 1.6 }}>Entirely missing schema types: {a.missingSchemaTypes.join(', ')}</p>}
+              </div>
+            )}
             {(a.topPriorities || []).length > 0 && (
               <div style={{ ...card, borderLeft: '3px solid ' + RED }}>
                 <p style={{ ...label, color: RED }}>Top Priorities</p>
@@ -108,6 +121,7 @@ export default function WebsiteAnalysisPage() {
                         {f.schemaType && <span style={{ fontSize: '0.46rem', fontWeight: 700, textTransform: 'uppercase', color: MUTED, background: WHITE, border: '1px solid ' + BORDER, borderRadius: 5, padding: '0.2rem 0.45rem' }}>{f.schemaType}</span>}
                       </div>
                       <p style={{ fontSize: '0.68rem', color: TEXT, margin: 0, lineHeight: 1.7 }}>→ {f.instruction}</p>
+                      {f.schemaBlock && <pre style={{ fontSize: '0.58rem', color: TEXT, background: WHITE, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.6rem', marginTop: '0.5rem', overflowX: 'auto', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{f.schemaBlock}</pre>}
                       {(f.faqsToAdd || []).map((q: any, k: number) => (
                         <div key={k} style={{ background: WHITE, borderRadius: 6, padding: '0.6rem 0.8rem', marginTop: '0.5rem' }}>
                           <p style={{ fontSize: '0.66rem', fontWeight: 700, color: TEXT, margin: '0 0 0.25rem' }}>Q: {q.question}</p>
