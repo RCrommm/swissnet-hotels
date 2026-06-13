@@ -2238,6 +2238,24 @@ function WebsiteTab({ hotel, hotelName }: any) {
             </div>
           </div>
 
+          {(a.siteWideReport || []).length > 0 && (
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.25rem' }}>
+              <div style={{ padding: '1.5rem 1.75rem', background: `linear-gradient(180deg, ${GOLD_LIGHT} 0%, rgba(248,245,239,0) 100%)`, borderBottom: '1px solid ' + BORDER }}>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.4rem' }}>Top Priorities</p>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: TEXT, margin: '0 0 0.2rem', lineHeight: 1.25 }}>Recommendations to improve your official site</p>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0 }}>The highest-impact changes to help AI understand and recommend {domain || 'your hotel'}, in order</p>
+              </div>
+              <div style={{ padding: '1.25rem 1.75rem' }}>
+                {a.siteWideReport.map((rec: string, i: number) => (
+                  <div key={i} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', padding: '0.85rem 0', borderBottom: i < a.siteWideReport.length - 1 ? '1px solid ' + BORDER : 'none' }}>
+                    <span style={{ flexShrink: 0, width: 24, height: 24, borderRadius: '50%', background: `linear-gradient(135deg, ${GOLD} 0%, #b8923f 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Cormorant Garamond, serif', fontSize: '0.85rem', fontWeight: 600, color: WHITE, marginTop: '0.05rem' }}>{i + 1}</span>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT, margin: 0, lineHeight: 1.7 }}>{rec}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {scraped.length > 0 && (
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1rem 1.5rem', marginBottom: '1.25rem' }}>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.6rem' }}>Pages reviewed ({scraped.length})</p>
