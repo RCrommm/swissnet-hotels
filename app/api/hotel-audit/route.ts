@@ -229,7 +229,7 @@ export async function POST(req: Request) {
     // classify a URL into a priority type by keyword (for picking its checklist)
     const classifyUrl = (u: string): { key: string; label: string; impact: string; cats: string[] } => {
       const lu = u.toLowerCase()
-      for (const def of PRIORITY) { if (def.key === 'homepage') continue; if (def.kws.some(k => lu.includes(k))) return { key: def.key, label: def.label.replace(/ pages?$/i, '').replace(/s$/, ''), impact: def.impact, cats: def.cats } }
+      for (const def of PRIORITY) { if (def.key === 'homepage') continue; if (def.kws.some(k => lu.includes(k))) return { key: def.key, label: def.label.replace(/ pages?$/i, ''), impact: def.impact, cats: def.cats } }
       return { key: 'homepage', label: 'Page', impact: 'Medium', cats: ['overall'] } // generic demand-page checklist
     }
 
@@ -305,7 +305,8 @@ export async function POST(req: Request) {
           reason: `No ${s.label.toLowerCase()} found in the crawl.`, affects: promptsByCat(s.cats).slice(0, 4) })
         continue
       }
-      const a = await auditPage(pageCache[s.url], s.key, openaiKey)
+      let a = await auditPage(pageCache[s.url], s.key, openaiKey)
+      if (!a) a = await auditPage(pageCache[s.url], s.key, openaiKey) // retry once on transient failure
       const present = expected.filter(e => a && a[e.field]).map(e => e.label)
       const missing = expected.filter(e => !a || !a[e.field]).map(e => e.label)
       importantPages.push({ key: s.key, label: s.label, status: 'Present', impact: s.impact, source: s.source,
