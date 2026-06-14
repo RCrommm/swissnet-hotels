@@ -633,6 +633,10 @@ export async function POST(req: Request) {
 
     // ── MISSING BLUEPRINTS (new pages worth creating) ──
     const presentKeys = new Set(slots.filter(s => s.url && pageCache[s.url]).map(s => s.key))
+    // Some blueprints are already covered by a differently-named existing page
+    // (e.g. a "business" page need is satisfied by an existing Meetings & Events page).
+    const KEY_ALIAS: Record<string, string[]> = { business: ['meetings'] }
+    const pageExistsFor = (k: string) => presentKeys.has(k) || (KEY_ALIAS[k] || []).some(a => presentKeys.has(a))
     const blueprintKeys = ['parking', 'accessibility', 'pets', 'breakfast', 'airport', 'family', 'romantic', 'business', 'spa', 'dining']
     const BP_KEYWORDS: Record<string, string[]> = {
       parking: ['parking'], accessibility: ['accessible', 'accessibility'], pets: ['pet'], breakfast: ['breakfast'],
