@@ -4,13 +4,20 @@ import { createClient } from '@supabase/supabase-js'
 export const maxDuration = 300
 const CRAWL_LIMIT = 22
 
+// ── SCRAPE (JS rendering ON so client-rendered FAQs/accordions are visible) ──
 async function scrape(url: string, apiKey: string): Promise<string | null> {
   try {
-    const res = await fetch(`https://app.scrapingbee.com/api/v1/?api_key=${apiKey}&url=${encodeURIComponent(url)}&render_js=false`)
-    if (!res.ok) return null
+    const res = await fetch(`https://app.scrapingbee.com/api/v1/?api_key=${apiKey}&url=${encodeURIComponent(url)}&render_js=true&wait=1500`)
+    if (!res.ok) {
+      // fallback without JS if render fails (some sites block headless)
+      const res2 = await fetch(`https://app.scrapingbee.com/api/v1/?api_key=${apiKey}&url=${encodeURIComponent(url)}&render_js=false`)
+      if (!res2.ok) return null
+      return await res2.text()
+    }
     return await res.text()
   } catch { return null }
 }
+
 function extractSchemaTypes(html: string): string[] {
   const types = new Set<string>()
   const re = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
@@ -81,11 +88,13 @@ const PRIORITY: { key: string; label: string; kws: string[]; impact: string; cat
   { key: 'romantic', label: 'Romantic page', kws: ['romantic', 'couple', 'honeymoon', 'romantique', 'lune-de-miel'], impact: 'High', cats: ['romantic'] },
   { key: 'business', label: 'Business page', kws: ['business', 'corporate', 'affaires', 'executive'], impact: 'Medium', cats: ['business'] },
   { key: 'luxury', label: 'Luxury / About page', kws: ['luxury', 'about', 'la-reserve', 'palace', 'histoire', 'story'], impact: 'Medium', cats: ['luxury', 'overall'] },
+  { key: 'offers', label: 'Offers page', kws: ['offer', 'package', 'deal', 'special', 'promotion'], impact: 'Medium', cats: ['overall'] },
   { key: 'parking', label: 'Parking page', kws: ['parking', 'voiturier', 'stationnement', 'garage'], impact: 'Medium', cats: ['practical'] },
   { key: 'accessibility', label: 'Accessibility page', kws: ['accessib', 'wheelchair', 'pmr', 'mobilite', 'mobilité'], impact: 'Medium', cats: ['accessibility'] },
   { key: 'breakfast', label: 'Breakfast page', kws: ['breakfast', 'petit-dejeuner', 'petit-déjeuner', 'brunch'], impact: 'Low', cats: ['dining', 'practical'] },
   { key: 'pets', label: 'Pets page', kws: ['pet', 'dog', 'animaux', 'chien'], impact: 'Low', cats: ['practical'] },
   { key: 'airport', label: 'Airport transfer page', kws: ['airport-transfer', 'transfert', 'navette', 'shuttle', 'limousine'], impact: 'Medium', cats: ['location'] },
+  { key: 'experiences', label: 'Experiences page', kws: ['experience', 'activities', 'things-to-do', 'discover', 'guide'], impact: 'Low', cats: ['overall'] },
 ]
 
 const EXPECTED: Record<string, { field: string; label: string }[]> = {
@@ -96,12 +105,16 @@ const EXPECTED: Record<string, { field: string; label: string }[]> = {
   family: [{ field: 'positioning', label: 'Family positioning' }, { field: 'rooms', label: 'Family rooms' }, { field: 'childpolicy', label: 'Children policy' }, { field: 'amenities', label: 'Family amenities' }, { field: 'attractions', label: 'Nearby family attractions' }, { field: 'faq', label: 'FAQ' }],
   romantic: [{ field: 'positioning', label: 'Couples positioning' }, { field: 'experiences', label: 'Romantic experiences' }, { field: 'suites', label: 'Suites' }, { field: 'spa', label: 'Spa experiences' }, { field: 'dining', label: 'Dining experiences' }, { field: 'faq', label: 'FAQ' }],
   business: [{ field: 'facilities', label: 'Meeting facilities' }, { field: 'capacities', label: 'Capacities' }, { field: 'services', label: 'Corporate services' }, { field: 'airport', label: 'Airport access' }, { field: 'faq', label: 'FAQ' }],
+  meetings: [{ field: 'facilities', label: 'Meeting facilities' }, { field: 'capacities', label: 'Capacities' }, { field: 'catering', label: 'Catering' }, { field: 'faq', label: 'FAQ' }],
   luxury: [{ field: 'positioning', label: 'Luxury positioning' }, { field: 'story', label: 'Story / heritage' }, { field: 'awards', label: 'Awards / recognition' }, { field: 'faq', label: 'FAQ' }],
+  offers: [{ field: 'positioning', label: 'Clear positioning' }, { field: 'quickfacts', label: 'Quick Facts block' }, { field: 'aisummary', label: 'AI summary' }, { field: 'faq', label: 'FAQ section' }],
+  experiences: [{ field: 'positioning', label: 'Clear positioning' }, { field: 'quickfacts', label: 'Quick Facts block' }, { field: 'aisummary', label: 'AI summary' }, { field: 'faq', label: 'FAQ section' }],
   parking: [{ field: 'availability', label: 'Availability' }, { field: 'pricing', label: 'Pricing' }, { field: 'ev', label: 'EV charging' }, { field: 'policy', label: 'Reservation policy' }, { field: 'faq', label: 'FAQ' }],
   accessibility: [{ field: 'rooms', label: 'Accessible rooms' }, { field: 'stepfree', label: 'Step-free access' }, { field: 'lift', label: 'Lift access' }, { field: 'policy', label: 'Accessibility policies' }, { field: 'faq', label: 'FAQ' }],
   breakfast: [{ field: 'hours', label: 'Hours' }, { field: 'included', label: 'Included / price' }, { field: 'venue', label: 'Venue' }, { field: 'faq', label: 'FAQ' }],
   pets: [{ field: 'policy', label: 'Pet policy' }, { field: 'fee', label: 'Fees' }, { field: 'amenities', label: 'Pet amenities' }, { field: 'faq', label: 'FAQ' }],
   airport: [{ field: 'available', label: 'Transfer available' }, { field: 'pricing', label: 'Pricing' }, { field: 'distance', label: 'Distance / time' }, { field: 'booking', label: 'How to book' }, { field: 'faq', label: 'FAQ' }],
+  location: [{ field: 'address', label: 'Address & map' }, { field: 'distances', label: 'Distances to airport / centre' }, { field: 'attractions', label: 'Nearby attractions' }, { field: 'transport', label: 'Transport options' }, { field: 'faq', label: 'FAQ' }],
 }
 
 const BLUEPRINTS: Record<string, { heading: string; sections: string[]; questions: string[] }> = {
@@ -134,6 +147,8 @@ const FAQ_QUESTIONS: Record<string, string[]> = {
   business: ['Does the hotel have meeting rooms?', 'What is the meeting room capacity?', 'Is the hotel suitable for business travel?', 'How far is the airport?'],
   meetings: ['What meeting and event spaces are available?', 'What is the capacity of each room?', 'Is catering available?', 'How far is the airport?'],
   luxury: ['What makes this hotel special?', 'What awards has the hotel won?', 'What is the hotel’s story?'],
+  offers: ['What makes this hotel distinctive?', 'Who is this hotel best suited to?', 'Where exactly is the hotel located?', 'What is included in a stay?'],
+  experiences: ['What makes this hotel distinctive?', 'Who is this hotel best suited to?', 'Where exactly is the hotel located?', 'What is included in a stay?'],
   location: ['Where is the hotel located?', 'How far is the airport?', 'What attractions are nearby?', 'How do I get there?'],
   parking: ['Does the hotel have parking?', 'How much does parking cost?', 'Is valet parking available?', 'Are EV chargers available?'],
   accessibility: ['Are accessible rooms available?', 'Is there step-free access?', 'Is there lift access to all floors?', 'Are accessible bathrooms available?'],
@@ -142,6 +157,7 @@ const FAQ_QUESTIONS: Record<string, string[]> = {
   airport: ['How far is the airport?', 'Is an airport transfer available?', 'How much is the transfer?', 'How do I book a transfer?'],
 }
 
+// ── LLM: recommendation readiness (unchanged behaviour) ──
 const REC_SYSTEM = `You are a strict, evidence-based hotel AI-recommendation auditor. Given crawled text from ONE hotel website and a list of recommendation prompts, decide for EACH prompt whether THIS WEBSITE provides enough evidence for an AI to CONFIDENTLY RECOMMEND this hotel for that prompt.
 
 RULES:
@@ -226,69 +242,148 @@ async function auditPage(pg: any, typeKey: string, openaiKey: string) {
 }
 
 function pct(g: number, m: number) { return m ? Math.round((g / m) * 100) : 0 }
+
+// ── CATEGORY / CLUSTER MAPPING ──
+const CAT_MAP: Record<string, string> = { luxury: 'luxury', spa: 'wellness', romantic: 'romantic', family: 'family', business: 'business', lake: 'location', location: 'location', airport: 'location', parking: 'practical', pets: 'practical', dining: 'dining', accessibility: 'accessibility', positioning: 'overall', overall: 'overall' }
+const CAT_LABEL: Record<string, string> = { luxury: 'Luxury', wellness: 'Wellness', romantic: 'Romantic', family: 'Family', business: 'Business', location: 'Location', practical: 'Practical (parking/pets)', dining: 'Dining', accessibility: 'Accessibility', overall: 'Overall / Brand' }
+
+// ── ROOM NAMING: unique, human labels so two room pages never collide ──
+function roomNameFromUrl(u: string): string {
+  const lu = (u || '').toLowerCase()
+  if (lu.includes('villa')) return 'Villa'
+  if (lu.includes('suite')) return 'Suites'
+  if (lu.includes('apartment') || lu.includes('residence')) return 'Apartments'
+  if (lu.includes('penthouse')) return 'Penthouse'
+  return 'Rooms'
+}
+// Friendly, de-duplicated page name for the action plan
+function pageDisplayName(p: any, allPages: any[]): string {
+  if (p.key === 'rooms') {
+    const sameKey = allPages.filter(x => x.key === 'rooms' && x.url)
+    if (sameKey.length > 1) return roomNameFromUrl(p.url || '')
+    return 'Rooms'
+  }
+  const raw = (p.label || '').split(' — ')[0].replace(/ pages?$/i, '').trim()
+  return raw || 'Page'
+}
+
+// ── LAYER DEFINITIONS (static: what it is + why AI cares) ──
+const LAYER_META: Record<number, { layer: string; definition: string; why: string }> = {
+  0: { layer: 'Knowledge layer', definition: 'Whether core hotel facts (parking, breakfast, pets, accessibility, airport, check-in, cancellation) have a single, consistent source of truth.', why: 'AI assistants quote facts directly. When facts are scattered or missing, AI either cannot answer or risks giving a wrong answer — both lose the recommendation.' },
+  1: { layer: 'Core website structure', definition: 'Whether the expected core pages exist: Homepage, Rooms, Dining, Spa, Location, Offers, Meetings, Contact.', why: 'These are the pages AI crawlers expect on a hotel site. Missing core pages create blind spots the AI fills with nothing — or with a competitor.' },
+  2: { layer: 'AI intent hub', definition: 'Whether pages exist that target recommendation intent (family hotel, romantic, business, spa, pet-friendly, accessible, parking, near-airport, lake views).', why: 'AI matches a guest’s intent ("best family hotel in Geneva") to pages built around that intent. No intent page = no match.' },
+  3: { layer: 'Knowledge center', definition: 'Whether dedicated fact pages exist for Parking, Breakfast, Pets, Accessibility, Airport Transfer, Check-in/out, Cancellation, and a central FAQ.', why: 'A dedicated, crawlable page per fact is the most reliable way for AI to retrieve and trust a specific answer.' },
+  4: { layer: 'Room intelligence', definition: 'For each room page: does it explain what the room is, who it’s for, why choose it, and when to book — with Overview, Quick Facts, Occupancy, View, Ideal-For, Comparison, FAQ.', why: 'Rich room data lets AI recommend a specific room for a specific guest ("best room for a couple"), not just the hotel in general.' },
+  5: { layer: 'AI retrieval blocks', definition: 'Whether major pages contain a Quick Facts block and a concise AI Summary paragraph.', why: 'These structured blocks are the easiest thing for AI to lift verbatim, making your answers more likely to be quoted accurately.' },
+  6: { layer: 'Question architecture', definition: 'Whether major pages answer WHAT, WHO, HOW, WHY, COMPARISON and FAQ for their topic.', why: 'AI answers guest questions by matching this structure. Pages that only describe, without answering, are weak retrieval sources.' },
+  7: { layer: 'Entity coverage', definition: 'Whether pages name real entities — landmarks, airports, stations, neighbourhoods, attractions.', why: 'Named entities anchor the hotel in a location graph AI understands, improving location-based recommendations.' },
+  8: { layer: 'Recommendation content', definition: 'Whether pages explicitly help AI recommend (best room for couples / families / business; comparison and ideal-for sections).', why: 'Explicit recommendation cues let AI confidently say "this hotel is best for X" instead of hedging.' },
+  9: { layer: 'Local expertise', definition: 'Whether local-knowledge pages exist (things to do, family guide, business guide, romantic guide).', why: 'Local guides signal authority and answer the planning questions guests ask AI alongside the booking.' },
+  10: { layer: 'Trust signals', definition: 'Whether reviews, awards, ratings and recognition are present and machine-readable (review schema).', why: 'AI weighs trust signals heavily when choosing which hotel to surface first among similar options.' },
+  11: { layer: 'Internal linking', definition: 'Whether pages form topic clusters (e.g. Family page → Family Rooms → Family Offers → Family FAQ).', why: 'Strong internal linking helps crawlers discover all your pages and understand which pages belong to which intent.' },
+  12: { layer: 'Schema', definition: 'Whether structured data is present: Hotel, HotelRoom, FAQPage, Review, AggregateRating, Restaurant, Offer, Breadcrumb.', why: 'Schema is the most direct, unambiguous way to feed facts to AI. It removes guesswork from retrieval.' },
+  13: { layer: 'AI answer library', definition: 'How many of the important guest questions the website can actually answer, based on the prompt analysis.', why: 'The breadth of answerable questions is a direct measure of how often AI can use your site to respond to a guest.' },
+}
+
 const IMPACT_RANK: Record<string, number> = { Critical: 0, High: 1, Medium: 2, Low: 3 }
-function buildActionPlan(readiness: any[], importantPages: any[], missingBlueprints: any[], architecture: any, demandCoverage: any[]) {
+
+// ── ACTION PLAN: NO→PARTIAL ordering, unique page names, quick wins with why+affects ──
+const QW_WHY = (el: string): string => {
+  const e = el.toLowerCase()
+  if (e.includes('quick facts')) return 'Gives AI a scannable list of hard facts (parking, spa, transfer, pets) it can quote directly instead of guessing.'
+  if (e.includes('ai summary')) return 'A 1–2 sentence positioning line AI can lift verbatim when asked who the hotel is best for.'
+  if (e.includes('faq')) return 'Q&A pairs mirror how guests phrase questions, making your answers easy for AI to match and quote.'
+  if (e.includes('comparison')) return 'Comparative detail is what lets AI rank you above alternatives instead of leaving you at a tentative maybe.'
+  if (e.includes('award')) return 'Awards and recognition are trust signals AI weighs heavily when deciding which hotel to surface first.'
+  return 'Adds structured detail AI looks for, widening the searches it can confidently recommend you for.'
+}
+function buildActionPlan(readiness: any[], importantPages: any[], missingBlueprints: any[], demandCoverage: any[]) {
+  const noByCat: Record<string, number> = {}
+  for (const r of readiness) { if (r.readiness === 'NO') { const c = CAT_MAP[r.category] || 'overall'; noByCat[c] = (noByCat[c] || 0) + 1 } }
+
   const priorities: any[] = []
+  // NEW PAGES that flip full-NO prompts (highest value: NO→YES)
   for (const b of missingBlueprints) {
-    const level = b.impact === 'High' ? 'Critical' : b.impact === 'Medium' ? 'High' : 'Medium'
     if (!b.affects || b.affects.length === 0) continue
+    const noCount = b.noCount || 0
+    const level = noCount >= 2 ? 'Critical' : b.impact === 'High' ? 'Critical' : 'High'
     priorities.push({
-      level, title: `Create a ${b.blueprint.heading} page`,
-      why: `AI currently cannot confidently recommend the hotel for these searches because no dedicated ${b.blueprint.heading.toLowerCase()} content was found in the crawl.`,
+      level, addressesNo: noCount, kind: 'create',
+      title: `Create a ${b.blueprint.heading} page`,
+      why: `AI currently cannot recommend the hotel for these searches because no dedicated ${b.blueprint.heading.toLowerCase()} content was found.`,
       affectedPrompts: b.affects, pages: [`${b.blueprint.heading} page (missing)`],
       outcome: `AI would be able to answer "${b.blueprint.questions[0]}" and confidently surface the hotel for the searches above.`,
       blueprint: { sections: b.blueprint.sections, questions: b.blueprint.questions },
     })
   }
+  // EXISTING pages that need strengthening (PARTIAL→YES)
   for (const p of importantPages) {
     if (p.status !== 'Present' || typeof p.score !== 'number' || p.score >= 75) continue
     if (!p.missing || p.missing.length === 0) continue
+    const cats = p.cats || []
+    const noCount = cats.reduce((s: number, c: string) => s + (noByCat[c] || 0), 0)
     const level = p.score < 40 ? 'High' : 'Medium'
     priorities.push({
-      level, title: `Strengthen your ${p.label.split(' — ')[0]} page`,
-      why: `This page exists but is missing key elements AI looks for, limiting how confidently it can recommend you.`,
+      level, addressesNo: noCount, kind: 'strengthen',
+      title: `Strengthen your ${p.displayName} page`,
+      why: 'This page exists but is missing key elements AI looks for, limiting how confidently it can recommend you.',
       affectedPrompts: p.affects || [], pages: [p.url ? p.url : p.label],
       outcome: `Adding ${p.missing.slice(0, 3).join(', ')} would let AI fully understand and recommend this page's strengths.`,
       toAdd: p.missing,
     })
   }
-  priorities.sort((a, b) => (IMPACT_RANK[a.level] - IMPACT_RANK[b.level]) || ((b.affectedPrompts?.length || 0) - (a.affectedPrompts?.length || 0)))
-  const topPriorities = priorities.slice(0, 10)
-  const QW_WHY = (el: string): string => {
-    const e = el.toLowerCase()
-    if (e.includes('quick facts')) return 'Gives AI a scannable list of hard facts (parking, spa, transfer, pets) it can quote directly instead of guessing.'
-    if (e.includes('ai summary')) return 'A 1–2 sentence positioning line AI can lift verbatim when asked who the hotel is best for.'
-    if (e.includes('faq')) return 'Q&A pairs mirror how guests phrase questions, making your answers easy for AI to match and quote.'
-    if (e.includes('comparison')) return 'Comparative claims are exactly what holds your luxury and 5-star prompts at PARTIAL — AI will not rank you above alternatives without them.'
-    if (e.includes('award')) return 'Awards and recognition are trust signals AI weighs heavily when deciding which hotel to surface first.'
-    return 'Adds structured detail AI looks for, widening the searches it can confidently recommend you for.'
-  }
+  // SORT: pages that flip NO prompts first, then by impact tier, then by number of prompts affected
+  priorities.sort((a, b) =>
+    (b.addressesNo - a.addressesNo) ||
+    (IMPACT_RANK[a.level] - IMPACT_RANK[b.level]) ||
+    ((b.affectedPrompts?.length || 0) - (a.affectedPrompts?.length || 0))
+  )
+  // De-duplicate identical titles defensively
+  const seenTitle = new Set<string>()
+  const topPriorities = priorities.filter(p => { if (seenTitle.has(p.title)) return false; seenTitle.add(p.title); return true }).slice(0, 10)
+
+  // QUICK WINS (low-effort elements) with why + affected prompts
   const quickWins: any[] = []
   for (const p of importantPages) {
     if (p.status !== 'Present' || !p.missing) continue
     for (const m of p.missing) {
-      if (/FAQ|Quick Facts|Comparison|AI summary|awards/i.test(m)) quickWins.push({ action: `Add ${m} to your ${p.label.split(' — ')[0]} page`, page: p.url || p.label, element: m, why: QW_WHY(m), helps: (p.affects || []).slice(0, 3) })
+      if (/FAQ|Quick Facts|Comparison|AI summary|awards/i.test(m)) {
+        quickWins.push({ action: `Add ${m} to your ${p.displayName} page`, page: p.url || p.label, element: m, why: QW_WHY(m), affects: (p.affects || []).slice(0, 3) })
+      }
     }
   }
   const seenQW = new Set<string>()
   const quickWinsDedup = quickWins.filter(q => { if (seenQW.has(q.action)) return false; seenQW.add(q.action); return true }).slice(0, 8)
-  const strategic = missingBlueprints.map((b: any) => ({ title: `${b.blueprint.heading} page`, impact: b.impact, strengthens: b.affects && b.affects.length ? b.affects : [] })).filter((s: any) => s.strengthens.length)
+
+  // STRATEGIC: missing pages, ordered NO-first, with structure + categories
+  const strategic = missingBlueprints
+    .filter((b: any) => b.affects && b.affects.length)
+    .sort((a: any, b: any) => (b.noCount || 0) - (a.noCount || 0))
+    .map((b: any) => ({
+      title: `Create a ${b.blueprint.heading} page`,
+      impact: (b.noCount || 0) >= 2 ? 'High' : b.impact,
+      why: `Closes ${b.affects.length} recommendation prompt(s) the site currently cannot answer.`,
+      categories: b.categories || [],
+      strengthens: b.affects,
+      sections: b.blueprint.sections,
+    }))
+
   const strengths = demandCoverage.filter(d => d.coverage >= 67).map(d => d.label)
   const weaknesses = demandCoverage.filter(d => d.coverage < 40).map(d => d.label)
-  const highRoi = topPriorities.filter(p => p.level === 'Critical' || p.level === 'High').slice(0, 3).map(p => p.title)
+  const highRoi = topPriorities.slice(0, 3).map(p => p.title)
   const focusFirst = topPriorities.slice(0, 3).map(p => p.title)
   return {
-    intro: 'Based on the pages crawled and the recommendation-readiness analysis, these are the highest-impact actions that would most improve AI recommendation confidence. Every action below is drawn directly from the audit findings.',
+    intro: 'Based on the pages crawled and the recommendation-readiness analysis, these are the highest-impact actions that would most improve AI recommendation confidence. Actions that unlock searches the site cannot currently answer are listed first.',
     topPriorities, quickWins: quickWinsDedup, strategic,
     forecast: { strengths, weaknesses, highRoi },
-    whatNotToDo: focusFirst.length ? { message: 'Do not try to create or rewrite everything at once. Focus first on the items below — they close the largest number of recommendation gaps. Once those are live, move down the priority list.', focusFirst } : null,
+    whatNotToDo: focusFirst.length ? { message: 'Do not try to create or rewrite everything at once. Start with the items below — they unlock the largest number of searches the site currently cannot answer. Once those are live, work down the priority list.', focusFirst } : null,
   }
 }
 function buildContentPlan(importantPages: any[], missingBlueprints: any[]) {
   const existing = importantPages
     .filter(p => p.status === 'Present' && !p.notAssessed)
     .map(p => ({
-      type: 'existing' as const, label: p.label, url: p.url || '',
+      type: 'existing' as const, label: p.displayName ? `${p.displayName} — ${p.url ? (() => { try { return new URL(p.url).pathname } catch { return p.url } })() : ''}` : p.label, url: p.url || '',
       score: typeof p.score === 'number' ? p.score : null,
       addSections: (p.missing || []).filter((m: string) => !/^FAQ/i.test(m)),
       faqs: FAQ_QUESTIONS[p.key] || FAQ_QUESTIONS.homepage,
@@ -302,9 +397,6 @@ function buildContentPlan(importantPages: any[], missingBlueprints: any[]) {
   }))
   return { existing, newPages }
 }
-
-const CAT_MAP: Record<string, string> = { luxury: 'luxury', spa: 'wellness', romantic: 'romantic', family: 'family', business: 'business', lake: 'location', location: 'location', airport: 'location', parking: 'practical', pets: 'practical', dining: 'dining', accessibility: 'accessibility', positioning: 'overall', overall: 'overall' }
-const CAT_LABEL: Record<string, string> = { luxury: 'Luxury', wellness: 'Wellness', romantic: 'Romantic', family: 'Family', business: 'Business', location: 'Location', practical: 'Practical (parking/pets)', dining: 'Dining', accessibility: 'Accessibility', overall: 'Overall / Brand' }
 
 export async function POST(req: Request) {
   try {
@@ -351,18 +443,20 @@ export async function POST(req: Request) {
     }
 
     if (Array.isArray(manualUrls) && manualUrls.length) {
+      // Manual list: audit exactly these
       manualUrls.forEach((u: string) => {
         const c = classifyUrl(u)
         const isHome = u.replace(/\/$/, '') === url.replace(/\/$/, '')
         slots.push({ key: isHome ? 'homepage' : c.key, label: isHome ? 'Homepage' : `${c.label} — ${(() => { try { return new URL(u).pathname } catch { return u } })()}`, impact: c.impact, cats: c.cats, url: u, source: 'manual' })
       })
     } else {
+      // AUTO-DISCOVERY: match every PRIORITY type against the homepage's real links
       for (const def of PRIORITY) {
         if (def.key === 'homepage') { slots.push({ key: 'homepage', label: 'Homepage', impact: def.impact, cats: def.cats, url, source: 'home' }); continue }
         if (overrides[def.key]) { slots.push({ key: def.key, label: def.label, impact: def.impact, cats: def.cats, url: overrides[def.key], source: 'override' }); continue }
         if (def.multi) {
           const all = matchAll(def.kws).slice(0, 4)
-          if (all.length) { all.forEach((u, i) => slots.push({ key: def.key, label: `${def.label.replace(/s$/, '')} ${i + 1}`, impact: def.impact, cats: def.cats, url: u, source: 'auto' })); continue }
+          if (all.length) { all.forEach((u) => slots.push({ key: def.key, label: `${roomNameFromUrl(u)} — ${(() => { try { return new URL(u).pathname } catch { return u } })()}`, impact: def.impact, cats: def.cats, url: u, source: 'auto' })); continue }
           slots.push({ key: def.key, label: def.label, impact: def.impact, cats: def.cats, url: null, source: 'missing' }); continue
         }
         const found = matchLink(def.kws)
@@ -384,6 +478,7 @@ export async function POST(req: Request) {
     const allSchema = new Set<string>()
     for (const p of pages) for (const t of (p.schemaTypes || [])) allSchema.add(t)
 
+    // ── PROMPTS (the 30 predefined) ──
     let prompts: any[] = []
     if (sbUrl && sbKey) {
       try {
@@ -400,49 +495,64 @@ export async function POST(req: Request) {
     const noN = readiness.filter((c: any) => c.readiness === 'NO').length
     const recScore = readiness.length ? Math.round(((yesN + partialN * 0.5) / readiness.length) * 100) : 0
 
-    const buckets: Record<string, { yes: number; partial: number; no: number; total: number }> = {}
+    // ── DEMAND COVERAGE + CLUSTERS (Pillar 2) ──
+    const buckets: Record<string, { yes: number; partial: number; no: number; total: number; answered: string[]; missing: string[] }> = {}
     for (const r of readiness) {
       const cat = CAT_MAP[r.category] || 'overall'
-      const b = (buckets[cat] ||= { yes: 0, partial: 0, no: 0, total: 0 })
-      b.total++; if (r.readiness === 'YES') b.yes++; else if (r.readiness === 'PARTIAL') b.partial++; else b.no++
+      const b = (buckets[cat] ||= { yes: 0, partial: 0, no: 0, total: 0, answered: [], missing: [] })
+      b.total++
+      if (r.readiness === 'YES') { b.yes++; b.answered.push(r.question) }
+      else if (r.readiness === 'PARTIAL') { b.partial++; b.missing.push(r.question) }
+      else { b.no++; b.missing.push(r.question) }
     }
     const demandCoverage = Object.entries(buckets).map(([cat, b]) => ({
       category: cat, label: CAT_LABEL[cat] || cat, coverage: b.total ? Math.round(((b.yes + b.partial * 0.5) / b.total) * 100) : 0,
       yes: b.yes, partial: b.partial, no: b.no, total: b.total,
     })).sort((a, b) => a.coverage - b.coverage)
+    const clusters = Object.entries(buckets).map(([cat, b]) => ({
+      key: cat, label: CAT_LABEL[cat] || cat,
+      coverage: b.total ? Math.round(((b.yes + b.partial * 0.5) / b.total) * 100) : 0,
+      total: b.total, answered: b.answered, missing: b.missing,
+    })).sort((a, b) => b.coverage - a.coverage)
     const strongFor = demandCoverage.filter(d => d.coverage >= 67).map(d => d.label)
     const weakFor = demandCoverage.filter(d => d.coverage < 34).map(d => d.label)
 
+    // ── PER-PAGE AUDIT (also feeds Room intelligence / Question architecture) ──
     const promptsByCat = (cats: string[]) => readiness.filter((r: any) => cats.includes(CAT_MAP[r.category] || 'overall')).map((r: any) => r.question)
     const importantPages: any[] = []
     for (const s of slots) {
       const expected = EXPECTED[s.key] || []
       if (!s.url || !pageCache[s.url]) {
-        importantPages.push({ key: s.key, label: s.label, status: 'Missing', impact: s.impact, source: s.source,
+        importantPages.push({ key: s.key, label: s.label, displayName: pageDisplayName({ key: s.key, label: s.label, url: s.url }, slots), cats: s.cats, status: 'Missing', impact: s.impact, source: s.source,
           reason: `No ${s.label.toLowerCase()} found in the crawl.`, affects: promptsByCat(s.cats).slice(0, 4), blueprint: BLUEPRINTS[s.key] || null })
         continue
       }
       const a = await auditPage(pageCache[s.url], s.key, openaiKey)
       if (!a) {
-        importantPages.push({ key: s.key, label: s.label, status: 'Present', impact: s.impact, source: s.source,
-          url: s.url, score: null, notAssessed: true, present: [], missing: [], examples: [], evidence: '', affects: [], blueprint: null })
+        importantPages.push({ key: s.key, label: s.label, displayName: pageDisplayName({ key: s.key, label: s.label, url: s.url }, slots), cats: s.cats, status: 'Present', impact: s.impact, source: s.source,
+          url: s.url, score: null, notAssessed: true, present: [], missing: [], examples: [], evidence: '', affects: [], fields: {} })
         continue
       }
       const present = expected.filter(e => a[e.field]).map(e => e.label)
       const missingDefs = expected.filter(e => !a[e.field])
       const missing = missingDefs.map(e => e.label)
-      const examples = s.key === 'homepage' ? missingDefs.map(e => EXAMPLES[e.field]).filter(Boolean).slice(0, 3) : []
-      importantPages.push({ key: s.key, label: s.label, status: 'Present', impact: s.impact, source: s.source,
+      const examples = (s.key === 'homepage' || s.key === 'offers' || s.key === 'experiences') ? missingDefs.map(e => EXAMPLES[e.field]).filter(Boolean).slice(0, 3) : []
+      importantPages.push({ key: s.key, label: s.label, displayName: pageDisplayName({ key: s.key, label: s.label, url: s.url }, slots), cats: s.cats, status: 'Present', impact: s.impact, source: s.source,
         url: s.url, score: pct(present.length, expected.length), present, missing, examples,
-        evidence: a?.evidence || '', affects: missing.length ? promptsByCat(s.cats).slice(0, 4) : [], blueprint: null })
+        evidence: a?.evidence || '', affects: missing.length ? promptsByCat(s.cats).slice(0, 4) : [], fields: a })
     }
 
+    // ── MISSING BLUEPRINTS (new pages worth creating) ──
     const presentKeys = new Set(slots.filter(s => s.url && pageCache[s.url]).map(s => s.key))
     const blueprintKeys = ['parking', 'accessibility', 'pets', 'breakfast', 'airport', 'family', 'romantic', 'business', 'spa', 'dining']
     const BP_KEYWORDS: Record<string, string[]> = {
       parking: ['parking'], accessibility: ['accessible', 'accessibility'], pets: ['pet'], breakfast: ['breakfast'],
       airport: ['airport'], romantic: ['romantic', 'honeymoon', 'couple'], business: ['business', 'meeting', 'executive', 'event'],
       spa: ['spa', 'wellness'], dining: ['dining', 'restaurant', 'gastronomy', 'fine dining'],
+    }
+    const BP_CATS: Record<string, string[]> = {
+      parking: ['practical'], accessibility: ['accessibility'], pets: ['practical'], breakfast: ['dining'],
+      airport: ['location'], romantic: ['romantic'], business: ['business'], spa: ['wellness'], dining: ['dining'],
     }
     const catCovered = (k: string) => {
       const cat = (PRIORITY.find(p => p.key === k)?.cats || [])
@@ -455,16 +565,21 @@ export async function POST(req: Request) {
     const missingBlueprints = blueprintKeys.filter(k => !presentKeys.has(k) && BLUEPRINTS[k] && !catCovered(k) && !topicInText(k)).map(k => {
       const def = PRIORITY.find(p => p.key === k)
       const kws = BP_KEYWORDS[k] || []
-      const affects = readiness.filter((r: any) => kws.some(w => r.question.toLowerCase().includes(w))).map((r: any) => r.question).slice(0, 4)
-      return { key: k, impact: def?.impact || 'Medium', affects, blueprint: BLUEPRINTS[k] }
+      const affectsRows = readiness.filter((r: any) => kws.some(w => r.question.toLowerCase().includes(w)))
+      const affects = affectsRows.map((r: any) => r.question).slice(0, 4)
+      const noCount = affectsRows.filter((r: any) => r.readiness === 'NO').length
+      return { key: k, impact: def?.impact || 'Medium', affects, noCount, categories: BP_CATS[k] || [], blueprint: BLUEPRINTS[k] }
     })
 
+    // ── LAYER 0 facts ──
     const factTopics = [
       { key: 'Parking', kws: ['parking', 'valet', 'voiturier', 'garage', 'stationnement'] },
       { key: 'Breakfast', kws: ['breakfast', 'petit-déjeuner', 'petit dejeuner', 'petit déjeuner', 'brunch'] },
       { key: 'Pets', kws: ['pet', 'dog', 'animal', 'animaux', 'chien'] },
       { key: 'Accessibility', kws: ['accessible', 'wheelchair', 'step-free', 'disabled', 'accessibilité', 'mobilité réduite', 'pmr'] },
       { key: 'Airport transfer', kws: ['airport transfer', 'transfert aéroport', 'shuttle', 'navette', 'limousine'] },
+      { key: 'Check-in / out', kws: ['check-in', 'check in', 'check-out', 'check out', 'arrivée', 'départ'] },
+      { key: 'Cancellation', kws: ['cancellation', 'cancel', 'annulation', 'refundable'] },
     ]
     const layer0 = factTopics.map(t => {
       const onPages = pages.filter((p: any) => t.kws.some(k => p.text.toLowerCase().includes(k)))
@@ -476,6 +591,8 @@ export async function POST(req: Request) {
       else { status = 'Present'; note = `On ${onPages.length} page(s).` }
       return { topic: t.key, status, note }
     })
+
+    // ── ENTITY COVERAGE ──
     const entityHits = (() => {
       const joined = pages.map((p: any) => p.text).join(' ')
       const re = /\b([A-Z][a-zà-ÿ]+(?:\s+(?:[A-Z][a-zà-ÿ]+|de|du|des|d'|la|le))*)\b/g
@@ -484,39 +601,173 @@ export async function POST(req: Request) {
       while ((m = re.exec(joined)) !== null) { const tok = m[1].trim(); if (tok.length > 4 && tok.includes(' ') && !stop.has(tok.split(' ')[0])) found.add(tok) }
       return found.size
     })()
+
+    // ── SCHEMA + TRUST ──
     const schemaDefs = ['Hotel', 'HotelRoom', 'FAQPage', 'Review', 'AggregateRating', 'Restaurant', 'Offer', 'Event', 'BreadcrumbList']
     const schemaFound = schemaDefs.filter(s => allSchema.has(s) || (s === 'Hotel' && allSchema.has('LodgingBusiness')))
     const trustText = pages.map((p: any) => p.text.toLowerCase()).join(' ')
-    const trust = { reviewSchema: allSchema.has('AggregateRating') || allSchema.has('Review'), awards: /\b(forbes|michelin|award|recognition|voted|best hotel)\b/.test(trustText), ratings: /\b(rated|rating|stars|tripadvisor|5-star|five-star)\b/.test(trustText) }
-    const presentSlots = slots.filter(s => s.url && pageCache[s.url])
-    const coreKeys = ['homepage', 'rooms', 'dining', 'spa', 'location', 'meetings']
-    const coreScore = pct(coreKeys.filter(k => presentSlots.some(s => s.key === k)).length, coreKeys.length)
-    const intentKeys = ['family', 'romantic', 'business', 'spa', 'luxury', 'parking', 'accessibility', 'airport']
-    const intentScore = pct(intentKeys.filter(k => presentSlots.some(s => s.key === k)).length, intentKeys.length)
-    const schemaScore = pct(schemaFound.length, schemaDefs.length)
-    const pf = (n: number) => n >= 75 ? 'PASS' : n >= 40 ? 'PARTIAL' : 'FAIL'
-    const architecture = {
-      layers: [
-        { n: 0, layer: 'Knowledge consistency', result: layer0.every(l => l.status === 'Single source') ? 'PASS' : 'PARTIAL', detail: layer0 },
-        { n: 1, layer: 'Core structure', result: pf(coreScore), score: coreScore },
-        { n: 2, layer: 'AI intent hub', result: pf(intentScore), score: intentScore },
-        { n: 7, layer: 'Entity coverage', result: entityHits >= 12 ? 'PASS' : entityHits >= 5 ? 'PARTIAL' : 'FAIL', note: `${entityHits} named entities across crawled pages.` },
-        { n: 10, layer: 'Trust signals', result: (trust.reviewSchema && (trust.awards || trust.ratings)) ? 'PASS' : (trust.reviewSchema || trust.awards || trust.ratings) ? 'PARTIAL' : 'FAIL', note: `Review schema ${trust.reviewSchema ? 'present' : 'absent'}; awards ${trust.awards ? 'mentioned' : 'absent'}; ratings ${trust.ratings ? 'mentioned' : 'absent'}.` },
-        { n: 12, layer: 'Schema', result: pf(schemaScore), score: schemaScore, present: schemaFound, missing: schemaDefs.filter(s => !schemaFound.includes(s)) },
-      ],
-      note: 'Architecture layers are supporting evidence, computed from crawled pages only.',
-    }
-    const architectureScore = Math.round(coreScore * 0.3 + intentScore * 0.25 + schemaScore * 0.25 + Math.min(100, entityHits * 8) * 0.1 + ((trust.reviewSchema ? 50 : 0) + (trust.awards ? 25 : 0) + (trust.ratings ? 25 : 0)) * 0.1)
+    const trust = { reviewSchema: allSchema.has('AggregateRating') || allSchema.has('Review'), awards: /\b(forbes|michelin|award|recognition|voted|best hotel|guide)\b/.test(trustText), ratings: /\b(rated|rating|stars|tripadvisor|5-star|five-star)\b/.test(trustText) }
 
-    const actionPlan = buildActionPlan(readiness, importantPages, missingBlueprints, architecture, demandCoverage)
+    // ── INTERNAL LINKING (Layer 11) — score topic clusters from crawled links ──
+    const themeKw: Record<string, string[]> = { family: ['family', 'kids', 'children'], spa: ['spa', 'wellness'], dining: ['dining', 'restaurant', 'bar'], romantic: ['romantic', 'couple', 'honeymoon'], rooms: ['room', 'suite', 'accommodation', 'villa'] }
+    const linkingFindings: string[] = []
+    let clusterCount = 0, themesWithHub = 0
+    for (const [theme, kws] of Object.entries(themeKw)) {
+      const hub = pages.find((p: any) => kws.some(k => (p.url || '').toLowerCase().includes(k)))
+      if (!hub) continue
+      themesWithHub++
+      const internalToTheme = (hub.links || []).filter((l: string) => kws.some(k => l.toLowerCase().includes(k)) && l !== hub.url).length
+      if (internalToTheme >= 2) { clusterCount++; linkingFindings.push(`${theme}: ${internalToTheme} related links`) }
+    }
+    const linkingStatus = clusterCount >= 3 ? 'PASS' : clusterCount >= 1 ? 'PARTIAL' : 'FAIL'
+
+    // ── DERIVE LAYER VALUES ──
+    const has = (k: string) => slots.some(s => s.key === k && s.url && pageCache[s.url])
+    const presentSlots = slots.filter(s => s.url && pageCache[s.url])
+    const pf = (n: number) => n >= 75 ? 'PASS' : n >= 40 ? 'PARTIAL' : 'FAIL'
+    const fixFor = (missing: string[], verb = 'Add') => missing.length ? `${verb} ${missing.slice(0, 4).join(', ')}.` : 'Nothing missing.'
+
+    // L1 core
+    const coreKeys = [['homepage', 'Homepage'], ['rooms', 'Rooms'], ['dining', 'Dining'], ['spa', 'Spa'], ['location', 'Location'], ['offers', 'Offers'], ['meetings', 'Meetings'], ['luxury', 'Contact / About']] as [string, string][]
+    const coreHave = coreKeys.filter(([k]) => has(k)).map(([, l]) => l)
+    const coreMiss = coreKeys.filter(([k]) => !has(k)).map(([, l]) => l)
+    const coreScore = pct(coreHave.length, coreKeys.length)
+
+    // L2 intent
+    const intentKeys = [['family', 'Family'], ['romantic', 'Romantic'], ['business', 'Business'], ['spa', 'Spa'], ['pets', 'Pet-friendly'], ['accessibility', 'Accessible'], ['parking', 'Parking'], ['airport', 'Near-airport']] as [string, string][]
+    const intentHave = intentKeys.filter(([k]) => has(k)).map(([, l]) => l)
+    const intentMiss = intentKeys.filter(([k]) => !has(k)).map(([, l]) => l)
+    const intentScore = pct(intentHave.length, intentKeys.length)
+
+    // L3 knowledge center
+    const kcKeys = [['parking', 'Parking'], ['breakfast', 'Breakfast'], ['pets', 'Pets'], ['accessibility', 'Accessibility'], ['airport', 'Airport transfer']] as [string, string][]
+    const kcHave = kcKeys.filter(([k]) => has(k)).map(([, l]) => l)
+    const kcMiss = kcKeys.filter(([k]) => !has(k)).map(([, l]) => l)
+    const hasFaqAnywhere = allSchema.has('FAQPage') || importantPages.some(p => p.fields && p.fields.faq)
+    if (hasFaqAnywhere) kcHave.push('FAQ'); else kcMiss.push('Central FAQ')
+    const kcScore = pct(kcHave.length, kcKeys.length + 1)
+
+    // L4 room intelligence
+    const roomPages = importantPages.filter(p => p.key === 'rooms' && p.status === 'Present' && !p.notAssessed)
+    const roomScore = roomPages.length ? Math.round(roomPages.reduce((s, p) => s + (p.score || 0), 0) / roomPages.length) : 0
+    const roomMiss = Array.from(new Set(roomPages.flatMap(p => p.missing || [])))
+    const roomEvidence = roomPages.map(p => `${p.displayName} (${p.score}%)`)
+
+    // L5 retrieval blocks
+    const majorForBlocks = importantPages.filter(p => ['homepage', 'offers', 'experiences', 'spa', 'luxury'].includes(p.key) && p.fields)
+    const withQF = majorForBlocks.filter(p => p.fields.quickfacts).length
+    const withSummary = majorForBlocks.filter(p => p.fields.aisummary).length
+    const blocksScore = majorForBlocks.length ? pct(withQF + withSummary, majorForBlocks.length * 2) : 0
+    const blocksMiss: string[] = []
+    if (withQF < majorForBlocks.length) blocksMiss.push('Quick Facts block on key pages')
+    if (withSummary < majorForBlocks.length) blocksMiss.push('AI summary on key pages')
+
+    // L6 question architecture (WHAT/WHO/WHY/COMPARISON/FAQ across assessed pages)
+    const qaMap = [
+      { comp: 'WHAT', fields: ['overview', 'descriptions', 'positioning', 'services'] },
+      { comp: 'WHO', fields: ['who', 'idealfor'] },
+      { comp: 'WHY', fields: ['why', 'idealfor'] },
+      { comp: 'COMPARISON', fields: ['comparison'] },
+      { comp: 'FAQ', fields: ['faq'] },
+    ]
+    const assessed = importantPages.filter(p => p.fields && p.status === 'Present' && !p.notAssessed)
+    const qaPresent = qaMap.filter(q => assessed.some(p => q.fields.some(f => p.fields[f]))).map(q => q.comp)
+    const qaMiss = qaMap.filter(q => !assessed.some(p => q.fields.some(f => p.fields[f]))).map(q => q.comp)
+    const qaScore = pct(qaPresent.length, qaMap.length)
+
+    // L8 recommendation content (comparison / ideal-for present anywhere + intent pages)
+    const recHas = assessed.some(p => p.fields.comparison || p.fields.idealfor) || intentHave.length >= 2
+    const recEvidence: string[] = []
+    if (assessed.some(p => p.fields.comparison)) recEvidence.push('Comparison sections present')
+    if (assessed.some(p => p.fields.idealfor)) recEvidence.push('Ideal-For sections present')
+    if (intentHave.length) recEvidence.push(`${intentHave.length} intent pages`)
+    const recMiss = recHas ? [] : ['Comparison sections', 'Ideal-For / best-for sections']
+
+    // L9 local expertise
+    const localHints = ['things-to-do', 'guide', 'discover', 'experiences', 'neighbourhood', 'area', 'attractions']
+    const localPages = pages.filter((p: any) => localHints.some(k => (p.url || '').toLowerCase().includes(k)))
+    const localStatus = localPages.length >= 2 ? 'PASS' : localPages.length === 1 ? 'PARTIAL' : 'FAIL'
+
+    // L13 answer library (tied to the 30 prompts — no fabricated counts)
+    const answerable = yesN + partialN
+    const answerStatus = readiness.length ? (answerable / readiness.length >= 0.7 ? 'PASS' : answerable / readiness.length >= 0.4 ? 'PARTIAL' : 'FAIL') : 'FAIL'
+
+    const L = (n: number, extra: any) => ({ n, ...LAYER_META[n], ...extra })
+    const layers = [
+      L(0, { status: layer0.every(l => l.status === 'Single source' || l.status === 'Present') ? 'PASS' : layer0.some(l => l.status === 'Missing') ? 'PARTIAL' : 'PARTIAL', detail: layer0, evidence: layer0.filter(l => l.status !== 'Missing').map(l => `${l.topic}: ${l.note}`), missing: layer0.filter(l => l.status === 'Missing').map(l => l.topic), fix: fixFor(layer0.filter(l => l.status === 'Missing').map(l => `a dedicated ${l.topic} page`), 'Create') }),
+      L(1, { status: pf(coreScore), score: coreScore, evidence: coreHave, missing: coreMiss, fix: fixFor(coreMiss.map(m => `a ${m} page`), 'Create') }),
+      L(2, { status: pf(intentScore), score: intentScore, evidence: intentHave.map(x => `${x} page`), missing: intentMiss.map(x => `${x} page`), fix: fixFor(intentMiss.map(m => `a ${m} page`), 'Create') }),
+      L(3, { status: pf(kcScore), score: kcScore, evidence: kcHave, missing: kcMiss, fix: fixFor(kcMiss.map(m => `a dedicated ${m} page`), 'Create') }),
+      L(4, { status: pf(roomScore), score: roomScore, evidence: roomEvidence, missing: roomMiss, fix: fixFor(roomMiss, 'Add') + ' to your room pages.' }),
+      L(5, { status: pf(blocksScore), score: blocksScore, evidence: [withQF ? `Quick Facts on ${withQF} page(s)` : '', withSummary ? `AI summary on ${withSummary} page(s)` : ''].filter(Boolean), missing: blocksMiss, fix: fixFor(blocksMiss, 'Add') }),
+      L(6, { status: pf(qaScore), score: qaScore, evidence: qaPresent, missing: qaMiss, fix: qaMiss.length ? `Make sure pages answer ${qaMiss.join(', ')} for their topic.` : 'Nothing missing.' }),
+      L(7, { status: entityHits >= 12 ? 'PASS' : entityHits >= 5 ? 'PARTIAL' : 'FAIL', evidence: [`${entityHits} named entities across crawled pages`], missing: entityHits >= 12 ? [] : ['More named landmarks, airports, stations, neighbourhoods'], fix: entityHits >= 12 ? 'Nothing missing.' : 'Name nearby landmarks, the airport, stations and attractions on your location and intent pages.' }),
+      L(8, { status: recHas ? 'PASS' : 'FAIL', evidence: recEvidence, missing: recMiss, fix: recMiss.length ? 'Add comparison and best-for sections to room and intent pages.' : 'Nothing missing.' }),
+      L(9, { status: localStatus, evidence: localPages.map((p: any) => { try { return new URL(p.url).pathname } catch { return p.url } }), missing: localStatus === 'PASS' ? [] : ['Local guide pages (things to do, area guide)'], fix: localStatus === 'PASS' ? 'Nothing missing.' : 'Add local guide pages: things to do, family guide, romantic guide.' }),
+      L(10, { status: (trust.reviewSchema && (trust.awards || trust.ratings)) ? 'PASS' : (trust.reviewSchema || trust.awards || trust.ratings) ? 'PARTIAL' : 'FAIL', evidence: [trust.reviewSchema ? 'Review schema present' : '', trust.awards ? 'Awards mentioned' : '', trust.ratings ? 'Ratings mentioned' : ''].filter(Boolean), missing: [!trust.reviewSchema ? 'Review / AggregateRating schema' : '', !trust.awards ? 'Awards & recognition' : '', !trust.ratings ? 'Guest ratings' : ''].filter(Boolean), fix: !trust.reviewSchema ? 'Add Review and AggregateRating schema so AI can read your ratings.' : 'Surface awards and guest ratings prominently.' }),
+      L(11, { status: linkingStatus, evidence: linkingFindings, missing: linkingStatus === 'PASS' ? [] : ['Topic clusters interlinking related pages'], fix: linkingStatus === 'PASS' ? 'Nothing missing.' : 'Link each intent hub to its related pages (e.g. Family → Family Rooms → Family Offers → Family FAQ).' }),
+      L(12, { status: pf(pct(schemaFound.length, schemaDefs.length)), score: pct(schemaFound.length, schemaDefs.length), present: schemaFound, evidence: schemaFound, missing: schemaDefs.filter(s => !schemaFound.includes(s)), fix: fixFor(schemaDefs.filter(s => !schemaFound.includes(s)).map(s => `${s} schema`), 'Add') }),
+      L(13, { status: answerStatus, evidence: [`${answerable} of ${readiness.length} tracked questions answerable`], missing: readiness.filter((r: any) => r.readiness === 'NO').map((r: any) => r.question).slice(0, 5), fix: answerStatus === 'PASS' ? 'Nothing missing.' : 'Add FAQs and fact pages for the unanswered questions listed in Pillar 2.' }),
+    ]
+
+    const schemaScore = pct(schemaFound.length, schemaDefs.length)
+    const architectureScore = Math.round(
+      coreScore * 0.16 + intentScore * 0.14 + kcScore * 0.12 + roomScore * 0.10 + qaScore * 0.08 +
+      schemaScore * 0.14 + Math.min(100, entityHits * 8) * 0.06 +
+      (linkingStatus === 'PASS' ? 100 : linkingStatus === 'PARTIAL' ? 50 : 0) * 0.06 +
+      ((trust.reviewSchema ? 50 : 0) + (trust.awards ? 25 : 0) + (trust.ratings ? 25 : 0)) * 0.08 +
+      (answerStatus === 'PASS' ? 100 : answerStatus === 'PARTIAL' ? 50 : 0) * 0.06
+    )
+
+    // ── PILLAR 3: recommendation coverage (intents with definition/why/fix) ──
+    const INTENT_META: Record<string, { label: string; definition: string; why: string }> = {
+      luxury: { label: 'Luxury', definition: 'Can AI recommend the hotel for high-end luxury searches?', why: 'The core positioning for a 5-star property; the highest-value demand.' },
+      romantic: { label: 'Romantic', definition: 'Can AI recommend it for couples, honeymoons and romantic getaways?', why: 'High-margin, high-intent demand that books premium rooms and packages.' },
+      family: { label: 'Family', definition: 'Can AI recommend it for families with children?', why: 'Books multiple rooms and longer stays; strong off-peak demand.' },
+      wellness: { label: 'Wellness', definition: 'Can AI recommend it for spa and wellness stays?', why: 'Growing, high-value demand; often the strongest differentiator.' },
+      business: { label: 'Business', definition: 'Can AI recommend it for business travel, meetings and events?', why: 'Reliable midweek and corporate demand.' },
+      dining: { label: 'Dining', definition: 'Can AI recommend it for fine dining and gastronomy?', why: 'Drives both stays and local reputation.' },
+      location: { label: 'Location & airport', definition: 'Can AI recommend it for location, lake views and airport proximity?', why: 'Practical filters travellers and AI use to shortlist hotels.' },
+      accessibility: { label: 'Accessibility', definition: 'Can AI recommend it for accessible stays?', why: 'A growing, underserved search category with little competition.' },
+      practical: { label: 'Practical (parking/pets)', definition: 'Can AI answer practical filters like parking and pets?', why: 'Common dealbreaker questions; a single missing fact can drop you from a shortlist.' },
+      overall: { label: 'Overall / brand', definition: 'Can AI describe and recommend the hotel in general?', why: 'The catch-all positioning behind every recommendation.' },
+    }
+    const recommendation = demandCoverage.map(d => {
+      const meta = INTENT_META[d.category] || { label: d.label, definition: '', why: '' }
+      const bp = Object.entries(BP_CATS).find(([, cats]) => cats.includes(d.category))
+      const bpKey = bp?.[0]
+      const evidenceRows = readiness.filter((r: any) => (CAT_MAP[r.category] || 'overall') === d.category && r.readiness !== 'NO' && r.evidence)
+      const missingRows = readiness.filter((r: any) => (CAT_MAP[r.category] || 'overall') === d.category && r.readiness === 'NO')
+      return {
+        key: d.category, label: meta.label, definition: meta.definition, why: meta.why,
+        coverage: d.coverage,
+        evidence: evidenceRows.slice(0, 2).map((r: any) => r.evidence),
+        missing: missingRows.map((r: any) => r.question).slice(0, 4),
+        fix: d.coverage >= 67 ? 'Strong — keep content fresh.' : bpKey && !presentKeys.has(bpKey) ? `Create a ${BLUEPRINTS[bpKey].heading} page.` : 'Add the missing sections and FAQs flagged in the page plan.',
+      }
+    }).sort((a, b) => a.coverage - b.coverage)
+
+    const architecture = { layers, note: 'Architecture layers are objective findings computed from crawled pages only.', score: architectureScore }
+    const actionPlan = buildActionPlan(readiness, importantPages, missingBlueprints, demandCoverage)
     const contentPlan = buildContentPlan(importantPages, missingBlueprints)
 
     const result = {
       url, city: effCity || null, hotelType: effType || null,
+      // headline
+      recommendation: { score: recScore, yes: yesN, partial: partialN, no: noN, total: readiness.length, results: readiness },
+      architectureScore,
+      // executive layer
       actionPlan, contentPlan,
       summary: { strongFor, weakFor },
-      recommendation: { score: recScore, yes: yesN, partial: partialN, no: noN, total: readiness.length, results: readiness },
-      demandCoverage, importantPages, missingBlueprints, architecture, architectureScore,
+      // four pillars
+      pillars: {
+        architecture: { score: architectureScore, layers },
+        answerability: { score: recScore, clusters, total: readiness.length, yes: yesN, partial: partialN, no: noN },
+        recommendation: { intents: recommendation },
+        trust: { reviewSchema: trust.reviewSchema, awards: trust.awards, ratings: trust.ratings, why: 'Trust signals (reviews, awards, ratings, recognition) are weighed heavily by AI when choosing which hotel to surface first.', missing: [!trust.reviewSchema ? 'Review / AggregateRating schema' : '', !trust.awards ? 'Awards & recognition' : '', !trust.ratings ? 'Guest ratings' : ''].filter(Boolean) },
+      },
+      // supporting detail
+      demandCoverage, importantPages, missingBlueprints, architecture,
       robots, pagesScraped: pages.map((p: any) => p.url), crawlDepth: pages.length, crawlLimit: CRAWL_LIMIT,
     }
 
