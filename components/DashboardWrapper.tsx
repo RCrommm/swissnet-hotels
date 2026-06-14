@@ -45,8 +45,8 @@ const { data: allCompVisibility } = await supabase
   .from('competitor_visibility')
   .select('competitor_name, category, platform, visibility_score, checked_at, run_date, appearances, total_queries')
   .eq('region', region)
-  .gte('run_date', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
-  .order('run_date', { ascending: true })
+  .gte('checked_at', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString())
+  .order('checked_at', { ascending: true })
   .limit(5000)
 
       const { data: googleAiScores } = await supabase
