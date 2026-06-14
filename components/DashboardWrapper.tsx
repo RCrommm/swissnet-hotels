@@ -90,8 +90,8 @@ const latestOverviewScores = overviewScores.filter((s: any) => s.run_date === la
 const runDatesAll = [...new Set(overviewScores.map((s: any) => s.run_date || s.checked_at?.split('T')[0]).filter(Boolean))].sort() as string[]
       const latestDate = runDatesAll[runDatesAll.length - 1]
       const prevDate = runDatesAll[runDatesAll.length - 2]
-      const latestScores = overviewScores.filter((s: any) => s.checked_at?.startsWith(latestDate))
-      const prevScores = overviewScores.filter((s: any) => s.checked_at?.startsWith(prevDate))
+      const latestScores = overviewScores.filter((s: any) => (s.run_date || s.checked_at?.split('T')[0]) === latestDate)
+      const prevScores = overviewScores.filter((s: any) => (s.run_date || s.checked_at?.split('T')[0]) === prevDate)
 
       const getLatestScore = (scores: any[], name: string) => {
   const entries = scores.filter((s: any) => s.competitor_name === name)
