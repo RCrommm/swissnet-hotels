@@ -45,6 +45,7 @@ export default function HotelAuditPage() {
   const grouped = (rs: any[], k: string) => rs.filter((x: any) => x.readiness === k)
   const path = (u: string) => { try { return new URL(u).pathname || u } catch { return u } }
   const card: any = { background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1rem' }
+  const head: any = { padding: '0.9rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG }
   const sectionLabel: any = { fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.3rem' }
   const sectionTitle: any = { fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: TEXT, margin: 0 }
   const impactColor = (i: string) => i === 'High' ? RED : i === 'Medium' ? AMBER : MUTED
@@ -88,6 +89,110 @@ export default function HotelAuditPage() {
             <p style={{ fontSize: '0.62rem', color: TEXT, margin: '0.4rem 0 0', fontWeight: 700 }}>{r.recommendation.yes} YES · {r.recommendation.partial} PARTIAL · {r.recommendation.no} NO</p>
             <p style={{ fontSize: '0.52rem', color: MUTED, margin: '0.2rem 0 0', letterSpacing: '0.08em', textTransform: 'uppercase' }}>AI Recommendation Readiness</p>
           </div>
+            
+        {/* EXECUTIVE ACTION PLAN — first section */}
+          {r.actionPlan && <>
+            <div style={{ background: `linear-gradient(180deg, ${GOLD_LIGHT} 0%, ${WHITE} 100%)`, border: '1px solid ' + GOLD, borderRadius: 14, padding: '1.5rem 1.75rem', marginBottom: '1.25rem' }}>
+              <p style={{ fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.3rem' }}>Executive action plan</p>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.6rem', color: TEXT, margin: '0 0 0.4rem' }}>Your AI Visibility Action Plan</p>
+              <p style={{ fontSize: '0.66rem', color: MUTED, margin: 0, lineHeight: 1.6 }}>{r.actionPlan.intro}</p>
+            </div>
+
+            {/* TOP PRIORITIES */}
+            {r.actionPlan.topPriorities.length > 0 && <>
+              <p style={{ ...sectionLabel }}>Top priorities</p>
+              {r.actionPlan.topPriorities.map((a: any, i: number) => {
+                const lc = a.level === 'Critical' ? RED : a.level === 'High' ? AMBER : MUTED
+                return (
+                  <div key={i} style={card}>
+                    <div style={{ padding: '0.85rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                      <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.05rem', color: TEXT }}>{i + 1}. {a.title}</span>
+                      <span style={{ fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.06em', color: lc, border: '1px solid ' + lc, borderRadius: 4, padding: '0.12rem 0.5rem', textTransform: 'uppercase', flexShrink: 0 }}>{a.level}</span>
+                    </div>
+                    <div style={{ padding: '0.8rem 1.5rem 1rem' }}>
+                      <p style={{ fontSize: '0.64rem', color: TEXT, margin: '0 0 0.4rem', lineHeight: 1.5 }}><b>Why this matters:</b> {a.why}</p>
+                      {a.affectedPrompts && a.affectedPrompts.length > 0 && <p style={{ fontSize: '0.62rem', color: AMBER, margin: '0 0 0.3rem' }}><b>Affected searches:</b> {a.affectedPrompts.join('; ')}</p>}
+                      {a.pages && a.pages.length > 0 && <p style={{ fontSize: '0.6rem', color: MUTED, margin: '0 0 0.3rem' }}>Pages responsible: {a.pages.map((u: string) => path(u)).join(', ')}</p>}
+                      {a.outcome && <p style={{ fontSize: '0.62rem', color: GREEN, margin: '0 0 0.4rem' }}><b>Expected outcome:</b> {a.outcome}</p>}
+                      {a.toAdd && a.toAdd.length > 0 && <p style={{ fontSize: '0.62rem', color: TEXT, margin: 0 }}><b>To add:</b> {a.toAdd.join(', ')}</p>}
+                      {a.blueprint && <>
+                        <p style={{ fontSize: '0.56rem', fontWeight: 700, color: TEXT, margin: '0.5rem 0 0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Recommended structure</p>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                          {a.blueprint.sections.map((s: string, j: number) => <span key={j} style={{ fontSize: '0.58rem', color: TEXT, background: BG, border: '1px solid ' + BORDER, borderRadius: 14, padding: '0.2rem 0.55rem' }}>{s}</span>)}
+                        </div>
+                      </>}
+                    </div>
+                  </div>
+                )
+              })}
+            </>}
+
+            {/* QUICK WINS */}
+            {r.actionPlan.quickWins.length > 0 && (
+              <div style={card}>
+                <div style={head}><p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.05rem', color: TEXT, margin: 0 }}>Quick wins <span style={{ fontFamily: 'Montserrat', fontSize: '0.58rem', color: MUTED }}>low effort · high impact</span></p></div>
+                <div style={{ padding: '0.75rem 1.5rem 1rem' }}>
+                  {r.actionPlan.quickWins.map((q: any, i: number) => (
+                    <div key={i} style={{ display: 'flex', gap: '0.6rem', padding: '0.35rem 0', alignItems: 'baseline' }}>
+                      <span style={{ color: GREEN, fontWeight: 700, fontSize: '0.7rem' }}>✓</span>
+                      <span style={{ fontSize: '0.66rem', color: TEXT, flex: 1 }}>{q.action}<span style={{ color: MUTED, fontSize: '0.56rem' }}> — {path(q.page)}</span></span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* STRATEGIC OPPORTUNITIES */}
+            {r.actionPlan.strategic.length > 0 && (
+              <div style={card}>
+                <div style={head}><p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.05rem', color: TEXT, margin: 0 }}>Strategic opportunities <span style={{ fontFamily: 'Montserrat', fontSize: '0.58rem', color: MUTED }}>larger content additions</span></p></div>
+                <div style={{ padding: '0.75rem 1.5rem 1rem' }}>
+                  {r.actionPlan.strategic.map((s: any, i: number) => {
+                    const lc = s.impact === 'High' ? RED : s.impact === 'Medium' ? AMBER : MUTED
+                    return (
+                      <div key={i} style={{ padding: '0.5rem 0', borderBottom: i < r.actionPlan.strategic.length - 1 ? '1px solid ' + BORDER : 'none' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 600, color: TEXT }}>{s.title}</span>
+                          <span style={{ fontSize: '0.5rem', fontWeight: 700, color: lc, textTransform: 'uppercase' }}>{s.impact} impact</span>
+                        </div>
+                        <p style={{ fontSize: '0.6rem', color: MUTED, margin: '0.2rem 0 0' }}>Strengthens: {s.strengthens.join('; ')}</p>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* WHAT NOT TO DO */}
+            {r.actionPlan.whatNotToDo && (
+              <div style={{ background: '#fdf8ef', border: '1px solid ' + GOLD, borderRadius: 14, padding: '1.25rem 1.5rem', marginBottom: '1rem' }}>
+                <p style={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: AMBER, margin: '0 0 0.4rem' }}>What not to do</p>
+                <p style={{ fontSize: '0.66rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.6 }}>{r.actionPlan.whatNotToDo.message}</p>
+                {r.actionPlan.whatNotToDo.focusFirst.map((f: string, i: number) => <p key={i} style={{ fontSize: '0.66rem', color: TEXT, margin: '0.15rem 0', fontWeight: 600 }}>{i + 1}. {f}</p>)}
+              </div>
+            )}
+
+            {/* FORECAST */}
+            <div style={card}>
+              <div style={head}><p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.05rem', color: TEXT, margin: 0 }}>AI visibility forecast</p></div>
+              <div style={{ padding: '0.9rem 1.5rem 1rem', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <p style={{ fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: GREEN, margin: '0 0 0.4rem' }}>Current strengths</p>
+                  {r.actionPlan.forecast.strengths.length ? r.actionPlan.forecast.strengths.map((s: string, i: number) => <p key={i} style={{ fontSize: '0.64rem', color: TEXT, margin: '0.15rem 0' }}>{s}</p>) : <p style={{ fontSize: '0.6rem', color: MUTED }}>—</p>}
+                </div>
+                <div>
+                  <p style={{ fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: RED, margin: '0 0 0.4rem' }}>Current weaknesses</p>
+                  {r.actionPlan.forecast.weaknesses.length ? r.actionPlan.forecast.weaknesses.map((s: string, i: number) => <p key={i} style={{ fontSize: '0.64rem', color: TEXT, margin: '0.15rem 0' }}>{s}</p>) : <p style={{ fontSize: '0.6rem', color: MUTED }}>—</p>}
+                </div>
+                <div>
+                  <p style={{ fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.4rem' }}>Highest-ROI moves</p>
+                  {r.actionPlan.forecast.highRoi.length ? r.actionPlan.forecast.highRoi.map((s: string, i: number) => <p key={i} style={{ fontSize: '0.64rem', color: TEXT, margin: '0.15rem 0' }}>{i + 1}. {s}</p>) : <p style={{ fontSize: '0.6rem', color: MUTED }}>—</p>}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ borderTop: '2px solid ' + BORDER, margin: '1.5rem 0' }} />
+          </>}
 
           {r.summary && (r.summary.strongFor.length > 0 || r.summary.weakFor.length > 0) && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>

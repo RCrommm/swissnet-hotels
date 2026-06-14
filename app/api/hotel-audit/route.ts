@@ -209,6 +209,55 @@ async function auditPage(pg: any, typeKey: string, openaiKey: string) {
 }
 
 function pct(g: number, m: number) { return m ? Math.round((g / m) * 100) : 0 }
+const IMPACT_RANK: Record<string, number> = { Critical: 0, High: 1, Medium: 2, Low: 3 }
+function buildActionPlan(readiness: any[], importantPages: any[], missingBlueprints: any[], architecture: any, demandCoverage: any[]) {
+  const priorities: any[] = []
+  for (const b of missingBlueprints) {
+    const level = b.impact === 'High' ? 'Critical' : b.impact === 'Medium' ? 'High' : 'Medium'
+    if (!b.affects || b.affects.length === 0) continue
+    priorities.push({
+      level, title: `Create a ${b.blueprint.heading} page`,
+      why: `AI currently cannot confidently recommend the hotel for these searches because no dedicated ${b.blueprint.heading.toLowerCase()} content was found in the crawl.`,
+      affectedPrompts: b.affects, pages: [`${b.blueprint.heading} page (missing)`],
+      outcome: `AI would be able to answer "${b.blueprint.questions[0]}" and confidently surface the hotel for the searches above.`,
+      blueprint: { sections: b.blueprint.sections, questions: b.blueprint.questions },
+    })
+  }
+  for (const p of importantPages) {
+    if (p.status !== 'Present' || typeof p.score !== 'number' || p.score >= 75) continue
+    if (!p.missing || p.missing.length === 0) continue
+    const level = p.score < 40 ? 'High' : 'Medium'
+    priorities.push({
+      level, title: `Strengthen your ${p.label.split(' — ')[0]} page`,
+      why: `This page exists but is missing key elements AI looks for, limiting how confidently it can recommend you.`,
+      affectedPrompts: p.affects || [], pages: [p.url ? p.url : p.label],
+      outcome: `Adding ${p.missing.slice(0, 3).join(', ')} would let AI fully understand and recommend this page's strengths.`,
+      toAdd: p.missing,
+    })
+  }
+  priorities.sort((a, b) => (IMPACT_RANK[a.level] - IMPACT_RANK[b.level]) || ((b.affectedPrompts?.length || 0) - (a.affectedPrompts?.length || 0)))
+  const topPriorities = priorities.slice(0, 10)
+  const quickWins: any[] = []
+  for (const p of importantPages) {
+    if (p.status !== 'Present' || !p.missing) continue
+    for (const m of p.missing) {
+      if (/FAQ|Quick Facts|Comparison|AI summary|awards/i.test(m)) quickWins.push({ action: `Add ${m} to your ${p.label.split(' — ')[0]} page`, page: p.url || p.label })
+    }
+  }
+  const seenQW = new Set<string>()
+  const quickWinsDedup = quickWins.filter(q => { if (seenQW.has(q.action)) return false; seenQW.add(q.action); return true }).slice(0, 8)
+  const strategic = missingBlueprints.map((b: any) => ({ title: `${b.blueprint.heading} page`, impact: b.impact, strengthens: b.affects && b.affects.length ? b.affects : [] })).filter((s: any) => s.strengthens.length)
+  const strengths = demandCoverage.filter(d => d.coverage >= 67).map(d => d.label)
+  const weaknesses = demandCoverage.filter(d => d.coverage < 40).map(d => d.label)
+  const highRoi = topPriorities.filter(p => p.level === 'Critical' || p.level === 'High').slice(0, 3).map(p => p.title)
+  const focusFirst = topPriorities.slice(0, 3).map(p => p.title)
+  return {
+    intro: 'Based on the pages crawled and the recommendation-readiness analysis, these are the highest-impact actions that would most improve AI recommendation confidence. Every action below is drawn directly from the audit findings.',
+    topPriorities, quickWins: quickWinsDedup, strategic,
+    forecast: { strengths, weaknesses, highRoi },
+    whatNotToDo: focusFirst.length ? { message: 'Do not try to create or rewrite everything at once. Focus first on the items below — they close the largest number of recommendation gaps. Once those are live, move down the priority list.', focusFirst } : null,
+  }
+}
 
 const CAT_MAP: Record<string, string> = { luxury: 'luxury', spa: 'wellness', romantic: 'romantic', family: 'family', business: 'business', lake: 'location', location: 'location', airport: 'location', parking: 'practical', pets: 'practical', dining: 'dining', accessibility: 'accessibility', positioning: 'overall', overall: 'overall' }
 const CAT_LABEL: Record<string, string> = { luxury: 'Luxury', wellness: 'Wellness', romantic: 'Romantic', family: 'Family', business: 'Business', location: 'Location', practical: 'Practical (parking/pets)', dining: 'Dining', accessibility: 'Accessibility', overall: 'Overall / Brand' }
@@ -400,8 +449,11 @@ export async function POST(req: Request) {
     }
     const architectureScore = Math.round(coreScore * 0.3 + intentScore * 0.25 + schemaScore * 0.25 + Math.min(100, entityHits * 8) * 0.1 + ((trust.reviewSchema ? 50 : 0) + (trust.awards ? 25 : 0) + (trust.ratings ? 25 : 0)) * 0.1)
 
+    const actionPlan = buildActionPlan(readiness, importantPages, missingBlueprints, architecture, demandCoverage)
+
     const result = {
       url, city: effCity || null, hotelType: effType || null,
+      actionPlan,
       summary: { strongFor, weakFor },
       recommendation: { score: recScore, yes: yesN, partial: partialN, no: noN, total: readiness.length, results: readiness },
       demandCoverage, importantPages, missingBlueprints, architecture, architectureScore,
