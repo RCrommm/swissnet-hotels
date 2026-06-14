@@ -124,6 +124,23 @@ const EXAMPLES: Record<string, string> = {
   aisummary: 'Example format (write your own 1–2 sentences): "[Hotel] is a [type] hotel in [area], best suited to [guest types], known for [1–2 distinctive features]."',
   faq: 'Example questions to answer: Does the hotel have parking? · Is breakfast included? · How far is the airport? · Is the spa open to non-residents?',
 }
+const FAQ_QUESTIONS: Record<string, string[]> = {
+  homepage: ['What makes this hotel distinctive?', 'Who is this hotel best suited to?', 'Where exactly is the hotel located?', 'What is included in a stay?'],
+  rooms: ['What room types are available?', 'How many guests does each room sleep?', 'Which rooms have the best views?', 'Which room is best for families / couples?'],
+  spa: ['Does the hotel have a spa?', 'What treatments are offered?', 'Is the spa open to non-residents?', 'What are the spa opening hours?'],
+  dining: ['What restaurants are at the hotel?', 'What cuisine is served?', 'Do I need a reservation?', 'Are there vegetarian / dietary options?'],
+  family: ['Is the hotel family-friendly?', 'Are family or connecting rooms available?', 'What activities are there for children?', 'Is there a kids club?'],
+  romantic: ['Is the hotel good for couples?', 'Are there honeymoon packages?', 'Which room is best for a romantic stay?', 'Are there couples spa treatments?'],
+  business: ['Does the hotel have meeting rooms?', 'What is the meeting room capacity?', 'Is the hotel suitable for business travel?', 'How far is the airport?'],
+  meetings: ['What meeting and event spaces are available?', 'What is the capacity of each room?', 'Is catering available?', 'How far is the airport?'],
+  luxury: ['What makes this hotel special?', 'What awards has the hotel won?', 'What is the hotel’s story?'],
+  location: ['Where is the hotel located?', 'How far is the airport?', 'What attractions are nearby?', 'How do I get there?'],
+  parking: ['Does the hotel have parking?', 'How much does parking cost?', 'Is valet parking available?', 'Are EV chargers available?'],
+  accessibility: ['Are accessible rooms available?', 'Is there step-free access?', 'Is there lift access to all floors?', 'Are accessible bathrooms available?'],
+  breakfast: ['Is breakfast included?', 'What are the breakfast hours?', 'Where is breakfast served?', 'Are there vegan / gluten-free options?'],
+  pets: ['Are pets allowed?', 'Is there a fee for pets?', 'What pet amenities are provided?', 'Is there a size limit for pets?'],
+  airport: ['How far is the airport?', 'Is an airport transfer available?', 'How much is the transfer?', 'How do I book a transfer?'],
+}
 
 const REC_SYSTEM = `You are a strict, evidence-based hotel AI-recommendation auditor. Given crawled text from ONE hotel website and a list of recommendation prompts, decide for EACH prompt whether THIS WEBSITE provides enough evidence for an AI to CONFIDENTLY RECOMMEND this hotel for that prompt.
 
@@ -258,6 +275,24 @@ function buildActionPlan(readiness: any[], importantPages: any[], missingBluepri
     whatNotToDo: focusFirst.length ? { message: 'Do not try to create or rewrite everything at once. Focus first on the items below — they close the largest number of recommendation gaps. Once those are live, move down the priority list.', focusFirst } : null,
   }
 }
+function buildContentPlan(importantPages: any[], missingBlueprints: any[]) {
+  const existing = importantPages
+    .filter(p => p.status === 'Present' && !p.notAssessed)
+    .map(p => ({
+      type: 'existing' as const, label: p.label, url: p.url || '',
+      score: typeof p.score === 'number' ? p.score : null,
+      addSections: (p.missing || []).filter((m: string) => !/^FAQ/i.test(m)),
+      faqs: FAQ_QUESTIONS[p.key] || FAQ_QUESTIONS.homepage,
+      needsFaq: (p.missing || []).some((m: string) => /FAQ/i.test(m)),
+    }))
+    .sort((a, b) => (a.score ?? 101) - (b.score ?? 101))
+  const newPages = missingBlueprints.map((b: any) => ({
+    type: 'new' as const, label: b.blueprint.heading, impact: b.impact,
+    addSections: b.blueprint.sections.filter((s: string) => !/^FAQ/i.test(s)),
+    faqs: b.blueprint.questions,
+  }))
+  return { existing, newPages }
+}
 
 const CAT_MAP: Record<string, string> = { luxury: 'luxury', spa: 'wellness', romantic: 'romantic', family: 'family', business: 'business', lake: 'location', location: 'location', airport: 'location', parking: 'practical', pets: 'practical', dining: 'dining', accessibility: 'accessibility', positioning: 'overall', overall: 'overall' }
 const CAT_LABEL: Record<string, string> = { luxury: 'Luxury', wellness: 'Wellness', romantic: 'Romantic', family: 'Family', business: 'Business', location: 'Location', practical: 'Practical (parking/pets)', dining: 'Dining', accessibility: 'Accessibility', overall: 'Overall / Brand' }
@@ -301,7 +336,9 @@ export async function POST(req: Request) {
     const classifyUrl = (u: string): { key: string; label: string; impact: string; cats: string[] } => {
       const lu = u.toLowerCase()
       for (const def of PRIORITY) { if (def.key === 'homepage') continue; if (def.kws.some(k => lu.includes(k))) return { key: def.key, label: def.label.replace(/ pages?$/i, ''), impact: def.impact, cats: def.cats } }
-      return { key: 'homepage', label: 'Page', impact: 'Medium', cats: ['overall'] }
+      let slug = 'Page'
+      try { const segs = new URL(u).pathname.split('/').filter(Boolean); const last = segs[segs.length - 1] || ''; if (last) slug = last.replace(/[-_]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) } catch {}
+      return { key: 'homepage', label: slug, impact: 'Medium', cats: ['overall'] }
     }
 
     if (Array.isArray(manualUrls) && manualUrls.length) {
@@ -377,8 +414,13 @@ export async function POST(req: Request) {
         continue
       }
       const a = await auditPage(pageCache[s.url], s.key, openaiKey)
-      const present = expected.filter(e => a && a[e.field]).map(e => e.label)
-      const missingDefs = expected.filter(e => !a || !a[e.field])
+      if (!a) {
+        importantPages.push({ key: s.key, label: s.label, status: 'Present', impact: s.impact, source: s.source,
+          url: s.url, score: null, notAssessed: true, present: [], missing: [], examples: [], evidence: '', affects: [], blueprint: null })
+        continue
+      }
+      const present = expected.filter(e => a[e.field]).map(e => e.label)
+      const missingDefs = expected.filter(e => !a[e.field])
       const missing = missingDefs.map(e => e.label)
       const examples = s.key === 'homepage' ? missingDefs.map(e => EXAMPLES[e.field]).filter(Boolean).slice(0, 3) : []
       importantPages.push({ key: s.key, label: s.label, status: 'Present', impact: s.impact, source: s.source,
@@ -393,7 +435,15 @@ export async function POST(req: Request) {
       airport: ['airport'], romantic: ['romantic', 'honeymoon', 'couple'], business: ['business', 'meeting', 'executive', 'event'],
       spa: ['spa', 'wellness'], dining: ['dining', 'restaurant', 'gastronomy', 'fine dining'],
     }
-    const missingBlueprints = blueprintKeys.filter(k => !presentKeys.has(k) && BLUEPRINTS[k]).map(k => {
+    const catCovered = (k: string) => {
+      const cat = (PRIORITY.find(p => p.key === k)?.cats || [])
+      return readiness.some((r: any) => cat.includes(CAT_MAP[r.category] || 'overall') && r.readiness !== 'NO')
+    }
+    const topicInText = (k: string) => {
+      const kws = (PRIORITY.find(p => p.key === k)?.kws || [])
+      return pages.some((p: any) => kws.some(w => (p.text || '').toLowerCase().includes(w)))
+    }
+    const missingBlueprints = blueprintKeys.filter(k => !presentKeys.has(k) && BLUEPRINTS[k] && !catCovered(k) && !topicInText(k)).map(k => {
       const def = PRIORITY.find(p => p.key === k)
       const kws = BP_KEYWORDS[k] || []
       const affects = readiness.filter((r: any) => kws.some(w => r.question.toLowerCase().includes(w))).map((r: any) => r.question).slice(0, 4)
@@ -450,10 +500,11 @@ export async function POST(req: Request) {
     const architectureScore = Math.round(coreScore * 0.3 + intentScore * 0.25 + schemaScore * 0.25 + Math.min(100, entityHits * 8) * 0.1 + ((trust.reviewSchema ? 50 : 0) + (trust.awards ? 25 : 0) + (trust.ratings ? 25 : 0)) * 0.1)
 
     const actionPlan = buildActionPlan(readiness, importantPages, missingBlueprints, architecture, demandCoverage)
+    const contentPlan = buildContentPlan(importantPages, missingBlueprints)
 
     const result = {
       url, city: effCity || null, hotelType: effType || null,
-      actionPlan,
+      actionPlan, contentPlan,
       summary: { strongFor, weakFor },
       recommendation: { score: recScore, yes: yesN, partial: partialN, no: noN, total: readiness.length, results: readiness },
       demandCoverage, importantPages, missingBlueprints, architecture, architectureScore,

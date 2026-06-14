@@ -194,6 +194,56 @@ export default function HotelAuditPage() {
             <div style={{ borderTop: '2px solid ' + BORDER, margin: '1.5rem 0' }} />
           </>}
 
+          {/* CONTENT & FAQ PLAN — marketing checklist */}
+          {r.contentPlan && (r.contentPlan.existing.length > 0 || r.contentPlan.newPages.length > 0) && <>
+            <div style={{ margin: '0 0 0.6rem' }}>
+              <p style={sectionLabel}>Content & FAQ plan</p>
+              <p style={sectionTitle}>Page-by-page: what to add and which questions to answer</p>
+              <p style={{ fontSize: '0.62rem', color: MUTED, margin: '0.3rem 0 0' }}>A checklist for your marketing team. Add the sections listed, and answer the FAQ questions in your own words — the answers stay yours to write.</p>
+            </div>
+            {r.contentPlan.existing.map((p: any, i: number) => (
+              <div key={i} style={card}>
+                <div style={{ padding: '0.85rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.05rem', color: TEXT }}>{p.label}{typeof p.score === 'number' ? <span style={{ fontFamily: 'Montserrat', fontSize: '0.6rem', color: MUTED }}>  {p.score}%</span> : null}</span>
+                  <span style={{ fontSize: '0.5rem', fontWeight: 700, color: GOLD, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Existing page</span>
+                </div>
+                <div style={{ padding: '0.8rem 1.5rem 1rem' }}>
+                  {p.addSections.length > 0 ? (
+                    <><p style={{ fontSize: '0.56rem', fontWeight: 700, color: TEXT, margin: '0 0 0.3rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Add these sections</p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '0.6rem' }}>
+                      {p.addSections.map((s: string, j: number) => <span key={j} style={{ fontSize: '0.6rem', color: TEXT, background: BG, border: '1px solid ' + BORDER, borderRadius: 14, padding: '0.2rem 0.55rem' }}>{s}</span>)}
+                    </div></>
+                  ) : <p style={{ fontSize: '0.6rem', color: GREEN, margin: '0 0 0.6rem' }}>✓ Core sections present — just add the FAQ below.</p>}
+                  <p style={{ fontSize: '0.56rem', fontWeight: 700, color: TEXT, margin: '0 0 0.3rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>FAQ questions to answer</p>
+                  {p.faqs.map((q: string, j: number) => <p key={j} style={{ fontSize: '0.62rem', color: MUTED, margin: '0.12rem 0 0' }}>• {q}</p>)}
+                </div>
+              </div>
+            ))}
+            {r.contentPlan.newPages.map((p: any, i: number) => {
+              const lc = p.impact === 'High' ? RED : p.impact === 'Medium' ? AMBER : MUTED
+              return (
+                <div key={i} style={card}>
+                  <div style={{ padding: '0.85rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.05rem', color: TEXT }}>{p.label}</span>
+                    <span style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.5rem', fontWeight: 700, color: lc, textTransform: 'uppercase' }}>{p.impact} impact</span>
+                      <span style={{ fontSize: '0.5rem', fontWeight: 700, color: GREEN, textTransform: 'uppercase', letterSpacing: '0.06em' }}>New page</span>
+                    </span>
+                  </div>
+                  <div style={{ padding: '0.8rem 1.5rem 1rem' }}>
+                    <p style={{ fontSize: '0.56rem', fontWeight: 700, color: TEXT, margin: '0 0 0.3rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Build with these sections</p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '0.6rem' }}>
+                      {p.addSections.map((s: string, j: number) => <span key={j} style={{ fontSize: '0.6rem', color: TEXT, background: BG, border: '1px solid ' + BORDER, borderRadius: 14, padding: '0.2rem 0.55rem' }}>{s}</span>)}
+                    </div>
+                    <p style={{ fontSize: '0.56rem', fontWeight: 700, color: TEXT, margin: '0 0 0.3rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>FAQ questions to answer</p>
+                    {p.faqs.map((q: string, j: number) => <p key={j} style={{ fontSize: '0.62rem', color: MUTED, margin: '0.12rem 0 0' }}>• {q}</p>)}
+                  </div>
+                </div>
+              )
+            })}
+            <div style={{ borderTop: '2px solid ' + BORDER, margin: '1.5rem 0' }} />
+          </>}
+
           {r.summary && (r.summary.strongFor.length > 0 || r.summary.weakFor.length > 0) && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
               <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.25rem' }}>
@@ -263,11 +313,13 @@ export default function HotelAuditPage() {
                 <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.05rem', color: TEXT }}>{p.label}{typeof p.score === 'number' ? <span style={{ fontFamily: 'Montserrat', fontSize: '0.6rem', color: MUTED }}>  {p.score}%</span> : null}</span>
                 <span style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
                   {p.status === 'Missing' && <span style={{ fontSize: '0.5rem', fontWeight: 700, color: impactColor(p.impact), textTransform: 'uppercase' }}>{p.impact} impact</span>}
-                  <span style={{ fontSize: '0.55rem', fontWeight: 700, color: pf(p.status === 'Missing' ? 'FAIL' : p.score >= 75 ? 'PASS' : p.score >= 40 ? 'PARTIAL' : 'FAIL'), border: '1px solid ' + pf(p.status === 'Missing' ? 'FAIL' : p.score >= 75 ? 'PASS' : p.score >= 40 ? 'PARTIAL' : 'FAIL'), borderRadius: 4, padding: '0.12rem 0.5rem' }}>{p.status === 'Missing' ? 'MISSING' : p.score >= 75 ? 'STRONG' : p.score >= 40 ? 'PARTIAL' : 'WEAK'}</span>
+                  <span style={{ fontSize: '0.55rem', fontWeight: 700, color: p.notAssessed ? MUTED : pf(p.status === 'Missing' ? 'FAIL' : p.score >= 75 ? 'PASS' : p.score >= 40 ? 'PARTIAL' : 'FAIL'), border: '1px solid ' + (p.notAssessed ? BORDER : pf(p.status === 'Missing' ? 'FAIL' : p.score >= 75 ? 'PASS' : p.score >= 40 ? 'PARTIAL' : 'FAIL')), borderRadius: 4, padding: '0.12rem 0.5rem' }}>{p.notAssessed ? 'NOT ASSESSED' : p.status === 'Missing' ? 'MISSING' : p.score >= 75 ? 'STRONG' : p.score >= 40 ? 'PARTIAL' : 'WEAK'}</span>
                 </span>
               </div>
               <div style={{ padding: '0.75rem 1.5rem 1rem' }}>
-                {p.status === 'Missing' ? <>
+                {p.notAssessed ? (
+                  <p style={{ fontSize: '0.62rem', color: MUTED, margin: 0, fontStyle: 'italic' }}>This page loaded but couldn't be auto-assessed on this run. It does not count against your score.</p>
+                ) : p.status === 'Missing' ? <>
                   <p style={{ fontSize: '0.64rem', color: TEXT, margin: '0 0 0.3rem' }}>{p.reason}</p>
                   {p.affects && p.affects.length > 0 && <p style={{ fontSize: '0.62rem', color: AMBER, margin: 0 }}>Affects: {p.affects.join('; ')}</p>}
                 </> : <>
