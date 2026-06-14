@@ -37,23 +37,25 @@ export default function HotelAuditPage() {
   }
 
   const sc = (v: number) => v >= 75 ? GREEN : v >= 50 ? AMBER : RED
-  const pf = (s: string) => s === 'PASS' || s === 'YES' ? GREEN : s === 'PARTIAL' ? AMBER : s === 'Not assessed from crawled pages' ? MUTED : RED
+  const pf = (s: string) => s === 'PASS' || s === 'YES' || s === 'Present' ? GREEN : s === 'PARTIAL' ? AMBER : RED
   const inp: any = { width: '100%', padding: '0.6rem 0.8rem', borderRadius: 6, border: '1px solid ' + BORDER, background: WHITE, color: TEXT, fontSize: '0.75rem', boxSizing: 'border-box', fontFamily: 'Montserrat, sans-serif' }
   const grouped = (rs: any[], k: string) => rs.filter((x: any) => x.readiness === k)
   const path = (u: string) => { try { return new URL(u).pathname || u } catch { return u } }
   const card: any = { background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1rem' }
-  const head: any = { padding: '0.9rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG }
+  const sectionLabel: any = { fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.3rem' }
+  const sectionTitle: any = { fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: TEXT, margin: 0 }
+  const impactColor = (i: string) => i === 'High' ? RED : i === 'Medium' ? AMBER : MUTED
 
   return (
     <div style={{ background: BG, minHeight: '100vh', padding: '2.5rem', fontFamily: 'Montserrat, sans-serif' }}>
       <style>{`@media print { .no-print { display: none !important } }`}</style>
       <div style={{ maxWidth: 920, margin: '0 auto' }}>
-        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.9rem', color: TEXT, margin: '0 0 0.25rem' }}>Hotel AI Architecture Audit</p>
-        <p style={{ fontSize: '0.72rem', color: MUTED, margin: '0 0 1.5rem' }}>Crawls up to 18 pages, tests AI recommendation-readiness against demand prompts, and audits the full AI-first architecture — evidence-based only, with anything unverifiable marked “Not assessed from crawled pages.”</p>
+        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.9rem', color: TEXT, margin: '0 0 0.25rem' }}>AI Recommendation Readiness Audit</p>
+        <p style={{ fontSize: '0.72rem', color: MUTED, margin: '0 0 1.5rem' }}>Can AI confidently recommend this hotel — and for which kinds of guests? Evidence-based, judged only from the hotel's own pages.</p>
 
         <div className="no-print" style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', marginBottom: '1.5rem' }}>
           <div style={{ marginBottom: '0.75rem' }}>
-            <label style={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED, display: 'block', marginBottom: '0.3rem' }}>Your hotel <span style={{ textTransform: 'none', fontWeight: 400 }}>(optional — saves to dashboard & loads its prompt set)</span></label>
+            <label style={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED, display: 'block', marginBottom: '0.3rem' }}>Your hotel <span style={{ textTransform: 'none', fontWeight: 400 }}>(optional — saves to dashboard & loads its prompts)</span></label>
             <select value={hotelId} onChange={e => { const h = hotels.find(x => x.id === e.target.value); setHotelId(e.target.value); if (h?.direct_booking_url) setUrl(h.direct_booking_url) }} style={inp}>
               <option value="">External hotel (no database link)</option>
               {hotels.map(h => <option key={h.id} value={h.id}>{h.name} — {h.region}</option>)}
@@ -71,33 +73,43 @@ export default function HotelAuditPage() {
         </div>
 
         {error && <div className="no-print" style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '1.25rem', marginBottom: '1rem' }}><p style={{ fontSize: '0.72rem', color: '#b91c1c', margin: 0 }}>{error}</p></div>}
-        {loading && <div className="no-print" style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', textAlign: 'center' }}><p style={{ fontSize: '0.72rem', color: MUTED, margin: 0 }}>Crawling 18 pages, testing recommendation-readiness, and analysing every page… this takes 2–3 minutes.</p></div>}
+        {loading && <div className="no-print" style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', textAlign: 'center' }}><p style={{ fontSize: '0.72rem', color: MUTED, margin: 0 }}>Crawling priority pages, testing recommendation-readiness, and auditing each important page… this takes 2–3 minutes.</p></div>}
 
         {r && <>
-          {/* SCORES */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
-            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.5rem', textAlign: 'center' }}>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 400, color: sc(r.recommendation.score), margin: 0, lineHeight: 1 }}>{r.recommendation.score}<span style={{ fontSize: '1rem', color: MUTED }}>/100</span></p>
-              <p style={{ fontSize: '0.6rem', color: TEXT, margin: '0.4rem 0 0', fontWeight: 700 }}>{r.recommendation.yes} YES · {r.recommendation.partial} PARTIAL · {r.recommendation.no} NO</p>
-              <p style={{ fontSize: '0.52rem', color: MUTED, margin: '0.2rem 0 0', letterSpacing: '0.05em', textTransform: 'uppercase' }}>AI Recommendation Readiness</p>
-            </div>
-            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.5rem', textAlign: 'center' }}>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 400, color: sc(r.architectureScore), margin: 0, lineHeight: 1 }}>{r.architectureScore}<span style={{ fontSize: '1rem', color: MUTED }}>/100</span></p>
-              <p style={{ fontSize: '0.6rem', color: TEXT, margin: '0.4rem 0 0', fontWeight: 700 }}>{r.verdict}</p>
-              <p style={{ fontSize: '0.52rem', color: MUTED, margin: '0.2rem 0 0', letterSpacing: '0.05em', textTransform: 'uppercase' }}>AI Architecture Compliance</p>
+          <div style={{ ...card, padding: '1.75rem', textAlign: 'center', marginBottom: '1.25rem' }}>
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3.4rem', fontWeight: 400, color: sc(r.recommendation.score), margin: 0, lineHeight: 1 }}>{r.recommendation.score}<span style={{ fontSize: '1.1rem', color: MUTED }}>/100</span></p>
+            <p style={{ fontSize: '0.62rem', color: TEXT, margin: '0.4rem 0 0', fontWeight: 700 }}>{r.recommendation.yes} YES · {r.recommendation.partial} PARTIAL · {r.recommendation.no} NO</p>
+            <p style={{ fontSize: '0.52rem', color: MUTED, margin: '0.2rem 0 0', letterSpacing: '0.08em', textTransform: 'uppercase' }}>AI Recommendation Readiness</p>
+          </div>
+
+          <div style={{ margin: '0 0 0.6rem' }}>
+            <p style={sectionLabel}>Demand coverage</p>
+            <p style={sectionTitle}>Where can AI recommend you — and where can't it?</p>
+          </div>
+          <div style={card}>
+            <div style={{ padding: '1rem 1.5rem' }}>
+              {r.demandCoverage.map((d: any, i: number) => (
+                <div key={i} style={{ padding: '0.55rem 0', borderBottom: i < r.demandCoverage.length - 1 ? '1px solid ' + BORDER : 'none' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 600, color: TEXT }}>{d.label}</span>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: sc(d.coverage) }}>{d.coverage}%</span>
+                  </div>
+                  <div style={{ height: 6, background: BG, borderRadius: 3, overflow: 'hidden' }}>
+                    <div style={{ width: d.coverage + '%', height: '100%', background: sc(d.coverage) }} />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* SECTION 1 — READINESS PROMPTS */}
+          <div style={{ margin: '1.5rem 0 0.6rem' }}>
+            <p style={sectionLabel}>Section 1 · Recommendation readiness</p>
+            <p style={sectionTitle}>Every demand prompt, with evidence and what's missing</p>
+          </div>
           <div style={card}>
-            <div style={{ padding: '1.25rem 1.75rem', background: `linear-gradient(180deg, ${GOLD_LIGHT} 0%, rgba(248,245,239,0) 100%)`, borderBottom: '1px solid ' + BORDER }}>
-              <p style={{ fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.3rem' }}>Section 1 · AI recommendation readiness</p>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: TEXT, margin: 0 }}>Can AI recommend this hotel for each demand prompt?</p>
-              <p style={{ fontSize: '0.62rem', color: MUTED, margin: '0.35rem 0 0' }}>Judged only from the site's own text. NO and PARTIAL are where recommendations go to competitors.</p>
-            </div>
             <div style={{ padding: '0.5rem 1.75rem 1.25rem' }}>
               {['NO', 'PARTIAL', 'YES'].flatMap(g => grouped(r.recommendation.results, g)).map((c: any, i: number, arr: any[]) => (
-                <div key={i} style={{ padding: '0.8rem 0', borderBottom: i < arr.length - 1 ? '1px solid ' + BORDER : 'none' }}>
+                <div key={i} style={{ padding: '0.85rem 0', borderBottom: i < arr.length - 1 ? '1px solid ' + BORDER : 'none' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1rem' }}>
                     <span style={{ fontSize: '0.74rem', color: TEXT, fontWeight: 600, flex: 1 }}>{c.question}</span>
                     <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
@@ -106,81 +118,74 @@ export default function HotelAuditPage() {
                     </span>
                   </div>
                   {c.evidence && <p style={{ fontSize: '0.64rem', color: MUTED, margin: '0.3rem 0 0', lineHeight: 1.5, fontStyle: 'italic' }}>“{c.evidence}”{c.url && <span style={{ fontStyle: 'normal' }}> — {path(c.url)}</span>}</p>}
-                  {c.missing && c.readiness !== 'YES' && <p style={{ fontSize: '0.62rem', color: AMBER, margin: '0.25rem 0 0' }}>Missing: {c.missing}</p>}
+                  {c.missing && c.readiness !== 'YES' && <p style={{ fontSize: '0.62rem', color: AMBER, margin: '0.25rem 0 0' }}><b>Missing:</b> {c.missing}</p>}
+                  {c.pages && c.pages.length > 0 && c.readiness !== 'YES' && <p style={{ fontSize: '0.58rem', color: MUTED, margin: '0.2rem 0 0' }}>Pages responsible: {c.pages.join(', ')}</p>}
                 </div>
               ))}
             </div>
           </div>
 
-          {/* SECTION 2 — LAYERS */}
-          <div style={{ margin: '1.5rem 0 0.75rem' }}>
-            <p style={{ fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.3rem' }}>Section 2 · Architecture audit</p>
-            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: TEXT, margin: 0 }}>The 14 layers of AI-first hotel architecture</p>
+          <div style={{ margin: '1.5rem 0 0.6rem' }}>
+            <p style={sectionLabel}>Section 3 · Important pages</p>
+            <p style={sectionTitle}>The pages that decide your recommendations</p>
           </div>
-
-          {r.layers.map((l: any) => (
-            <div key={l.n} style={card}>
-              <div style={{ ...head, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.05rem', color: TEXT }}>Layer {l.n} · {l.layer}{typeof l.score === 'number' ? <span style={{ fontFamily: 'Montserrat', fontSize: '0.6rem', color: MUTED }}>  {l.score}%</span> : null}</span>
-                <span style={{ fontSize: '0.55rem', fontWeight: 700, color: pf(l.result), border: '1px solid ' + pf(l.result), borderRadius: 4, padding: '0.12rem 0.5rem' }}>{l.result}</span>
+          {r.importantPages.map((p: any, i: number) => (
+            <div key={i} style={card}>
+              <div style={{ padding: '0.9rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.05rem', color: TEXT }}>{p.label}{typeof p.score === 'number' ? <span style={{ fontFamily: 'Montserrat', fontSize: '0.6rem', color: MUTED }}>  {p.score}%</span> : null}</span>
+                <span style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                  {p.status === 'Missing' && <span style={{ fontSize: '0.5rem', fontWeight: 700, color: impactColor(p.impact), textTransform: 'uppercase' }}>{p.impact} impact</span>}
+                  <span style={{ fontSize: '0.55rem', fontWeight: 700, color: pf(p.status === 'Missing' ? 'FAIL' : p.score >= 75 ? 'PASS' : p.score >= 40 ? 'PARTIAL' : 'FAIL'), border: '1px solid ' + pf(p.status === 'Missing' ? 'FAIL' : p.score >= 75 ? 'PASS' : p.score >= 40 ? 'PARTIAL' : 'FAIL'), borderRadius: 4, padding: '0.12rem 0.5rem' }}>{p.status === 'Missing' ? 'MISSING' : p.score >= 75 ? 'STRONG' : p.score >= 40 ? 'PARTIAL' : 'WEAK'}</span>
+                </span>
               </div>
               <div style={{ padding: '0.75rem 1.5rem 1rem' }}>
-                {l.present && l.present.length > 0 && <p style={{ fontSize: '0.64rem', color: GREEN, margin: '0 0 0.3rem' }}>Present: {l.present.join(', ')}</p>}
-                {l.missing && l.missing.length > 0 && <p style={{ fontSize: '0.64rem', color: AMBER, margin: '0 0 0.3rem' }}>Missing: {l.missing.join(', ')}</p>}
-                {l.level && <p style={{ fontSize: '0.64rem', color: TEXT, margin: '0 0 0.3rem' }}>{l.level}{typeof l.count === 'number' ? ` · ${l.count} named entities` : ''}</p>}
-                {l.note && <p style={{ fontSize: '0.62rem', color: MUTED, margin: '0.2rem 0 0', lineHeight: 1.5 }}>{l.note}</p>}
-                {l.n === 0 && l.detail && l.detail.map((d: any, j: number) => (
-                  <div key={j} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.3rem 0', borderBottom: j < l.detail.length - 1 ? '1px solid ' + BORDER : 'none' }}>
-                    <span style={{ fontSize: '0.64rem', color: TEXT }}>{d.topic}</span>
-                    <span style={{ fontSize: '0.6rem', color: d.status === 'Single source' ? GREEN : d.status === 'Missing' ? RED : AMBER }}>{d.status} <span style={{ color: MUTED }}>· {d.note}</span></span>
-                  </div>
-                ))}
-                {l.n === 4 && l.detail && l.detail.rooms && l.detail.rooms.map((rm: any, j: number) => (
-                  <div key={j} style={{ padding: '0.4rem 0', borderBottom: j < l.detail.rooms.length - 1 ? '1px solid ' + BORDER : 'none' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ fontSize: '0.62rem', color: TEXT }}>{path(rm.url)}</span><span style={{ fontSize: '0.62rem', fontWeight: 700, color: sc(rm.score) }}>{rm.score}%</span></div>
-                    {rm.missing.length > 0 && <p style={{ fontSize: '0.58rem', color: AMBER, margin: '0.15rem 0 0' }}>Missing: {rm.missing.join(', ')}</p>}
-                  </div>
-                ))}
-                {l.n === 11 && l.clusters && l.clusters.map((cl: any, j: number) => (
-                  <div key={j} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.3rem 0', borderBottom: j < l.clusters.length - 1 ? '1px solid ' + BORDER : 'none' }}>
-                    <span style={{ fontSize: '0.64rem', color: TEXT }}>{cl.cluster} cluster</span>
-                    <span style={{ fontSize: '0.6rem', color: cl.strength === 'Strong' ? GREEN : cl.strength === 'Moderate' ? AMBER : RED }}>{cl.strength} <span style={{ color: MUTED }}>· {cl.pages} pages, {cl.internalEdges} links</span></span>
-                  </div>
-                ))}
+                {p.status === 'Missing' ? <>
+                  <p style={{ fontSize: '0.64rem', color: TEXT, margin: '0 0 0.3rem' }}>{p.reason}</p>
+                  {p.affects && p.affects.length > 0 && <p style={{ fontSize: '0.62rem', color: AMBER, margin: 0 }}>Affects: {p.affects.join('; ')}</p>}
+                </> : <>
+                  {p.present.length > 0 && <p style={{ fontSize: '0.64rem', color: GREEN, margin: '0 0 0.3rem' }}>Has: {p.present.join(', ')}</p>}
+                  {p.missing.length > 0 && <p style={{ fontSize: '0.64rem', color: AMBER, margin: '0 0 0.3rem' }}><b>To add:</b> {p.missing.join(', ')}</p>}
+                  {p.evidence && <p style={{ fontSize: '0.6rem', color: MUTED, margin: '0.2rem 0 0', fontStyle: 'italic' }}>“{p.evidence}”</p>}
+                  {p.affects && p.affects.length > 0 && <p style={{ fontSize: '0.58rem', color: MUTED, margin: '0.3rem 0 0' }}>Improving this helps: {p.affects.join('; ')}</p>}
+                  {p.url && <p style={{ fontSize: '0.55rem', color: MUTED, margin: '0.2rem 0 0' }}>{path(p.url)}</p>}
+                </>}
               </div>
             </div>
           ))}
 
-          {/* PAGE BY PAGE */}
+          <div style={{ margin: '1.5rem 0 0.6rem' }}>
+            <p style={sectionLabel}>Section 4 · Architecture (supporting evidence)</p>
+            <p style={sectionTitle}>Technical AI-readiness · score {r.architectureScore}/100</p>
+          </div>
           <div style={card}>
-            <div style={head}><p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.05rem', color: TEXT, margin: 0 }}>Page-by-page analysis ({r.pageByPage.length} crawled)</p></div>
             <div style={{ padding: '0.5rem 1.5rem 1rem' }}>
-              {r.pageByPage.map((p: any, i: number) => (
-                <div key={i} style={{ padding: '0.6rem 0', borderBottom: i < r.pageByPage.length - 1 ? '1px solid ' + BORDER : 'none' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1rem' }}>
-                    <span style={{ fontSize: '0.66rem', color: TEXT, fontWeight: 600 }}>{path(p.url)} <span style={{ fontSize: '0.55rem', color: MUTED, textTransform: 'uppercase' }}>{p.type}</span></span>
-                    <span style={{ fontSize: '0.62rem', fontWeight: 700, color: p.score === null ? MUTED : sc(p.score), flexShrink: 0 }}>{p.score === null ? '—' : p.score + '%'}</span>
+              {r.architecture.layers.map((l: any, i: number) => (
+                <div key={i} style={{ padding: '0.6rem 0', borderBottom: i < r.architecture.layers.length - 1 ? '1px solid ' + BORDER : 'none' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: TEXT }}>Layer {l.n} · {l.layer}{typeof l.score === 'number' ? <span style={{ fontWeight: 400, color: MUTED, fontSize: '0.6rem' }}>  {l.score}%</span> : null}</span>
+                    <span style={{ fontSize: '0.55rem', fontWeight: 700, color: pf(l.result), border: '1px solid ' + pf(l.result), borderRadius: 4, padding: '0.12rem 0.5rem' }}>{l.result}</span>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.2rem', flexWrap: 'wrap' }}>
-                    {p.quickFacts && <span style={{ fontSize: '0.52rem', color: GREEN }}>✓ Quick Facts</span>}
-                    {p.aiSummary && <span style={{ fontSize: '0.52rem', color: GREEN }}>✓ AI summary</span>}
-                    {p.present.length > 0 && <span style={{ fontSize: '0.55rem', color: MUTED }}>Has: {p.present.join(', ')}</span>}
-                    {p.missing.length > 0 && <span style={{ fontSize: '0.55rem', color: AMBER }}>Missing: {p.missing.join(', ')}</span>}
-                  </div>
+                  {l.note && <p style={{ fontSize: '0.6rem', color: MUTED, margin: '0.25rem 0 0' }}>{l.note}</p>}
+                  {l.present && l.present.length > 0 && <p style={{ fontSize: '0.6rem', color: GREEN, margin: '0.2rem 0 0' }}>Present: {l.present.join(', ')}</p>}
+                  {l.missing && l.missing.length > 0 && <p style={{ fontSize: '0.6rem', color: AMBER, margin: '0.15rem 0 0' }}>Missing: {l.missing.join(', ')}</p>}
+                  {l.n === 0 && l.detail && l.detail.map((d: any, j: number) => (
+                    <div key={j} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.2rem 0' }}>
+                      <span style={{ fontSize: '0.6rem', color: TEXT }}>{d.topic}</span>
+                      <span style={{ fontSize: '0.56rem', color: d.status === 'Single source' ? GREEN : d.status === 'Missing' ? RED : AMBER }}>{d.status} <span style={{ color: MUTED }}>· {d.note}</span></span>
+                    </div>
+                  ))}
                 </div>
               ))}
             </div>
+            <div style={{ padding: '0.75rem 1.5rem', background: BG, borderTop: '1px solid ' + BORDER }}>
+              <p style={{ fontSize: '0.58rem', color: MUTED, margin: 0 }}>{r.architecture.note}</p>
+            </div>
           </div>
 
-          {/* NOT ASSESSED + CRAWL */}
-          <div style={{ background: BG, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1rem 1.5rem', marginBottom: '1rem' }}>
-            <p style={{ fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED, margin: '0 0 0.4rem' }}>Not assessed from crawled pages</p>
-            <p style={{ fontSize: '0.6rem', color: MUTED, margin: 0, lineHeight: 1.6 }}>{(r.notAssessed || []).join(' · ')}</p>
-          </div>
           <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1rem 1.5rem' }}>
-            <p style={{ fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: MUTED, margin: '0 0 0.6rem' }}>Pages crawled ({r.crawlDepth} of max {r.crawlLimit})</p>
+            <p style={{ fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: MUTED, margin: '0 0 0.6rem' }}>Priority pages crawled ({r.crawlDepth})</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-              {r.pagesScraped.map((p: any, i: number) => <span key={i} style={{ fontSize: '0.6rem', fontWeight: 600, color: TEXT, background: BG, border: '1px solid ' + BORDER, borderRadius: 20, padding: '0.3rem 0.75rem' }}>{path(p.url)}</span>)}
+              {r.pagesScraped.map((u: string, i: number) => <span key={i} style={{ fontSize: '0.6rem', fontWeight: 600, color: TEXT, background: BG, border: '1px solid ' + BORDER, borderRadius: 20, padding: '0.3rem 0.75rem' }}>{path(u)}</span>)}
             </div>
             {r.robots && r.robots.blocked && r.robots.blocked.length > 0 && <p style={{ fontSize: '0.6rem', color: RED, margin: '0.6rem 0 0' }}>⚠ robots.txt blocks: {r.robots.blocked.join(', ')}</p>}
           </div>
