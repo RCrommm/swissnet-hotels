@@ -2488,7 +2488,7 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
   const visibilityScore = platformScores?.overall ?? 0
 
   // For chart — use overviewRunData grouped by date
-  const runDates = [...new Set((overviewRunData || []).map((r: any) => r.checked_at?.split('T')[0]))].sort() as string[]
+  const runDates = [...new Set((overviewRunData || []).map((r: any) => r.run_date || r.checked_at?.split('T')[0]).filter(Boolean))].sort() as string[]
 
   // For "Where You Appear" and "Queries to Improve" — use hotelSpecificScores
   const rangeStartStr = customRange
@@ -3005,7 +3005,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
                   ? runDates
                   : chartPlatform === 'google_ai'
                   ? ([...new Set((googleAiScores || []).map((r: any) => r.checked_at?.split('T')[0]).filter(Boolean))].sort() as string[])
-                  : ([...new Set((overviewRunData || []).filter((r: any) => r.platform === chartPlatform).map((r: any) => r.checked_at?.split('T')[0]).filter(Boolean))].sort() as string[])
+                  : ([...new Set((overviewRunData || []).filter((r: any) => r.platform === chartPlatform).map((r: any) => r.run_date || r.checked_at?.split('T')[0]).filter(Boolean))].sort() as string[])
 
                 const realPoints = allDates.map((d: string) => {
                   if (chartPlatform === 'overall') {
