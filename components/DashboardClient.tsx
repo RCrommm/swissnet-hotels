@@ -2326,10 +2326,10 @@ function WebsiteTab({ hotel }: any) {
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.3rem' }}>Full Audit · supporting evidence</p>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: TEXT, margin: '0 0 1.25rem' }}>The four pillars of AI visibility</p>
 
-          {/* ── PILLAR 1 · ARCHITECTURE ── */}
           {arch?.layers?.length > 0 && (
             <Card>
               <CardHead kicker="Pillar 1" title="AI Architecture" right={<span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: scoreColor(arch.score) }}>{arch.score}<span style={{ fontSize: '0.7rem', color: TEXT_MUTED }}>/100</span></span>} />
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: 0, padding: '0.6rem 1.5rem 0', fontStyle: 'italic' }}>Tap any layer to see what it is, why it matters for AI, and why it scored the way it did.</p>
               <div>
                 {arch.layers.map((l: any, i: number) => {
                   const open = openLayer === l.n
@@ -2343,11 +2343,19 @@ function WebsiteTab({ hotel }: any) {
                       </div>
                       {open && (
                         <div style={{ padding: '0 1.5rem 1.1rem 3rem', background: BG }}>
-                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, margin: '0.5rem 0 0.4rem', lineHeight: 1.6 }}><strong>What it is:</strong> {l.definition}</p>
-                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: '0 0 0.5rem', lineHeight: 1.6 }}><strong style={{ color: TEXT }}>Why AI cares:</strong> {l.why}</p>
-                          {l.evidence?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: GREEN, margin: '0 0 0.3rem', lineHeight: 1.5 }}><strong>Found:</strong> {l.evidence.join(' · ')}</p>}
-                          {l.missing?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: '#d97706', margin: '0 0 0.3rem', lineHeight: 1.5 }}><strong>Missing:</strong> {l.missing.join(', ')}</p>}
-                          {l.fix && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, margin: '0.3rem 0 0', lineHeight: 1.6 }}><strong>To improve:</strong> {l.fix}</p>}
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0.7rem 0 0.15rem' }}>What it is</p>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.6 }}>{l.definition}</p>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.15rem' }}>Why it matters for AI visibility</p>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.6 }}>{l.why}</p>
+                          {l.scoreReason && (
+                            <>
+                              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: statusColor(l.status), margin: '0 0 0.15rem' }}>Why this score</p>
+                              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.6 }}>{l.scoreReason}</p>
+                            </>
+                          )}
+                          {l.evidence?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: GREEN, margin: '0 0 0.25rem', lineHeight: 1.5 }}><strong>Found:</strong> {l.evidence.join(' · ')}</p>}
+                          {l.missing?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: '#d97706', margin: '0 0 0.25rem', lineHeight: 1.5 }}><strong>Missing:</strong> {l.missing.join(', ')}</p>}
+                          {l.fix && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, margin: '0.3rem 0 0', lineHeight: 1.6 }}><strong>How to improve:</strong> {l.fix}</p>}
                         </div>
                       )}
                     </div>
