@@ -36,7 +36,7 @@ export default function HotelAuditPage() {
       const res = await fetch('/api/hotel-audit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: firstUrl, city, password, hotelId: hotelId || undefined, manualUrls: list }) })
       const data = await res.json()
       if (data.error) setError(data.error); else setR(data)
-    } catch { setError('Request failed (the audit may have timed out — full audits take 2–3 minutes).') } finally { setLoading(false) }
+    } catch { setError('Request failed (the audit may have timed out — audits take 2–3 minutes).') } finally { setLoading(false) }
   }
 
   const sc = (v: number) => v >= 75 ? GREEN : v >= 50 ? AMBER : RED
@@ -65,7 +65,7 @@ export default function HotelAuditPage() {
             </select>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
-            <div><label style={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED, display: 'block', marginBottom: '0.3rem' }}>Website URL</label><input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://hotel.com" style={inp} /></div>
+            <div><label style={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED, display: 'block', marginBottom: '0.3rem' }}>Website URL <span style={{ textTransform: 'none', fontWeight: 400 }}>(origin)</span></label><input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://hotel.com" style={inp} /></div>
             <div><label style={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED, display: 'block', marginBottom: '0.3rem' }}>City <span style={{ textTransform: 'none', fontWeight: 400 }}>(optional)</span></label><input value={city} onChange={e => setCity(e.target.value)} placeholder="Geneva" style={inp} /></div>
           </div>
           <div style={{ marginBottom: '0.75rem' }}>
@@ -80,18 +80,31 @@ export default function HotelAuditPage() {
         </div>
 
         {error && <div className="no-print" style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '1.25rem', marginBottom: '1rem' }}><p style={{ fontSize: '0.72rem', color: '#b91c1c', margin: 0 }}>{error}</p></div>}
-        {loading && <div className="no-print" style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', textAlign: 'center' }}><p style={{ fontSize: '0.72rem', color: MUTED, margin: 0 }}>Crawling priority pages, testing recommendation-readiness, and auditing each important page… this takes 2–3 minutes.</p></div>}
+        {loading && <div className="no-print" style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', textAlign: 'center' }}><p style={{ fontSize: '0.72rem', color: MUTED, margin: 0 }}>Crawling pages, testing recommendation-readiness, and auditing each page… this takes 2–3 minutes.</p></div>}
 
         {r && <>
-          <div style={{ ...card, padding: '1.75rem', textAlign: 'center', marginBottom: '1.25rem' }}>
+          <div style={{ ...card, padding: '1.75rem', textAlign: 'center', marginBottom: '1rem' }}>
             <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3.4rem', fontWeight: 400, color: sc(r.recommendation.score), margin: 0, lineHeight: 1 }}>{r.recommendation.score}<span style={{ fontSize: '1.1rem', color: MUTED }}>/100</span></p>
             <p style={{ fontSize: '0.62rem', color: TEXT, margin: '0.4rem 0 0', fontWeight: 700 }}>{r.recommendation.yes} YES · {r.recommendation.partial} PARTIAL · {r.recommendation.no} NO</p>
             <p style={{ fontSize: '0.52rem', color: MUTED, margin: '0.2rem 0 0', letterSpacing: '0.08em', textTransform: 'uppercase' }}>AI Recommendation Readiness</p>
           </div>
 
+          {r.summary && (r.summary.strongFor.length > 0 || r.summary.weakFor.length > 0) && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
+              <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.25rem' }}>
+                <p style={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: GREEN, margin: '0 0 0.5rem' }}>AI can recommend you for</p>
+                {r.summary.strongFor.length ? r.summary.strongFor.map((s: string, i: number) => <p key={i} style={{ fontSize: '0.74rem', color: TEXT, margin: '0.2rem 0' }}>✓ {s}</p>) : <p style={{ fontSize: '0.66rem', color: MUTED, margin: 0 }}>No category is strong yet.</p>}
+              </div>
+              <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.25rem' }}>
+                <p style={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: RED, margin: '0 0 0.5rem' }}>AI cannot recommend you for</p>
+                {r.summary.weakFor.length ? r.summary.weakFor.map((s: string, i: number) => <p key={i} style={{ fontSize: '0.74rem', color: TEXT, margin: '0.2rem 0' }}>✗ {s}</p>) : <p style={{ fontSize: '0.66rem', color: MUTED, margin: 0 }}>No critical gaps.</p>}
+              </div>
+            </div>
+          )}
+
           <div style={{ margin: '0 0 0.6rem' }}>
             <p style={sectionLabel}>Demand coverage</p>
-            <p style={sectionTitle}>Where can AI recommend you — and where can't it?</p>
+            <p style={sectionTitle}>Coverage by guest type</p>
           </div>
           <div style={card}>
             <div style={{ padding: '1rem 1.5rem' }}>
@@ -101,17 +114,15 @@ export default function HotelAuditPage() {
                     <span style={{ fontSize: '0.72rem', fontWeight: 600, color: TEXT }}>{d.label}</span>
                     <span style={{ fontSize: '0.68rem', fontWeight: 700, color: sc(d.coverage) }}>{d.coverage}%</span>
                   </div>
-                  <div style={{ height: 6, background: BG, borderRadius: 3, overflow: 'hidden' }}>
-                    <div style={{ width: d.coverage + '%', height: '100%', background: sc(d.coverage) }} />
-                  </div>
+                  <div style={{ height: 6, background: BG, borderRadius: 3, overflow: 'hidden' }}><div style={{ width: d.coverage + '%', height: '100%', background: sc(d.coverage) }} /></div>
                 </div>
               ))}
             </div>
           </div>
 
           <div style={{ margin: '1.5rem 0 0.6rem' }}>
-            <p style={sectionLabel}>Section 1 · Recommendation readiness</p>
-            <p style={sectionTitle}>Every demand prompt, with evidence and what's missing</p>
+            <p style={sectionLabel}>Recommendation prompts</p>
+            <p style={sectionTitle}>Every prompt — and why AI answered that way</p>
           </div>
           <div style={card}>
             <div style={{ padding: '0.5rem 1.75rem 1.25rem' }}>
@@ -125,15 +136,20 @@ export default function HotelAuditPage() {
                     </span>
                   </div>
                   {c.evidence && <p style={{ fontSize: '0.64rem', color: MUTED, margin: '0.3rem 0 0', lineHeight: 1.5, fontStyle: 'italic' }}>“{c.evidence}”{c.url && <span style={{ fontStyle: 'normal' }}> — {path(c.url)}</span>}</p>}
-                  {c.missing && c.readiness !== 'YES' && <p style={{ fontSize: '0.62rem', color: AMBER, margin: '0.25rem 0 0' }}><b>Missing:</b> {c.missing}</p>}
-                  {c.pages && c.pages.length > 0 && c.readiness !== 'YES' && <p style={{ fontSize: '0.58rem', color: MUTED, margin: '0.2rem 0 0' }}>Pages responsible: {c.pages.join(', ')}</p>}
+                  {c.reasons && c.reasons.length > 0 && c.readiness !== 'YES' && (
+                    <div style={{ margin: '0.35rem 0 0' }}>
+                      <p style={{ fontSize: '0.58rem', fontWeight: 700, color: TEXT, margin: '0 0 0.15rem' }}>{c.readiness === 'NO' ? 'AI could not recommend because:' : 'Holding it back from a strong YES:'}</p>
+                      {c.reasons.map((rs: string, j: number) => <p key={j} style={{ fontSize: '0.62rem', color: AMBER, margin: '0.1rem 0 0' }}>{j + 1}. {rs}</p>)}
+                    </div>
+                  )}
+                  {c.pages && c.pages.length > 0 && c.readiness !== 'YES' && <p style={{ fontSize: '0.58rem', color: MUTED, margin: '0.25rem 0 0' }}>Pages responsible: {c.pages.join(', ')}</p>}
                 </div>
               ))}
             </div>
           </div>
 
           <div style={{ margin: '1.5rem 0 0.6rem' }}>
-            <p style={sectionLabel}>Section 3 · Important pages</p>
+            <p style={sectionLabel}>Important pages</p>
             <p style={sectionTitle}>The pages that decide your recommendations</p>
           </div>
           {r.importantPages.map((p: any, i: number) => (
@@ -152,6 +168,11 @@ export default function HotelAuditPage() {
                 </> : <>
                   {p.present.length > 0 && <p style={{ fontSize: '0.64rem', color: GREEN, margin: '0 0 0.3rem' }}>Has: {p.present.join(', ')}</p>}
                   {p.missing.length > 0 && <p style={{ fontSize: '0.64rem', color: AMBER, margin: '0 0 0.3rem' }}><b>To add:</b> {p.missing.join(', ')}</p>}
+                  {p.examples && p.examples.length > 0 && (
+                    <div style={{ background: BG, borderRadius: 8, padding: '0.6rem 0.8rem', margin: '0.4rem 0' }}>
+                      {p.examples.map((ex: string, j: number) => <p key={j} style={{ fontSize: '0.58rem', color: MUTED, margin: j ? '0.5rem 0 0' : 0, whiteSpace: 'pre-line', lineHeight: 1.5 }}>{ex}</p>)}
+                    </div>
+                  )}
                   {p.evidence && <p style={{ fontSize: '0.6rem', color: MUTED, margin: '0.2rem 0 0', fontStyle: 'italic' }}>“{p.evidence}”</p>}
                   {p.affects && p.affects.length > 0 && <p style={{ fontSize: '0.58rem', color: MUTED, margin: '0.3rem 0 0' }}>Improving this helps: {p.affects.join('; ')}</p>}
                   {p.url && <p style={{ fontSize: '0.55rem', color: MUTED, margin: '0.2rem 0 0' }}>{path(p.url)}</p>}
@@ -160,8 +181,33 @@ export default function HotelAuditPage() {
             </div>
           ))}
 
+          {r.missingBlueprints && r.missingBlueprints.length > 0 && <>
+            <div style={{ margin: '1.5rem 0 0.6rem' }}>
+              <p style={sectionLabel}>Recommended new pages</p>
+              <p style={sectionTitle}>Blueprints for the pages you're missing</p>
+              <p style={{ fontSize: '0.62rem', color: MUTED, margin: '0.3rem 0 0' }}>These pages were not found in the crawl. Each blueprint is a recommended structure — fill it with your hotel's real details.</p>
+            </div>
+            {r.missingBlueprints.map((b: any, i: number) => (
+              <div key={i} style={card}>
+                <div style={{ padding: '0.9rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.05rem', color: TEXT }}>{b.blueprint.heading}</span>
+                  <span style={{ fontSize: '0.5rem', fontWeight: 700, color: impactColor(b.impact), textTransform: 'uppercase' }}>{b.impact} impact</span>
+                </div>
+                <div style={{ padding: '0.75rem 1.5rem 1rem' }}>
+                  <p style={{ fontSize: '0.58rem', fontWeight: 700, color: TEXT, margin: '0 0 0.3rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Recommended sections</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.6rem' }}>
+                    {b.blueprint.sections.map((s: string, j: number) => <span key={j} style={{ fontSize: '0.6rem', color: TEXT, background: BG, border: '1px solid ' + BORDER, borderRadius: 16, padding: '0.25rem 0.6rem' }}>{s}</span>)}
+                  </div>
+                  <p style={{ fontSize: '0.58rem', fontWeight: 700, color: TEXT, margin: '0 0 0.3rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Questions it should answer</p>
+                  {b.blueprint.questions.map((q: string, j: number) => <p key={j} style={{ fontSize: '0.62rem', color: MUTED, margin: '0.1rem 0 0' }}>• {q}</p>)}
+                  {b.affects && b.affects.length > 0 && <p style={{ fontSize: '0.58rem', color: AMBER, margin: '0.5rem 0 0' }}>Adding this would help: {b.affects.join('; ')}</p>}
+                </div>
+              </div>
+            ))}
+          </>}
+
           <div style={{ margin: '1.5rem 0 0.6rem' }}>
-            <p style={sectionLabel}>Section 4 · Architecture (supporting evidence)</p>
+            <p style={sectionLabel}>Technical architecture (supporting)</p>
             <p style={sectionTitle}>Technical AI-readiness · score {r.architectureScore}/100</p>
           </div>
           <div style={card}>
@@ -184,13 +230,11 @@ export default function HotelAuditPage() {
                 </div>
               ))}
             </div>
-            <div style={{ padding: '0.75rem 1.5rem', background: BG, borderTop: '1px solid ' + BORDER }}>
-              <p style={{ fontSize: '0.58rem', color: MUTED, margin: 0 }}>{r.architecture.note}</p>
-            </div>
+            <div style={{ padding: '0.75rem 1.5rem', background: BG, borderTop: '1px solid ' + BORDER }}><p style={{ fontSize: '0.58rem', color: MUTED, margin: 0 }}>{r.architecture.note}</p></div>
           </div>
 
           <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1rem 1.5rem' }}>
-            <p style={{ fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: MUTED, margin: '0 0 0.6rem' }}>Priority pages crawled ({r.crawlDepth})</p>
+            <p style={{ fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: MUTED, margin: '0 0 0.6rem' }}>Pages crawled ({r.crawlDepth})</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
               {r.pagesScraped.map((u: string, i: number) => <span key={i} style={{ fontSize: '0.6rem', fontWeight: 600, color: TEXT, background: BG, border: '1px solid ' + BORDER, borderRadius: 20, padding: '0.3rem 0.75rem' }}>{path(u)}</span>)}
             </div>

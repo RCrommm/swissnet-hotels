@@ -72,9 +72,9 @@ async function fetchRobots(origin: string) {
 
 const PRIORITY: { key: string; label: string; kws: string[]; impact: string; cats: string[]; multi?: boolean }[] = [
   { key: 'homepage', label: 'Homepage', kws: [], impact: 'High', cats: ['overall'] },
-  { key: 'rooms', label: 'Room pages', kws: ['room', 'suite', 'accommodation', 'chambre', 'zimmer'], impact: 'High', cats: ['luxury', 'family', 'romantic'], multi: true },
+  { key: 'rooms', label: 'Room pages', kws: ['room', 'suite', 'accommodation', 'chambre', 'zimmer', 'villa'], impact: 'High', cats: ['luxury', 'family', 'romantic'], multi: true },
   { key: 'spa', label: 'Spa / Wellness page', kws: ['spa', 'wellness', 'bien-etre', 'bien-être'], impact: 'High', cats: ['wellness'] },
-  { key: 'dining', label: 'Dining page', kws: ['restaurant', 'dining', 'gastro', 'cuisine'], impact: 'High', cats: ['dining'] },
+  { key: 'dining', label: 'Dining page', kws: ['restaurant', 'dining', 'gastro', 'cuisine', 'bar'], impact: 'High', cats: ['dining'] },
   { key: 'location', label: 'Location page', kws: ['location', 'directions', 'getting-here', 'contact', 'access', 'map'], impact: 'High', cats: ['location'] },
   { key: 'meetings', label: 'Meetings & Events page', kws: ['meeting', 'event', 'conference', 'banquet', 'mice', 'seminaire'], impact: 'Medium', cats: ['business'] },
   { key: 'family', label: 'Family page', kws: ['family', 'kids', 'children', 'famille', 'enfant'], impact: 'High', cats: ['family'] },
@@ -104,6 +104,27 @@ const EXPECTED: Record<string, { field: string; label: string }[]> = {
   airport: [{ field: 'available', label: 'Transfer available' }, { field: 'pricing', label: 'Pricing' }, { field: 'distance', label: 'Distance / time' }, { field: 'booking', label: 'How to book' }, { field: 'faq', label: 'FAQ' }],
 }
 
+const BLUEPRINTS: Record<string, { heading: string; sections: string[]; questions: string[] }> = {
+  parking: { heading: 'Parking at the hotel', sections: ['Availability (on-site / valet / nearby)', 'Pricing per night', 'EV charging', 'Reservation policy', 'Height / size limits', 'FAQ'], questions: ['Does the hotel have parking?', 'How much does parking cost?', 'Is valet parking available?', 'Are EV chargers available?', 'Do I need to reserve parking?'] },
+  accessibility: { heading: 'Accessibility', sections: ['Accessible rooms', 'Step-free access', 'Lift access', 'Accessible bathrooms', 'Accessibility policies', 'FAQ'], questions: ['Are accessible rooms available?', 'Is there step-free access?', 'Is there lift access to all floors?', 'Are accessible bathrooms available?'] },
+  pets: { heading: 'Pets policy', sections: ['Pet policy (allowed / restrictions)', 'Fees', 'Pet amenities (beds, bowls)', 'Size / number limits', 'FAQ'], questions: ['Are pets allowed?', 'Is there a fee for pets?', 'What pet amenities are provided?', 'Is there a size limit for pets?'] },
+  breakfast: { heading: 'Breakfast', sections: ['Hours', 'Included in rate / price', 'Venue & setting', 'Menu / style (buffet, à la carte)', 'Dietary options', 'FAQ'], questions: ['Is breakfast included?', 'What are the breakfast hours?', 'Where is breakfast served?', 'Are there vegan / gluten-free options?'] },
+  airport: { heading: 'Airport transfer', sections: ['Transfer available (yes/no)', 'Pricing', 'Distance & travel time to airport', 'Vehicle type', 'How to book', 'FAQ'], questions: ['How far is the airport?', 'Is an airport transfer available?', 'How much is the transfer?', 'How do I book a transfer?'] },
+  family: { heading: 'Family stays', sections: ['Family positioning', 'Family / connecting rooms', 'Children policy & age limits', 'Family amenities (kids club, pool)', 'Nearby family attractions', 'FAQ'], questions: ['Is the hotel family-friendly?', 'Are family or connecting rooms available?', 'What activities are there for children?', 'Is there a kids club?'] },
+  romantic: { heading: 'Romantic & honeymoon stays', sections: ['Couples positioning', 'Romantic experiences & packages', 'Best suites for couples', 'Couples spa experiences', 'Romantic dining', 'FAQ'], questions: ['Is the hotel good for couples?', 'Are there honeymoon packages?', 'Which room is best for a romantic stay?', 'Are there couples spa treatments?'] },
+  business: { heading: 'Business, meetings & events', sections: ['Meeting facilities', 'Room capacities', 'Corporate / executive services', 'Airport access', 'Catering', 'FAQ'], questions: ['Does the hotel have meeting rooms?', 'What is the meeting room capacity?', 'Is the hotel suitable for business travel?', 'How far is the airport?'] },
+  spa: { heading: 'Spa & wellness', sections: ['Services & treatments', 'Facilities (pool, sauna, gym)', 'Opening hours', 'Non-resident policy', 'Quick Facts', 'FAQ'], questions: ['Does the hotel have a spa?', 'What treatments are offered?', 'Is the spa open to non-residents?', 'What are the spa opening hours?'] },
+  dining: { heading: 'Restaurants & bars', sections: ['Each restaurant described', 'Cuisine type', 'Who it’s for / occasion', 'Why choose it', 'Hours & dress code', 'FAQ'], questions: ['What restaurants are at the hotel?', 'What cuisine is served?', 'Do I need a reservation?', 'Are there vegetarian options?'] },
+  luxury: { heading: 'About / the hotel', sections: ['Luxury positioning', 'Story & heritage', 'Awards & recognition', 'What makes it distinctive', 'FAQ'], questions: ['What makes this hotel special?', 'What awards has the hotel won?', 'What is the hotel’s story?'] },
+  location: { heading: 'Location & getting here', sections: ['Address & map', 'Distance to airport / station / centre', 'Nearby attractions', 'Transport options', 'FAQ'], questions: ['Where is the hotel located?', 'How far is the airport?', 'What attractions are nearby?', 'How do I get there?'] },
+}
+
+const EXAMPLES: Record<string, string> = {
+  quickfacts: 'Example format (fill with your own facts):\nParking: Yes · Spa: Yes · Lake view: Some rooms · Airport transfer: On request · Pets: Allowed',
+  aisummary: 'Example format (write your own 1–2 sentences): "[Hotel] is a [type] hotel in [area], best suited to [guest types], known for [1–2 distinctive features]."',
+  faq: 'Example questions to answer: Does the hotel have parking? · Is breakfast included? · How far is the airport? · Is the spa open to non-residents?',
+}
+
 const REC_SYSTEM = `You are a strict, evidence-based hotel AI-recommendation auditor. Given crawled text from ONE hotel website and a list of recommendation prompts, decide for EACH prompt whether THIS WEBSITE provides enough evidence for an AI to CONFIDENTLY RECOMMEND this hotel for that prompt.
 
 RULES:
@@ -111,19 +132,19 @@ RULES:
 - "readiness": "YES" (clear specific quotable evidence), "PARTIAL" (some but thin/incomplete), or "NO" (none).
 - Every YES/PARTIAL MUST include a verbatim quote from the text. No quote = NO.
 - "evidence": the verbatim quote, or "".
-- "missing": short, concrete list of what content is absent that prevents confident recommendation.
+- "reasons": an array of 1-4 short, concrete reasons WHY an AI could not confidently recommend (for YES, may be empty). Phrase as plain factual gaps, e.g. "No parking information found", "No dedicated family page", "No FAQ answering this", "No distinctive features stated". Avoid the generic phrase "comparative claims"; instead say "No distinctive features stated" or "No specific [topic] details".
 - "confidence": integer 0-100 (NO 0-20, PARTIAL 21-60, YES 61-100), justified by the quote.
 - "url": source URL of the quote; "".
-- "pages": short list of which page TYPES are responsible for this prompt (e.g. "family page", "room pages", "FAQ", "spa page", "parking page").
+- "pages": short list of which page TYPES are responsible (e.g. "family page", "room pages", "parking page", "FAQ").
 Return STRICTLY the JSON schema, one entry per prompt in order.`
 
 function recSchema() {
   return { type: 'object', additionalProperties: false, required: ['answers'], properties: { answers: { type: 'array', items: {
     type: 'object', additionalProperties: false,
-    required: ['index', 'readiness', 'evidence', 'missing', 'url', 'confidence', 'pages'],
+    required: ['index', 'readiness', 'evidence', 'reasons', 'url', 'confidence', 'pages'],
     properties: {
       index: { type: 'integer' }, readiness: { type: 'string', enum: ['YES', 'PARTIAL', 'NO'] },
-      evidence: { type: 'string' }, missing: { type: 'string' }, url: { type: 'string' }, confidence: { type: 'integer' },
+      evidence: { type: 'string' }, reasons: { type: 'array', items: { type: 'string' } }, url: { type: 'string' }, confidence: { type: 'integer' },
       pages: { type: 'array', items: { type: 'string' } },
     },
   } } } }
@@ -136,7 +157,7 @@ async function runReadiness(prompts: any[], pages: any[], openaiKey: string) {
     const res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
       body: JSON.stringify({
-        model: 'gpt-4o', temperature: 0, max_tokens: 4000,
+        model: 'gpt-4o', temperature: 0, max_tokens: 4500,
         response_format: { type: 'json_schema', json_schema: { name: 'readiness', strict: true, schema: recSchema() } },
         messages: [{ role: 'system', content: REC_SYSTEM }, { role: 'user', content: `WEBSITE PAGES:\n\n${corpus}\n\n────────\nPROMPTS:\n${pList}` }],
       }),
@@ -152,10 +173,10 @@ async function runReadiness(prompts: any[], pages: any[], openaiKey: string) {
       if ((readiness === 'YES' || readiness === 'PARTIAL') && ev.length === 0) readiness = 'NO'
       let conf = Number.isFinite(a.confidence) ? Math.max(0, Math.min(100, a.confidence)) : 0
       if (readiness === 'NO') conf = Math.min(conf, 20)
-      return { question: q.question, category: q.category || 'overall', priority: q.priority || 'medium', readiness, evidence: readiness === 'NO' ? '' : ev, missing: (a.missing || '').trim(), url: readiness === 'NO' ? '' : (a.url || ''), confidence: conf, pages: Array.isArray(a.pages) ? a.pages.slice(0, 5) : [] }
+      return { question: q.question, category: q.category || 'overall', priority: q.priority || 'medium', readiness, evidence: readiness === 'NO' ? '' : ev, reasons: Array.isArray(a.reasons) ? a.reasons.slice(0, 4) : [], url: readiness === 'NO' ? '' : (a.url || ''), confidence: conf, pages: Array.isArray(a.pages) ? a.pages.slice(0, 5) : [] }
     })
   } catch {
-    return prompts.map(q => ({ question: q.question, category: q.category || 'overall', priority: q.priority || 'medium', readiness: 'NO', evidence: '', missing: 'Not evaluated', url: '', confidence: 0, pages: [] }))
+    return prompts.map(q => ({ question: q.question, category: q.category || 'overall', priority: q.priority || 'medium', readiness: 'NO', evidence: '', reasons: ['Not evaluated'], url: '', confidence: 0, pages: [] }))
   }
 }
 
@@ -164,25 +185,27 @@ function pageSchema(fields: string[]) {
   for (const f of fields) props[f] = { type: 'boolean' }
   return { type: 'object', additionalProperties: false, required: [...fields, 'evidence'], properties: props }
 }
-async function auditPage(pg: any, typeKey: string, openaiKey: string) {
+async function auditPageOnce(pg: any, typeKey: string, openaiKey: string) {
   const expected = EXPECTED[typeKey] || EXPECTED.homepage
   const fields = expected.map(e => e.field)
-  const sys = `You are a strict evidence-based auditor checking ONE hotel ${typeKey} page for required elements. Use ONLY the provided text/headings. NEVER infer or use outside knowledge. For each element return true ONLY if it is genuinely present in the text. Provide one short verbatim quote as "evidence" (or "").
+  const sys = `You are a strict evidence-based auditor checking ONE hotel ${typeKey} page for required elements. Use ONLY the provided text/headings. NEVER infer or use outside knowledge. For each element return true ONLY if it is genuinely present. Provide one short verbatim quote as "evidence" (or "").
 Elements: ${expected.map(e => `"${e.field}" = ${e.label}`).join('; ')}.`
-  try {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
-      body: JSON.stringify({
-        model: 'gpt-4o', temperature: 0, max_tokens: 600,
-        response_format: { type: 'json_schema', json_schema: { name: 'page_audit', strict: true, schema: pageSchema(fields) } },
-        messages: [{ role: 'system', content: sys }, { role: 'user', content: `URL: ${pg.url}\nHEADINGS: ${(pg.headings || []).join(' | ')}\nTEXT: ${(pg.text || '').slice(0, 4000)}` }],
-      }),
-    })
-    const data = await res.json()
-    const c = data?.choices?.[0]?.message?.content
-    if (!c) return null
-    return JSON.parse(c)
-  } catch { return null }
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
+    body: JSON.stringify({
+      model: 'gpt-4o', temperature: 0, max_tokens: 600,
+      response_format: { type: 'json_schema', json_schema: { name: 'page_audit', strict: true, schema: pageSchema(fields) } },
+      messages: [{ role: 'system', content: sys }, { role: 'user', content: `URL: ${pg.url}\nHEADINGS: ${(pg.headings || []).join(' | ')}\nTEXT: ${(pg.text || '').slice(0, 4000)}` }],
+    }),
+  })
+  const data = await res.json()
+  const c = data?.choices?.[0]?.message?.content
+  if (!c) return null
+  return JSON.parse(c)
+}
+async function auditPage(pg: any, typeKey: string, openaiKey: string) {
+  try { const a = await auditPageOnce(pg, typeKey, openaiKey); if (a) return a } catch {}
+  try { return await auditPageOnce(pg, typeKey, openaiKey) } catch { return null }
 }
 
 function pct(g: number, m: number) { return m ? Math.round((g / m) * 100) : 0 }
@@ -226,22 +249,19 @@ export async function POST(req: Request) {
     type Slot = { key: string; label: string; impact: string; cats: string[]; url: string | null; source: string }
     const slots: Slot[] = []
 
-    // classify a URL into a priority type by keyword (for picking its checklist)
     const classifyUrl = (u: string): { key: string; label: string; impact: string; cats: string[] } => {
       const lu = u.toLowerCase()
       for (const def of PRIORITY) { if (def.key === 'homepage') continue; if (def.kws.some(k => lu.includes(k))) return { key: def.key, label: def.label.replace(/ pages?$/i, ''), impact: def.impact, cats: def.cats } }
-      return { key: 'homepage', label: 'Page', impact: 'Medium', cats: ['overall'] } // generic demand-page checklist
+      return { key: 'homepage', label: 'Page', impact: 'Medium', cats: ['overall'] }
     }
 
     if (Array.isArray(manualUrls) && manualUrls.length) {
-      // MANUAL MODE: audit exactly the URLs provided, in order
-      manualUrls.forEach((u: string, i: number) => {
+      manualUrls.forEach((u: string) => {
         const c = classifyUrl(u)
         const isHome = u.replace(/\/$/, '') === url.replace(/\/$/, '')
         slots.push({ key: isHome ? 'homepage' : c.key, label: isHome ? 'Homepage' : `${c.label} — ${(() => { try { return new URL(u).pathname } catch { return u } })()}`, impact: c.impact, cats: c.cats, url: u, source: 'manual' })
       })
     } else {
-      // AUTO MODE
       for (const def of PRIORITY) {
         if (def.key === 'homepage') { slots.push({ key: 'homepage', label: 'Homepage', impact: def.impact, cats: def.cats, url, source: 'home' }); continue }
         if (overrides[def.key]) { slots.push({ key: def.key, label: def.label, impact: def.impact, cats: def.cats, url: overrides[def.key], source: 'override' }); continue }
@@ -295,6 +315,8 @@ export async function POST(req: Request) {
       category: cat, label: CAT_LABEL[cat] || cat, coverage: b.total ? Math.round(((b.yes + b.partial * 0.5) / b.total) * 100) : 0,
       yes: b.yes, partial: b.partial, no: b.no, total: b.total,
     })).sort((a, b) => a.coverage - b.coverage)
+    const strongFor = demandCoverage.filter(d => d.coverage >= 67).map(d => d.label)
+    const weakFor = demandCoverage.filter(d => d.coverage < 34).map(d => d.label)
 
     const promptsByCat = (cats: string[]) => readiness.filter((r: any) => cats.includes(CAT_MAP[r.category] || 'overall')).map((r: any) => r.question)
     const importantPages: any[] = []
@@ -302,17 +324,25 @@ export async function POST(req: Request) {
       const expected = EXPECTED[s.key] || []
       if (!s.url || !pageCache[s.url]) {
         importantPages.push({ key: s.key, label: s.label, status: 'Missing', impact: s.impact, source: s.source,
-          reason: `No ${s.label.toLowerCase()} found in the crawl.`, affects: promptsByCat(s.cats).slice(0, 4) })
+          reason: `No ${s.label.toLowerCase()} found in the crawl.`, affects: promptsByCat(s.cats).slice(0, 4), blueprint: BLUEPRINTS[s.key] || null })
         continue
       }
-      let a = await auditPage(pageCache[s.url], s.key, openaiKey)
-      if (!a) a = await auditPage(pageCache[s.url], s.key, openaiKey) // retry once on transient failure
+      const a = await auditPage(pageCache[s.url], s.key, openaiKey)
       const present = expected.filter(e => a && a[e.field]).map(e => e.label)
-      const missing = expected.filter(e => !a || !a[e.field]).map(e => e.label)
+      const missingDefs = expected.filter(e => !a || !a[e.field])
+      const missing = missingDefs.map(e => e.label)
+      const examples = missingDefs.map(e => EXAMPLES[e.field]).filter(Boolean).slice(0, 3)
       importantPages.push({ key: s.key, label: s.label, status: 'Present', impact: s.impact, source: s.source,
-        url: s.url, score: pct(present.length, expected.length), present, missing,
-        evidence: a?.evidence || '', affects: missing.length ? promptsByCat(s.cats).slice(0, 4) : [] })
+        url: s.url, score: pct(present.length, expected.length), present, missing, examples,
+        evidence: a?.evidence || '', affects: missing.length ? promptsByCat(s.cats).slice(0, 4) : [], blueprint: null })
     }
+
+    const presentKeys = new Set(slots.filter(s => s.url && pageCache[s.url]).map(s => s.key))
+    const blueprintKeys = ['parking', 'accessibility', 'pets', 'breakfast', 'airport', 'family', 'romantic', 'business', 'spa', 'dining']
+    const missingBlueprints = blueprintKeys.filter(k => !presentKeys.has(k) && BLUEPRINTS[k]).map(k => {
+      const def = PRIORITY.find(p => p.key === k)
+      return { key: k, impact: def?.impact || 'Medium', affects: promptsByCat(def?.cats || []).slice(0, 4), blueprint: BLUEPRINTS[k] }
+    })
 
     const factTopics = [
       { key: 'Parking', kws: ['parking', 'valet', 'voiturier', 'garage', 'stationnement'] },
@@ -359,14 +389,15 @@ export async function POST(req: Request) {
         { n: 10, layer: 'Trust signals', result: (trust.reviewSchema && (trust.awards || trust.ratings)) ? 'PASS' : (trust.reviewSchema || trust.awards || trust.ratings) ? 'PARTIAL' : 'FAIL', note: `Review schema ${trust.reviewSchema ? 'present' : 'absent'}; awards ${trust.awards ? 'mentioned' : 'absent'}; ratings ${trust.ratings ? 'mentioned' : 'absent'}.` },
         { n: 12, layer: 'Schema', result: pf(schemaScore), score: schemaScore, present: schemaFound, missing: schemaDefs.filter(s => !schemaFound.includes(s)) },
       ],
-      note: 'Architecture layers are supporting evidence, computed from crawled priority pages only.',
+      note: 'Architecture layers are supporting evidence, computed from crawled pages only.',
     }
     const architectureScore = Math.round(coreScore * 0.3 + intentScore * 0.25 + schemaScore * 0.25 + Math.min(100, entityHits * 8) * 0.1 + ((trust.reviewSchema ? 50 : 0) + (trust.awards ? 25 : 0) + (trust.ratings ? 25 : 0)) * 0.1)
 
     const result = {
       url, city: effCity || null, hotelType: effType || null,
+      summary: { strongFor, weakFor },
       recommendation: { score: recScore, yes: yesN, partial: partialN, no: noN, total: readiness.length, results: readiness },
-      demandCoverage, importantPages, architecture, architectureScore,
+      demandCoverage, importantPages, missingBlueprints, architecture, architectureScore,
       robots, pagesScraped: pages.map((p: any) => p.url), crawlDepth: pages.length, crawlLimit: CRAWL_LIMIT,
     }
 
