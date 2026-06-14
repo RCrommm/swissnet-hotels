@@ -332,8 +332,11 @@ function buildActionPlan(readiness: any[], importantPages: any[], missingBluepri
       toAdd: p.missing,
     })
   }
-  // SORT: pages that flip NO prompts first, then by impact tier, then by number of prompts affected
+  // SORT: create-page actions (NO→YES) before strengthen actions (PARTIAL→YES),
+  // then by NO prompts unlocked, then impact tier, then number of prompts affected
+  const KIND_RANK: Record<string, number> = { create: 0, strengthen: 1 }
   priorities.sort((a, b) =>
+    (KIND_RANK[a.kind] - KIND_RANK[b.kind]) ||
     (b.addressesNo - a.addressesNo) ||
     (IMPACT_RANK[a.level] - IMPACT_RANK[b.level]) ||
     ((b.affectedPrompts?.length || 0) - (a.affectedPrompts?.length || 0))
@@ -554,22 +557,16 @@ export async function POST(req: Request) {
       parking: ['practical'], accessibility: ['accessibility'], pets: ['practical'], breakfast: ['dining'],
       airport: ['location'], romantic: ['romantic'], business: ['business'], spa: ['wellness'], dining: ['dining'],
     }
-    const catCovered = (k: string) => {
-      const cat = (PRIORITY.find(p => p.key === k)?.cats || [])
-      return readiness.some((r: any) => cat.includes(CAT_MAP[r.category] || 'overall') && r.readiness !== 'NO')
-    }
-    const topicInText = (k: string) => {
-      const kws = (PRIORITY.find(p => p.key === k)?.kws || [])
-      return pages.some((p: any) => kws.some(w => (p.text || '').toLowerCase().includes(w)))
-    }
-    const missingBlueprints = blueprintKeys.filter(k => !presentKeys.has(k) && BLUEPRINTS[k] && !catCovered(k) && !topicInText(k)).map(k => {
+    // A blueprint is worth creating only when a SPECIFIC prompt for it actually scored NO
+    // (driven by prompt outcomes, not by an incidental keyword appearing somewhere on the site).
+    const missingBlueprints = blueprintKeys.filter(k => !presentKeys.has(k) && BLUEPRINTS[k]).map(k => {
       const def = PRIORITY.find(p => p.key === k)
       const kws = BP_KEYWORDS[k] || []
       const affectsRows = readiness.filter((r: any) => kws.some(w => r.question.toLowerCase().includes(w)))
       const affects = affectsRows.map((r: any) => r.question).slice(0, 4)
       const noCount = affectsRows.filter((r: any) => r.readiness === 'NO').length
       return { key: k, impact: def?.impact || 'Medium', affects, noCount, categories: BP_CATS[k] || [], blueprint: BLUEPRINTS[k] }
-    })
+    }).filter(b => b.noCount >= 1)
 
     // ── LAYER 0 facts ──
     const factTopics = [
