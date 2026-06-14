@@ -103,7 +103,7 @@ const runDatesAll = [...new Set(overviewScores.map((s: any) => s.run_date || s.c
       .sort((a: any, b: any) => (b.run_date || '').localeCompare(a.run_date || ''))
     const latest = platformEntries[0]
     if (!latest) return null
-    return platform === 'chatgpt' ? Math.min(100, latest.visibility_score + 8) : latest.visibility_score
+    return latest.visibility_score
   }).filter((s): s is number => s !== null)
   if (!latestPerPlatform.length) return null
   return Math.round(latestPerPlatform.reduce((a, b) => a + b, 0) / latestPerPlatform.length)
