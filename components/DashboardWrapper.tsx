@@ -121,8 +121,8 @@ const prevRanking = allHotelNames
       const getPrevRank = (name: string) => prevRanking.findIndex(h => h.name === name) + 1
 
       const competitors = (regionHotels || []).map((h: any) => {
-        const hotelOverviewScores = latestOverviewScores.filter((s: any) => s.competitor_name === h.name)
-        const visibilityScore = getLatestScore(hotelOverviewScores, h.name)
+        const hotelAllScores = overviewScores.filter((s: any) => s.competitor_name === h.name)
+        const visibilityScore = getLatestScore(hotelAllScores, h.name)
 
         const catScores: Record<string, number> = {}
         for (const cat of ['spa', 'ski', 'dining', 'romantic', 'lake', 'business', 'family']) {
