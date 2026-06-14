@@ -254,11 +254,20 @@ function buildActionPlan(readiness: any[], importantPages: any[], missingBluepri
   }
   priorities.sort((a, b) => (IMPACT_RANK[a.level] - IMPACT_RANK[b.level]) || ((b.affectedPrompts?.length || 0) - (a.affectedPrompts?.length || 0)))
   const topPriorities = priorities.slice(0, 10)
+  const QW_WHY = (el: string): string => {
+    const e = el.toLowerCase()
+    if (e.includes('quick facts')) return 'Gives AI a scannable list of hard facts (parking, spa, transfer, pets) it can quote directly instead of guessing.'
+    if (e.includes('ai summary')) return 'A 1–2 sentence positioning line AI can lift verbatim when asked who the hotel is best for.'
+    if (e.includes('faq')) return 'Q&A pairs mirror how guests phrase questions, making your answers easy for AI to match and quote.'
+    if (e.includes('comparison')) return 'Comparative claims are exactly what holds your luxury and 5-star prompts at PARTIAL — AI will not rank you above alternatives without them.'
+    if (e.includes('award')) return 'Awards and recognition are trust signals AI weighs heavily when deciding which hotel to surface first.'
+    return 'Adds structured detail AI looks for, widening the searches it can confidently recommend you for.'
+  }
   const quickWins: any[] = []
   for (const p of importantPages) {
     if (p.status !== 'Present' || !p.missing) continue
     for (const m of p.missing) {
-      if (/FAQ|Quick Facts|Comparison|AI summary|awards/i.test(m)) quickWins.push({ action: `Add ${m} to your ${p.label.split(' — ')[0]} page`, page: p.url || p.label })
+      if (/FAQ|Quick Facts|Comparison|AI summary|awards/i.test(m)) quickWins.push({ action: `Add ${m} to your ${p.label.split(' — ')[0]} page`, page: p.url || p.label, element: m, why: QW_WHY(m), helps: (p.affects || []).slice(0, 3) })
     }
   }
   const seenQW = new Set<string>()
