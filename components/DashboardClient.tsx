@@ -2191,6 +2191,7 @@ function WebsiteTab({ hotel }: any) {
   const path = (u: string) => { try { return new URL(u).pathname || u } catch { return u } }
 
   const ap = r?.actionPlan
+  const proj = r?.projects
   const pillars = r?.pillars
   const arch = pillars?.architecture
   const answer = pillars?.answerability
@@ -2277,55 +2278,47 @@ function WebsiteTab({ hotel }: any) {
             )}
           </Card>
 
-          {/* ── SECTION 2 · QUICK WINS ── */}
-          {ap?.quickWins?.length > 0 && (
-            <Card>
-              <CardHead title={<>Quick Wins <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED }}>low effort · high impact</span></>} />
-              <div style={{ padding: '0.5rem 1.5rem 1rem' }}>
-                {ap.quickWins.map((q: any, i: number) => (
-                  <div key={i} style={{ display: 'flex', gap: '0.75rem', padding: '0.85rem 0', borderBottom: i < ap.quickWins.length - 1 ? '1px solid ' + BORDER : 'none', alignItems: 'flex-start' }}>
-                    <span style={{ color: GREEN, fontWeight: 700, fontSize: '0.75rem', marginTop: '0.1rem' }}>✓</span>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: TEXT, margin: 0 }}>{q.action}<span style={{ color: TEXT_MUTED, fontWeight: 400, fontSize: '0.58rem' }}> — {path(q.page)}</span></p>
-                      {q.why && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: '0.25rem 0 0', lineHeight: 1.6 }}>{q.why}</p>}
-                      {q.affects?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: '#d97706', margin: '0.25rem 0 0', lineHeight: 1.5 }}><strong>Helps:</strong> {q.affects.join('; ')}</p>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
-
-          {/* ── SECTION 3 · STRATEGIC IMPROVEMENTS ── */}
-          {(ap?.strategic?.length > 0 || ap?.topPriorities?.length > 0) && (
+          {/* ── PROJECTS · the analysed, plain-language plan (dashboard lead) ── */}
+          {proj?.projects?.length > 0 && (
             <>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.6rem' }}>Strategic Improvements</p>
-              {(ap.topPriorities || []).map((a: any, i: number) => {
-                const lc = impactColor(a.level)
+              {proj.overview && (
+                <div style={{ background: WHITE, border: '1px solid ' + GOLD, borderLeft: '3px solid ' + GOLD, borderRadius: 12, padding: '1.25rem 1.5rem', marginBottom: '1.25rem' }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.5rem' }}>What this means for you</p>
+                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT, margin: 0, lineHeight: 1.5 }}>{proj.overview}</p>
+                </div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', margin: '0 0 0.6rem' }}>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: GOLD, margin: 0 }}>Your projects</p>
+                {proj.method && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.54rem', color: TEXT_MUTED, fontStyle: 'italic' }}>{proj.method}</span>}
+              </div>
+              {proj.projects.map((p: any, i: number) => {
+                const isQuick = p.effort === 'Quick win'
+                const ec = isQuick ? GREEN : GOLD
+                const ic = impactColor(p.impact)
                 return (
                   <div key={i} style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, overflow: 'hidden', marginBottom: '0.85rem' }}>
                     <div style={{ padding: '0.9rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
-                      <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: TEXT }}>{i + 1}. {a.title}</span>
-                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.06em', color: lc, border: '1px solid ' + lc, borderRadius: 4, padding: '0.12rem 0.5rem', textTransform: 'uppercase', flexShrink: 0 }}>{a.level}</span>
+                      <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT }}>{i + 1}. {p.title}</span>
+                      <span style={{ display: 'flex', gap: '0.35rem', flexShrink: 0 }}>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.05em', color: ec, border: '1px solid ' + ec, borderRadius: 4, padding: '0.12rem 0.5rem', textTransform: 'uppercase' }}>{p.effort}</span>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.05em', color: ic, border: '1px solid ' + ic, borderRadius: 4, padding: '0.12rem 0.5rem', textTransform: 'uppercase' }}>{p.impact} impact</span>
+                      </span>
                     </div>
                     <div style={{ padding: '0.9rem 1.5rem 1.1rem' }}>
-                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: TEXT, margin: '0 0 0.4rem', lineHeight: 1.6 }}><strong>Why this matters:</strong> {a.why}</p>
-                      {a.affectedPrompts?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: '#d97706', margin: '0 0 0.3rem', lineHeight: 1.5 }}><strong>Affected searches:</strong> {a.affectedPrompts.join('; ')}</p>}
-                      {a.pages?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED, margin: '0 0 0.3rem' }}>Pages responsible: {a.pages.map((u: string) => path(u)).join(', ')}</p>}
-                      {a.outcome && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: GREEN, margin: '0 0 0.4rem', lineHeight: 1.5 }}><strong>Expected outcome:</strong> {a.outcome}</p>}
-                      {a.toAdd?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: TEXT, margin: 0 }}><strong>To add:</strong> {a.toAdd.join(', ')}</p>}
-                      {a.blueprint && (
-                        <>
-                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, color: TEXT, margin: '0.6rem 0 0.3rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Recommended structure</p>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
-                            {a.blueprint.sections.map((s: string, j: number) => <span key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT, background: BG, border: '1px solid ' + BORDER, borderRadius: 14, padding: '0.2rem 0.55rem' }}>{s}</span>)}
-                          </div>
-                        </>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.6 }}>{p.why}</p>
+                      {p.steps?.length > 0 && (
+                        <div style={{ margin: '0 0 0.5rem' }}>
+                          {p.steps.map((s: string, j: number) => (
+                            <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: TEXT, margin: '0.2rem 0', lineHeight: 1.5, display: 'flex', gap: '0.5rem' }}><span style={{ color: ec }}>›</span><span>{s}</span></p>
+                          ))}
+                        </div>
                       )}
+                      {p.unlocks?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: '#d97706', margin: 0, lineHeight: 1.5 }}><strong>Unlocks these searches:</strong> {p.unlocks.join('; ')}</p>}
                     </div>
                   </div>
                 )
               })}
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: '0.5rem 0 0', lineHeight: 1.6, fontStyle: 'italic' }}>The full page-by-page breakdown and every prompt is in the detailed audit below — and in your downloadable report.</p>
             </>
           )}
 

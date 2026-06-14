@@ -401,6 +401,92 @@ function buildContentPlan(importantPages: any[], missingBlueprints: any[]) {
   return { existing, newPages }
 }
 
+// ── PROJECTS: GPT synthesis layer. Turns raw findings into a few plain-language
+// projects for a hotel marketing team. Grounded ONLY in the findings passed in. ──
+const PROJECTS_SYSTEM = `You are a senior hotel AI-visibility (GEO) strategist writing for a hotel marketing director who is NOT technical. You are given the FINDINGS of an automated audit of one hotel website. Your job is to synthesise those findings into a short, clear set of PROJECTS the marketing team can act on — not a list of raw issues.
+
+WHAT YOU KNOW ABOUT AI VISIBILITY (use this to explain WHY each project matters, in plain words):
+- AI assistants (ChatGPT, Perplexity, Google AI) recommend a hotel only when the hotel's own pages give clear, retrievable, quotable evidence for a specific guest need.
+- The biggest wins come from: (1) creating dedicated pages for guest intents the site can't answer at all (romantic, family, accessibility, parking, airport); (2) adding FAQ blocks and Quick Facts that mirror how guests ask questions; (3) stating clear positioning and distinctive features so AI can say WHY this hotel over others; (4) machine-readable trust signals (review/rating schema, awards).
+- "Quick wins" are low-effort additions to existing pages (FAQ, Quick Facts, AI summary). "Projects" are new pages or substantial rewrites.
+
+STRICT RULES:
+- Use ONLY the findings provided. NEVER invent a fact about the hotel (no made-up amenities, locations, awards). You are describing GAPS and recommended ADDITIONS, not stating what the hotel has.
+- "unlocks" must be copied verbatim from the searches listed in the findings. Do not invent searches.
+- Group everything into 4 to 7 projects. Merge related gaps (e.g. all FAQ additions = one "Add FAQs" quick-win project).
+- Order: quick-win projects first, then larger projects by impact (most failed searches first).
+- Keep language simple and concrete. No jargon, no fluff. Each "why" is 1-2 sentences a non-technical marketer instantly understands.
+- Also write a 2-3 sentence "overview": how the site reads to AI today, what it's strong/invisible for, and the single most important thing to do.
+Return STRICTLY the JSON schema.`
+
+function projectsSchema() {
+  return {
+    type: 'object', additionalProperties: false, required: ['overview', 'method', 'projects'],
+    properties: {
+      overview: { type: 'string' },
+      method: { type: 'string' },
+      projects: {
+        type: 'array', items: {
+          type: 'object', additionalProperties: false,
+          required: ['title', 'effort', 'impact', 'why', 'unlocks', 'steps'],
+          properties: {
+            title: { type: 'string' },
+            effort: { type: 'string', enum: ['Quick win', 'Project'] },
+            impact: { type: 'string', enum: ['High', 'Medium', 'Low'] },
+            why: { type: 'string' },
+            unlocks: { type: 'array', items: { type: 'string' } },
+            steps: { type: 'array', items: { type: 'string' } },
+          },
+        },
+      },
+    },
+  }
+}
+
+function fallbackProjects(findings: any) {
+  const projects: any[] = []
+  const qwPages = (findings.pages || []).filter((p: any) => (p.missing || []).some((m: string) => /FAQ|Quick Facts|AI summary/i.test(m)))
+  if (qwPages.length) projects.push({
+    title: 'Add FAQs, Quick Facts and AI summaries to existing pages', effort: 'Quick win', impact: 'High',
+    why: 'AI answers guests by matching question-and-answer content and scannable facts. Adding these lets AI quote your pages directly instead of skipping you.',
+    unlocks: [], steps: qwPages.map((p: any) => `${p.name}: add ${(p.missing || []).filter((m: string) => /FAQ|Quick Facts|AI summary/i.test(m)).join(', ')}`),
+  })
+  for (const mp of (findings.missingPages || [])) projects.push({
+    title: `Create a ${mp.page} page`, effort: 'Project', impact: (mp.unlocks || []).length >= 2 ? 'High' : 'Medium',
+    why: 'There is no dedicated content for this, so AI cannot recommend the hotel for these searches at all.',
+    unlocks: mp.unlocks || [], steps: ['Build the page with the recommended sections and answer the listed questions in your own words.'],
+  })
+  const weakPages = (findings.pages || []).filter((p: any) => typeof p.score === 'number' && p.score < 60 && (p.missing || []).some((m: string) => !/FAQ|Quick Facts|AI summary/i.test(m)))
+  for (const p of weakPages.slice(0, 3)) projects.push({
+    title: `Strengthen the ${p.name} page`, effort: 'Project', impact: 'Medium',
+    why: 'This page exists but is missing detail AI looks for, so recommendations stay tentative.',
+    unlocks: [], steps: [`Add ${(p.missing || []).join(', ')}.`],
+  })
+  return { overview: `The site can confidently support ${findings.counts?.yes || 0} of ${(findings.counts?.yes || 0) + (findings.counts?.partial || 0) + (findings.counts?.no || 0)} tracked searches. The fastest gains come from adding FAQs and Quick Facts to existing pages, then building the missing intent pages.`, method: 'Projects are ordered by how many guest searches they unlock that the site cannot answer today.', projects }
+}
+
+async function buildProjects(findings: any, openaiKey: string) {
+  try {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
+      body: JSON.stringify({
+        model: 'gpt-4o', temperature: 0.3, max_tokens: 2200,
+        response_format: { type: 'json_schema', json_schema: { name: 'projects', strict: true, schema: projectsSchema() } },
+        messages: [{ role: 'system', content: PROJECTS_SYSTEM }, { role: 'user', content: `FINDINGS (JSON):\n${JSON.stringify(findings)}` }],
+      }),
+    })
+    const data = await res.json()
+    const c = data?.choices?.[0]?.message?.content
+    if (!c) throw new Error('empty')
+    const parsed = JSON.parse(c)
+    if (!parsed.projects || !parsed.projects.length) throw new Error('no projects')
+    if (!parsed.method) parsed.method = 'Projects are ordered by how many guest searches they unlock that the site cannot answer today.'
+    return parsed
+  } catch {
+    return fallbackProjects(findings)
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const { url, city, password, hotelId, hotelType, manualUrls } = await req.json()
@@ -748,12 +834,26 @@ export async function POST(req: Request) {
     const actionPlan = buildActionPlan(readiness, importantPages, missingBlueprints, demandCoverage)
     const contentPlan = buildContentPlan(importantPages, missingBlueprints)
 
+    // Grounded findings → GPT synthesis into plain-language projects (dashboard lead)
+    const findings = {
+      score: recScore,
+      counts: { yes: yesN, partial: partialN, no: noN },
+      coverageByType: demandCoverage.map(d => ({ type: d.label, coverage: d.coverage })),
+      cannotRecommend: readiness.filter((r: any) => r.readiness === 'NO').map((r: any) => r.question),
+      weakRecommend: readiness.filter((r: any) => r.readiness === 'PARTIAL').map((r: any) => ({ search: r.question, holdingBack: r.reasons })),
+      pages: importantPages.filter((p: any) => p.status === 'Present' && !p.notAssessed).map((p: any) => ({ name: p.displayName, score: p.score, missing: p.missing })),
+      missingPages: missingBlueprints.map((b: any) => ({ page: b.blueprint.heading, unlocks: b.affects })),
+      architecture: { schemaMissing: schemaDefs.filter(s => !schemaFound.includes(s)), trust: { reviewSchema: trust.reviewSchema, awards: trust.awards, ratings: trust.ratings } },
+    }
+    const projects = await buildProjects(findings, openaiKey)
+
     const result = {
       url, city: effCity || null, hotelType: effType || null,
       // headline
       recommendation: { score: recScore, yes: yesN, partial: partialN, no: noN, total: readiness.length, results: readiness },
       architectureScore,
       // executive layer
+      projects,
       actionPlan, contentPlan,
       summary: { strongFor, weakFor },
       // four pillars
