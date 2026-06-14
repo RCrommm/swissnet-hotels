@@ -3009,7 +3009,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
 
                 const realPoints = allDates.map((d: string) => {
                   if (chartPlatform === 'overall') {
-                    const dayScoresAll = (overviewRunData || []).filter((r: any) => r.checked_at?.startsWith(d))
+                    const dayScoresAll = (overviewRunData || []).filter((r: any) => (r.run_date === d || r.checked_at?.startsWith(d)))
 // Take only latest score per platform
 const dayScores = ['chatgpt', 'perplexity'].map(platform => 
   dayScoresAll.filter((s: any) => s.platform === platform)
@@ -3037,7 +3037,7 @@ return { date: d, score: avg }
                     const score = dayGoogleScores.length > 0 ? Math.round((appeared / dayGoogleScores.length) * 100) : null
                     return { date: d, score }
                   }
-                  const dayScores = (overviewRunData || []).filter((r: any) => r.checked_at?.startsWith(d) && r.platform === chartPlatform)
+                  const dayScores = (overviewRunData || []).filter((r: any) => (r.run_date === d || r.checked_at?.startsWith(d)) && r.platform === chartPlatform)
                   const adjustedDayScores = dayScores.map((s: any) => ({
   ...s,
   visibility_score: s.platform === 'chatgpt' ? Math.min(100, s.visibility_score +8) : s.visibility_score
