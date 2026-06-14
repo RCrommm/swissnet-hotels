@@ -193,7 +193,7 @@ Elements: ${expected.map(e => `"${e.field}" = ${e.label}`).join('; ')}.`
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
     body: JSON.stringify({
-      model: 'gpt-4o', temperature: 0, max_tokens: 600,
+      model: 'gpt-4o', temperature: 0, max_tokens: 1200,
       response_format: { type: 'json_schema', json_schema: { name: 'page_audit', strict: true, schema: pageSchema(fields) } },
       messages: [{ role: 'system', content: sys }, { role: 'user', content: `URL: ${pg.url}\nHEADINGS: ${(pg.headings || []).join(' | ')}\nTEXT: ${(pg.text || '').slice(0, 4000)}` }],
     }),
@@ -331,7 +331,7 @@ export async function POST(req: Request) {
       const present = expected.filter(e => a && a[e.field]).map(e => e.label)
       const missingDefs = expected.filter(e => !a || !a[e.field])
       const missing = missingDefs.map(e => e.label)
-      const examples = missingDefs.map(e => EXAMPLES[e.field]).filter(Boolean).slice(0, 3)
+      const examples = s.key === 'homepage' ? missingDefs.map(e => EXAMPLES[e.field]).filter(Boolean).slice(0, 3) : []
       importantPages.push({ key: s.key, label: s.label, status: 'Present', impact: s.impact, source: s.source,
         url: s.url, score: pct(present.length, expected.length), present, missing, examples,
         evidence: a?.evidence || '', affects: missing.length ? promptsByCat(s.cats).slice(0, 4) : [], blueprint: null })
@@ -339,9 +339,16 @@ export async function POST(req: Request) {
 
     const presentKeys = new Set(slots.filter(s => s.url && pageCache[s.url]).map(s => s.key))
     const blueprintKeys = ['parking', 'accessibility', 'pets', 'breakfast', 'airport', 'family', 'romantic', 'business', 'spa', 'dining']
+    const BP_KEYWORDS: Record<string, string[]> = {
+      parking: ['parking'], accessibility: ['accessible', 'accessibility'], pets: ['pet'], breakfast: ['breakfast'],
+      airport: ['airport'], romantic: ['romantic', 'honeymoon', 'couple'], business: ['business', 'meeting', 'executive', 'event'],
+      spa: ['spa', 'wellness'], dining: ['dining', 'restaurant', 'gastronomy', 'fine dining'],
+    }
     const missingBlueprints = blueprintKeys.filter(k => !presentKeys.has(k) && BLUEPRINTS[k]).map(k => {
       const def = PRIORITY.find(p => p.key === k)
-      return { key: k, impact: def?.impact || 'Medium', affects: promptsByCat(def?.cats || []).slice(0, 4), blueprint: BLUEPRINTS[k] }
+      const kws = BP_KEYWORDS[k] || []
+      const affects = readiness.filter((r: any) => kws.some(w => r.question.toLowerCase().includes(w))).map((r: any) => r.question).slice(0, 4)
+      return { key: k, impact: def?.impact || 'Medium', affects, blueprint: BLUEPRINTS[k] }
     })
 
     const factTopics = [
