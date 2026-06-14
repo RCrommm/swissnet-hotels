@@ -100,7 +100,7 @@ const runDatesAll = [...new Set(overviewScores.map((s: any) => s.run_date || s.c
   const latestPerPlatform = platforms.map(platform => {
     const platformEntries = entries
       .filter((s: any) => s.platform === platform)
-      .sort((a: any, b: any) => (b.run_date || '').localeCompare(a.run_date || ''))
+      .sort((a: any, b: any) => String(b.run_date || '').localeCompare(String(a.run_date || '')))
     const latest = platformEntries[0]
     if (!latest) return null
     return latest.visibility_score
@@ -149,11 +149,11 @@ const myRankChange = myHasLatest && myHasPrev && myLatestRank > 0 && myPrevRank 
 
       const rawChatgpt = myOverviewScores
   .filter((s: any) => s.platform === 'chatgpt')
-  .sort((a: any, b: any) => (b.run_date || b.checked_at || '').localeCompare(a.run_date || a.checked_at || ''))[0]?.visibility_score ?? null
+  .sort((a: any, b: any) => String(b.run_date || '').localeCompare(String(a.run_date || '')))[0]?.visibility_score ?? null
       const chatgptScore = rawChatgpt !== null ? Math.min(100, rawChatgpt + 8) : null
       const perplexityScore = myOverviewScores
   .filter((s: any) => s.platform === 'perplexity')
-  .sort((a: any, b: any) => (b.run_date || b.checked_at || '').localeCompare(a.run_date || a.checked_at || ''))[0]?.visibility_score ?? null
+  .sort((a: any, b: any) => String(b.run_date || '').localeCompare(String(a.run_date || '')))[0]?.visibility_score ?? null
 
       const latestGoogleDate = googleAiScores?.[0]?.checked_at?.split('T')[0]
       const latestGoogleScores = googleAiScores?.filter((s: any) => s.checked_at?.startsWith(latestGoogleDate)) || []
