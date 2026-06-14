@@ -56,7 +56,8 @@ function extractLinks(html: string, origin: string): string[] {
   while ((m = re.exec(html)) !== null) {
     let href = m[1].trim()
     if (href.startsWith('/')) href = origin + href
-    if (href.startsWith(origin) || href.includes(host)) links.add(href.split('#')[0].split('?')[0].replace(/\/$/, ''))
+    const clean = href.split('#')[0].split('?')[0].replace(/\/$/, '')
+    if ((href.startsWith(origin) || href.includes(host)) && !/\.(woff2?|ttf|otf|eot|jpg|jpeg|png|gif|svg|webp|ico|css|js|pdf|mp4|webm|zip)$/i.test(clean)) links.add(clean)
   }
   return [...links]
 }
@@ -274,7 +275,8 @@ export async function POST(req: Request) {
         const sb = createClient(sbUrl, sbKey)
         const { data } = await sb.from('audit_questions').select('question, city, hotel_type, category, priority').eq('active', true)
         const cityL = (effCity || '').toLowerCase(), typeL = (effType || '').toLowerCase()
-        prompts = (data || []).filter((r: any) => (!r.city || r.city.toLowerCase() === cityL) && (!r.hotel_type || r.hotel_type.toLowerCase() === typeL))
+        const soft = (a: string, b: string) => !a || !b || a.includes(b) || b.includes(a)
+        prompts = (data || []).filter((r: any) => soft(cityL, (r.city || '').toLowerCase()) && soft(typeL, (r.hotel_type || '').toLowerCase()))
       } catch {}
     }
     const readiness = await runReadiness(prompts, pages, openaiKey)
@@ -292,11 +294,11 @@ export async function POST(req: Request) {
 
     // ── LAYER 0: knowledge consistency ────────────────────────────────
     const factTopics = [
-      { key: 'Parking', kws: ['parking', 'valet', 'garage'] },
-      { key: 'Breakfast', kws: ['breakfast', 'petit-déjeuner', 'petit dejeuner'] },
-      { key: 'Pets', kws: ['pet', 'dog', 'animal'] },
-      { key: 'Accessibility', kws: ['accessible', 'wheelchair', 'step-free', 'disabled'] },
-      { key: 'Airport transfer', kws: ['airport', 'transfer', 'shuttle'] },
+      { key: 'Parking', kws: ['parking', 'valet', 'voiturier', 'garage', 'stationnement'] },
+      { key: 'Breakfast', kws: ['breakfast', 'petit-déjeuner', 'petit dejeuner', 'petit déjeuner', 'brunch'] },
+      { key: 'Pets', kws: ['pet', 'dog', 'animal', 'animaux', 'chien'] },
+      { key: 'Accessibility', kws: ['accessible', 'wheelchair', 'step-free', 'disabled', 'accessibilité', 'mobilité réduite', 'pmr'] },
+      { key: 'Airport transfer', kws: ['airport transfer', 'transfert aéroport', 'shuttle', 'navette', 'limousine'] },
     ]
     const layer0 = factTopics.map(t => {
       const onPages = pages.filter(p => t.kws.some(k => p.text.toLowerCase().includes(k))).map(p => p.url)
