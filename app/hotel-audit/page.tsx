@@ -12,6 +12,7 @@ export default function HotelAuditPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [r, setR] = useState<any>(null)
+  const [manualUrls, setManualUrls] = useState('https://www.lareserve-geneve.com/en/\nhttps://www.lareserve-geneve.com/en/luxury-accommodations/\nhttps://www.lareserve-geneve.com/en/restaurants-and-bars/\nhttps://www.lareserve-geneve.com/en/luxury-spa/\nhttps://www.lareserve-geneve.com/en/luxury-family-offers/\nhttps://www.lareserve-geneve.com/en/meetings-and-events/\nhttps://www.lareserve-geneve.com/en/special-offers/\nhttps://www.lareserve-geneve.com/en/experiences/\nhttps://www.lareserve-geneve.com/en/accommodation/luxury-villa-rental-geneva/')
 
   useEffect(() => {
     const p = new URLSearchParams(window.location.search).get('password'); if (p) setPassword(p)
@@ -27,10 +28,12 @@ export default function HotelAuditPage() {
   }, [])
 
   const run = async () => {
-    if (!url.trim()) return
+    const list = manualUrls.split('\n').map(s => s.trim()).filter(Boolean)
+    const firstUrl = list[0] || url
+    if (!firstUrl.trim()) return
     setLoading(true); setError(''); setR(null)
     try {
-      const res = await fetch('/api/hotel-audit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url, city, password, hotelId: hotelId || undefined }) })
+      const res = await fetch('/api/hotel-audit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: firstUrl, city, password, hotelId: hotelId || undefined, manualUrls: list }) })
       const data = await res.json()
       if (data.error) setError(data.error); else setR(data)
     } catch { setError('Request failed (the audit may have timed out — full audits take 2–3 minutes).') } finally { setLoading(false) }
@@ -64,6 +67,10 @@ export default function HotelAuditPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
             <div><label style={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED, display: 'block', marginBottom: '0.3rem' }}>Website URL</label><input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://hotel.com" style={inp} /></div>
             <div><label style={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED, display: 'block', marginBottom: '0.3rem' }}>City <span style={{ textTransform: 'none', fontWeight: 400 }}>(optional)</span></label><input value={city} onChange={e => setCity(e.target.value)} placeholder="Geneva" style={inp} /></div>
+          </div>
+          <div style={{ marginBottom: '0.75rem' }}>
+            <label style={{ fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: MUTED, display: 'block', marginBottom: '0.3rem' }}>Pages to audit <span style={{ textTransform: 'none', fontWeight: 400 }}>(one URL per line — these exact pages get audited individually)</span></label>
+            <textarea value={manualUrls} onChange={e => setManualUrls(e.target.value)} rows={6} style={{ ...inp, fontFamily: 'monospace', fontSize: '0.65rem', resize: 'vertical' }} />
           </div>
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
             <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="password" style={{ ...inp, width: 160 }} />

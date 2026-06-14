@@ -192,7 +192,7 @@ const CAT_LABEL: Record<string, string> = { luxury: 'Luxury', wellness: 'Wellnes
 
 export async function POST(req: Request) {
   try {
-    const { url, city, password, hotelId, hotelType } = await req.json()
+    const { url, city, password, hotelId, hotelType, manualUrls } = await req.json()
     if (password !== (process.env.ADMIN_REPORT_PASSWORD || 'RCrom2004Romeo')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     if (!url) return NextResponse.json({ error: 'Enter a website URL' }, { status: 400 })
     const apiKey = process.env.SCRAPINGBEE_API_KEY
@@ -225,16 +225,34 @@ export async function POST(req: Request) {
     const matchAll = (kws: string[]) => homeLinks.filter(l => kws.some(k => l.toLowerCase().includes(k)))
     type Slot = { key: string; label: string; impact: string; cats: string[]; url: string | null; source: string }
     const slots: Slot[] = []
-    for (const def of PRIORITY) {
-      if (def.key === 'homepage') { slots.push({ key: 'homepage', label: 'Homepage', impact: def.impact, cats: def.cats, url, source: 'home' }); continue }
-      if (overrides[def.key]) { slots.push({ key: def.key, label: def.label, impact: def.impact, cats: def.cats, url: overrides[def.key], source: 'override' }); continue }
-      if (def.multi) {
-        const all = matchAll(def.kws).slice(0, 4)
-        if (all.length) { all.forEach((u, i) => slots.push({ key: def.key, label: `${def.label.replace(/s$/, '')} ${i + 1}`, impact: def.impact, cats: def.cats, url: u, source: 'auto' })); continue }
-        slots.push({ key: def.key, label: def.label, impact: def.impact, cats: def.cats, url: null, source: 'missing' }); continue
+
+    // classify a URL into a priority type by keyword (for picking its checklist)
+    const classifyUrl = (u: string): { key: string; label: string; impact: string; cats: string[] } => {
+      const lu = u.toLowerCase()
+      for (const def of PRIORITY) { if (def.key === 'homepage') continue; if (def.kws.some(k => lu.includes(k))) return { key: def.key, label: def.label.replace(/ pages?$/i, '').replace(/s$/, ''), impact: def.impact, cats: def.cats } }
+      return { key: 'homepage', label: 'Page', impact: 'Medium', cats: ['overall'] } // generic demand-page checklist
+    }
+
+    if (Array.isArray(manualUrls) && manualUrls.length) {
+      // MANUAL MODE: audit exactly the URLs provided, in order
+      manualUrls.forEach((u: string, i: number) => {
+        const c = classifyUrl(u)
+        const isHome = u.replace(/\/$/, '') === url.replace(/\/$/, '')
+        slots.push({ key: isHome ? 'homepage' : c.key, label: isHome ? 'Homepage' : `${c.label} — ${(() => { try { return new URL(u).pathname } catch { return u } })()}`, impact: c.impact, cats: c.cats, url: u, source: 'manual' })
+      })
+    } else {
+      // AUTO MODE
+      for (const def of PRIORITY) {
+        if (def.key === 'homepage') { slots.push({ key: 'homepage', label: 'Homepage', impact: def.impact, cats: def.cats, url, source: 'home' }); continue }
+        if (overrides[def.key]) { slots.push({ key: def.key, label: def.label, impact: def.impact, cats: def.cats, url: overrides[def.key], source: 'override' }); continue }
+        if (def.multi) {
+          const all = matchAll(def.kws).slice(0, 4)
+          if (all.length) { all.forEach((u, i) => slots.push({ key: def.key, label: `${def.label.replace(/s$/, '')} ${i + 1}`, impact: def.impact, cats: def.cats, url: u, source: 'auto' })); continue }
+          slots.push({ key: def.key, label: def.label, impact: def.impact, cats: def.cats, url: null, source: 'missing' }); continue
+        }
+        const found = matchLink(def.kws)
+        slots.push({ key: def.key, label: def.label, impact: def.impact, cats: def.cats, url: found || null, source: found ? 'auto' : 'missing' })
       }
-      const found = matchLink(def.kws)
-      slots.push({ key: def.key, label: def.label, impact: def.impact, cats: def.cats, url: found || null, source: found ? 'auto' : 'missing' })
     }
 
     const toScrape = Array.from(new Set(slots.filter(s => s.url).map(s => s.url as string))).slice(0, CRAWL_LIMIT)
