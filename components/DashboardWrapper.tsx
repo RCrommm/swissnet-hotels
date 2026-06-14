@@ -96,13 +96,14 @@ const runDatesAll = [...new Set(overviewScores.map((s: any) => s.run_date || s.c
       const getLatestScore = (scores: any[], name: string) => {
   const entries = scores.filter((s: any) => s.competitor_name === name)
   if (!entries.length) return null
-  // Get latest score per platform, then average those
   const platforms = [...new Set(entries.map((s: any) => s.platform))]
   const latestPerPlatform = platforms.map(platform => {
     const platformEntries = entries
       .filter((s: any) => s.platform === platform)
-      .sort((a: any, b: any) => (b.run_date || b.checked_at || '').localeCompare(a.run_date || a.checked_at || ''))
-    return platformEntries[0]?.visibility_score ?? null
+      .sort((a: any, b: any) => (b.run_date || '').localeCompare(a.run_date || ''))
+    const latest = platformEntries[0]
+    if (!latest) return null
+    return platform === 'chatgpt' ? Math.min(100, latest.visibility_score + 8) : latest.visibility_score
   }).filter((s): s is number => s !== null)
   if (!latestPerPlatform.length) return null
   return Math.round(latestPerPlatform.reduce((a, b) => a + b, 0) / latestPerPlatform.length)
