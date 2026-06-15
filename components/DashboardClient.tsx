@@ -2499,13 +2499,18 @@ function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hot
     load()
   }, [hotelRegion])
 
-  // Aggregate by domain → citation count + best-known mention status
-  const byDomain: Record<string, { count: number; urls: Set<string>; mentioned: boolean | null }> = {}
+  // Total distinct queries in the period = coverage denominator
+  const allQueries = new Set(rows.map((r: any) => r.query).filter(Boolean))
+  const totalQueries = allQueries.size || 1
+
+  // Aggregate by domain → citation count + distinct queries + mention status
+  const byDomain: Record<string, { count: number; queries: Set<string>; urls: Set<string>; mentioned: boolean | null }> = {}
   for (const r of rows) {
     const d = r.source_domain || ''
     if (!d) continue
-    if (!byDomain[d]) byDomain[d] = { count: 0, urls: new Set(), mentioned: null }
+    if (!byDomain[d]) byDomain[d] = { count: 0, queries: new Set(), urls: new Set(), mentioned: null }
     byDomain[d].count++
+    if (r.query) byDomain[d].queries.add(r.query)
     byDomain[d].urls.add(r.source_url)
     const m = mentions[r.source_url]
     if (m === true) byDomain[d].mentioned = true
@@ -2513,7 +2518,7 @@ function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hot
   }
 
   const ranked = Object.entries(byDomain)
-    .map(([domain, v]) => ({ domain, count: v.count, mentioned: v.mentioned }))
+    .map(([domain, v]) => ({ domain, count: v.count, coverage: Math.round((v.queries.size / totalQueries) * 100), mentioned: v.mentioned }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 50)
 
@@ -2575,7 +2580,7 @@ function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hot
                   {isOwn && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.48rem', fontWeight: 700, color: GOLD, background: WHITE, border: '1px solid rgba(201,169,76,0.3)', padding: '2px 7px', borderRadius: 10, flexShrink: 0 }}>YOUR PAGE</span>}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
-                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>cited {r.count}×</span>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>cited {r.count}× · {r.coverage}%</span>
                   <StatusPill m={r.mentioned} />
                 </div>
               </div>
