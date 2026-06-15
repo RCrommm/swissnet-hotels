@@ -2485,14 +2485,18 @@ function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hot
       setRows(cites || [])
 
       const urls = [...new Set((cites || []).map((c: any) => c.source_url))]
-      if (urls.length) {
-        const { data: pm } = await sb
-          .from('page_mentions')
-          .select('source_url, mentioned')
-          .in('source_url', urls.slice(0, 1000))
-        const map: Record<string, boolean | null> = {}
-        for (const m of pm || []) map[m.source_url] = m.mentioned
-        setMentions(map)
+      try {
+        if (urls.length) {
+          const { data: pm } = await sb
+            .from('page_mentions')
+            .select('source_url, mentioned')
+            .in('source_url', urls.slice(0, 100))
+          const map: Record<string, boolean | null> = {}
+          for (const m of pm || []) map[m.source_url] = m.mentioned
+          setMentions(map)
+        }
+      } catch (e) {
+        console.error('page_mentions lookup failed (non-fatal):', e)
       }
       setLoaded(true)
     }
