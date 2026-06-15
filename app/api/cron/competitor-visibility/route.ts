@@ -40,21 +40,26 @@ async function queryChatGPT(query: string): Promise<{ text: string; citations: s
   const data = await res.json()
 
   let text = ''
-  const citations: string[] = []
+  const cited: string[] = []
+  const consulted: string[] = []
   for (const item of data.output || []) {
     if (item.type === 'message') {
       for (const c of item.content || []) {
         if (typeof c.text === 'string') text += c.text
+        for (const a of c.annotations || []) {
+          if (a.type === 'url_citation' && a.url) cited.push(a.url)
+        }
       }
     }
     if (item.type === 'web_search_call') {
       const srcs = item.action?.sources || []
       for (const s of srcs) {
         const url = typeof s === 'string' ? s : s?.url
-        if (url) citations.push(url)
+        if (url) consulted.push(url)
       }
     }
   }
+  const citations = cited.length ? cited : consulted
   return { text, citations: [...new Set(citations)] }
 }
 

@@ -2569,7 +2569,7 @@ function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hot
         <div style={{ position: 'relative' }}>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0 0 0.6rem' }}>Citation Sources · Last 30 days</p>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 300, color: WHITE, margin: '0 0 0.6rem', lineHeight: 1.3, maxWidth: 560 }}>Where AI gets its answers for {hotelRegion}</p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.7, maxWidth: 560 }}>These are the pages ChatGPT and Perplexity cite when answering {hotelRegion} hotel searches. The ones that don't mention {hotelName} are your outreach targets — get placed there to feed the engines directly.</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.7, maxWidth: 560 }}>The publisher pages cited in ChatGPT and Perplexity answers for {hotelRegion} hotel searches. The ones that don't mention {hotelName} are your outreach targets — get placed there to improve your odds of being cited.</p>
         </div>
       </div>
 
