@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin as supabase } from '@/lib/supabase-admin'
 
-async function queryPerplexity(query: string): Promise<string> {
+async function queryPerplexity(query: string): Promise<{ text: string; citations: string[] }> {
   const res = await fetch('https://api.perplexity.ai/chat/completions', {
     method: 'POST',
     headers: {
@@ -15,10 +15,14 @@ async function queryPerplexity(query: string): Promise<string> {
     }),
   })
   const data = await res.json()
-  return data.choices?.[0]?.message?.content || ''
+  const citations = [
+    ...(Array.isArray(data.citations) ? data.citations : []),
+    ...((data.search_results || []).map((s: any) => s?.url).filter(Boolean)),
+  ]
+  return { text: data.choices?.[0]?.message?.content || '', citations }
 }
 
-async function queryChatGPT(query: string): Promise<string> {
+async function queryChatGPT(query: string): Promise<{ text: string; citations: string[] }> {
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -32,7 +36,11 @@ async function queryChatGPT(query: string): Promise<string> {
     }),
   })
   const data = await res.json()
-  return data.choices?.[0]?.message?.content || ''
+  const annotations = data.choices?.[0]?.message?.annotations || []
+  const citations = annotations
+    .filter((a: any) => a?.type === 'url_citation' && a?.url_citation?.url)
+    .map((a: any) => a.url_citation.url)
+  return { text: data.choices?.[0]?.message?.content || '', citations }
 }
 
 const PLATFORMS = [
@@ -51,6 +59,39 @@ function checkAppeared(hotelName: string, responseText: string): boolean {
   const firstTwo = noAccents(hotelName.split(' ').slice(0, 2).join(' ').toLowerCase())
   const keyWords = words.slice(0, 3).join(' ')
   return rn.includes(nn) || rn.includes(lastTwo) || rn.includes(firstTwo) || (words.length >= 2 && rn.includes(keyWords))
+}
+
+function domainOf(url: string): string {
+  try { return new URL(url).hostname.replace(/^www\./, '') } catch { return '' }
+}
+
+async function saveCitations(rows: { query: string; platform: string; source_url: string; region: string | null }[], runDate: string) {
+  try {
+    const seen = new Set<string>()
+    const deduped: any[] = []
+    for (const r of rows) {
+      if (!r.source_url) continue
+      const key = `${r.query}|${r.platform}|${r.source_url}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      deduped.push({
+        query: r.query,
+        platform: r.platform,
+        source_url: r.source_url,
+        source_domain: domainOf(r.source_url),
+        region: r.region,
+        run_date: runDate,
+      })
+    }
+    if (deduped.length) {
+      await supabase.from('ai_citations').upsert(deduped, {
+        onConflict: 'query,platform,source_url,run_date',
+        ignoreDuplicates: true,
+      })
+    }
+  } catch (err: any) {
+    console.error('saveCitations failed (non-fatal):', err?.message)
+  }
 }
 
 export async function GET(request: Request) {
@@ -133,9 +174,12 @@ export async function GET(request: Request) {
       for (const platform of PLATFORMS) {
         const responseCache: Record<string, string> = {}
 
+        const citationRows: any[] = []
         for (const q of queries) {
           try {
-            responseCache[q] = await platform.queryFn(q)
+            const { text, citations } = await platform.queryFn(q)
+            responseCache[q] = text
+            for (const url of citations) citationRows.push({ query: q, platform: platform.id, source_url: url, region: regionFilter })
             catCost += platform.id === 'chatgpt' ? 0.037 : 0.008
             await new Promise(r => setTimeout(r, 300))
           } catch (err: any) {
@@ -143,6 +187,7 @@ export async function GET(request: Request) {
             responseCache[q] = ''
           }
         }
+        await saveCitations(citationRows, new Date().toISOString().split('T')[0])
 
         const rows: any[] = []
         for (const hotel of regionHotels) {
@@ -262,9 +307,12 @@ const { data: regionQueriesData } = await supabase
 
     await Promise.all(PLATFORMS.map(async (platform) => {
       responseCache[platform.id] = {}
+      const citationRows: any[] = []
       for (const q of queries) {
         try {
-          responseCache[platform.id][q] = await platform.queryFn(q)
+          const { text, citations } = await platform.queryFn(q)
+          responseCache[platform.id][q] = text
+          for (const url of citations) citationRows.push({ query: q, platform: platform.id, source_url: url, region })
           estimatedCost += platform.id === 'chatgpt' ? 0.037 : 0.008
           await new Promise(r => setTimeout(r, 300))
         } catch (err: any) {
@@ -272,6 +320,7 @@ const { data: regionQueriesData } = await supabase
           responseCache[platform.id][q] = ''
         }
       }
+      await saveCitations(citationRows, new Date().toISOString().split('T')[0])
 
       for (const hotel of allHotels) {
         const appearances = queries.filter(q => checkAppeared(hotel.name, responseCache[platform.id][q] || '')).length
