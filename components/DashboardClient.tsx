@@ -2464,7 +2464,134 @@ function WebsiteTab({ hotel }: any) {
   )
 }
 
+// ── CITATION SOURCES TAB ──────────────────────────────────────────────────────
 
+function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hotelRegion: string }) {
+  const [rows, setRows] = useState<any[]>([])
+  const [mentions, setMentions] = useState<Record<string, boolean | null>>({})
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    const load = async () => {
+      const { createClient } = await import('@supabase/supabase-js')
+      const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+      const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      const { data: cites } = await sb
+        .from('ai_citations')
+        .select('source_url, source_domain, run_date')
+        .eq('region', hotelRegion)
+        .gte('run_date', since)
+        .limit(5000)
+      setRows(cites || [])
+
+      const urls = [...new Set((cites || []).map((c: any) => c.source_url))]
+      if (urls.length) {
+        const { data: pm } = await sb
+          .from('page_mentions')
+          .select('source_url, mentioned')
+          .in('source_url', urls.slice(0, 1000))
+        const map: Record<string, boolean | null> = {}
+        for (const m of pm || []) map[m.source_url] = m.mentioned
+        setMentions(map)
+      }
+      setLoaded(true)
+    }
+    load()
+  }, [hotelRegion])
+
+  // Aggregate by domain → citation count + best-known mention status
+  const byDomain: Record<string, { count: number; urls: Set<string>; mentioned: boolean | null }> = {}
+  for (const r of rows) {
+    const d = r.source_domain || ''
+    if (!d) continue
+    if (!byDomain[d]) byDomain[d] = { count: 0, urls: new Set(), mentioned: null }
+    byDomain[d].count++
+    byDomain[d].urls.add(r.source_url)
+    const m = mentions[r.source_url]
+    if (m === true) byDomain[d].mentioned = true
+    else if (m === false && byDomain[d].mentioned !== true) byDomain[d].mentioned = false
+  }
+
+  const ranked = Object.entries(byDomain)
+    .map(([domain, v]) => ({ domain, count: v.count, mentioned: v.mentioned }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 50)
+
+  const totalSources = Object.keys(byDomain).length
+  const mentionYes = ranked.filter(r => r.mentioned === true).length
+  const mentionNo = ranked.filter(r => r.mentioned === false).length
+  const ownDomain = 'swissnethotels.com'
+
+  if (!loaded) return <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>Loading citation sources…</p>
+
+  if (rows.length === 0) return (
+    <div style={{ background: WHITE, border: '1px dashed ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}>
+      <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.4rem' }}>No citation data yet</p>
+      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6, maxWidth: 440, marginLeft: 'auto', marginRight: 'auto' }}>
+        As the daily visibility run records which pages ChatGPT and Perplexity cite for {hotelRegion} hotel searches, the most-cited sources will appear here — and whether {hotelName} is mentioned on each.
+      </p>
+    </div>
+  )
+
+  const StatusPill = ({ m }: { m: boolean | null }) => {
+    if (m === true) return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, color: GREEN, background: GREEN + '14', padding: '3px 10px', borderRadius: 20 }}>Mentions you</span>
+    if (m === false) return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, color: RED, background: RED + '12', padding: '3px 10px', borderRadius: 20 }}>Missing you</span>
+    return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, padding: '3px 10px', borderRadius: 20 }}>Not checked</span>
+  }
+
+  return (
+    <div>
+      {/* Hero */}
+      <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 16, padding: '2.5rem', marginBottom: '1.5rem', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: -40, right: -40, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,169,76,0.08) 0%, transparent 70%)' }} />
+        <div style={{ position: 'relative' }}>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0 0 0.6rem' }}>Citation Sources · Last 30 days</p>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 300, color: WHITE, margin: '0 0 0.6rem', lineHeight: 1.3, maxWidth: 560 }}>Where AI gets its answers for {hotelRegion}</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.7, maxWidth: 560 }}>These are the pages ChatGPT and Perplexity cite when answering {hotelRegion} hotel searches. The ones that don't mention {hotelName} are your outreach targets — get placed there to feed the engines directly.</p>
+        </div>
+      </div>
+
+      {/* Metric cards */}
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+        <KPICard label="Sources Cited" value={totalSources} sub="distinct pages · last 30d" color={GOLD} />
+        <KPICard label="Already Mention You" value={mentionYes} sub="of top 50 sources" color={GREEN} />
+        <KPICard label="Cited but Missing You" value={mentionNo} sub="outreach targets" color={RED} />
+      </div>
+
+      {/* Source list */}
+      <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.5rem' }}>
+        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG }}>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT, margin: '0 0 0.2rem' }}>Most-cited sources</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Ranked by how often AI cited the domain · top 50</p>
+        </div>
+        <div>
+          {ranked.map((r, i) => {
+            const isOwn = r.domain === ownDomain
+            return (
+              <div key={r.domain} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '0.85rem 1.5rem', borderBottom: i < ranked.length - 1 ? '1px solid ' + BORDER : 'none', background: isOwn ? GOLD_LIGHT : 'transparent' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, color: TEXT_MUTED, width: 20, flexShrink: 0 }}>{i + 1}</span>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: isOwn ? 700 : 500, color: isOwn ? GOLD : TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.domain}</span>
+                  {isOwn && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.48rem', fontWeight: 700, color: GOLD, background: WHITE, border: '1px solid rgba(201,169,76,0.3)', padding: '2px 7px', borderRadius: 10, flexShrink: 0 }}>YOUR PAGE</span>}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>cited {r.count}×</span>
+                  <StatusPill m={r.mentioned} />
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      <div style={{ background: GOLD_LIGHT, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${GOLD}`, borderRadius: 10, padding: '1.25rem 1.5rem' }}>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT, margin: 0, lineHeight: 1.7 }}>
+          <strong>How to use this:</strong> the "Missing you" sources are pages AI already trusts for {hotelRegion}. Getting {hotelName} added to the highest-cited ones is the fastest way to start appearing in more AI answers. "Not checked" means the page hasn't been scanned for your name yet.
+        </p>
+      </div>
+    </div>
+  )
+}
 
 // ── MAIN DASHBOARD ────────────────────────────────────────────────────────────
 
@@ -2701,7 +2828,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
       { id: 'schema', label: 'SwissNet Profile' },
       { id: 'website', label: 'Official Website' },
       { id: 'optimise', label: 'Optimise' },
-      { id: 'goals', label: 'Goals' },
+      { id: 'citations', label: 'Citation Sources' },
     ] },
     { heading: 'Account', items: [
       { id: 'reports', label: 'Monthly Reports' },
@@ -2753,7 +2880,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
               {tab === 'schema' && '✦ SwissNet Profile'}
 {tab === 'optimise' && '✦ Optimise'}
 {tab === 'website' && '✦ Official Website'}
-{tab === 'goals' && '✦ Goals This Month'}
+{tab === 'citations' && '✦ Citation Sources'}
 {tab === 'reports' && 'Reports'}
 {tab === 'settings' && 'Settings'}
             </h1>
@@ -2765,7 +2892,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
               {tab === 'schema' && 'AI readiness score and content recommendations'}
 {tab === 'optimise' && 'Manage your content and FAQs'}
 {tab === 'website' && 'Build AI visibility on your own official site'}
-{tab === 'goals' && 'Three focused actions to climb the AI rankings'}
+{tab === 'citations' && 'Where AI gets its answers — and where to get listed'}
 {tab === 'reports' && 'Compare your performance month over month'}
 {tab === 'settings' && 'Account and hotel settings'}
             </p>
@@ -3351,19 +3478,9 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
           <OptimiseTab hotelId={hotel?.id} hotelName={hotelName} hotelSlug={hotel?.slug} hotel={hotel} initialTab={optimiseTab} />
         )}
 
-        {/* ── GOALS ── */}
-        {tab === 'goals' && (
-          <GoalsTab
-            hotelName={hotelName}
-            hotelRegion={hotelRegion}
-            periodScore={periodScore}
-            prevPeriodScore={prevPeriodScore}
-            hotelCatScores={hotelCatScores}
-            competitors={competitors}
-            missedList={missedList}
-            categoryLabels={categoryLabels}
-            googleAiScores={googleAiScores}
-          />
+        {/* ── CITATION SOURCES ── */}
+        {tab === 'citations' && (
+          <CitationSourcesTab hotelName={hotelName} hotelRegion={hotelRegion} />
         )}
         {tab === 'website' && <WebsiteTab hotel={hotel} />}
 
