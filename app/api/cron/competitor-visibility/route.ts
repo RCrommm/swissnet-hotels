@@ -37,13 +37,25 @@ async function queryChatGPT(query: string): Promise<{ text: string; citations: s
   })
   const data = await res.json()
   const msg = data.choices?.[0]?.message || {}
+  const annotations = msg.annotations || []
   try {
-    const { count } = await supabase.from('_debug_chatgpt').select('*', { count: 'exact', head: true })
-    if ((count ?? 0) < 3) {
-      await supabase.from('_debug_chatgpt').insert({ raw: msg })
+    const { count } = await supabase.from('_citation_shape').select('*', { count: 'exact', head: true })
+    if ((count ?? 0) < 5) {
+      const collectUrls = (obj: any, acc: string[] = []): string[] => {
+        if (!obj || typeof obj !== 'object') return acc
+        for (const [k, v] of Object.entries(obj)) {
+          if (k === 'url' && typeof v === 'string') acc.push(v)
+          else if (typeof v === 'object') collectUrls(v, acc)
+        }
+        return acc
+      }
+      await supabase.from('_citation_shape').insert({
+        model: data.model || 'gpt-4o-search-preview',
+        annotation_types: [...new Set(annotations.map((a: any) => a?.type).filter(Boolean))],
+        citation_urls: [...new Set(collectUrls(msg))].slice(0, 40),
+      })
     }
   } catch {}
-  const annotations = msg.annotations || []
   const citations = annotations
     .filter((a: any) => a?.type === 'url_citation' && a?.url_citation?.url)
     .map((a: any) => a.url_citation.url)
@@ -114,24 +126,6 @@ export async function GET(request: Request) {
   const isVercelCron = authHeader === `Bearer ${process.env.CRON_SECRET}`
   if (!isVercelCron) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  // Temporary debug: inspect raw ChatGPT response shape
-  if (searchParams.get('debug') === 'chatgpt') {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-search-preview',
-        messages: [{ role: 'user', content: 'best luxury hotel to stay in Geneva. Please list all relevant hotels by name.' }],
-        max_tokens: 500,
-      }),
-    })
-    const data = await res.json()
-    return NextResponse.json({ message: data.choices?.[0]?.message ?? data })
   }
 
   if (!forceRun) {
