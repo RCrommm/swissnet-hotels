@@ -2470,6 +2470,7 @@ function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hot
   const [rows, setRows] = useState<any[]>([])
   const [mentions, setMentions] = useState<Record<string, boolean | null>>({})
   const [loaded, setLoaded] = useState(false)
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     const load = async () => {
@@ -2538,6 +2539,7 @@ function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hot
   const rankedUrls = Object.entries(byUrl)
     .map(([url, v]) => ({ url, domain: v.domain, count: v.count, coverage: Math.round((v.queries.size / totalQueries) * 100), mentioned: v.mentioned }))
     .sort((a, b) => b.count - a.count)
+    .filter(r => !search || r.url.toLowerCase().includes(search.toLowerCase()))
 
   const totalSources = Object.keys(byDomain).length
   const mentionYes = ranked.filter(r => r.mentioned === true).length
@@ -2576,7 +2578,7 @@ function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hot
       {/* Metric cards */}
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
         <KPICard label="Sources Cited" value={totalSources} sub="distinct pages · last 30d" color={GOLD} />
-        <KPICard label="Already Mention You" value={mentionYes} sub="of top 50 sources" color={GREEN} />
+        <KPICard label="Already Mention You" value={mentionYes} sub="of top 10 sources" color={GREEN} />
         <KPICard label="Cited but Missing You" value={mentionNo} sub="outreach targets" color={RED} />
       </div>
 
@@ -2584,7 +2586,7 @@ function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hot
       <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.5rem' }}>
         <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG }}>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT, margin: '0 0 0.2rem' }}>Most-cited sources</p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Ranked by how often AI cited the domain · top 50</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Ranked by how often AI cited the domain · top 10</p>
         </div>
         <div>
           {ranked.map((r, i) => {
@@ -2608,9 +2610,12 @@ function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hot
 
       {/* All cited pages — actual URLs */}
       <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.5rem' }}>
-        <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG }}>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT, margin: '0 0 0.15rem' }}>Every cited page</p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>The exact pages ChatGPT and Perplexity cited across your queries — click to open</p>
+        <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          <div>
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT, margin: '0 0 0.15rem' }}>Every cited page</p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>The exact pages ChatGPT and Perplexity cited across your queries — click to open</p>
+          </div>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search pages…" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.45rem 0.75rem', background: WHITE, outline: 'none', minWidth: 180 }} />
         </div>
         <div>
           {rankedUrls.map((r, i) => {
