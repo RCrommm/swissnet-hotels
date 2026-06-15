@@ -23,25 +23,39 @@ async function queryPerplexity(query: string): Promise<{ text: string; citations
 }
 
 async function queryChatGPT(query: string): Promise<{ text: string; citations: string[] }> {
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+  const res = await fetch('https://api.openai.com/v1/responses', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
     },
     body: JSON.stringify({
-      model: 'gpt-4o-search-preview',
-      messages: [{ role: 'user', content: `${query}. Please list all relevant hotels by name.` }],
-      max_tokens: 500,
+      model: 'gpt-4o',
+      input: `${query}. Search the web and list all relevant hotels by name.`,
+      tools: [{ type: 'web_search_preview' }],
+      tool_choice: { type: 'web_search_preview' },
+      include: ['web_search_call.action.sources'],
     }),
   })
   const data = await res.json()
-  const msg = data.choices?.[0]?.message || {}
-  const annotations = msg.annotations || []
-  const citations = annotations
-    .filter((a: any) => a?.type === 'url_citation' && a?.url_citation?.url)
-    .map((a: any) => a.url_citation.url)
-  return { text: msg.content || '', citations }
+
+  let text = ''
+  const citations: string[] = []
+  for (const item of data.output || []) {
+    if (item.type === 'message') {
+      for (const c of item.content || []) {
+        if (typeof c.text === 'string') text += c.text
+      }
+    }
+    if (item.type === 'web_search_call') {
+      const srcs = item.action?.sources || []
+      for (const s of srcs) {
+        const url = typeof s === 'string' ? s : s?.url
+        if (url) citations.push(url)
+      }
+    }
+  }
+  return { text, citations: [...new Set(citations)] }
 }
 
 const PLATFORMS = [
