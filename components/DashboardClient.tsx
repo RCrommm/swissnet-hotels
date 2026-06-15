@@ -2606,31 +2606,6 @@ function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hot
         </div>
       </div>
 
-      {/* Reference: key AI authority sources (industry knowledge, not measured) */}
-      <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.5rem' }}>
-        <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG }}>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT, margin: '0 0 0.15rem' }}>Key AI authority sources</p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Publishers AI models lean on most for luxury hotels — industry reference, not measured from your queries</p>
-        </div>
-        <div>
-          {[
-            { name: 'Condé Nast Traveler', url: 'https://www.cntraveler.com/gallery/best-hotels-in-geneva-switzerland', note: 'Editorial roundups of the best hotels — strong on romantic, spa & lakefront' },
-            { name: 'Forbes Travel Guide', url: 'https://www.forbestravelguide.com/destinations/geneva-switzerland', note: 'The dominant luxury authority across nearly every category' },
-            { name: 'MICHELIN Guide', url: 'https://guide.michelin.com/en/hotels-stays/geneva', note: 'Dining, gourmet & luxury positioning via Keys and stars' },
-            { name: 'American Express Travel', url: 'https://www.americanexpress.com/en-us/travel/discover/', note: 'Fine Hotels + Resorts curation shapes premium recommendations' },
-            { name: 'Tablet Hotels', url: 'https://www.tablethotels.com/en/luxury-hotels/geneva', note: 'Michelin-owned boutique & design-hotel discovery' },
-          ].map((s, i, arr) => (
-            <div key={s.url} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '0.8rem 1.5rem', borderBottom: i < arr.length - 1 ? '1px solid ' + BORDER : 'none' }}>
-              <div style={{ minWidth: 0 }}>
-                <a href={s.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: TEXT, textDecoration: 'none' }}>{s.name}</a>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: '0.15rem 0 0' }}>{s.note}</p>
-              </div>
-              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: GOLD, background: GOLD_LIGHT, border: '1px solid ' + BORDER, padding: '3px 8px', borderRadius: 6, flexShrink: 0 }}>Reference</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* All cited pages — actual URLs */}
       <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.5rem' }}>
         <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG }}>
