@@ -67,10 +67,12 @@ function domainOf(url: string): string {
 
 async function saveCitations(rows: { query: string; platform: string; source_url: string; region: string | null }[], runDate: string) {
   try {
+    const JUNK_HOSTS = ['google.com/maps', 'google.com/search', 'bing.com/search', 'duckduckgo.com']
     const seen = new Set<string>()
     const deduped: any[] = []
     for (const r of rows) {
       if (!r.source_url) continue
+      if (JUNK_HOSTS.some(h => r.source_url.includes(h))) continue
       const key = `${r.query}|${r.platform}|${r.source_url}`
       if (seen.has(key)) continue
       seen.add(key)
