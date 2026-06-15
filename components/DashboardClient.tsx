@@ -2520,7 +2520,7 @@ function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hot
   const ranked = Object.entries(byDomain)
     .map(([domain, v]) => ({ domain, count: v.count, coverage: Math.round((v.queries.size / totalQueries) * 100), mentioned: v.mentioned }))
     .sort((a, b) => b.count - a.count)
-    .slice(0, 50)
+    .slice(0, 10)
 
   // Page-level aggregation → actual cited URLs
   const byUrl: Record<string, { count: number; queries: Set<string>; domain: string; mentioned: boolean | null }> = {}
@@ -2534,7 +2534,6 @@ function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hot
   const rankedUrls = Object.entries(byUrl)
     .map(([url, v]) => ({ url, domain: v.domain, count: v.count, coverage: Math.round((v.queries.size / totalQueries) * 100), mentioned: v.mentioned }))
     .sort((a, b) => b.count - a.count)
-    .slice(0, 20)
 
   const totalSources = Object.keys(byDomain).length
   const mentionYes = ranked.filter(r => r.mentioned === true).length
@@ -2567,31 +2566,6 @@ function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hot
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0 0 0.6rem' }}>Citation Sources · Last 30 days</p>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 300, color: WHITE, margin: '0 0 0.6rem', lineHeight: 1.3, maxWidth: 560 }}>Where AI gets its answers for {hotelRegion}</p>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.7, maxWidth: 560 }}>These are the pages ChatGPT and Perplexity cite when answering {hotelRegion} hotel searches. The ones that don't mention {hotelName} are your outreach targets — get placed there to feed the engines directly.</p>
-        </div>
-      </div>
-
-      {/* Top cited pages — actual URLs */}
-      <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.25rem' }}>
-        <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG }}>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT, margin: '0 0 0.15rem' }}>Top cited pages</p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>The exact pages ChatGPT and Perplexity cited — click to open</p>
-        </div>
-        <div>
-          {rankedUrls.map((r, i) => {
-            const short = (() => { try { const u = new URL(r.url); const base = u.hostname.replace(/^www\./, ''); return u.pathname && u.pathname !== '/' ? base + u.pathname : base } catch { return r.url } })()
-            return (
-              <div key={r.url} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '0.8rem 1.5rem', borderBottom: i < rankedUrls.length - 1 ? '1px solid ' + BORDER : 'none' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
-                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, color: TEXT_MUTED, width: 18, flexShrink: 0 }}>{i + 1}</span>
-                  <a href={r.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: TEXT, textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{short}</a>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
-                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>cited {r.count}× · {r.coverage}%</span>
-                  <StatusPill m={r.mentioned} />
-                </div>
-              </div>
-            )
-          })}
         </div>
       </div>
 
@@ -2628,9 +2602,34 @@ function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hot
         </div>
       </div>
 
+      {/* All cited pages — actual URLs */}
+      <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.5rem' }}>
+        <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG }}>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT, margin: '0 0 0.15rem' }}>Every cited page</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>The exact pages ChatGPT and Perplexity cited across your queries — click to open</p>
+        </div>
+        <div>
+          {rankedUrls.map((r, i) => {
+            const short = (() => { try { const u = new URL(r.url); const base = u.hostname.replace(/^www\./, ''); return u.pathname && u.pathname !== '/' ? base + u.pathname : base } catch { return r.url } })()
+            return (
+              <div key={r.url} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '0.8rem 1.5rem', borderBottom: i < rankedUrls.length - 1 ? '1px solid ' + BORDER : 'none' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, color: TEXT_MUTED, width: 18, flexShrink: 0 }}>{i + 1}</span>
+                  <a href={r.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: TEXT, textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{short}</a>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>cited {r.count}× · {r.coverage}%</span>
+                  <StatusPill m={r.mentioned} />
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
       <div style={{ background: GOLD_LIGHT, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${GOLD}`, borderRadius: 10, padding: '1.25rem 1.5rem' }}>
         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT, margin: 0, lineHeight: 1.7 }}>
-          <strong>How to use this:</strong> the "Missing you" sources are pages AI already trusts for {hotelRegion}. Getting {hotelName} added to the highest-cited ones is the fastest way to start appearing in more AI answers. "Not checked" means the page hasn't been scanned for your name yet.
+          <strong>How to use this:</strong>the "Missing you" sources are pages AI already trusts for {hotelRegion}. Getting {hotelName} added to the highest-cited ones is the fastest way to start appearing in more AI answers. "Not checked" means the page hasn't been scanned for your name yet.
         </p>
       </div>
     </div>
