@@ -18,8 +18,9 @@ export async function GET(request: Request) {
     },
     body: JSON.stringify({
       model: 'gpt-4o',
-      input: `${query}. Please list all relevant hotels by name.`,
-      tools: [{ type: 'web_search' }],
+      input: `${query}. Search the web and list all relevant hotels by name with their sources.`,
+      tools: [{ type: 'web_search_preview' }],
+      tool_choice: { type: 'web_search_preview' },
       include: ['web_search_call.action.sources'],
     }),
   })
