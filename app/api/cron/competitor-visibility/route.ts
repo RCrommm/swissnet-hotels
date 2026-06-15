@@ -37,6 +37,12 @@ async function queryChatGPT(query: string): Promise<{ text: string; citations: s
   })
   const data = await res.json()
   const msg = data.choices?.[0]?.message || {}
+  try {
+    const { count } = await supabase.from('_debug_chatgpt').select('*', { count: 'exact', head: true })
+    if ((count ?? 0) < 3) {
+      await supabase.from('_debug_chatgpt').insert({ raw: msg })
+    }
+  } catch {}
   const annotations = msg.annotations || []
   const citations = annotations
     .filter((a: any) => a?.type === 'url_citation' && a?.url_citation?.url)
