@@ -31,17 +31,26 @@ async function queryChatGPT(query: string): Promise<{ text: string; citations: s
     },
     body: JSON.stringify({
       model: 'gpt-4o-search-preview',
-      messages: [{ role: 'user', content: `${query}. Please list all relevant hotels by name.` }],
-      max_tokens: 500,
+      messages: [{ role: 'user', content: `${query}. Please list all relevant hotels by name. At the end, add a section titled exactly "All URL sources used" listing every web source URL you used, one per line. Do not include Google Maps links.` }],
+      max_tokens: 800,
     }),
   })
   const data = await res.json()
   const msg = data.choices?.[0]?.message || {}
+  const text = msg.content || ''
   const annotations = msg.annotations || []
-  const citations = annotations
+  const annotationUrls = annotations
     .filter((a: any) => a?.type === 'url_citation' && a?.url_citation?.url)
     .map((a: any) => a.url_citation.url)
-  return { text: msg.content || '', citations }
+  const textUrls: string[] = []
+  const idx = text.toLowerCase().indexOf('url sources used')
+  if (idx !== -1) {
+    const block = text.slice(idx)
+    const matches = block.match(/https?:\/\/[^\s)\]]+/g) || []
+    for (const u of matches) textUrls.push(u.replace(/[.,)]+$/, ''))
+  }
+  const citations = [...new Set([...annotationUrls, ...textUrls])]
+  return { text, citations }
 }
 
 const PLATFORMS = [
