@@ -2526,6 +2526,7 @@ function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hot
     .map(([domain, v]) => ({ domain, count: v.count, coverage: Math.round((v.queries.size / totalQueries) * 100), mentioned: v.mentioned }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 10)
+  const top10CiteTotal = ranked.reduce((s, r) => s + r.count, 0) || 1
 
   // Page-level aggregation → actual cited URLs
   const byUrl: Record<string, { count: number; queries: Set<string>; domain: string; mentioned: boolean | null }> = {}
@@ -2539,7 +2540,9 @@ function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hot
   const rankedUrls = Object.entries(byUrl)
     .map(([url, v]) => ({ url, domain: v.domain, count: v.count, coverage: Math.round((v.queries.size / totalQueries) * 100), mentioned: v.mentioned }))
     .sort((a, b) => b.count - a.count)
-    .filter(r => !search || r.url.toLowerCase().includes(search.toLowerCase()))
+    .slice(0, 100)
+  .slice(0, 100)
+  const urlsCiteTotal = rankedUrls.reduce((s, r) => s + r.count, 0) || 1
 
   const totalSources = Object.keys(byDomain).length
   const mentionYes = ranked.filter(r => r.mentioned === true).length
@@ -2586,7 +2589,7 @@ function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hot
       <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.5rem' }}>
         <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG }}>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT, margin: '0 0 0.2rem' }}>Most-cited sources</p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Ranked by how often AI cited the domain · top 10</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Share of all citations · top 10 domains</p>
         </div>
         <div>
           {ranked.map((r, i) => {
@@ -2599,7 +2602,8 @@ function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hot
                   {isOwn && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.48rem', fontWeight: 700, color: GOLD, background: WHITE, border: '1px solid rgba(201,169,76,0.3)', padding: '2px 7px', borderRadius: 10, flexShrink: 0 }}>YOUR PAGE</span>}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
-                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>cited {r.count}× · {r.coverage}%</span>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>cited {r.count}×</span>
+                  <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', fontWeight: 600, color: GOLD, minWidth: 52, textAlign: 'right' }}>{Math.round((r.count / top10CiteTotal) * 100)}%</span>
                   <StatusPill m={r.mentioned} />
                 </div>
               </div>
@@ -2627,7 +2631,8 @@ function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hot
                   <a href={r.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', color: TEXT, textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{short}</a>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
-                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>cited {r.count}× · {r.coverage}%</span>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>cited {r.count}×</span>
+                  <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', fontWeight: 600, color: GOLD, minWidth: 52, textAlign: 'right' }}>{Math.round((r.count / urlsCiteTotal) * 100)}%</span>
                   <StatusPill m={r.mentioned} />
                 </div>
               </div>
