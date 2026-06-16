@@ -2522,7 +2522,7 @@ function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hot
     .slice(0, 100)
   const urlsCiteTotal = rankedUrls.reduce((s, r) => s + r.count, 0) || 1
 
-  const totalSources = Object.keys(byDomain).length
+  const totalSources = Object.keys(byUrl).length
   const mentionYes = ranked.filter(r => r.mentioned === true).length
   const mentionNo = ranked.filter(r => r.mentioned === false).length
   const ownDomain = 'swissnethotels.com'
