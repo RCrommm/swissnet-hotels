@@ -1320,8 +1320,7 @@ function SchemaVisualizer({ hotelId, hotelSlug }: { hotelId: string; hotelSlug: 
   )
 }
 
-function SchemaTab({ hotel, hotelId, crawlerCount, onGoToOptimise }: { hotel: any; hotelId: string; crawlerCount?: number; onGoToOptimise: (tab?: string) => void }) {
-  const crawlers = crawlerCount ?? 0
+function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: string; onGoToOptimise: (tab?: string) => void }) {
   const [data, setData] = useState<any>(null)
   const [loaded, setLoaded] = useState(false)
 
@@ -3508,7 +3507,7 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
 
         {/* ── SCHEMA ── */}
 {tab === 'schema' && (
-  <SchemaTab hotel={hotel} hotelId={hotel?.id} crawlerCount={crawlerCount} onGoToOptimise={(tab) => { setTab('optimise'); setOptimiseTab(tab || 'overview') }} />
+  <SchemaTab hotel={hotel} hotelId={hotel?.id} onGoToOptimise={(tab) => { setTab('optimise'); setOptimiseTab(tab || 'overview') }} />
 )}
 
         {/* ── OPTIMISE ── */}
