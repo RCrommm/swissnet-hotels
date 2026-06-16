@@ -2457,12 +2457,10 @@ function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hot
     const load = async () => {
       const { createClient } = await import('@supabase/supabase-js')
       const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-      const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
       const { data: cites } = await sb
         .from('ai_citations')
         .select('query, source_url, source_domain, run_date')
         .eq('region', hotelRegion)
-        .gte('run_date', since)
         .limit(5000)
       setRows(cites || [])
 
@@ -2509,28 +2507,11 @@ function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hot
     .slice(0, 10)
   const top10CiteTotal = ranked.reduce((s, r) => s + r.count, 0) || 1
 
-  // Per-query top 10 URLs → union → the sources the bots actually leaned on
-  const urlCountByQuery: Record<string, Record<string, number>> = {}
-  for (const r of rows) {
-    const u = r.source_url || ''
-    const q = r.query || ''
-    if (!u || !q) continue
-    if (!urlCountByQuery[q]) urlCountByQuery[q] = {}
-    urlCountByQuery[q][u] = (urlCountByQuery[q][u] || 0) + 1
-  }
-  const allowedUrls = new Set<string>()
-  for (const q of Object.keys(urlCountByQuery)) {
-    Object.entries(urlCountByQuery[q])
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
-      .forEach(([u]) => allowedUrls.add(u))
-  }
-
-  // Page-level aggregation → only the per-query top 10 URLs
+  // Page-level aggregation → every distinct cited URL, ranked by all-time usage
   const byUrl: Record<string, { count: number; queries: Set<string>; domain: string; mentioned: boolean | null }> = {}
   for (const r of rows) {
     const u = r.source_url || ''
-    if (!u || !allowedUrls.has(u)) continue
+    if (!u) continue
     if (!byUrl[u]) byUrl[u] = { count: 0, queries: new Set(), domain: r.source_domain || '', mentioned: mentions[u] ?? null }
     byUrl[u].count++
     if (r.query) byUrl[u].queries.add(r.query)
@@ -2538,7 +2519,7 @@ function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hot
   const rankedUrls = Object.entries(byUrl)
     .map(([url, v]) => ({ url, domain: v.domain, count: v.count, coverage: Math.round((v.queries.size / totalQueries) * 100), mentioned: v.mentioned }))
     .sort((a, b) => b.count - a.count)
-    .slice(0, 150)
+    .slice(0, 100)
   const urlsCiteTotal = rankedUrls.reduce((s, r) => s + r.count, 0) || 1
 
   const totalSources = Object.keys(byDomain).length
