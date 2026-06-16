@@ -2559,7 +2559,7 @@ function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hot
       {/* Metric cards */}
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
         <KPICard label="Sources Cited" value={totalSources} sub="distinct pages · all time" color={GOLD} />
-        <KPICard label="Already Mention You" value={mentionYes} sub="of top 10 sources" color={GREEN} />
+        <KPICard label="Already Mention You" value={mentionYes} sub="sources mentioning you" color={GREEN} />
         <KPICard label="Cited but Missing You" value={mentionNo} sub="outreach targets" color={RED} />
       </div>
 
@@ -2600,7 +2600,7 @@ function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hot
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search pages…" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.45rem 0.75rem', background: WHITE, outline: 'none', minWidth: 180 }} />
         </div>
         <div>
-          {rankedUrls.map((r, i) => {
+          {rankedUrls.filter(r => !search || r.url.toLowerCase().includes(search.toLowerCase())).map((r, i) => {
             const short = (() => { try { const u = new URL(r.url); const base = u.hostname.replace(/^www\./, ''); return u.pathname && u.pathname !== '/' ? base + u.pathname : base } catch { return r.url } })()
             return (
               <div key={r.url} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '0.8rem 1.5rem', borderBottom: i < rankedUrls.length - 1 ? '1px solid ' + BORDER : 'none' }}>
