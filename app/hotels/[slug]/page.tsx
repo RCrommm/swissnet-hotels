@@ -235,7 +235,7 @@ hotel.accessibility && { '@type': 'LocationFeatureSpecification', name: hotel.ac
     })) : []),
 
     // FAQPage
-    ...(faqs?.length > 0 ? [{
+    ...(hotel.is_partner && faqs?.length > 0 ? [{
       '@type': 'FAQPage',
       '@id': `${pageUrl}#faq`,
       mainEntity: faqs.map((f: any) => ({
@@ -767,7 +767,7 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
             <div style={{ height: 1, background: border, marginBottom: '4rem' }} />
 
             {/* FAQS */}
-            {faqs.length > 0 && (
+            {hotel.is_partner && faqs.length > 0 && (
               <>
                 <section style={{ marginBottom: '4rem' }}>
                   <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>Frequently Asked Questions</p>
