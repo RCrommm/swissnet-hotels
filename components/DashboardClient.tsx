@@ -2523,8 +2523,9 @@ function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hot
   const urlsCiteTotal = rankedUrls.reduce((s, r) => s + r.count, 0) || 1
 
   const totalSources = Object.keys(byUrl).length
-  const mentionYes = ranked.filter(r => r.mentioned === true).length
-  const mentionNo = ranked.filter(r => r.mentioned === false).length
+  const totalUrls = rankedUrls.length || 1
+  const mentionYes = Math.round((rankedUrls.filter(r => r.mentioned === true).length / totalUrls) * 100) + '%'
+  const mentionNo = Math.round((rankedUrls.filter(r => r.mentioned === false).length / totalUrls) * 100) + '%'
   const ownDomain = 'swissnethotels.com'
 
   if (!loaded) return <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>Loading citation sources…</p>
