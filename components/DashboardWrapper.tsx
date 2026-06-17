@@ -23,8 +23,8 @@ export default function DashboardWrapper() {
         .from('hotel_users')
         .select('hotel_id')
         .eq('user_id', session.user.id)
-        .single()
-      if (!hotelUser) { router.push('/dashboard/login'); return }
+        .maybeSingle()
+      if (!hotelUser) { setData('PENDING'); setLoading(false); return }
 
       const hotelId = hotelUser.hotel_id
 
@@ -236,6 +236,25 @@ const myRankChange = myHasLatest && myHasPrev && myLatestRank > 0 && myPrevRank 
       <div style={{ minHeight: '100vh', background: '#F8F5EF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', color: '#C9A84C' }}>Loading your dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (data === 'PENDING') {
+    return (
+      <div style={{ minHeight: '100vh', background: '#492816', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+        <div style={{ textAlign: 'center', maxWidth: 460 }}>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', color: '#C9A84C', margin: '0 0 1rem' }}>Account created ✓</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: 'rgba(255,255,255,0.65)', lineHeight: 1.8, margin: '0 0 1.5rem' }}>
+            Your account is set up. We're linking it to your hotel — you'll have full dashboard access shortly. We'll be in touch by email.
+          </p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)' }}>
+            Questions? <a href="mailto:contact@swissnethotels.com" style={{ color: '#C9A84C', textDecoration: 'none' }}>contact@swissnethotels.com</a>
+          </p>
+          <p style={{ marginTop: '2rem' }}>
+            <a href="/dashboard/login" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', textDecoration: 'none' }}>← Sign out / back to login</a>
+          </p>
         </div>
       </div>
     )
