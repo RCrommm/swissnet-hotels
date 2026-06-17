@@ -2447,7 +2447,7 @@ function WebsiteTab({ hotel }: any) {
 
 // ── CITATION SOURCES TAB ──────────────────────────────────────────────────────
 
-function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hotelRegion: string }) {
+function CitationSourcesTab({ hotelName, hotelRegion, hotelId }: { hotelName: string; hotelRegion: string; hotelId: string }) {
   const [rows, setRows] = useState<any[]>([])
   const [mentions, setMentions] = useState<Record<string, boolean | null>>({})
   const [loaded, setLoaded] = useState(false)
@@ -2470,6 +2470,7 @@ function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hot
           const { data: pm } = await sb
             .from('page_mentions')
             .select('source_url, mentioned')
+            .eq('hotel_id', hotelId)
             .in('source_url', urls.slice(0, 100))
           const map: Record<string, boolean | null> = {}
           for (const m of pm || []) map[m.source_url] = m.mentioned
@@ -3569,7 +3570,7 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
 
         {/* ── CITATION SOURCES ── */}
         {tab === 'citations' && (
-          <CitationSourcesTab hotelName={hotelName} hotelRegion={hotelRegion} />
+          <CitationSourcesTab hotelName={hotelName} hotelRegion={hotelRegion} hotelId={hotel?.id} />
         )}
         {tab === 'website' && <WebsiteTab hotel={hotel} />}
 
