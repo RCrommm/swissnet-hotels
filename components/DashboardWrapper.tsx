@@ -21,10 +21,10 @@ export default function DashboardWrapper() {
 
       const { data: hotelUser } = await supabase
         .from('hotel_users')
-        .select('hotel_id')
+        .select('hotel_id, status')
         .eq('user_id', session.user.id)
         .maybeSingle()
-      if (!hotelUser) { setData('PENDING'); setLoading(false); return }
+      if (!hotelUser || hotelUser.status !== 'approved' || !hotelUser.hotel_id) { setData('PENDING'); setLoading(false); return }
 
       const hotelId = hotelUser.hotel_id
 
