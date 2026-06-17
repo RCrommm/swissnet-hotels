@@ -278,7 +278,7 @@ export default async function HomePage() {
         gold={gold} border={border}
         name="Monitor"
         tagline="See where you stand in AI search."
-        price="199"
+        price="149"
         primary={[
           'Premium hotel profile on SwissNet',
           'Tracked across ChatGPT, Perplexity & Google AI',
