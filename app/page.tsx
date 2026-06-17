@@ -54,6 +54,7 @@ export default async function HomePage() {
           .dashboard-grid { grid-template-columns: 1fr !important; gap: 2rem !important; }
           .chatgpt-grid { grid-template-columns: 1fr !important; gap: 2rem !important; }
           .pricing-grid { grid-template-columns: 1fr !important; }
+          .group-card { grid-template-columns: 1fr !important; gap: 1.5rem !important; }
         }
       `}</style>
       <Navigation />
@@ -265,6 +266,10 @@ export default async function HomePage() {
       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: textMuted, fontWeight: 300, maxWidth: '520px', margin: '0 auto' }}>
         Three plans, one path: see where you stand in AI search, get the tools to improve it, and have us optimise and promote you.
       </p>
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6rem', marginTop: '1.5rem', padding: '0.6rem 1.5rem', border: '1px solid ' + border, borderRadius: '40px' }}>
+        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: textMuted }}>One-time profile set-up</span>
+        <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: gold, fontWeight: 400, lineHeight: 1 }}>CHF 400</span>
+      </div>
     </div>
 
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.25rem', alignItems: 'start' }} className="pricing-grid">
@@ -276,7 +281,7 @@ export default async function HomePage() {
         price="199"
         primary={[
           'Premium hotel profile on SwissNet',
-          'Tracked across ChatGPT & Perplexity',
+          'Tracked across ChatGPT, Perplexity & Google AI',
           'Daily AI visibility score',
           'Query coverage & appearance tracking',
           'Regional competitor benchmarking',
@@ -334,10 +339,31 @@ export default async function HomePage() {
 
     </div>
 
-    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)', textAlign: 'center', margin: '2.5rem 0 0', lineHeight: 1.7 }}>
-      One-time profile set-up <span style={{ color: gold }}>CHF 400</span> · same across all tiers · no long-term contracts · cancel anytime
-      <br />
-      Operating several properties? Group pricing from <span style={{ color: gold }}>~15% off</span> (2–4) up to <span style={{ color: gold }}>~35% off</span> per property (10+). <a href="#contact" style={{ color: gold, textDecoration: 'none' }}>Talk to us →</a>
+    {/* Enterprise / group — wide short card */}
+    <div style={{ background: '#FFFFFF', border: '1px solid ' + border, marginTop: '1.5rem', padding: '2rem 2.5rem', display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '2.5rem', alignItems: 'center' }} className="group-card">
+      <div>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: gold, margin: '0 0 0.6rem' }}>Group &amp; Multi-Property</p>
+        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.35rem', fontWeight: 400, color: '#2A1208', margin: '0 0 0.5rem', lineHeight: 1.3 }}>One price per property, not per portfolio.</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: 'rgba(42,18,8,0.6)', lineHeight: 1.6, margin: 0 }}>Operating several hotels? Each plan is priced per property with a volume discount that grows with your portfolio. <a href="#contact" style={{ color: gold, textDecoration: 'none', fontWeight: 600 }}>Talk to us →</a></p>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
+        {[
+          { q: '1', d: 'property', v: 'Full price' },
+          { q: '2–4', d: 'properties', v: '~15% off' },
+          { q: '5–9', d: 'properties', v: '~25% off' },
+          { q: '10+', d: 'properties', v: '~35% off' },
+        ].map(t => (
+          <div key={t.q} style={{ textAlign: 'center', padding: '1rem 0.5rem', background: 'rgba(201,169,76,0.06)', border: '1px solid ' + border }}>
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 400, color: '#2A1208', margin: '0 0 0.1rem', lineHeight: 1 }}>{t.q}</p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(42,18,8,0.45)', margin: '0 0 0.6rem' }}>{t.d}</p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 700, color: gold, margin: 0 }}>{t.v}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)', textAlign: 'center', margin: '1.5rem 0 0', lineHeight: 1.7 }}>
+      No long-term contracts · cancel anytime · 10+ properties may move to a flat negotiated group rate
     </p>
   </div>
 </section>
