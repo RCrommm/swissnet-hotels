@@ -35,6 +35,11 @@ export default function LoginPage() {
       }
       const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password })
       if (signInErr) { setMode('login'); setError('Account created — please sign in.'); setLoading(false); return }
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        await supabase.from('hotel_users').insert({ user_id: session.user.id, email, status: 'pending', hotel_id: null })
+        fetch('/api/notify-signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) }).catch(() => {})
+      }
       router.push('/dashboard'); router.refresh()
       return
     }
