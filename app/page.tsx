@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import ContactForm from '@/components/ContactForm'
 import Navigation from '@/components/Navigation'
+import PricingCard from '@/components/PricingCard'
 
 export const metadata = {
   title: 'SwissNet Hotels — AI Visibility for Swiss Luxury Hotels',
@@ -251,119 +252,92 @@ export default async function HomePage() {
 
  {/* Pricing */}
 <section id="pricing" style={{ background: bgLight, borderTop: '1px solid ' + border, padding: '6rem 0' }}>
-  <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 2rem' }}>
-    <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+  <div style={{ maxWidth: '1180px', margin: '0 auto', padding: '0 2rem' }}>
+    <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '1rem' }}>
         <span style={{ width: '30px', height: '1px', background: gold, display: 'inline-block' }} />
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.3em', textTransform: 'uppercase', color: gold, margin: 0 }}>Partnership</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.3em', textTransform: 'uppercase', color: gold, margin: 0 }}>Pricing</p>
         <span style={{ width: '30px', height: '1px', background: gold, display: 'inline-block' }} />
       </div>
-      <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 300, color: text, margin: '0 0 1rem' }}>Choose Your Plan.</h2>
-      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: textMuted, fontWeight: 300, maxWidth: '480px', margin: '0 auto' }}>
-        Two ways to grow your visibility in AI search and drive more direct bookings — start where it makes sense for your hotel.
+      <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', fontWeight: 300, color: text, margin: '0 0 1rem' }}>
+        See <span style={{ color: gold }}>→</span> Act <span style={{ color: gold }}>→</span> <span style={{ fontStyle: 'italic', color: gold }}>We help.</span>
+      </h2>
+      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: textMuted, fontWeight: 300, maxWidth: '520px', margin: '0 auto' }}>
+        Three plans, one path: see where you stand in AI search, get the tools to improve it, and have us optimise and promote you.
       </p>
     </div>
 
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', alignItems: 'stretch' }} className="pricing-grid">
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.25rem', alignItems: 'start' }} className="pricing-grid">
 
-      {/* ESSENTIAL */}
-      <div style={{ background: '#FFFFFF', border: '1px solid ' + border, padding: '2.5rem', display: 'flex', flexDirection: 'column' }}>
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: gold, margin: '0 0 0.75rem' }}>Partner</p>
-        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 300, color: '#2A1208', margin: '0 0 1.5rem', lineHeight: 1.5 }}>
-          Get listed, structured and tracked for AI search.
-        </p>
+      <PricingCard
+        gold={gold} border={border}
+        name="Monitor"
+        tagline="See where you stand in AI search."
+        price="199"
+        primary={[
+          'Premium hotel profile on SwissNet',
+          'Tracked across ChatGPT & Perplexity',
+          'Daily AI visibility score',
+          'Query coverage & appearance tracking',
+          'Regional competitor benchmarking',
+        ]}
+        more={[
+          'Views, clicks & enquiry tracking',
+          'Monthly automated AI report',
+          'Standard support',
+          '1 dashboard seat',
+        ]}
+      />
 
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.5rem', marginBottom: '2rem', paddingBottom: '2rem', borderBottom: '1px solid rgba(201,169,110,0.2)' }}>
-          <div>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(42,18,8,0.4)', margin: '0 0 0.4rem' }}>Setup</p>
-            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 300, color: '#2A1208', margin: 0, lineHeight: 1 }}>CHF 200</p>
-          </div>
-          <div style={{ width: '1px', height: '40px', background: 'rgba(201,169,110,0.3)' }} />
-          <div>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(42,18,8,0.4)', margin: '0 0 0.4rem' }}>Monthly</p>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem' }}>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 300, color: '#2A1208', margin: 0, lineHeight: 1 }}>CHF 199</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: 'rgba(42,18,8,0.4)', margin: 0 }}>/mo</p>
-            </div>
-          </div>
-        </div>
+      <PricingCard
+        gold={gold} border={border}
+        featured
+        name="Optimise"
+        tagline="The tools to act on your visibility."
+        noCommission
+        price="379"
+        plus="Everything in Monitor, plus:"
+        primary={[
+          'Google AI added to tracked engines',
+          'Citation Sources — the pages AI cites',
+          'Official website AI-readability audit',
+          'Prioritised recommendations & action plan',
+          'Category opportunity tracking (spa, family, lake…)',
+        ]}
+        more={[
+          'SwissNet profile & schema access',
+          'Hotel appearance tracking on cited pages',
+          '3 dashboard seats · priority email',
+        ]}
+      />
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2.5rem', flex: 1 }}>
-          {[
-            'Premium hotel profile on SwissNet',
-            'Optimised for ChatGPT, Google AI, Perplexity',
-            'Structured content and schema setup',
-            'Direct booking link to your website',
-            'Visibility and performance dashboard',
-            'Daily AI visibility score',
-            'Views, clicks and enquiry tracking',
-            'Standard support',
-          ].map(f => (
-            <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-              <span style={{ color: gold, fontSize: '0.7rem', flexShrink: 0, marginTop: '0.15rem' }}>✦</span>
-              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: 'rgba(42,18,8,0.7)', lineHeight: 1.5 }}>{f}</span>
-            </div>
-          ))}
-        </div>
-
-        <a href="#contact" style={{ display: 'block', textAlign: 'center', background: 'transparent', color: '#2A1208', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '1rem', textDecoration: 'none', border: '1px solid ' + gold }}>
-          Get Started
-        </a>
-      </div>
-
-      {/* PREMIUM */}
-      <div style={{ background: '#FFFFFF', border: '1px solid ' + gold + '55', padding: '2.5rem', position: 'relative', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
-        <div style={{ position: 'absolute', top: '-1px', left: '50%', transform: 'translateX(-50%)', background: gold, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', padding: '0.3rem 1.25rem', whiteSpace: 'nowrap' }}>
-          Most Complete
-        </div>
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: gold, margin: '0.5rem 0 0.75rem' }}>Premium</p>
-        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', fontWeight: 300, color: '#2A1208', margin: '0 0 1.5rem', lineHeight: 1.5 }}>
-          Full visibility, competitor edge and hands-on monthly guidance.
-        </p>
-
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.5rem', marginBottom: '2rem', paddingBottom: '2rem', borderBottom: '1px solid rgba(201,169,110,0.2)' }}>
-          <div>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(42,18,8,0.4)', margin: '0 0 0.4rem' }}>Setup</p>
-            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 300, color: '#2A1208', margin: 0, lineHeight: 1 }}>CHF 200</p>
-          </div>
-          <div style={{ width: '1px', height: '40px', background: 'rgba(201,169,110,0.3)' }} />
-          <div>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(42,18,8,0.4)', margin: '0 0 0.4rem' }}>Monthly</p>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem' }}>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 300, color: '#2A1208', margin: 0, lineHeight: 1 }}>CHF 399</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: 'rgba(42,18,8,0.4)', margin: 0 }}>/mo</p>
-            </div>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: '#C9A84C', margin: '0.3rem 0 0', fontWeight: 500, letterSpacing: '0.05em' }}>No commission on bookings</p>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2.5rem', flex: 1 }}>
-          {[
-            'Everything in Partner',
-            'Featured in AI comparison & best-of pages',
-            'Competitor benchmarking by category',
-            'Official website AI-visibility audit',
-            'Tailored recommendations for your own site',
-            'Monthly performance follow-up call',
-            'Ongoing content and visibility improvements',
-            'Priority support',
-          ].map(f => (
-            <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-              <span style={{ color: gold, fontSize: '0.7rem', flexShrink: 0, marginTop: '0.15rem' }}>✦</span>
-              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: 'rgba(42,18,8,0.7)', lineHeight: 1.5 }}>{f}</span>
-            </div>
-          ))}
-        </div>
-
-        <a href="#contact" style={{ display: 'block', textAlign: 'center', background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '1rem', textDecoration: 'none' }}>
-          Get Started
-        </a>
-      </div>
+      <PricingCard
+        gold={gold} border={border}
+        name="Premium Partner"
+        tagline="We optimise & promote with you."
+        noCommission
+        price="699"
+        plus="Everything in Optimise, plus:"
+        primary={[
+          'Monthly optimisation call',
+          'Advanced promotion on comparison pages',
+          'Monthly LinkedIn PR for weak categories',
+          'Multi-hotel / group dashboard',
+          'Ongoing hands-on visibility improvements',
+        ]}
+        more={[
+          'Early access to new features',
+          'Dedicated contact · priority support',
+          '5 dashboard seats',
+        ]}
+      />
 
     </div>
 
-    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.35)', textAlign: 'center', margin: '2rem 0 0', lineHeight: 1.6 }}>
-      No long-term contracts · Cancel anytime · CHF 200 one-time setup applies to both plans
+    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.4)', textAlign: 'center', margin: '2.5rem 0 0', lineHeight: 1.7 }}>
+      One-time profile set-up <span style={{ color: gold }}>CHF 400</span> · same across all tiers · no long-term contracts · cancel anytime
+      <br />
+      Operating several properties? Group pricing from <span style={{ color: gold }}>~15% off</span> (2–4) up to <span style={{ color: gold }}>~35% off</span> per property (10+). <a href="#contact" style={{ color: gold, textDecoration: 'none' }}>Talk to us →</a>
     </p>
   </div>
 </section>
