@@ -8,6 +8,7 @@ import SchemaTab from '@/components/SchemaTab'
 import AIVisibilityToggle from '@/components/AIVisibilityToggle'
 import AIVisibilityQueries from '@/components/AIVisibilityQueries'
 import GoogleAITab from '@/components/GoogleAITab'
+import UsersTab from '@/components/UsersTab'
 
 async function isAuthenticated(password?: string) {
   const cookieStore = await cookies()
@@ -43,6 +44,10 @@ export default async function AdminPage({
     .select('*')
     .order('is_partner', { ascending: false })
     .order('name', { ascending: true })
+    const { data: hotelUsers } = await supabase
+    .from('hotel_users')
+    .select('id, email, hotel_id, status, created_at')
+    .order('created_at', { ascending: false })
 
   const { data: leads } = await supabase
     .from('leads')
@@ -175,7 +180,7 @@ const { data: cronCosts } = await supabase
         </div>
 
         <div className="flex gap-1 mb-6 border-b border-stone-200 flex-wrap">
-{['hotels', 'schema', 'ai visibility', 'analytics', 'keywords', 'clicks'].map(t => ( <a key={t} href={'/admin?password=' + pw + '&tab=' + t}
+{['hotels', 'schema', 'ai visibility', 'analytics', 'keywords', 'clicks', 'users'].map(t => ( <a key={t} href={'/admin?password=' + pw + '&tab=' + t}
               className={'px-5 py-3 text-sm uppercase tracking-wide capitalize transition-colors ' +
                 (tab === t ? 'border-b-2 border-amber-700 text-amber-700 font-semibold' : 'text-stone-500 hover:text-stone-700')}>
               {t}
@@ -355,6 +360,7 @@ const { data: cronCosts } = await supabase
       
 
         {tab === 'keywords' && <KeywordsTab hotels={hotelsList} keywords={keywordsList} password={pw} />}
+        {tab === 'users' && <UsersTab users={hotelUsers || []} hotels={hotelsList} />}
 
 
 
