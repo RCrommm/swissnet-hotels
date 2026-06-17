@@ -344,8 +344,10 @@ const { data: regionQueriesData } = await supabase
       }
       await saveCitations(citationRows, new Date().toISOString().split('T')[0])
 
+      const appearanceRows: any[] = []
       for (const hotel of allHotels) {
-        const appearances = queries.filter(q => checkAppeared(hotel.name, responseCache[platform.id][q] || '')).length
+        const perQuery = queries.map(q => ({ query: q, appeared: checkAppeared(hotel.name, responseCache[platform.id][q] || '') }))
+        const appearances = perQuery.filter(p => p.appeared).length
         const score = queries.length > 0 ? Math.round((appearances / queries.length) * 100) : 0
         if (appearances > 0) results.push({ hotel: hotel.name, platform: platform.id, region })
         const today = new Date().toISOString().split('T')[0]
@@ -361,6 +363,29 @@ const { data: regionQueriesData } = await supabase
           run_date: today,
           checked_at: new Date().toISOString(),
         }, { onConflict: 'competitor_name,platform,run_date,category', ignoreDuplicates: true })
+
+        if ((hotel as any).isPartner) {
+          const nowIso = new Date().toISOString()
+          for (const p of perQuery) {
+            appearanceRows.push({
+              hotel_id: (hotel as any).id,
+              hotel_name: hotel.name,
+              query: p.query,
+              platform: platform.id,
+              region,
+              category: 'general',
+              appeared: p.appeared,
+              run_date: today,
+              checked_at: nowIso,
+            })
+          }
+        }
+      }
+      if (appearanceRows.length) {
+        await supabase.from('query_appearances').upsert(appearanceRows, {
+          onConflict: 'hotel_name,query,platform,run_date,category',
+          ignoreDuplicates: false,
+        })
       }
     }))
 

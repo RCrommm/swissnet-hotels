@@ -2629,6 +2629,87 @@ function CitationSourcesTab({ hotelName, hotelRegion }: { hotelName: string; hot
   )
 }
 
+function QueryAppearanceBreakdown({ hotelId, hotelName, googleAiScores, onAddFaq }: { hotelId: string; hotelName: string; googleAiScores: any[]; onAddFaq: () => void }) {
+  const [platform, setPlatform] = useState<'chatgpt' | 'perplexity' | 'google_ai'>('chatgpt')
+  const [rows, setRows] = useState<any[]>([])
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    if (!hotelId) return
+    const load = async () => {
+      const { createClient } = await import('@supabase/supabase-js')
+      const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+      const { data } = await sb
+        .from('query_appearances')
+        .select('query, platform, appeared, checked_at')
+        .eq('hotel_id', hotelId)
+        .eq('category', 'general')
+        .order('checked_at', { ascending: false })
+      setRows(data || [])
+      setLoaded(true)
+    }
+    load()
+  }, [hotelId])
+
+  const latestForPlatform = (plat: string, source: any[]) =>
+    [...new Map(
+      [...source]
+        .filter((r: any) => plat === 'google_ai' ? true : r.platform === plat)
+        .sort((a: any, b: any) => new Date(b.checked_at).getTime() - new Date(a.checked_at).getTime())
+        .map((r: any) => [r.query, r])
+    ).values()]
+
+  const source = platform === 'google_ai' ? (googleAiScores || []) : rows
+  const latest = latestForPlatform(platform, source)
+  const appeared = latest.filter((r: any) => r.appeared)
+  const missed = latest.filter((r: any) => !r.appeared)
+
+  const platforms = [
+    { key: 'chatgpt', label: 'ChatGPT' },
+    { key: 'perplexity', label: 'Perplexity' },
+    { key: 'google_ai', label: 'Google AI' },
+  ]
+
+  const List = ({ items, type }: { items: any[]; type: 'appeared' | 'missed' }) => (
+    <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem' }}>
+      <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 0.25rem' }}>{type === 'appeared' ? 'Where You Appear' : 'Queries to Improve'}</p>
+      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: '0 0 1rem' }}>{type === 'appeared' ? `Searches where ${hotelName} was recommended` : 'Searches where your hotel did not appear'}</p>
+      {items.length === 0 ? (
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>{type === 'appeared' ? 'No appearances recorded yet for this platform.' : 'No missed queries — excellent coverage.'}</p>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {items.map((row: any, i: number) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0', borderBottom: '1px solid ' + BORDER }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: type === 'appeared' ? GREEN : RED, flexShrink: 0 }} />
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, margin: 0, flex: 1 }}>{row.query}</p>
+              {type === 'missed' && <button onClick={onAddFaq} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, color: GOLD, background: GOLD_LIGHT, border: '1px solid ' + BORDER, borderRadius: 4, padding: '0.2rem 0.6rem', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>Add FAQ →</button>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+
+  return (
+    <div style={{ marginBottom: '1.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: 0 }}>Query appearance by platform</p>
+        <select value={platform} onChange={e => setPlatform(e.target.value as any)} style={{ padding: '0.4rem 0.75rem', borderRadius: 4, border: '1px solid ' + BORDER, background: WHITE, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 600, cursor: 'pointer', outline: 'none' }}>
+          {platforms.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}
+        </select>
+      </div>
+      {platform !== 'google_ai' && !loaded ? (
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>Loading…</p>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <List items={appeared} type="appeared" />
+          <List items={missed} type="missed" />
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── MAIN DASHBOARD ────────────────────────────────────────────────────────────
 
 export default function DashboardClient({ hotel, views, clicks, leads, aiVisibility, googleAiScores, bookings, competitors, hotelCatScores, platformScores, overviewRunData, myRankChange, marketAverages, crawlerCount }: any) {
@@ -3096,35 +3177,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
                 })}
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-              <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem' }}>
-                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 1rem' }}>Where You Appear</p>
-                {appearedQueries === 0 ? <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>No appearances yet — indexing in progress.</p> : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    {appearedList.slice(0, 5).map((row: any, i: number) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0', borderBottom: '1px solid ' + BORDER }}>
-                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: GREEN, flexShrink: 0 }} />
-                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT, margin: 0 }}>{row.query}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem' }}>
-                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 0.25rem' }}>Queries to Improve</p>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: '0 0 1rem' }}>Searches where your hotel did not appear</p>
-                {googleAiScores?.filter((r: any) => !r.appeared).slice(0, 6).length === 0
-  ? <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>No missed queries — excellent coverage.</p>
-  : [...new Map(googleAiScores?.filter((r: any) => !r.appeared).map((r: any) => [r.query, r])).values()].slice(0, 6).map((row: any, i: number) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0', borderBottom: '1px solid ' + BORDER }}>
-                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: RED, flexShrink: 0 }} />
-                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, margin: 0, flex: 1 }}>{row.query}</p>
-                      <button onClick={() => { setTab('optimise') }} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, color: GOLD, background: GOLD_LIGHT, border: '1px solid ' + BORDER, borderRadius: 4, padding: '0.2rem 0.6rem', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>Add FAQ →</button>
-                    </div>
-                  ))
-                }
-              </div>
-            </div>
+            <QueryAppearanceBreakdown hotelId={hotel?.id} hotelName={hotelName} googleAiScores={googleAiScores} onAddFaq={() => setTab('optimise')} />
             {/* Visibility over time chart */}
             <div style={{ background: WHITE, border: '1px solid rgba(201,169,76,0.08)', borderRadius: 10, padding: '1.25rem 1.5rem', marginBottom: '1.5rem', overflow: 'hidden', boxShadow: '0 1px 12px rgba(42,26,14,0.04)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
