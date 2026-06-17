@@ -2484,6 +2484,20 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId }: { hotelName: st
     load()
   }, [hotelRegion])
 
+  const sourceType = (domain: string): { label: string; color: string } => {
+    const d = domain.toLowerCase()
+    const map: { match: string[]; label: string; color: string }[] = [
+      { match: ['booking.com','expedia','hotels.com','agoda','trivago','kayak','tripadvisor','hrs.','lastminute'], label: 'OTA', color: '#dc2626' },
+      { match: ['forbestravelguide','guide.michelin','relaischateaux','slh.com','tablethotels','leadinghotels','virtuoso','fivestaralliance'], label: 'Guide', color: '#8B5CF6' },
+      { match: ['facebook','instagram','x.com','twitter','tiktok','linkedin','youtube','pinterest'], label: 'Social', color: '#3b82f6' },
+      { match: ['americanexpress','marriott','hyatt','fourseasons','accor','hilton'], label: 'Brand / loyalty', color: '#0891b2' },
+      { match: ['blog','medium.com','substack','wordpress','condenast','cntraveler','travelandleisure','vogue'], label: 'Editorial / blog', color: '#d97706' },
+    ]
+    for (const m of map) if (m.match.some(s => d.includes(s))) return { label: m.label, color: m.color }
+    if (d === ownDomain) return { label: 'Your site', color: GOLD }
+    return { label: 'Other', color: TEXT_MUTED }
+  }
+
   // Total distinct queries in the period = coverage denominator
   const allQueries = new Set(rows.map((r: any) => r.query).filter(Boolean))
   const totalQueries = allQueries.size || 1
@@ -2584,7 +2598,7 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId }: { hotelName: st
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
                   <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>cited {r.count}×</span>
                   <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', fontWeight: 600, color: GOLD, minWidth: 52, textAlign: 'right' }}>{Math.round((r.count / top10CiteTotal) * 100)}%</span>
-                  <StatusPill m={r.mentioned} />
+                  {(() => { const t = sourceType(r.domain); return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, color: t.color, background: t.color + '14', padding: '3px 10px', borderRadius: 20, minWidth: 80, textAlign: 'center' }}>{t.label}</span> })()}
                 </div>
               </div>
             )
