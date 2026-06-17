@@ -2491,7 +2491,7 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId }: { hotelName: st
       { match: ['forbestravelguide','guide.michelin','relaischateaux','slh.com','tablethotels','leadinghotels','virtuoso','fivestaralliance'], label: 'Guide', color: '#8B5CF6' },
       { match: ['facebook','instagram','x.com','twitter','tiktok','linkedin','youtube','pinterest'], label: 'Social', color: '#3b82f6' },
       { match: ['americanexpress','marriott','hyatt','fourseasons','accor','hilton'], label: 'Brand / loyalty', color: '#0891b2' },
-      { match: ['blog','medium.com','substack','wordpress','condenast','cntraveler','travelandleisure','vogue'], label: 'Editorial / blog', color: '#d97706' },
+      { match: ['blog','medium.com','substack','wordpress','condenast','cntraveler','cntraveller','travelandleisure','vogue'], label: 'Editorial / blog', color: '#d97706' },
     ]
     for (const m of map) if (m.match.some(s => d.includes(s))) return { label: m.label, color: m.color }
     if (d === ownDomain) return { label: 'Your site', color: GOLD }
