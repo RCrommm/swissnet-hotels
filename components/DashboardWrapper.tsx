@@ -19,14 +19,31 @@ export default function DashboardWrapper() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/dashboard/login'); return }
 
-      const { data: hotelUser } = await supabase
+      // All approved hotels this user can access
+      const { data: hotelUsers } = await supabase
         .from('hotel_users')
         .select('hotel_id, status')
         .eq('user_id', session.user.id)
-        .maybeSingle()
-      if (!hotelUser || hotelUser.status !== 'approved' || !hotelUser.hotel_id) { setData('PENDING'); setLoading(false); return }
+        .eq('status', 'approved')
+      const approved = (hotelUsers || []).filter((h: any) => h.hotel_id)
+      if (approved.length === 0) { setData('PENDING'); setLoading(false); return }
 
-      const hotelId = hotelUser.hotel_id
+      // Which hotel is active: from ?hotel= if the user has access to it, else first
+      const params = new URLSearchParams(window.location.search)
+      const requested = params.get('hotel')
+      const allowedIds = approved.map((h: any) => h.hotel_id)
+      let hotelId = requested && allowedIds.includes(requested) ? requested : allowedIds[0]
+
+      // If user has multiple hotels and none chosen in URL → show picker
+      if (approved.length > 1 && !requested) {
+        const { data: pickHotels } = await supabase
+          .from('hotels')
+          .select('id, name, region')
+          .in('id', allowedIds)
+        setData({ __choose: pickHotels || [] })
+        setLoading(false)
+        return
+      }
 
       const [hotel, views, clicks, leads, bookings] = await Promise.all([
         supabase.from('hotels').select('*').eq('id', hotelId).single().then(r => r.data),
@@ -224,6 +241,10 @@ const myRankChange = myHasLatest && myHasPrev && myLatestRank > 0 && myPrevRank 
         myLatestRank,
         marketAverages,
         crawlerCount,
+        accessHotels: approved.length > 1
+          ? (await supabase.from('hotels').select('id, name').in('id', allowedIds)).data || []
+          : [],
+        activeHotelId: hotelId,
       })
       setLoading(false)
     }
@@ -236,6 +257,25 @@ const myRankChange = myHasLatest && myHasPrev && myLatestRank > 0 && myPrevRank 
       <div style={{ minHeight: '100vh', background: '#F8F5EF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', color: '#C9A84C' }}>Loading your dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (data && data.__choose) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#492816', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+        <div style={{ width: '100%', maxWidth: 460 }}>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', color: '#C9A84C', margin: '0 0 0.5rem', textAlign: 'center' }}>Choose a property</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.6)', margin: '0 0 2rem', textAlign: 'center' }}>You have access to multiple dashboards. Select one to continue.</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+            {data.__choose.map((h: any) => (
+              <a key={h.id} href={`/dashboard?hotel=${h.id}`} style={{ display: 'block', background: '#3D2010', border: '1px solid rgba(201,169,110,0.3)', borderRadius: 8, padding: '1rem 1.25rem', textDecoration: 'none' }}>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: '#fff', margin: 0 }}>{h.name}</p>
+                {h.region && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: '#C9A84C', margin: '0.2rem 0 0', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{h.region}</p>}
+              </a>
+            ))}
+          </div>
         </div>
       </div>
     )

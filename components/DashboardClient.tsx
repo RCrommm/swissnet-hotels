@@ -2727,7 +2727,7 @@ function QueryAppearanceBreakdown({ hotelId, hotelName, googleAiScores, onAddFaq
 
 // ── MAIN DASHBOARD ────────────────────────────────────────────────────────────
 
-export default function DashboardClient({ hotel, views, clicks, leads, aiVisibility, googleAiScores, bookings, competitors, hotelCatScores, platformScores, overviewRunData, myRankChange, marketAverages, crawlerCount }: any) {
+export default function DashboardClient({ hotel, views, clicks, leads, aiVisibility, googleAiScores, bookings, competitors, hotelCatScores, platformScores, overviewRunData, myRankChange, marketAverages, crawlerCount, accessHotels, activeHotelId }: any) {
   const [tab, setTab] = useState('overview')
   const [period, setPeriod] = useState(30)
   const [customRange, setCustomRange] = useState<{ start: string; end: string } | null>(null)
@@ -2977,6 +2977,17 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
         <div style={{ padding: '1.5rem', borderBottom: '1px solid ' + BORDER }}>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: GOLD, margin: '0 0 0.15rem' }}>SwissNet <span style={{ fontStyle: 'italic', color: TEXT }}>Hotels</span></p>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: TEXT_MUTED, margin: 0 }}>AI Visibility Platform</p>
+          {accessHotels && accessHotels.length > 1 && (
+            <select
+              value={activeHotelId || hotel?.id || ''}
+              onChange={e => { window.location.href = `/dashboard?hotel=${e.target.value}` }}
+              style={{ marginTop: '0.85rem', width: '100%', padding: '0.45rem 0.6rem', borderRadius: 6, border: '1px solid ' + BORDER, background: BG, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 600, cursor: 'pointer', outline: 'none' }}
+            >
+              {accessHotels.map((h: any) => (
+                <option key={h.id} value={h.id}>{h.name}</option>
+              ))}
+            </select>
+          )}
         </div>
         <div style={{ padding: '0.5rem 0', flex: 1 }}>
           {navGroups.map((group, gi) => (
