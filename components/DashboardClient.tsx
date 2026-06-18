@@ -2692,7 +2692,7 @@ function QueryAppearanceBreakdown({ hotelId, hotelName, googleAiScores, onAddFaq
       {items.length === 0 ? (
         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>{type === 'appeared' ? 'No appearances recorded yet for this platform.' : 'No missed queries — excellent coverage.'}</p>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: 210, overflowY: 'auto' }}>
           {items.map((row: any, i: number) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0', borderBottom: '1px solid ' + BORDER }}>
               <div style={{ width: 6, height: 6, borderRadius: '50%', background: type === 'appeared' ? GREEN : RED, flexShrink: 0 }} />
