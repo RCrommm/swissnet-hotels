@@ -74,11 +74,22 @@ function checkAppeared(hotelName: string, responseText: string): boolean {
   const noAccents = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
   const rn = noAccents(r)
   const nn = noAccents(n)
+  const CITIES = ['geneva','zurich','zermatt','lausanne','interlaken','gstaad','andermatt','lucerne','lugano','montreux','ascona','basel','bern','crans','montana','stmoritz','st moritz','pontresina','vitznau']
   const words = nn.split(' ').filter((w: string) => !['hotel','the','le','la','les','grand','de','du','au','aux','by','at','and','&'].includes(w))
+  // distinctive name = full normalized name minus any trailing city word
+  const nameWords = nn.split(' ').filter(Boolean)
+  const coreWords = nameWords.filter(w => !CITIES.includes(w))
+  const core = coreWords.join(' ')
   const lastTwo = noAccents(hotelName.split(' ').slice(-2).join(' ').toLowerCase())
   const firstTwo = noAccents(hotelName.split(' ').slice(0, 2).join(' ').toLowerCase())
   const keyWords = words.slice(0, 3).join(' ')
-  return rn.includes(nn) || rn.includes(lastTwo) || rn.includes(firstTwo) || (words.length >= 2 && rn.includes(keyWords))
+  // require the core to be distinctive enough (2+ words, or one long word) to avoid false matches
+  const coreDistinct = coreWords.length >= 2 || (coreWords.length === 1 && coreWords[0].length >= 6)
+  return rn.includes(nn)
+    || (coreDistinct && rn.includes(core))
+    || rn.includes(lastTwo)
+    || rn.includes(firstTwo)
+    || (words.length >= 2 && rn.includes(keyWords))
 }
 
 function domainOf(url: string): string {
