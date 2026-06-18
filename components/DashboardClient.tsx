@@ -2727,7 +2727,7 @@ function QueryAppearanceBreakdown({ hotelId, hotelName, googleAiScores, onAddFaq
 
 // ── MAIN DASHBOARD ────────────────────────────────────────────────────────────
 
-export default function DashboardClient({ hotel, views, clicks, leads, aiVisibility, googleAiScores, bookings, competitors, hotelCatScores, platformScores, overviewRunData, myRankChange, marketAverages, crawlerCount, accessHotels, activeHotelId }: any) {
+export default function DashboardClient({ hotel, views, clicks, leads, aiVisibility, googleAiScores, bookings, competitors, hotelCatScores, platformScores, overviewRunData, myRankChange, marketAverages, crawlerCount, accessHotels, activeHotelId, tier }: any) {
   const [tab, setTab] = useState('overview')
   const [period, setPeriod] = useState(30)
   const [customRange, setCustomRange] = useState<{ start: string; end: string } | null>(null)
@@ -2949,6 +2949,8 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
     ? `General — ${hotelRegion}` 
     : `${competitorTabs.find(t => t.key === competitorView)?.label || ''} — ${hotelRegion}`
 
+  const tierRank: Record<string, number> = { monitor: 1, optimise: 2, premium: 3 }
+  const myTier = tierRank[tier || 'monitor'] || 1
   const navGroups = [
     { heading: 'Monitor', items: [
       { id: 'overview', label: 'Overview' },
@@ -2957,16 +2959,17 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
       { id: 'competitors', label: 'Competitors' },
     ] },
     { heading: 'Improve', items: [
-      { id: 'schema', label: 'SwissNet Profile' },
-      { id: 'website', label: 'Official Website' },
-      { id: 'optimise', label: 'Optimise' },
-      { id: 'citations', label: 'Citation Sources' },
+      { id: 'schema', label: 'SwissNet Profile', minTier: 2 },
+      { id: 'website', label: 'Official Website', minTier: 2 },
+      { id: 'optimise', label: 'Optimise', minTier: 2 },
+      { id: 'citations', label: 'Citation Sources', minTier: 2 },
     ] },
     { heading: 'Account', items: [
-      { id: 'reports', label: 'Monthly Reports' },
+      { id: 'reports', label: 'Monthly Reports', minTier: 3 },
       { id: 'settings', label: 'Settings' },
     ] },
-  ]
+  ].map(g => ({ ...g, items: g.items.filter((it: any) => !it.minTier || myTier >= it.minTier) }))
+    .filter(g => g.items.length > 0)
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: BG, fontFamily: 'Montserrat, sans-serif' }}>

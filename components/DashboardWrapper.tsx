@@ -245,6 +245,7 @@ const myRankChange = myHasLatest && myHasPrev && myLatestRank > 0 && myPrevRank 
           ? (await supabase.from('hotels').select('id, name').in('id', allowedIds)).data || []
           : [],
         activeHotelId: hotelId,
+        tier: hotel?.tier || 'monitor',
       })
       setLoading(false)
     }
