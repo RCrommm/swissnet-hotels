@@ -173,7 +173,7 @@ const myRankChange = myHasLatest && myHasPrev && myLatestRank > 0 && myPrevRank 
     const d = (b.run_date || '').localeCompare(a.run_date || '')
     return d !== 0 ? d : new Date(b.checked_at || 0).getTime() - new Date(a.checked_at || 0).getTime()
   })[0]?.visibility_score ?? null
-      const chatgptScore = rawChatgpt !== null ? Math.min(100, rawChatgpt + 8) : null
+      const chatgptScore = rawChatgpt
       const perplexityScore = myOverviewScores
   .filter((s: any) => s.platform === 'perplexity')
   .sort((a: any, b: any) => {
@@ -206,7 +206,7 @@ const myRankChange = myHasLatest && myHasPrev && myLatestRank > 0 && myPrevRank 
       const calcMarketAvg = (platform: string) => {
         const scores = recentOverview
           .filter((s: any) => s.platform === platform)
-          .map((s: any) => platform === 'chatgpt' ? Math.min(100, s.visibility_score + 8) : s.visibility_score)
+          .map((s: any) => s.visibility_score)
         return scores.length > 0 ? Math.round(scores.reduce((a: number, b: number) => a + b, 0) / scores.length) : null
       }
 
