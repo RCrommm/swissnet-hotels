@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 
-export default function UsersTab({ users, hotels }: { users: any[]; hotels: any[] }) {
+export default function UsersTab({ users, hotels, password }: { users: any[]; hotels: any[]; password: string }) {
   const [rows, setRows] = useState(users)
   const [picks, setPicks] = useState<Record<string, string>>({})
   const [addPicks, setAddPicks] = useState<Record<string, string>>({})
@@ -15,7 +15,7 @@ export default function UsersTab({ users, hotels }: { users: any[]; hotels: any[
     setBusy(id)
     const res = await fetch('/api/admin-approve', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, hotel_id }),
+      body: JSON.stringify({ id, hotel_id, password }),
     })
     setBusy('')
     if (res.ok) setRows(prev => prev.map(r => r.id === id ? { ...r, status: 'approved', hotel_id } : r))
@@ -28,7 +28,7 @@ export default function UsersTab({ users, hotels }: { users: any[]; hotels: any[
     setBusy(rowKey)
     const res = await fetch('/api/admin-approve', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id, email, hotel_id }),
+      body: JSON.stringify({ user_id, email, hotel_id, password }),
     })
     setBusy('')
     if (res.ok) {

@@ -360,7 +360,7 @@ const { data: cronCosts } = await supabase
       
 
         {tab === 'keywords' && <KeywordsTab hotels={hotelsList} keywords={keywordsList} password={pw} />}
-        {tab === 'users' && <UsersTab users={hotelUsers || []} hotels={hotelsList} />}
+        {tab === 'users' && <UsersTab users={hotelUsers || []} hotels={hotelsList} password={pw} />}
 
 
 

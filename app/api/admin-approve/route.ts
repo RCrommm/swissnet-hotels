@@ -4,10 +4,10 @@ import { cookies } from 'next/headers'
 
 export async function POST(request: Request) {
   const cookieStore = await cookies()
+  const { id, hotel_id, user_id, email, password } = await request.json()
   const ok = cookieStore.get('admin_auth')?.value === process.env.ADMIN_PASSWORD
+    || password === process.env.ADMIN_PASSWORD
   if (!ok) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const { id, hotel_id, user_id, email } = await request.json()
   if (!hotel_id) return NextResponse.json({ error: 'Missing hotel_id' }, { status: 400 })
 
   // Case 1: approving an existing pending row (has id) → set its hotel + approve
