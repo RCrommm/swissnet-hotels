@@ -303,16 +303,16 @@ export default async function HomePage() {
         price="379"
         plus="Everything in Monitor, plus:"
         primary={[
-          'Google AI added to tracked engines',
-          'Citation Sources — the pages AI cites',
-          'Official website AI-readability audit',
-          'Prioritised recommendations & action plan',
           'Category opportunity tracking (spa, family, lake…)',
+          'Official website AI-readability audit',
+          'Citation Sources — the pages AI cites',
+          'SwissNet profile & schema optimisation access',
+          '3 dashboard seats',
         ]}
         more={[
-          'SwissNet profile & schema access',
+          'Prioritised recommendations & action plan',
           'Hotel appearance tracking on cited pages',
-          '3 dashboard seats · priority email',
+          'Priority email support',
         ]}
       />
 
@@ -324,16 +324,16 @@ export default async function HomePage() {
         price="699"
         plus="Everything in Optimise, plus:"
         primary={[
-          'Monthly optimisation call',
           'Advanced promotion on comparison pages',
-          'Monthly LinkedIn PR for weak categories',
+          'Monthly optimisation call',
           'Multi-hotel / group dashboard',
-          'Ongoing hands-on visibility improvements',
+          'Monthly LinkedIn PR for weak categories',
+          '5 dashboard seats',
         ]}
         more={[
+          'Ongoing hands-on visibility improvements',
           'Early access to new features',
           'Dedicated contact · priority support',
-          '5 dashboard seats',
         ]}
       />
 
