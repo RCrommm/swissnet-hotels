@@ -3,24 +3,25 @@ import { useState } from 'react'
 
 const BASE_QUERIES = [
   'best luxury hotel',
-  'best spa hotel',
-  'best romantic hotel',
-  'best hotel on the lake',
   'best 5 star hotel',
-  'best boutique hotel',
-  'best hotel for couples',
-  'best lakeside hotel',
-  'luxury hotel with spa',
-  'best hotel lake view',
-  'most exclusive hotel',
-  'best wellness hotel',
-  'best fine dining hotel',
-  'best hotel for honeymoon',
   'top luxury hotel',
+  'most exclusive hotel',
+  'best hotel on Lake',
+  'best hotel with lake view',
+  'best lakeside hotel',
+  'best spa hotel',
+  'best wellness hotel',
+  'luxury hotel with spa',
+  'best boutique hotel',
+  'best romantic hotel',
+  'best hotel for couples',
+  'best honeymoon hotel',
   'best family hotel',
-  'best hotel with pool',
-  'hotel with tennis court',
   'best hotel for families',
+  'best luxury business hotel',
+  'best hotel with tennis court',
+  'best hotel with pool',
+  'best fine dining hotel',
 ]
 
 function getQueries(region: string) {
@@ -70,7 +71,7 @@ export default function GoogleAITab({ hotels }: { hotels: any[] }) {
     <div>
       <div style={{ background: '#fff', border: '1px solid #e7e5e4', borderRadius: 8, padding: '24px', marginBottom: 24 }}>
         <h2 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, color: '#78716c', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 20 }}>Log Google AI Appearance</h2>
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: '#a8a29e', marginBottom: 20, lineHeight: 1.6 }}>Search each query in Google incognito and click Yes/No. Save when all 15 are answered.</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: '#a8a29e', marginBottom: 20, lineHeight: 1.6 }}>Search each query in Google incognito and click Yes/No. Save when all 20 are answered.</p>
 
         <div style={{ marginBottom: 24 }}>
           <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, fontWeight: 600, color: '#78716c', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 6 }}>Hotel</label>
