@@ -46,7 +46,7 @@ export default async function AdminPage({
     .order('name', { ascending: true })
     const { data: hotelUsers } = await supabase
     .from('hotel_users')
-    .select('id, email, hotel_id, status, created_at')
+    .select('id, user_id, email, hotel_id, status, created_at')
     .order('created_at', { ascending: false })
 
   const { data: leads } = await supabase
