@@ -2149,7 +2149,7 @@ function WebsiteTab({ hotel }: any) {
   const [r, setR] = useState<any>(null)
   const [savedAt, setSavedAt] = useState<string>('')
   const [loading, setLoading] = useState(true)
-  const [open, setOpen] = useState<string | null>('content')
+  const [open, setOpen] = useState<string | null>(null)
   const [openLayer, setOpenLayer] = useState<number | null>(null)
 
   useEffect(() => {
@@ -2172,7 +2172,6 @@ function WebsiteTab({ hotel }: any) {
   const impactColor = (i: string) => i === 'Critical' || i === 'High' ? RED : i === 'Medium' ? '#d97706' : TEXT_MUTED
   const path = (u: string) => { try { return new URL(u).pathname || u } catch { return u } }
 
-  const ap = r?.actionPlan
   const proj = r?.projects
   const pillars = r?.pillars
   const arch = pillars?.architecture
@@ -2183,18 +2182,17 @@ function WebsiteTab({ hotel }: any) {
   const prompts = r?.recommendation?.results || []
   const orderedPrompts = ['NO', 'PARTIAL', 'YES'].flatMap(g => prompts.filter((p: any) => p.readiness === g))
 
-  // Collapsible detail section
   const Section = ({ id, title, subtitle, score, suffix = '%', children }: any) => {
     const isOpen = open === id
     return (
       <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '0.85rem' }}>
-        <div onClick={() => setOpen(isOpen ? null : id)} style={{ padding: '1.1rem 1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer', background: isOpen ? BG : WHITE }}>
+        <div onClick={() => setOpen(isOpen ? null : id)} style={{ padding: '1.35rem 1.75rem', display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer', background: isOpen ? BG : WHITE }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT, margin: 0 }}>{title}</p>
-            {subtitle && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: '0.15rem 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{subtitle}</p>}
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', color: TEXT, margin: 0 }}>{title}</p>
+            {subtitle && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: TEXT_MUTED, margin: '0.2rem 0 0', lineHeight: 1.4 }}>{subtitle}</p>}
           </div>
-          {typeof score === 'number' && <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: scoreColor(score), flexShrink: 0 }}>{score}<span style={{ fontSize: '0.7rem', color: TEXT_MUTED }}>{suffix}</span></span>}
-          <span style={{ color: TEXT_MUTED, fontSize: '0.9rem', flexShrink: 0, transform: isOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
+          {typeof score === 'number' && <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.85rem', color: scoreColor(score), flexShrink: 0 }}>{score}<span style={{ fontSize: '0.9rem', color: TEXT_MUTED }}>{suffix}</span></span>}
+          <span style={{ color: TEXT_MUTED, fontSize: '1.1rem', flexShrink: 0, transform: isOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
         </div>
         {isOpen && <div style={{ borderTop: '1px solid ' + BORDER }}>{children}</div>}
       </div>
@@ -2204,54 +2202,54 @@ function WebsiteTab({ hotel }: any) {
   return (
     <div>
       {/* HERO */}
-      <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 16, padding: '2.25rem 2.5rem', marginBottom: '1.5rem', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: -40, right: -40, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,169,76,0.08) 0%, transparent 70%)' }} />
+      <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 18, padding: '3rem 3.25rem', marginBottom: '1.75rem', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: -40, right: -40, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,169,76,0.08) 0%, transparent 70%)' }} />
         <div style={{ position: 'relative' }}>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0 0 0.6rem' }}>Your Own Website · AI Visibility Audit</p>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 300, color: WHITE, margin: '0 0 0.5rem', lineHeight: 1.3 }}>How {domain || 'your website'} reads to AI</p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.7, maxWidth: 560 }}>We read your pages the way ChatGPT, Perplexity and Google AI do — then tell you exactly what to fix first.</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.75)', margin: '0 0 0.85rem' }}>Your own website · AI visibility audit</p>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.6rem', fontWeight: 300, color: WHITE, margin: '0 0 0.7rem', lineHeight: 1.2 }}>How {domain || 'your website'} reads to AI</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.98rem', color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.7, maxWidth: 620 }}>We read your pages the way ChatGPT, Perplexity and Google AI do — then tell you exactly what to fix first.</p>
         </div>
       </div>
 
       {loading && (
         <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: 0 }}>Loading your latest audit…</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.9rem', color: TEXT_MUTED, margin: 0 }}>Loading your latest audit…</p>
         </div>
       )}
 
       {!loading && !r && (
         <div style={{ background: WHITE, border: '1px dashed ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.4rem' }}>Your website audit is being prepared</p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6, maxWidth: 420, marginLeft: 'auto', marginRight: 'auto' }}>Your SwissNet specialist runs a full AI-readability audit of {domain || 'your official site'}. Your latest results will appear here.</p>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.6rem', color: TEXT, margin: '0 0 0.5rem' }}>Your website audit is being prepared</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.9rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6, maxWidth: 460, marginLeft: 'auto', marginRight: 'auto' }}>Your SwissNet specialist runs a full AI-readability audit of {domain || 'your official site'}. Your latest results will appear here.</p>
         </div>
       )}
 
       {!loading && r && (
         <>
-          {/* ── HEADLINE SCORES ── */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.85rem', marginBottom: '1.5rem' }}>
+          {/* HEADLINE SCORES */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '0.85rem', marginBottom: '1.75rem' }}>
             {[
-              { label: 'Recommendation readiness', value: r.recommendation?.score, sub: `${r.recommendation?.yes || 0} yes · ${r.recommendation?.partial || 0} partial · ${r.recommendation?.no || 0} no` },
-              { label: 'Content quality', value: cq?.score, sub: 'how quotable your writing is' },
-              { label: 'Structured data', value: arch?.layers?.find((l: any) => l.n === 12)?.score, sub: 'schema AI can read' },
-              { label: 'AI architecture', value: r.architectureScore, sub: '14 layers evaluated' },
+              { label: 'Recommendation readiness', value: r.recommendation?.score, suffix: '/100', sub: `${r.recommendation?.yes || 0} yes · ${r.recommendation?.partial || 0} partial · ${r.recommendation?.no || 0} no` },
+              { label: 'Content quality', value: cq?.score, suffix: '%', sub: 'how quotable your writing is' },
+              { label: 'AI architecture', value: r.architectureScore, suffix: '/100', sub: '14 layers evaluated' },
+              { label: 'Question coverage', value: answer?.score, suffix: '%', sub: `${(answer?.yes || 0) + (answer?.partial || 0)}/${answer?.total || 30} answered` },
             ].map((t, i) => (
-              <div key={i} style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1.1rem 1.25rem' }}>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.5rem' }}>{t.label}</p>
-                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.1rem', color: scoreColor(t.value ?? 0), margin: 0, lineHeight: 1 }}>{typeof t.value === 'number' ? t.value : '—'}<span style={{ fontSize: '0.75rem', color: TEXT_MUTED }}>{typeof t.value === 'number' ? (t.label === 'Recommendation readiness' || t.label === 'AI architecture' ? '/100' : '%') : ''}</span></p>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.54rem', color: TEXT_MUTED, margin: '0.3rem 0 0' }}>{t.sub}</p>
+              <div key={i} style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.35rem 1.5rem' }}>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.6rem' }}>{t.label}</p>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.6rem', color: scoreColor(t.value ?? 0), margin: 0, lineHeight: 1 }}>{typeof t.value === 'number' ? t.value : '—'}<span style={{ fontSize: '0.95rem', color: TEXT_MUTED }}>{typeof t.value === 'number' ? t.suffix : ''}</span></p>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: '0.45rem 0 0' }}>{t.sub}</p>
               </div>
             ))}
           </div>
-          {savedAt && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: '0 0 1.25rem' }}>Last audit: {new Date(savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} · {(r.pagesScraped || []).length} pages reviewed</p>}
+          {savedAt && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: TEXT_MUTED, margin: '0 0 1.5rem' }}>Last audit: {new Date(savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} · {(r.pagesScraped || []).length} pages reviewed</p>}
 
-          {/* ── WHAT TO DO FIRST (always open) ── */}
+          {/* WHAT TO DO FIRST (always open) */}
           {proj?.projects?.length > 0 && (
-            <div style={{ marginBottom: '1.5rem' }}>
+            <div style={{ marginBottom: '1.75rem' }}>
               {proj.overview && (
-                <div style={{ background: WHITE, border: '1px solid ' + GOLD, borderLeft: '3px solid ' + GOLD, borderRadius: 12, padding: '1.25rem 1.5rem', marginBottom: '1rem' }}>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.5rem' }}>Start here</p>
-                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT, margin: 0, lineHeight: 1.5 }}>{proj.overview}</p>
+                <div style={{ background: WHITE, border: '1px solid ' + GOLD, borderLeft: '3px solid ' + GOLD, borderRadius: 12, padding: '1.5rem 1.75rem', marginBottom: '1.1rem' }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.6rem' }}>Start here</p>
+                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.45rem', color: TEXT, margin: 0, lineHeight: 1.5 }}>{proj.overview}</p>
                 </div>
               )}
               {proj.projects.map((p: any, i: number) => {
@@ -2259,20 +2257,20 @@ function WebsiteTab({ hotel }: any) {
                 const ec = isQuick ? GREEN : GOLD
                 const ic = impactColor(p.impact)
                 return (
-                  <div key={i} style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, overflow: 'hidden', marginBottom: '0.7rem' }}>
-                    <div style={{ padding: '0.85rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
-                      <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT }}>{i + 1}. {p.title}</span>
-                      <span style={{ display: 'flex', gap: '0.35rem', flexShrink: 0 }}>
-                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.05em', color: ec, border: '1px solid ' + ec, borderRadius: 4, padding: '0.12rem 0.5rem', textTransform: 'uppercase' }}>{p.effort}</span>
-                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.05em', color: ic, border: '1px solid ' + ic, borderRadius: 4, padding: '0.12rem 0.5rem', textTransform: 'uppercase' }}>{p.impact} impact</span>
+                  <div key={i} style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, overflow: 'hidden', marginBottom: '0.85rem' }}>
+                    <div style={{ padding: '1.1rem 1.75rem', borderBottom: '1px solid ' + BORDER, background: BG, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                      <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.45rem', color: TEXT }}>{i + 1}. {p.title}</span>
+                      <span style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', fontWeight: 700, letterSpacing: '0.05em', color: ec, border: '1px solid ' + ec, borderRadius: 4, padding: '0.18rem 0.6rem', textTransform: 'uppercase' }}>{p.effort}</span>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', fontWeight: 700, letterSpacing: '0.05em', color: ic, border: '1px solid ' + ic, borderRadius: 4, padding: '0.18rem 0.6rem', textTransform: 'uppercase' }}>{p.impact} impact</span>
                       </span>
                     </div>
-                    <div style={{ padding: '0.9rem 1.5rem 1.1rem' }}>
-                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.6 }}>{p.why}</p>
+                    <div style={{ padding: '1.1rem 1.75rem 1.3rem' }}>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.92rem', color: TEXT, margin: '0 0 0.7rem', lineHeight: 1.65 }}>{p.why}</p>
                       {p.steps?.length > 0 && p.steps.map((s: string, j: number) => (
-                        <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: TEXT, margin: '0.2rem 0', lineHeight: 1.5, display: 'flex', gap: '0.5rem' }}><span style={{ color: ec }}>›</span><span>{s}</span></p>
+                        <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.86rem', color: TEXT, margin: '0.3rem 0', lineHeight: 1.55, display: 'flex', gap: '0.5rem' }}><span style={{ color: ec }}>›</span><span>{s}</span></p>
                       ))}
-                      {p.unlocks?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: '#d97706', margin: '0.4rem 0 0', lineHeight: 1.5 }}><strong>Unlocks:</strong> {p.unlocks.join('; ')}</p>}
+                      {p.unlocks?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: '#d97706', margin: '0.6rem 0 0', lineHeight: 1.55 }}><strong>Unlocks:</strong> {p.unlocks.join('; ')}</p>}
                     </div>
                   </div>
                 )
@@ -2280,21 +2278,21 @@ function WebsiteTab({ hotel }: any) {
             </div>
           )}
 
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.75rem' }}>The detail · tap any section</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.9rem' }}>The detail · tap any section</p>
 
           {/* CONTENT QUALITY */}
           {cq?.categories?.length > 0 && (
             <Section id="content" title="Content quality" subtitle="How quotable your writing is — every score cites a real line" score={cq.score}>
-              <div style={{ padding: '0.75rem 1.5rem 1rem' }}>
+              <div style={{ padding: '1rem 1.75rem 1.25rem' }}>
                 {cq.categories.map((c: any, i: number) => (
-                  <div key={i} style={{ padding: '0.7rem 0', borderBottom: i < cq.categories.length - 1 ? '1px solid ' + BORDER : 'none' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
-                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: TEXT }}>{c.label}</span>
-                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', fontWeight: 700, color: scoreColor(c.score) }}>{c.score}%</span>
+                  <div key={i} style={{ padding: '0.9rem 0', borderBottom: i < cq.categories.length - 1 ? '1px solid ' + BORDER : 'none' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.92rem', fontWeight: 600, color: TEXT }}>{c.label}</span>
+                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.88rem', fontWeight: 700, color: scoreColor(c.score) }}>{c.score}%</span>
                     </div>
-                    <div style={{ height: 5, background: BG, borderRadius: 3, overflow: 'hidden', marginBottom: '0.4rem' }}><div style={{ width: c.score + '%', height: '100%', background: scoreColor(c.score) }} /></div>
-                    {c.comment && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, margin: '0 0 0.2rem', lineHeight: 1.5 }}>{c.comment}</p>}
-                    {c.evidence && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0, fontStyle: 'italic', lineHeight: 1.4 }}>“{c.evidence}”</p>}
+                    <div style={{ height: 6, background: BG, borderRadius: 3, overflow: 'hidden', marginBottom: '0.5rem' }}><div style={{ width: c.score + '%', height: '100%', background: scoreColor(c.score) }} /></div>
+                    {c.comment && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', color: TEXT, margin: '0 0 0.3rem', lineHeight: 1.55 }}>{c.comment}</p>}
+                    {c.evidence && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT_MUTED, margin: 0, fontStyle: 'italic', lineHeight: 1.45 }}>“{c.evidence}”</p>}
                   </div>
                 ))}
               </div>
@@ -2304,18 +2302,18 @@ function WebsiteTab({ hotel }: any) {
           {/* PROMPT COVERAGE */}
           {orderedPrompts.length > 0 && (
             <Section id="prompts" title="Prompt coverage" subtitle={`Every guest search, and why AI answered that way · ${answer ? `${(answer.yes || 0) + (answer.partial || 0)}/${answer.total}` : ''} answered`} score={answer?.score ?? r.recommendation?.score}>
-              <div style={{ padding: '0.5rem 1.5rem 1.25rem' }}>
+              <div style={{ padding: '0.6rem 1.75rem 1.5rem' }}>
                 {orderedPrompts.map((c: any, i: number) => (
-                  <div key={i} style={{ padding: '0.8rem 0', borderBottom: i < orderedPrompts.length - 1 ? '1px solid ' + BORDER : 'none' }}>
+                  <div key={i} style={{ padding: '1rem 0', borderBottom: i < orderedPrompts.length - 1 ? '1px solid ' + BORDER : 'none' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1rem' }}>
-                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT, fontWeight: 600, flex: 1 }}>{c.question}</span>
-                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, color: statusColor(c.readiness), border: '1px solid ' + statusColor(c.readiness), borderRadius: 4, padding: '0.12rem 0.5rem', flexShrink: 0 }}>{c.readiness}</span>
+                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.92rem', color: TEXT, fontWeight: 600, flex: 1 }}>{c.question}</span>
+                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 700, color: statusColor(c.readiness), border: '1px solid ' + statusColor(c.readiness), borderRadius: 4, padding: '0.18rem 0.6rem', flexShrink: 0 }}>{c.readiness}</span>
                     </div>
-                    {c.evidence && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: '0.3rem 0 0', lineHeight: 1.5, fontStyle: 'italic' }}>“{c.evidence}”{c.url && <span style={{ fontStyle: 'normal' }}> — {path(c.url)}</span>}</p>}
+                    {c.evidence && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT_MUTED, margin: '0.4rem 0 0', lineHeight: 1.5, fontStyle: 'italic' }}>“{c.evidence}”{c.url && <span style={{ fontStyle: 'normal' }}> — {path(c.url)}</span>}</p>}
                     {c.reasons?.length > 0 && c.readiness !== 'YES' && (
-                      <div style={{ margin: '0.35rem 0 0' }}>
-                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, color: TEXT, margin: '0 0 0.15rem' }}>{c.readiness === 'NO' ? 'AI could not recommend because:' : 'Holding it back from a strong yes:'}</p>
-                        {c.reasons.map((rs: string, j: number) => <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: '#d97706', margin: '0.1rem 0 0' }}>{j + 1}. {rs}</p>)}
+                      <div style={{ margin: '0.45rem 0 0' }}>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', fontWeight: 700, color: TEXT, margin: '0 0 0.2rem' }}>{c.readiness === 'NO' ? 'AI could not recommend because:' : 'Holding it back from a strong yes:'}</p>
+                        {c.reasons.map((rs: string, j: number) => <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: '#d97706', margin: '0.15rem 0 0' }}>{j + 1}. {rs}</p>)}
                       </div>
                     )}
                   </div>
@@ -2329,15 +2327,15 @@ function WebsiteTab({ hotel }: any) {
             <Section id="reco" title="Recommendation coverage" subtitle="Which guest types AI can confidently recommend you for">
               <div>
                 {reco.intents.map((it: any, i: number) => (
-                  <div key={i} style={{ padding: '1rem 1.5rem', borderBottom: i < reco.intents.length - 1 ? '1px solid ' + BORDER : 'none' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.3rem' }}>
-                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: TEXT }}>{it.label}</span>
-                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', fontWeight: 700, color: scoreColor(it.coverage) }}>{it.coverage}%</span>
+                  <div key={i} style={{ padding: '1.25rem 1.75rem', borderBottom: i < reco.intents.length - 1 ? '1px solid ' + BORDER : 'none' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.4rem' }}>
+                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.92rem', fontWeight: 600, color: TEXT }}>{it.label}</span>
+                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.88rem', fontWeight: 700, color: scoreColor(it.coverage) }}>{it.coverage}%</span>
                     </div>
-                    {it.definition && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED, margin: '0 0 0.2rem', lineHeight: 1.5 }}>{it.definition} <span style={{ fontStyle: 'italic' }}>{it.why}</span></p>}
-                    {it.evidence?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: GREEN, margin: '0.2rem 0 0', lineHeight: 1.5 }}>Evidence: “{it.evidence.join('” · “')}”</p>}
-                    {it.missing?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: '#d97706', margin: '0.2rem 0 0', lineHeight: 1.5 }}>Missing: {it.missing.join('; ')}</p>}
-                    {it.fix && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT, margin: '0.2rem 0 0', lineHeight: 1.5 }}><strong>Fix:</strong> {it.fix}</p>}
+                    {it.definition && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT_MUTED, margin: '0 0 0.3rem', lineHeight: 1.55 }}>{it.definition} <span style={{ fontStyle: 'italic' }}>{it.why}</span></p>}
+                    {it.evidence?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: GREEN, margin: '0.25rem 0 0', lineHeight: 1.55 }}>Evidence: “{it.evidence.join('” · “')}”</p>}
+                    {it.missing?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: '#d97706', margin: '0.25rem 0 0', lineHeight: 1.55 }}>Missing: {it.missing.join('; ')}</p>}
+                    {it.fix && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, margin: '0.25rem 0 0', lineHeight: 1.55 }}><strong>Fix:</strong> {it.fix}</p>}
                   </div>
                 ))}
               </div>
@@ -2352,22 +2350,22 @@ function WebsiteTab({ hotel }: any) {
                   const lOpen = openLayer === l.n
                   return (
                     <div key={i} style={{ borderBottom: i < arch.layers.length - 1 ? '1px solid ' + BORDER : 'none' }}>
-                      <div onClick={() => setOpenLayer(lOpen ? null : l.n)} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.8rem 1.5rem', cursor: 'pointer' }}>
-                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, color: TEXT_MUTED, width: 18 }}>{l.n}</span>
-                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 600, color: TEXT, flex: 1 }}>{l.layer}{typeof l.score === 'number' ? <span style={{ color: TEXT_MUTED, fontWeight: 400 }}>  {l.score}%</span> : null}</span>
-                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, color: statusColor(l.status), border: '1px solid ' + statusColor(l.status), borderRadius: 4, padding: '0.12rem 0.5rem' }}>{l.status}</span>
-                        <span style={{ color: TEXT_MUTED, fontSize: '0.7rem', transform: lOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
+                      <div onClick={() => setOpenLayer(lOpen ? null : l.n)} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem 1.75rem', cursor: 'pointer' }}>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', fontWeight: 700, color: TEXT_MUTED, width: 22 }}>{l.n}</span>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.9rem', fontWeight: 600, color: TEXT, flex: 1 }}>{l.layer}{typeof l.score === 'number' ? <span style={{ color: TEXT_MUTED, fontWeight: 400 }}>  {l.score}%</span> : null}</span>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 700, color: statusColor(l.status), border: '1px solid ' + statusColor(l.status), borderRadius: 4, padding: '0.18rem 0.6rem' }}>{l.status}</span>
+                        <span style={{ color: TEXT_MUTED, fontSize: '0.95rem', transform: lOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
                       </div>
                       {lOpen && (
-                        <div style={{ padding: '0 1.5rem 1.1rem 3rem', background: BG }}>
-                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0.7rem 0 0.15rem' }}>What it is</p>
-                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.6 }}>{l.definition}</p>
+                        <div style={{ padding: '0 1.75rem 1.3rem 3.5rem', background: BG }}>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0.9rem 0 0.2rem' }}>What it is</p>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', color: TEXT, margin: '0 0 0.6rem', lineHeight: 1.6 }}>{l.definition}</p>
                           {l.scoreReason && (<>
-                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: statusColor(l.status), margin: '0 0 0.15rem' }}>Why this score</p>
-                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.6 }}>{l.scoreReason}</p>
+                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: statusColor(l.status), margin: '0 0 0.2rem' }}>Why this score</p>
+                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', color: TEXT, margin: '0 0 0.6rem', lineHeight: 1.6 }}>{l.scoreReason}</p>
                           </>)}
-                          {l.missing?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: '#d97706', margin: '0 0 0.25rem', lineHeight: 1.5 }}><strong>Missing:</strong> {l.missing.join(', ')}</p>}
-                          {l.fix && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, margin: '0.3rem 0 0', lineHeight: 1.6 }}><strong>How to improve:</strong> {l.fix}</p>}
+                          {l.missing?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: '#d97706', margin: '0 0 0.3rem', lineHeight: 1.55 }}><strong>Missing:</strong> {l.missing.join(', ')}</p>}
+                          {l.fix && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', color: TEXT, margin: '0.4rem 0 0', lineHeight: 1.6 }}><strong>How to improve:</strong> {l.fix}</p>}
                         </div>
                       )}
                     </div>
@@ -2380,14 +2378,14 @@ function WebsiteTab({ hotel }: any) {
           {/* TRUST */}
           {trust && (
             <Section id="trust" title="Trust & authority" subtitle="Reviews, awards and ratings AI can read">
-              <div style={{ padding: '1rem 1.5rem' }}>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: '0 0 0.75rem', lineHeight: 1.6 }}>{trust.why}</p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: trust.missing?.length ? '0.75rem' : 0 }}>
+              <div style={{ padding: '1.25rem 1.75rem' }}>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', color: TEXT_MUTED, margin: '0 0 0.9rem', lineHeight: 1.6 }}>{trust.why}</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', marginBottom: trust.missing?.length ? '0.9rem' : 0 }}>
                   {[{ k: 'Review schema', v: trust.reviewSchema }, { k: 'Awards', v: trust.awards }, { k: 'Ratings', v: trust.ratings }].map((t, i) => (
-                    <span key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, color: t.v ? GREEN : RED, background: (t.v ? GREEN : RED) + '12', border: '1px solid ' + (t.v ? GREEN : RED) + '30', borderRadius: 14, padding: '0.25rem 0.7rem' }}>{t.v ? '✓' : '✗'} {t.k}</span>
+                    <span key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', fontWeight: 600, color: t.v ? GREEN : RED, background: (t.v ? GREEN : RED) + '12', border: '1px solid ' + (t.v ? GREEN : RED) + '30', borderRadius: 16, padding: '0.35rem 0.85rem' }}>{t.v ? '✓' : '✗'} {t.k}</span>
                   ))}
                 </div>
-                {trust.missing?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: '#d97706', margin: 0, lineHeight: 1.5 }}><strong>To add:</strong> {trust.missing.join(', ')}</p>}
+                {trust.missing?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: '#d97706', margin: 0, lineHeight: 1.55 }}><strong>To add:</strong> {trust.missing.join(', ')}</p>}
               </div>
             </Section>
           )}
@@ -2395,14 +2393,14 @@ function WebsiteTab({ hotel }: any) {
           {/* PAGES REVIEWED */}
           {(r.pagesScraped || []).length > 0 && (
             <Section id="pages" title="Pages reviewed" subtitle={`${r.pagesScraped.length} pages crawled for this audit`}>
-              <div style={{ padding: '1rem 1.5rem', display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                {r.pagesScraped.map((u: string, i: number) => <span key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, color: TEXT, background: BG, border: '1px solid ' + BORDER, borderRadius: 20, padding: '0.3rem 0.75rem' }}>{path(u)}</span>)}
+              <div style={{ padding: '1.25rem 1.75rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                {r.pagesScraped.map((u: string, i: number) => <span key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', fontWeight: 600, color: TEXT, background: BG, border: '1px solid ' + BORDER, borderRadius: 20, padding: '0.4rem 0.9rem' }}>{path(u)}</span>)}
               </div>
             </Section>
           )}
 
-          <div style={{ background: GOLD_LIGHT, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${GOLD}`, borderRadius: 10, padding: '1.25rem 1.5rem', marginTop: '0.5rem' }}>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT, margin: 0, lineHeight: 1.7 }}><strong style={{ color: TEXT }}>Want us to implement these?</strong> Your SwissNet specialist can work through this plan with you. Reach us at <a href="mailto:contact@swissnethotels.com" style={{ color: GOLD, textDecoration: 'none', fontWeight: 600 }}>contact@swissnethotels.com</a>.</p>
+          <div style={{ background: GOLD_LIGHT, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${GOLD}`, borderRadius: 10, padding: '1.5rem 1.75rem', marginTop: '0.5rem' }}>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.9rem', color: TEXT, margin: 0, lineHeight: 1.7 }}><strong>Want us to implement these?</strong> Your SwissNet specialist can work through this plan with you. Reach us at <a href="mailto:contact@swissnethotels.com" style={{ color: GOLD, textDecoration: 'none', fontWeight: 600 }}>contact@swissnethotels.com</a>.</p>
           </div>
         </>
       )}
