@@ -89,6 +89,32 @@ export default function HotelAuditPage() {
             <p style={{ fontSize: '0.62rem', color: TEXT, margin: '0.4rem 0 0', fontWeight: 700 }}>{r.recommendation.yes} YES · {r.recommendation.partial} PARTIAL · {r.recommendation.no} NO</p>
             <p style={{ fontSize: '0.52rem', color: MUTED, margin: '0.2rem 0 0', letterSpacing: '0.08em', textTransform: 'uppercase' }}>AI Recommendation Readiness</p>
           </div>
+
+          {/* CONTENT QUALITY — how quotable the writing is for AI (evidence-grounded) */}
+          {r.contentQuality && r.contentQuality.categories && (
+            <div style={card}>
+              <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <p style={sectionLabel}>Content quality</p>
+                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: 0 }}>How quotable your writing is for AI</p>
+                </div>
+                <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 400, color: sc(r.contentQuality.score) }}>{r.contentQuality.score}<span style={{ fontSize: '0.8rem', color: MUTED }}>%</span></span>
+              </div>
+              <div style={{ padding: '0.75rem 1.5rem 1rem' }}>
+                {r.contentQuality.categories.map((c: any, i: number) => (
+                  <div key={i} style={{ padding: '0.7rem 0', borderBottom: i < r.contentQuality.categories.length - 1 ? '1px solid ' + BORDER : 'none' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
+                      <span style={{ fontSize: '0.7rem', fontWeight: 600, color: TEXT }}>{c.label}</span>
+                      <span style={{ fontSize: '0.66rem', fontWeight: 700, color: sc(c.score) }}>{c.score}%</span>
+                    </div>
+                    <div style={{ height: 5, background: BG, borderRadius: 3, overflow: 'hidden', marginBottom: '0.4rem' }}><div style={{ width: c.score + '%', height: '100%', background: sc(c.score) }} /></div>
+                    {c.comment && <p style={{ fontSize: '0.62rem', color: TEXT, margin: '0 0 0.2rem', lineHeight: 1.5 }}>{c.comment}</p>}
+                    {c.evidence && <p style={{ fontSize: '0.58rem', color: MUTED, margin: 0, fontStyle: 'italic', lineHeight: 1.4 }}>“{c.evidence}”</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
             
         {/* EXECUTIVE ACTION PLAN — first section */}
           {r.actionPlan && <>

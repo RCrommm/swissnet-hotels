@@ -487,6 +487,75 @@ async function buildProjects(findings: any, openaiKey: string) {
   }
 }
 
+// ── CONTENT QUALITY: linguistic AI-readiness, evidence-grounded ──
+const CONTENT_QUALITY_CATS: { key: string; label: string; desc: string }[] = [
+  { key: 'faqcoverage', label: 'FAQ Coverage', desc: 'Real guest questions answered in clear question-and-answer form — the strongest lever for AI citation.' },
+  { key: 'specificity', label: 'Specificity', desc: 'Concrete facts (numbers, names, distances, hours, prices) vs vague marketing language.' },
+  { key: 'quotable', label: 'Quotable Phrasing', desc: 'Short, factual, liftable sentences AI can quote verbatim vs long flowery prose.' },
+  { key: 'summaryblock', label: 'Summary / Quick-Facts Block', desc: 'A compact Key-Facts block AI can lift in one go.' },
+  { key: 'clarity', label: 'Clarity & Assertiveness', desc: 'Verifiable, assertive statements vs hedged opinion ("one of the finest").' },
+  { key: 'repetition', label: 'Semantic Variety', desc: 'Natural phrasing variety vs the same selling points repeated verbatim.' },
+  { key: 'jargon', label: 'Concrete Language', desc: 'Plain concrete wording vs marketing metaphors and buzzwords.' },
+]
+
+const CQ_SYSTEM = `You are a strict, evidence-based content auditor judging how well ONE hotel website's writing is prepared to be QUOTED and CITED by AI search engines (ChatGPT, Perplexity, Google AI). You judge writing QUALITY for AI retrieval — not whether facts exist.
+
+For EACH category return:
+- "score": integer 0-100 (be strict; reserve 80+ for genuinely excellent AI-ready writing; most luxury hotel sites score 40-65 because they favour evocative marketing prose over machine-readable facts).
+- "evidence": ONE short verbatim quote from the provided text justifying the score (a good example, or a problem example). Use "" only if truly nothing applies.
+- "comment": 1-2 plain sentences — what you found (referencing the quote) and how to improve it for AI visibility. Concrete, no jargon.
+
+RULES:
+- Use ONLY the provided website text. NEVER invent facts, quotes, numbers or features.
+- Every score MUST be justified by the evidence quote or an explicit statement that the element is absent.
+- Be specific to THIS site. Never write a sentence that could apply to any hotel.
+Return STRICTLY the JSON schema.`
+
+function cqSchema() {
+  return {
+    type: 'object', additionalProperties: false, required: ['categories'],
+    properties: {
+      categories: {
+        type: 'array', items: {
+          type: 'object', additionalProperties: false,
+          required: ['key', 'score', 'evidence', 'comment'],
+          properties: {
+            key: { type: 'string' }, score: { type: 'integer' }, evidence: { type: 'string' }, comment: { type: 'string' },
+          },
+        },
+      },
+    },
+  }
+}
+
+async function analyzeContentQuality(pages: any[], openaiKey: string) {
+  if (!pages.length) return null
+  const corpus = pages.map((p: any) => `URL: ${p.url}\nHEADINGS: ${(p.headings || []).slice(0, 10).join(' | ')}\nTEXT: ${(p.text || '').slice(0, 1200)}`).join('\n\n---\n\n').slice(0, 15000)
+  const catList = CONTENT_QUALITY_CATS.map(c => `"${c.key}" = ${c.label}: ${c.desc}`).join('\n')
+  try {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
+      body: JSON.stringify({
+        model: 'gpt-4o', temperature: 0, max_tokens: 2500,
+        response_format: { type: 'json_schema', json_schema: { name: 'content_quality', strict: true, schema: cqSchema() } },
+        messages: [{ role: 'system', content: CQ_SYSTEM }, { role: 'user', content: `CATEGORIES TO SCORE:\n${catList}\n\n────────\nWEBSITE TEXT:\n${corpus}` }],
+      }),
+    })
+    const data = await res.json()
+    const c = data?.choices?.[0]?.message?.content
+    if (!c) return null
+    const parsed = JSON.parse(c)
+    const byKey = new Map<string, any>(); for (const a of (parsed.categories || [])) byKey.set(a.key, a)
+    const categories = CONTENT_QUALITY_CATS.map(def => {
+      const a = byKey.get(def.key) || {}
+      const score = Number.isFinite(a.score) ? Math.max(0, Math.min(100, a.score)) : 0
+      return { key: def.key, label: def.label, score, evidence: (a.evidence || '').trim(), comment: (a.comment || '').trim() }
+    })
+    const score = categories.length ? Math.round(categories.reduce((s, c) => s + c.score, 0) / categories.length) : 0
+    return { score, categories }
+  } catch { return null }
+}
+
 export async function POST(req: Request) {
   try {
     const { url, city, password, hotelId, hotelType, manualUrls } = await req.json()
@@ -839,6 +908,7 @@ export async function POST(req: Request) {
     const architecture = { layers, note: 'Architecture layers are objective findings computed from crawled pages only.', score: architectureScore }
     const actionPlan = buildActionPlan(readiness, importantPages, missingBlueprints, demandCoverage)
     const contentPlan = buildContentPlan(importantPages, missingBlueprints)
+    const contentQuality = await analyzeContentQuality(pages, openaiKey)
 
     // Grounded findings → GPT synthesis into plain-language projects (dashboard lead)
     const findings = {
@@ -860,7 +930,7 @@ export async function POST(req: Request) {
       architectureScore,
       // executive layer
       projects,
-      actionPlan, contentPlan,
+      actionPlan, contentPlan, contentQuality,
       summary: { strongFor, weakFor },
       // four pillars
       pillars: {
