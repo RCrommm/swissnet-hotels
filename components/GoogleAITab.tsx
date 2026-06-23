@@ -22,6 +22,8 @@ const BASE_QUERIES = [
   'best hotel with tennis court',
   'best hotel with pool',
   'best fine dining hotel',
+  'luxury wellness retreat',
+  'best hotel with restaurant',
 ]
 
 function getQueries(region: string) {
@@ -71,7 +73,7 @@ export default function GoogleAITab({ hotels }: { hotels: any[] }) {
     <div>
       <div style={{ background: '#fff', border: '1px solid #e7e5e4', borderRadius: 8, padding: '24px', marginBottom: 24 }}>
         <h2 style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 13, fontWeight: 700, color: '#78716c', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 20 }}>Log Google AI Appearance</h2>
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: '#a8a29e', marginBottom: 20, lineHeight: 1.6 }}>Search each query in Google incognito and click Yes/No. Save when all 20 are answered.</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 12, color: '#a8a29e', marginBottom: 20, lineHeight: 1.6 }}>Search each query in Google incognito and click Yes/No. Save when all 22 are answered.</p>
 
         <div style={{ marginBottom: 24 }}>
           <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: 11, fontWeight: 600, color: '#78716c', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 6 }}>Hotel</label>
