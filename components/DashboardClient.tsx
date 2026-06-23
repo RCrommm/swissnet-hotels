@@ -2180,6 +2180,13 @@ function WebsiteTab({ hotel }: any) {
   const trust = pillars?.trust
   const cq = r?.contentQuality
   const prompts = r?.recommendation?.results || []
+  const overall = (() => {
+    const rec = r?.recommendation?.score, cqs = cq?.score, ar = r?.architectureScore, qc = answer?.score
+    const parts = [[rec, 0.40], [qc, 0.25], [cqs, 0.20], [ar, 0.15]].filter(([v]) => typeof v === 'number')
+    if (!parts.length) return null
+    const w = parts.reduce((s, [, x]) => s + x, 0)
+    return Math.round(parts.reduce((s, [v, x]) => s + v * x, 0) / w)
+  })()
   const orderedPrompts = ['NO', 'PARTIAL', 'YES'].flatMap(g => prompts.filter((p: any) => p.readiness === g))
 
   const Section = ({ id, title, subtitle, score, suffix = '%', children }: any) => {
@@ -2204,10 +2211,18 @@ function WebsiteTab({ hotel }: any) {
       {/* HERO */}
       <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 18, padding: '3rem 3.25rem', marginBottom: '1.75rem', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: -40, right: -40, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,169,76,0.08) 0%, transparent 70%)' }} />
-        <div style={{ position: 'relative' }}>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.75)', margin: '0 0 0.85rem' }}>Your own website · AI visibility audit</p>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.6rem', fontWeight: 300, color: WHITE, margin: '0 0 0.7rem', lineHeight: 1.2 }}>How {domain || 'your website'} reads to AI</p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.98rem', color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.7, maxWidth: 620 }}>We read your pages the way ChatGPT, Perplexity and Google AI do — then tell you exactly what to fix first.</p>
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '2rem' }}>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.75)', margin: '0 0 0.75rem' }}>Your own website · AI visibility audit</p>
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.25rem', fontWeight: 300, color: WHITE, margin: '0 0 0.6rem', lineHeight: 1.2 }}>How {domain || 'your website'} reads to AI</p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.88rem', color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.65, maxWidth: 560 }}>We read your pages the way ChatGPT, Perplexity and Google AI do — then tell you exactly what to fix first.</p>
+          </div>
+          {typeof overall === 'number' && (
+            <div style={{ flexShrink: 0, textAlign: 'center', border: '1px solid rgba(201,169,76,0.35)', borderRadius: 16, padding: '1.25rem 1.5rem', minWidth: 130 }}>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.8)', margin: '0 0 0.35rem' }}>Overall score</p>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '3rem', color: overall >= 75 ? '#86efac' : overall >= 50 ? '#fcd34d' : '#fca5a5', margin: 0, lineHeight: 1 }}>{overall}<span style={{ fontSize: '1.1rem', color: 'rgba(255,255,255,0.5)' }}>/100</span></p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -2236,7 +2251,7 @@ function WebsiteTab({ hotel }: any) {
             ].map((t, i) => (
               <div key={i} style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.35rem 1.5rem' }}>
                 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.6rem' }}>{t.label}</p>
-                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.6rem', color: scoreColor(t.value ?? 0), margin: 0, lineHeight: 1 }}>{typeof t.value === 'number' ? t.value : '—'}<span style={{ fontSize: '0.95rem', color: TEXT_MUTED }}>{typeof t.value === 'number' ? t.suffix : ''}</span></p>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.3rem', color: scoreColor(t.value ?? 0), margin: 0, lineHeight: 1 }}>{typeof t.value === 'number' ? t.value : '—'}<span style={{ fontSize: '0.95rem', color: TEXT_MUTED }}>{typeof t.value === 'number' ? t.suffix : ''}</span></p>
                 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: '0.45rem 0 0' }}>{t.sub}</p>
               </div>
             ))}
