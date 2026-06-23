@@ -1,5 +1,5 @@
-// scripts/run-visibility.mjs
-// DAILY general visibility engine (ChatGPT + Perplexity), per region.
+// scripts/run-categories.mjs
+// WEEKLY category visibility runs (ChatGPT + Perplexity), per region.
 import { createClient } from '@supabase/supabase-js'
 import { readFileSync } from 'fs'
 
@@ -125,28 +125,14 @@ async function mapPool(items, concurrency, worker) {
   }))
 }
 
-const stats = { regions: 0, queries: 0, errors: 0, cost: 0 }
+const stats = { regions: 0, categories: 0, queries: 0, errors: 0, cost: 0 }
 
-async function runRegion(region) {
+async function runCategory(region, category, regionHotels) {
   const runDate = today()
-
-  const { data: regionQueriesData } = await supabase
-    .from('region_queries').select('query').eq('region', region).eq('is_active', true)
-  const queries = (regionQueriesData || []).map((q) => q.query)
-  if (!queries.length) { console.warn(`[${region}] no active region_queries — skipping`); return }
-
-  const { data: competitors } = await supabase
-    .from('competitor_hotels').select('id, name, region').eq('is_active', true).eq('region', region)
-  const { data: partnerHotels } = await supabase
-    .from('hotels').select('id, name, region').eq('region', region).eq('is_partner', true).eq('is_active', true)
-
-  const allHotels = [
-    ...(competitors || []).map((c) => ({ id: c.id, name: c.name, isPartner: false })),
-    ...(partnerHotels || []).map((h) => ({ id: h.id, name: h.name, isPartner: true })),
-  ]
-  if (!allHotels.length) { console.warn(`[${region}] no hotels — skipping`); return }
-
-  console.log(`[${region}] ${queries.length} queries x ${PLATFORMS.length} platforms, ${allHotels.length} hotels`)
+  const { data: catQueries } = await supabase
+    .from('category_queries').select('query').eq('category', category).eq('is_active', true)
+  const queries = (catQueries || []).map((q) => `${q.query} ${region}`)
+  if (!queries.length) { console.warn(`[${region}/${category}] no active category_queries — skipping`); return }
 
   await Promise.all(PLATFORMS.map(async (platform) => {
     const responseCache = {}; const citationRows = []
@@ -156,47 +142,40 @@ async function runRegion(region) {
         responseCache[q] = text
         for (const url of citations) citationRows.push({ query: q, platform: platform.id, source_url: url, region })
         stats.cost += platform.cost; stats.queries++
-      } catch (e) { stats.errors++; responseCache[q] = ''; console.error(`[QUERY FAIL] ${region}/${platform.id} "${q}": ${e?.message}`) }
+      } catch (e) { stats.errors++; responseCache[q] = ''; console.error(`[QUERY FAIL] ${region}/${category}/${platform.id} "${q}": ${e?.message}`) }
     })
     await saveCitations(citationRows, runDate)
 
-    const appearanceRows = []
-    for (const hotel of allHotels) {
-      const perQuery = queries.map((q) => ({ query: q, appeared: checkAppeared(hotel.name, responseCache[q] || '') }))
-      const appearances = perQuery.filter((p) => p.appeared).length
+    for (const hotel of regionHotels) {
+      const appearances = queries.filter((q) => responseCache[q] && checkAppeared(hotel.name, responseCache[q])).length
       const score = queries.length ? Math.round((appearances / queries.length) * 100) : 0
-
       await supabase.from('competitor_visibility').upsert({
-        competitor_name: hotel.name, region, category: null, platform: platform.id,
+        competitor_name: hotel.name, region, category, platform: platform.id,
         visibility_score: score, appearances, total_queries: queries.length,
         month: currentMonth, run_date: runDate, checked_at: new Date().toISOString(),
       }, { onConflict: 'competitor_name,platform,run_date,category', ignoreDuplicates: true })
-
-      if (hotel.isPartner) {
-        const nowIso = new Date().toISOString()
-        for (const p of perQuery) appearanceRows.push({
-          hotel_id: hotel.id, hotel_name: hotel.name, query: p.query, platform: platform.id,
-          region, category: 'general', appeared: p.appeared, run_date: runDate, checked_at: nowIso,
-        })
-      }
     }
-    if (appearanceRows.length) await supabase.from('query_appearances').upsert(appearanceRows, {
-      onConflict: 'hotel_name,query,platform,run_date,category', ignoreDuplicates: false,
-    })
-    console.log(`[${region}/${platform.id}] done`)
   }))
-  stats.regions++
+  stats.categories++
+  console.log(`[${region}/${category}] done — ${queries.length} queries`)
 }
 
 async function main() {
   const startedAt = Date.now()
-  const regions = Object.entries(CONFIG).filter(([, c]) => c.general).map(([r]) => r)
-  if (!regions.length) { console.error('No regions with "general": true in config'); process.exit(1) }
-  console.log(`General run for regions: ${regions.join(', ')}`)
+  const regions = Object.entries(CONFIG).map(([r, c]) => ({ region: r, categories: c.categories || [] }))
 
-  for (const region of regions) {
-    try { await runRegion(region) }
-    catch (e) { stats.errors++; console.error(`[REGION FAIL] ${region}: ${e?.message}`) }
+  for (const { region, categories } of regions) {
+    if (!categories.length) { console.log(`[${region}] no categories configured — skipping`); continue }
+    const { data: regionHotels } = await supabase
+      .from('hotels').select('id, name, region').eq('is_active', true).eq('region', region)
+    if (!regionHotels?.length) { console.warn(`[${region}] no hotels — skipping`); continue }
+
+    console.log(`[${region}] categories: ${categories.join(', ')} (${regionHotels.length} hotels)`)
+    for (const category of categories) {
+      try { await runCategory(region, category, regionHotels) }
+      catch (e) { stats.errors++; console.error(`[CATEGORY FAIL] ${region}/${category}: ${e?.message}`) }
+    }
+    stats.regions++
   }
 
   await supabase.from('cron_costs').insert({
@@ -206,7 +185,8 @@ async function main() {
 
   const mins = ((Date.now() - startedAt) / 60000).toFixed(1)
   console.log(`\n── SUMMARY ──`)
-  console.log(`regions ok:   ${stats.regions}/${regions.length}`)
+  console.log(`regions:      ${stats.regions}`)
+  console.log(`categories:   ${stats.categories}`)
   console.log(`queries ok:   ${stats.queries}`)
   console.log(`query errors: ${stats.errors}`)
   console.log(`est. cost:    $${stats.cost.toFixed(4)}`)

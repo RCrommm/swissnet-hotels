@@ -12,40 +12,12 @@
   },
   "crons": [
     {
-      "path": "/api/indexnow",
-      "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/cron/competitor-visibility?region=Geneva",
-      "schedule": "0 6 * * *"
-    },
-    {
       "path": "/api/cron/check-mentions",
       "schedule": "0 7 * * *"
     },
     {
-      "path": "/api/cron/competitor-visibility?region=Geneva&type=category&category=spa",
-      "schedule": "0 8 * * 0"
-    },
-    {
-      "path": "/api/cron/competitor-visibility?region=Geneva&type=category&category=dining",
-      "schedule": "0 10 * * 0"
-    },
-    {
-      "path": "/api/cron/competitor-visibility?region=Geneva&type=category&category=romantic",
-      "schedule": "0 11 * * 0"
-    },
-    {
-      "path": "/api/cron/competitor-visibility?region=Geneva&type=category&category=lake",
-      "schedule": "0 12 * * 0"
-    },
-    {
-      "path": "/api/cron/competitor-visibility?region=Geneva&type=category&category=business",
-      "schedule": "0 13 * * 0"
-    },
-    {
-      "path": "/api/cron/competitor-visibility?region=Geneva&type=category&category=family",
-      "schedule": "0 14 * * 0"
+      "path": "/api/indexnow",
+      "schedule": "0 9 * * *"
     }
   ]
 }
