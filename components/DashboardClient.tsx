@@ -2141,7 +2141,7 @@ function ComparisonReport({ hotelId, hotelName, hotelRegion, overviewRunData, go
   )
 }
 
-// ── YOUR WEBSITE TAB — 4-PILLAR AI VISIBILITY AUDIT ──────────────────────────
+// ── YOUR WEBSITE TAB — UNIFIED AI VISIBILITY AUDIT ───────────────────────────
 function WebsiteTab({ hotel }: any) {
   const officialUrl = hotel?.direct_booking_url || ''
   const domain = (() => { try { return officialUrl ? new URL(officialUrl).hostname.replace('www.', '') : '' } catch { return '' } })()
@@ -2149,6 +2149,7 @@ function WebsiteTab({ hotel }: any) {
   const [r, setR] = useState<any>(null)
   const [savedAt, setSavedAt] = useState<string>('')
   const [loading, setLoading] = useState(true)
+  const [open, setOpen] = useState<string | null>('content')
   const [openLayer, setOpenLayer] = useState<number | null>(null)
 
   useEffect(() => {
@@ -2178,31 +2179,37 @@ function WebsiteTab({ hotel }: any) {
   const answer = pillars?.answerability
   const reco = pillars?.recommendation
   const trust = pillars?.trust
+  const cq = r?.contentQuality
   const prompts = r?.recommendation?.results || []
   const orderedPrompts = ['NO', 'PARTIAL', 'YES'].flatMap(g => prompts.filter((p: any) => p.readiness === g))
 
-  const Card = ({ children, gold }: any) => (
-    <div style={{ background: WHITE, border: '1px solid ' + (gold ? GOLD : BORDER), borderRadius: 14, overflow: 'hidden', marginBottom: '1.25rem' }}>{children}</div>
-  )
-  const CardHead = ({ kicker, title, right }: any) => (
-    <div style={{ padding: '0.95rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
-      <div>
-        {kicker && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.2rem' }}>{kicker}</p>}
-        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT, margin: 0 }}>{title}</p>
+  // Collapsible detail section
+  const Section = ({ id, title, subtitle, score, suffix = '%', children }: any) => {
+    const isOpen = open === id
+    return (
+      <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '0.85rem' }}>
+        <div onClick={() => setOpen(isOpen ? null : id)} style={{ padding: '1.1rem 1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer', background: isOpen ? BG : WHITE }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT, margin: 0 }}>{title}</p>
+            {subtitle && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: '0.15rem 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{subtitle}</p>}
+          </div>
+          {typeof score === 'number' && <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: scoreColor(score), flexShrink: 0 }}>{score}<span style={{ fontSize: '0.7rem', color: TEXT_MUTED }}>{suffix}</span></span>}
+          <span style={{ color: TEXT_MUTED, fontSize: '0.9rem', flexShrink: 0, transform: isOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
+        </div>
+        {isOpen && <div style={{ borderTop: '1px solid ' + BORDER }}>{children}</div>}
       </div>
-      {right}
-    </div>
-  )
+    )
+  }
 
   return (
     <div>
       {/* HERO */}
-      <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 16, padding: '2.5rem', marginBottom: '1.5rem', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 16, padding: '2.25rem 2.5rem', marginBottom: '1.5rem', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: -40, right: -40, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,169,76,0.08) 0%, transparent 70%)' }} />
         <div style={{ position: 'relative' }}>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0 0 0.6rem' }}>Your Own Website · AI Visibility Audit</p>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 300, color: WHITE, margin: '0 0 0.6rem', lineHeight: 1.3, maxWidth: 560 }}>How {domain || 'your website'} reads to AI</p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.7, maxWidth: 560 }}>We read your pages the way ChatGPT, Perplexity and Google AI do, then measure four pillars — architecture, answerability, recommendation coverage and trust — and turn the gaps into a prioritised action plan.</p>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 300, color: WHITE, margin: '0 0 0.5rem', lineHeight: 1.3 }}>How {domain || 'your website'} reads to AI</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.7, maxWidth: 560 }}>We read your pages the way ChatGPT, Perplexity and Google AI do — then tell you exactly what to fix first.</p>
         </div>
       </div>
 
@@ -2221,64 +2228,39 @@ function WebsiteTab({ hotel }: any) {
 
       {!loading && r && (
         <>
-          {/* ── SECTION 1 · SNAPSHOT ── */}
-          <Card gold>
-            <div style={{ padding: '1.5rem 2rem 1rem' }}>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.4rem' }}>AI Visibility Snapshot</p>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.65rem', color: TEXT, margin: 0 }}>Where {domain || 'your site'} stands today</p>
-              {savedAt && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: '0.4rem 0 0' }}>Last audit: {new Date(savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>}
-            </div>
-            <div style={{ padding: '0 2rem 1.25rem', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
-              {[
-                { label: 'AI Recommendation Readiness', value: r.recommendation?.score, sub: `${r.recommendation?.yes || 0} YES · ${r.recommendation?.partial || 0} PARTIAL · ${r.recommendation?.no || 0} NO` },
-                { label: 'AI Architecture Score', value: r.architectureScore, sub: '14 layers evaluated' },
-                { label: 'Question Coverage', value: answer ? answer.score : r.recommendation?.score, sub: `${(answer?.yes || 0) + (answer?.partial || 0)} of ${answer?.total || r.recommendation?.total || 0} questions` },
-              ].map((t, i) => (
-                <div key={i} style={{ background: BG, borderRadius: 10, padding: '1.1rem 1.25rem' }}>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.5rem' }}>{t.label}</p>
-                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.25rem', color: scoreColor(t.value ?? 0), margin: 0, lineHeight: 1 }}>{t.value ?? '—'}<span style={{ fontSize: '0.8rem', color: TEXT_MUTED }}>/100</span></p>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: '0.3rem 0 0' }}>{t.sub}</p>
-                </div>
-              ))}
-            </div>
-            {ap?.forecast && (
-              <div style={{ padding: '0 2rem 1.5rem', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
-                <div>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: GREEN, margin: '0 0 0.4rem' }}>Current strengths</p>
-                  {ap.forecast.strengths?.length ? ap.forecast.strengths.map((s: string, i: number) => <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: TEXT, margin: '0.15rem 0' }}>✓ {s}</p>) : <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>—</p>}
-                </div>
-                <div>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: RED, margin: '0 0 0.4rem' }}>Current weaknesses</p>
-                  {ap.forecast.weaknesses?.length ? ap.forecast.weaknesses.map((s: string, i: number) => <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: TEXT, margin: '0.15rem 0' }}>✗ {s}</p>) : <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>—</p>}
-                </div>
-                <div>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.4rem' }}>Focus first</p>
-                  {ap.forecast.highRoi?.length ? ap.forecast.highRoi.map((s: string, i: number) => <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: TEXT, margin: '0.15rem 0' }}>{i + 1}. {s}</p>) : <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>—</p>}
-                </div>
+          {/* ── HEADLINE SCORES ── */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.85rem', marginBottom: '1.5rem' }}>
+            {[
+              { label: 'Recommendation readiness', value: r.recommendation?.score, sub: `${r.recommendation?.yes || 0} yes · ${r.recommendation?.partial || 0} partial · ${r.recommendation?.no || 0} no` },
+              { label: 'Content quality', value: cq?.score, sub: 'how quotable your writing is' },
+              { label: 'Structured data', value: arch?.layers?.find((l: any) => l.n === 12)?.score, sub: 'schema AI can read' },
+              { label: 'AI architecture', value: r.architectureScore, sub: '14 layers evaluated' },
+            ].map((t, i) => (
+              <div key={i} style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1.1rem 1.25rem' }}>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.5rem' }}>{t.label}</p>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.1rem', color: scoreColor(t.value ?? 0), margin: 0, lineHeight: 1 }}>{typeof t.value === 'number' ? t.value : '—'}<span style={{ fontSize: '0.75rem', color: TEXT_MUTED }}>{typeof t.value === 'number' ? (t.label === 'Recommendation readiness' || t.label === 'AI architecture' ? '/100' : '%') : ''}</span></p>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.54rem', color: TEXT_MUTED, margin: '0.3rem 0 0' }}>{t.sub}</p>
               </div>
-            )}
-          </Card>
+            ))}
+          </div>
+          {savedAt && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: '0 0 1.25rem' }}>Last audit: {new Date(savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} · {(r.pagesScraped || []).length} pages reviewed</p>}
 
-          {/* ── PROJECTS · the analysed, plain-language plan (dashboard lead) ── */}
+          {/* ── WHAT TO DO FIRST (always open) ── */}
           {proj?.projects?.length > 0 && (
-            <>
+            <div style={{ marginBottom: '1.5rem' }}>
               {proj.overview && (
-                <div style={{ background: WHITE, border: '1px solid ' + GOLD, borderLeft: '3px solid ' + GOLD, borderRadius: 12, padding: '1.25rem 1.5rem', marginBottom: '1.25rem' }}>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.5rem' }}>What this means for you</p>
+                <div style={{ background: WHITE, border: '1px solid ' + GOLD, borderLeft: '3px solid ' + GOLD, borderRadius: 12, padding: '1.25rem 1.5rem', marginBottom: '1rem' }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.5rem' }}>Start here</p>
                   <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT, margin: 0, lineHeight: 1.5 }}>{proj.overview}</p>
                 </div>
               )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', margin: '0 0 0.6rem' }}>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: GOLD, margin: 0 }}>Your projects</p>
-                {proj.method && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.54rem', color: TEXT_MUTED, fontStyle: 'italic' }}>{proj.method}</span>}
-              </div>
               {proj.projects.map((p: any, i: number) => {
                 const isQuick = p.effort === 'Quick win'
                 const ec = isQuick ? GREEN : GOLD
                 const ic = impactColor(p.impact)
                 return (
-                  <div key={i} style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, overflow: 'hidden', marginBottom: '0.85rem' }}>
-                    <div style={{ padding: '0.9rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                  <div key={i} style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, overflow: 'hidden', marginBottom: '0.7rem' }}>
+                    <div style={{ padding: '0.85rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
                       <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT }}>{i + 1}. {p.title}</span>
                       <span style={{ display: 'flex', gap: '0.35rem', flexShrink: 0 }}>
                         <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.05em', color: ec, border: '1px solid ' + ec, borderRadius: 4, padding: '0.12rem 0.5rem', textTransform: 'uppercase' }}>{p.effort}</span>
@@ -2287,30 +2269,25 @@ function WebsiteTab({ hotel }: any) {
                     </div>
                     <div style={{ padding: '0.9rem 1.5rem 1.1rem' }}>
                       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.6 }}>{p.why}</p>
-                      {p.steps?.length > 0 && (
-                        <div style={{ margin: '0 0 0.5rem' }}>
-                          {p.steps.map((s: string, j: number) => (
-                            <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: TEXT, margin: '0.2rem 0', lineHeight: 1.5, display: 'flex', gap: '0.5rem' }}><span style={{ color: ec }}>›</span><span>{s}</span></p>
-                          ))}
-                        </div>
-                      )}
-                      {p.unlocks?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: '#d97706', margin: 0, lineHeight: 1.5 }}><strong>Unlocks these searches:</strong> {p.unlocks.join('; ')}</p>}
+                      {p.steps?.length > 0 && p.steps.map((s: string, j: number) => (
+                        <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: TEXT, margin: '0.2rem 0', lineHeight: 1.5, display: 'flex', gap: '0.5rem' }}><span style={{ color: ec }}>›</span><span>{s}</span></p>
+                      ))}
+                      {p.unlocks?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: '#d97706', margin: '0.4rem 0 0', lineHeight: 1.5 }}><strong>Unlocks:</strong> {p.unlocks.join('; ')}</p>}
                     </div>
                   </div>
                 )
               })}
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: '0.5rem 0 0', lineHeight: 1.6, fontStyle: 'italic' }}>The full page-by-page breakdown and every prompt is in the detailed audit below — and in your downloadable report.</p>
-            </>
+            </div>
           )}
 
-          {/* ── CONTENT QUALITY · Otterly-style linguistic layer (evidence-grounded) ── */}
-          {r.contentQuality?.categories?.length > 0 && (
-            <Card>
-              <CardHead kicker="Content quality" title="How quotable your writing is for AI" right={<span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: scoreColor(r.contentQuality.score) }}>{r.contentQuality.score}<span style={{ fontSize: '0.7rem', color: TEXT_MUTED }}>%</span></span>} />
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: 0, padding: '0.6rem 1.5rem 0', fontStyle: 'italic' }}>How well your pages are written to be quoted and cited by AI — every score cites a real line from your site.</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.75rem' }}>The detail · tap any section</p>
+
+          {/* CONTENT QUALITY */}
+          {cq?.categories?.length > 0 && (
+            <Section id="content" title="Content quality" subtitle="How quotable your writing is — every score cites a real line" score={cq.score}>
               <div style={{ padding: '0.75rem 1.5rem 1rem' }}>
-                {r.contentQuality.categories.map((c: any, i: number) => (
-                  <div key={i} style={{ padding: '0.7rem 0', borderBottom: i < r.contentQuality.categories.length - 1 ? '1px solid ' + BORDER : 'none' }}>
+                {cq.categories.map((c: any, i: number) => (
+                  <div key={i} style={{ padding: '0.7rem 0', borderBottom: i < cq.categories.length - 1 ? '1px solid ' + BORDER : 'none' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
                       <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: TEXT }}>{c.label}</span>
                       <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', fontWeight: 700, color: scoreColor(c.score) }}>{c.score}%</span>
@@ -2321,75 +2298,12 @@ function WebsiteTab({ hotel }: any) {
                   </div>
                 ))}
               </div>
-            </Card>
+            </Section>
           )}
 
-          <div style={{ borderTop: '2px solid ' + BORDER, margin: '1.75rem 0 1.5rem' }} />
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.3rem' }}>Full Audit · supporting evidence</p>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: TEXT, margin: '0 0 1.25rem' }}>The four pillars of AI visibility</p>
-
-          {arch?.layers?.length > 0 && (
-            <Card>
-              <CardHead kicker="Pillar 1" title="AI Architecture" right={<span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: scoreColor(arch.score) }}>{arch.score}<span style={{ fontSize: '0.7rem', color: TEXT_MUTED }}>/100</span></span>} />
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: 0, padding: '0.6rem 1.5rem 0', fontStyle: 'italic' }}>Tap any layer to see what it is, why it matters for AI, and why it scored the way it did.</p>
-              <div>
-                {arch.layers.map((l: any, i: number) => {
-                  const open = openLayer === l.n
-                  return (
-                    <div key={i} style={{ borderBottom: i < arch.layers.length - 1 ? '1px solid ' + BORDER : 'none' }}>
-                      <div onClick={() => setOpenLayer(open ? null : l.n)} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.85rem 1.5rem', cursor: 'pointer' }}>
-                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, color: TEXT_MUTED, width: 18 }}>{l.n}</span>
-                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: TEXT, flex: 1 }}>{l.layer}{typeof l.score === 'number' ? <span style={{ color: TEXT_MUTED, fontWeight: 400 }}>  {l.score}%</span> : null}</span>
-                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, color: statusColor(l.status), border: '1px solid ' + statusColor(l.status), borderRadius: 4, padding: '0.12rem 0.5rem' }}>{l.status}</span>
-                        <span style={{ color: TEXT_MUTED, fontSize: '0.7rem', transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
-                      </div>
-                      {open && (
-                        <div style={{ padding: '0 1.5rem 1.1rem 3rem', background: BG }}>
-                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0.7rem 0 0.15rem' }}>What it is</p>
-                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.6 }}>{l.definition}</p>
-                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.15rem' }}>Why it matters for AI visibility</p>
-                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.6 }}>{l.why}</p>
-                          {l.scoreReason && (
-                            <>
-                              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: statusColor(l.status), margin: '0 0 0.15rem' }}>Why this score</p>
-                              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.6 }}>{l.scoreReason}</p>
-                            </>
-                          )}
-                          {l.evidence?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: GREEN, margin: '0 0 0.25rem', lineHeight: 1.5 }}><strong>Found:</strong> {l.evidence.join(' · ')}</p>}
-                          {l.missing?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: '#d97706', margin: '0 0 0.25rem', lineHeight: 1.5 }}><strong>Missing:</strong> {l.missing.join(', ')}</p>}
-                          {l.fix && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, margin: '0.3rem 0 0', lineHeight: 1.6 }}><strong>How to improve:</strong> {l.fix}</p>}
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </Card>
-          )}
-
-          {/* ── PILLAR 2 · ANSWERABILITY ── */}
-          {answer?.clusters?.length > 0 && (
-            <Card>
-              <CardHead kicker="Pillar 2" title="AI Answerability" right={<span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: scoreColor(answer.score) }}>{answer.score}<span style={{ fontSize: '0.7rem', color: TEXT_MUTED }}>/100</span></span>} />
-              <div style={{ padding: '1rem 1.5rem' }}>
-                {answer.clusters.map((c: any, i: number) => (
-                  <div key={i} style={{ padding: '0.6rem 0', borderBottom: i < answer.clusters.length - 1 ? '1px solid ' + BORDER : 'none' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
-                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 600, color: TEXT }}>{c.label} <span style={{ color: TEXT_MUTED, fontWeight: 400 }}>· {c.answered.length}/{c.total} answered</span></span>
-                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', fontWeight: 700, color: scoreColor(c.coverage) }}>{c.coverage}%</span>
-                    </div>
-                    <div style={{ height: 5, background: BG, borderRadius: 3, overflow: 'hidden' }}><div style={{ height: '100%', width: c.coverage + '%', background: scoreColor(c.coverage) }} /></div>
-                    {c.missing.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: '0.3rem 0 0', lineHeight: 1.5 }}>Missing: {c.missing.join('; ')}</p>}
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
-
-          {/* every prompt */}
+          {/* PROMPT COVERAGE */}
           {orderedPrompts.length > 0 && (
-            <Card>
-              <CardHead title="Every prompt — and why AI answered that way" />
+            <Section id="prompts" title="Prompt coverage" subtitle={`Every guest search, and why AI answered that way · ${answer ? `${(answer.yes || 0) + (answer.partial || 0)}/${answer.total}` : ''} answered`} score={answer?.score ?? r.recommendation?.score}>
               <div style={{ padding: '0.5rem 1.5rem 1.25rem' }}>
                 {orderedPrompts.map((c: any, i: number) => (
                   <div key={i} style={{ padding: '0.8rem 0', borderBottom: i < orderedPrompts.length - 1 ? '1px solid ' + BORDER : 'none' }}>
@@ -2400,20 +2314,19 @@ function WebsiteTab({ hotel }: any) {
                     {c.evidence && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: '0.3rem 0 0', lineHeight: 1.5, fontStyle: 'italic' }}>“{c.evidence}”{c.url && <span style={{ fontStyle: 'normal' }}> — {path(c.url)}</span>}</p>}
                     {c.reasons?.length > 0 && c.readiness !== 'YES' && (
                       <div style={{ margin: '0.35rem 0 0' }}>
-                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, color: TEXT, margin: '0 0 0.15rem' }}>{c.readiness === 'NO' ? 'AI could not recommend because:' : 'Holding it back from a strong YES:'}</p>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, color: TEXT, margin: '0 0 0.15rem' }}>{c.readiness === 'NO' ? 'AI could not recommend because:' : 'Holding it back from a strong yes:'}</p>
                         {c.reasons.map((rs: string, j: number) => <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: '#d97706', margin: '0.1rem 0 0' }}>{j + 1}. {rs}</p>)}
                       </div>
                     )}
                   </div>
                 ))}
               </div>
-            </Card>
+            </Section>
           )}
 
-          {/* ── PILLAR 3 · RECOMMENDATION COVERAGE ── */}
+          {/* RECOMMENDATION COVERAGE */}
           {reco?.intents?.length > 0 && (
-            <Card>
-              <CardHead kicker="Pillar 3" title="AI Recommendation Coverage" />
+            <Section id="reco" title="Recommendation coverage" subtitle="Which guest types AI can confidently recommend you for">
               <div>
                 {reco.intents.map((it: any, i: number) => (
                   <div key={i} style={{ padding: '1rem 1.5rem', borderBottom: i < reco.intents.length - 1 ? '1px solid ' + BORDER : 'none' }}>
@@ -2428,13 +2341,45 @@ function WebsiteTab({ hotel }: any) {
                   </div>
                 ))}
               </div>
-            </Card>
+            </Section>
           )}
 
-          {/* ── PILLAR 4 · TRUST ── */}
+          {/* TECHNICAL ARCHITECTURE */}
+          {arch?.layers?.length > 0 && (
+            <Section id="arch" title="Technical AI-readiness" subtitle="14 architecture layers · tap a layer for what, why and how to fix" score={arch.score} suffix="/100">
+              <div>
+                {arch.layers.map((l: any, i: number) => {
+                  const lOpen = openLayer === l.n
+                  return (
+                    <div key={i} style={{ borderBottom: i < arch.layers.length - 1 ? '1px solid ' + BORDER : 'none' }}>
+                      <div onClick={() => setOpenLayer(lOpen ? null : l.n)} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.8rem 1.5rem', cursor: 'pointer' }}>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, color: TEXT_MUTED, width: 18 }}>{l.n}</span>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 600, color: TEXT, flex: 1 }}>{l.layer}{typeof l.score === 'number' ? <span style={{ color: TEXT_MUTED, fontWeight: 400 }}>  {l.score}%</span> : null}</span>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, color: statusColor(l.status), border: '1px solid ' + statusColor(l.status), borderRadius: 4, padding: '0.12rem 0.5rem' }}>{l.status}</span>
+                        <span style={{ color: TEXT_MUTED, fontSize: '0.7rem', transform: lOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
+                      </div>
+                      {lOpen && (
+                        <div style={{ padding: '0 1.5rem 1.1rem 3rem', background: BG }}>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0.7rem 0 0.15rem' }}>What it is</p>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.6 }}>{l.definition}</p>
+                          {l.scoreReason && (<>
+                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: statusColor(l.status), margin: '0 0 0.15rem' }}>Why this score</p>
+                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.6 }}>{l.scoreReason}</p>
+                          </>)}
+                          {l.missing?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: '#d97706', margin: '0 0 0.25rem', lineHeight: 1.5 }}><strong>Missing:</strong> {l.missing.join(', ')}</p>}
+                          {l.fix && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, margin: '0.3rem 0 0', lineHeight: 1.6 }}><strong>How to improve:</strong> {l.fix}</p>}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </Section>
+          )}
+
+          {/* TRUST */}
           {trust && (
-            <Card>
-              <CardHead kicker="Pillar 4" title="Trust & Authority" />
+            <Section id="trust" title="Trust & authority" subtitle="Reviews, awards and ratings AI can read">
               <div style={{ padding: '1rem 1.5rem' }}>
                 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: '0 0 0.75rem', lineHeight: 1.6 }}>{trust.why}</p>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: trust.missing?.length ? '0.75rem' : 0 }}>
@@ -2444,21 +2389,20 @@ function WebsiteTab({ hotel }: any) {
                 </div>
                 {trust.missing?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: '#d97706', margin: 0, lineHeight: 1.5 }}><strong>To add:</strong> {trust.missing.join(', ')}</p>}
               </div>
-            </Card>
+            </Section>
           )}
 
-          {/* pages reviewed */}
+          {/* PAGES REVIEWED */}
           {(r.pagesScraped || []).length > 0 && (
-            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1rem 1.5rem', marginBottom: '1.25rem' }}>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.6rem' }}>Pages reviewed ({r.pagesScraped.length})</p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+            <Section id="pages" title="Pages reviewed" subtitle={`${r.pagesScraped.length} pages crawled for this audit`}>
+              <div style={{ padding: '1rem 1.5rem', display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
                 {r.pagesScraped.map((u: string, i: number) => <span key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, color: TEXT, background: BG, border: '1px solid ' + BORDER, borderRadius: 20, padding: '0.3rem 0.75rem' }}>{path(u)}</span>)}
               </div>
-            </div>
+            </Section>
           )}
 
-          <div style={{ background: GOLD_LIGHT, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${GOLD}`, borderRadius: 10, padding: '1.25rem 1.5rem' }}>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT, margin: 0, lineHeight: 1.7 }}><strong style={{ color: TEXT }}>Want us to implement these?</strong> Your SwissNet specialist can work through this plan with you and put the high-impact fixes in place. Reach us at <a href="mailto:contact@swissnethotels.com" style={{ color: GOLD, textDecoration: 'none', fontWeight: 600 }}>contact@swissnethotels.com</a>.</p>
+          <div style={{ background: GOLD_LIGHT, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${GOLD}`, borderRadius: 10, padding: '1.25rem 1.5rem', marginTop: '0.5rem' }}>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT, margin: 0, lineHeight: 1.7 }}><strong style={{ color: TEXT }}>Want us to implement these?</strong> Your SwissNet specialist can work through this plan with you. Reach us at <a href="mailto:contact@swissnethotels.com" style={{ color: GOLD, textDecoration: 'none', fontWeight: 600 }}>contact@swissnethotels.com</a>.</p>
           </div>
         </>
       )}
