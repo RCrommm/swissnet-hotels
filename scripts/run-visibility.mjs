@@ -18,7 +18,7 @@ for (const [k, v] of Object.entries({
 
 const CONFIG = JSON.parse(readFileSync(new URL('../config/visibility-regions.json', import.meta.url), 'utf8'))
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } })
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false }, realtime: { params: { eventsPerSecond: 0 } } })
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 const today = () => new Date().toISOString().split('T')[0]
 const currentMonth = new Date().toISOString().slice(0, 7)
