@@ -2303,6 +2303,27 @@ function WebsiteTab({ hotel }: any) {
             </>
           )}
 
+          {/* ── CONTENT QUALITY · Otterly-style linguistic layer (evidence-grounded) ── */}
+          {r.contentQuality?.categories?.length > 0 && (
+            <Card>
+              <CardHead kicker="Content quality" title="How quotable your writing is for AI" right={<span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: scoreColor(r.contentQuality.score) }}>{r.contentQuality.score}<span style={{ fontSize: '0.7rem', color: TEXT_MUTED }}>%</span></span>} />
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: 0, padding: '0.6rem 1.5rem 0', fontStyle: 'italic' }}>How well your pages are written to be quoted and cited by AI — every score cites a real line from your site.</p>
+              <div style={{ padding: '0.75rem 1.5rem 1rem' }}>
+                {r.contentQuality.categories.map((c: any, i: number) => (
+                  <div key={i} style={{ padding: '0.7rem 0', borderBottom: i < r.contentQuality.categories.length - 1 ? '1px solid ' + BORDER : 'none' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
+                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: TEXT }}>{c.label}</span>
+                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', fontWeight: 700, color: scoreColor(c.score) }}>{c.score}%</span>
+                    </div>
+                    <div style={{ height: 5, background: BG, borderRadius: 3, overflow: 'hidden', marginBottom: '0.4rem' }}><div style={{ width: c.score + '%', height: '100%', background: scoreColor(c.score) }} /></div>
+                    {c.comment && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, margin: '0 0 0.2rem', lineHeight: 1.5 }}>{c.comment}</p>}
+                    {c.evidence && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0, fontStyle: 'italic', lineHeight: 1.4 }}>“{c.evidence}”</p>}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
           <div style={{ borderTop: '2px solid ' + BORDER, margin: '1.75rem 0 1.5rem' }} />
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.3rem' }}>Full Audit · supporting evidence</p>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: TEXT, margin: '0 0 1.25rem' }}>The four pillars of AI visibility</p>
