@@ -2715,6 +2715,23 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
   const [visHover, setVisHover] = useState<number | null>(null)
   const [competitorView, setCompetitorView] = useState('region')
   const [optimiseTab, setOptimiseTab] = useState('overview')
+  const [frozenMonths, setFrozenMonths] = useState<Record<string, number>>({})
+  useEffect(() => {
+    if (!hotel?.id) return
+    const load = async () => {
+      try {
+        const { createClient } = await import('@supabase/supabase-js')
+        const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+        const { data } = await sb.from('monthly_scores').select('month, blended_score').eq('hotel_id', hotel.id)
+        if (data) {
+          const map: Record<string, number> = {}
+          for (const row of data) map[row.month] = row.blended_score
+          setFrozenMonths(map)
+        }
+      } catch {}
+    }
+    load()
+  }, [hotel?.id])
   const hotelName = hotel?.name || 'Your Hotel'
   const hotelRegion = hotel?.region || 'Switzerland'
 
@@ -2775,6 +2792,7 @@ const fmt = (y: number, m: number) => `${y}-${String(m + 1).padStart(2, '0')}-01
 const curMonthStart = fmt(_now.getFullYear(), _now.getMonth())
 const nextMonthStart = _now.getMonth() === 11 ? fmt(_now.getFullYear() + 1, 0) : fmt(_now.getFullYear(), _now.getMonth() + 1)
 const periodScore = scoreForWindow(curMonthStart, nextMonthStart)
+const curMonthKey = curMonthStart.slice(0, 7)
 const prevPeriodScore = (() => {
   const now = new Date()
   // previous full calendar month
@@ -2800,7 +2818,9 @@ const prevPeriodScore = (() => {
     const allScores = [...latestPerPlatform, ...(googleDayScore !== null ? [googleDayScore] : [])]
     return allScores.length > 0 ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length) : null
   }).filter((s): s is number => s !== null)
-  const score = dailyAvgs.length > 0 ? Math.round(dailyAvgs.reduce((a, b) => a + b, 0) / dailyAvgs.length) : null
+  const liveScore = dailyAvgs.length > 0 ? Math.round(dailyAvgs.reduce((a, b) => a + b, 0) / dailyAvgs.length) : null
+  const prevKey = prevStartStr.slice(0, 7)
+  const score = frozenMonths[prevKey] ?? liveScore
   const label = prevMonthStart.toLocaleDateString('en-GB', { month: 'short' })
   return { score, label }
 })()
