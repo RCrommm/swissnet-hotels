@@ -208,6 +208,31 @@ async function lockPreviousMonth() {
     .select('competitor_name, category, platform, visibility_score, run_date, checked_at, total_queries')
     .gte('run_date', start).lt('run_date', end)
 
+  // Pull Google AI rows (general only — per-query appeared) for the finished month
+  const { data: gaRows } = await supabase
+    .from('ai_visibility_scores')
+    .select('hotel_id, appeared, checked_at')
+    .eq('platform', 'google_ai')
+    .gte('checked_at', start).lt('checked_at', end)
+
+  // Google AI monthly average per hotel_id: daily appeared/total, then average the daily scores
+  const gaByHotel = {}  // hotel_id → { day → { appeared, total } }
+  for (const r of (gaRows || [])) {
+    const day = (r.checked_at || '').split('T')[0]
+    if (!day) continue
+    gaByHotel[r.hotel_id] = gaByHotel[r.hotel_id] || {}
+    gaByHotel[r.hotel_id][day] = gaByHotel[r.hotel_id][day] || { appeared: 0, total: 0 }
+    gaByHotel[r.hotel_id][day].total++
+    if (r.appeared) gaByHotel[r.hotel_id][day].appeared++
+  }
+  const googleAvgForHotel = (hotelId) => {
+    const days = gaByHotel[hotelId]
+    if (!days) return null
+    const dailyScores = Object.values(days).map((d) => d.total ? Math.round((d.appeared / d.total) * 100) : null).filter((s) => s !== null)
+    if (!dailyScores.length) return null
+    return Math.round(dailyScores.reduce((a, b) => a + b, 0) / dailyScores.length)
+  }
+
   // Map partner hotel names → ids (only partners get locked)
   const { data: partners } = await supabase
     .from('hotels').select('id, name').eq('is_partner', true)
@@ -251,12 +276,16 @@ async function lockPreviousMonth() {
     for (const [cat, plats] of Object.entries(cats)) {
       const cg = plats.chatgpt ?? null
       const pp = plats.perplexity ?? null
-      const both = [cg, pp].filter((v) => v !== null)
-      if (!both.length) continue
-      const blended = Math.round(both.reduce((a, b) => a + b, 0) / both.length)
       if (cat === 'general') {
-        genRows.push({ hotel_id: hotelId, hotel_name: name, month: monthKey, chatgpt_score: cg, perplexity_score: pp, google_ai_score: null, blended_score: blended })
+        const ga = googleAvgForHotel(hotelId)  // null if no Google AI data this month
+        const all = [cg, pp, ga].filter((v) => v !== null)
+        if (!all.length) continue
+        const blended = Math.round(all.reduce((a, b) => a + b, 0) / all.length)
+        genRows.push({ hotel_id: hotelId, hotel_name: name, month: monthKey, chatgpt_score: cg, perplexity_score: pp, google_ai_score: ga, blended_score: blended })
       } else {
+        const both = [cg, pp].filter((v) => v !== null)
+        if (!both.length) continue
+        const blended = Math.round(both.reduce((a, b) => a + b, 0) / both.length)
         catRows.push({ hotel_id: hotelId, month: monthKey, category: cat, chatgpt_score: cg, perplexity_score: pp, blended_score: blended })
       }
     }
