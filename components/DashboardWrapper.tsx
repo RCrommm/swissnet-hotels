@@ -201,22 +201,35 @@ const myRankChange = myHasLatest && myHasPrev && myLatestRank > 0 && myPrevRank 
       for (const r of (frozenCatRows || [])) frozenCat[`${r.month}:${r.category}`] = r.blended_score
       const curMonthKey = new Date().toISOString().slice(0, 7)
 
+      // Average a category's runs within the current month (blended across platforms, latest run per platform per day)
+      const currentMonthCatAvg = (catEntries: any[]) => {
+        const rows = catEntries.filter((s: any) =>
+          (s.run_date || s.checked_at?.split('T')[0] || '').slice(0, 7) === curMonthKey)
+        if (!rows.length) return null
+        // dedupe: latest checked_at per (run_date, platform)
+        const byKey: Record<string, any> = {}
+        for (const r of rows) {
+          const k = `${r.run_date || r.checked_at?.split('T')[0]}:${r.platform}`
+          if (!byKey[k] || new Date(r.checked_at || 0) > new Date(byKey[k].checked_at || 0)) byKey[k] = r
+        }
+        const vals = Object.values(byKey).map((r: any) => r.visibility_score).filter((v: any) => v >= 0)
+        if (!vals.length) return null
+        return Math.round(vals.reduce((a: number, b: number) => a + b, 0) / vals.length)
+      }
+
       const hotelCatScores: Record<string, number> = {}
       for (const cat of ['spa', 'ski', 'dining', 'romantic', 'lake', 'business', 'family']) {
         const catEntries = allCompVisibility?.filter((s: any) => s.competitor_name === hotel?.name && s.category === cat) || []
-        // Is there any current-month data for this category?
-        const hasCurrentMonth = catEntries.some((s: any) => (s.run_date || s.checked_at?.split('T')[0] || '').slice(0, 7) === curMonthKey)
-        if (hasCurrentMonth) {
-          // Current month: live latest run
-          const score = getLatestScore(catEntries, hotel?.name)
-          if (score !== null) hotelCatScores[cat] = score
+        const liveAvg = currentMonthCatAvg(catEntries)
+        if (liveAvg !== null) {
+          // Current month has data → live running average
+          hotelCatScores[cat] = liveAvg
         } else {
-          // No current-month data → use most recent frozen month for this category
+          // No current-month data → most recent frozen month
           const frozenKeys = Object.keys(frozenCat).filter(k => k.endsWith(`:${cat}`)).sort()
           const lastFrozen = frozenKeys[frozenKeys.length - 1]
-          if (lastFrozen) {
-            hotelCatScores[cat] = frozenCat[lastFrozen]
-          } else {
+          if (lastFrozen) hotelCatScores[cat] = frozenCat[lastFrozen]
+          else {
             const score = getLatestScore(catEntries, hotel?.name)
             if (score !== null) hotelCatScores[cat] = score
           }
