@@ -192,12 +192,36 @@ const myRankChange = myHasLatest && myHasPrev && myLatestRank > 0 && myPrevRank 
         ? Math.round(availableScores.reduce((a, b) => a + b, 0) / availableScores.length)
         : null
 
+      // Frozen monthly category scores for completed months
+      const { data: frozenCatRows } = await supabase
+        .from('monthly_category_scores')
+        .select('month, category, blended_score')
+        .eq('hotel_id', hotelId)
+      const frozenCat: Record<string, number> = {}
+      for (const r of (frozenCatRows || [])) frozenCat[`${r.month}:${r.category}`] = r.blended_score
+      const curMonthKey = new Date().toISOString().slice(0, 7)
+
       const hotelCatScores: Record<string, number> = {}
       for (const cat of ['spa', 'ski', 'dining', 'romantic', 'lake', 'business', 'family']) {
-  const catEntries = allCompVisibility?.filter((s: any) => s.competitor_name === hotel?.name && s.category === cat) || []
-  const score = getLatestScore(catEntries, hotel?.name)
-  if (score !== null) hotelCatScores[cat] = score
-}
+        const catEntries = allCompVisibility?.filter((s: any) => s.competitor_name === hotel?.name && s.category === cat) || []
+        // Is there any current-month data for this category?
+        const hasCurrentMonth = catEntries.some((s: any) => (s.run_date || s.checked_at?.split('T')[0] || '').slice(0, 7) === curMonthKey)
+        if (hasCurrentMonth) {
+          // Current month: live latest run
+          const score = getLatestScore(catEntries, hotel?.name)
+          if (score !== null) hotelCatScores[cat] = score
+        } else {
+          // No current-month data → use most recent frozen month for this category
+          const frozenKeys = Object.keys(frozenCat).filter(k => k.endsWith(`:${cat}`)).sort()
+          const lastFrozen = frozenKeys[frozenKeys.length - 1]
+          if (lastFrozen) {
+            hotelCatScores[cat] = frozenCat[lastFrozen]
+          } else {
+            const score = getLatestScore(catEntries, hotel?.name)
+            if (score !== null) hotelCatScores[cat] = score
+          }
+        }
+      }
 
       // Calculate market averages per platform from last 30 days
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
