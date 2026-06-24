@@ -188,6 +188,85 @@ async function runRegion(region) {
   stats.regions++
 }
 
+// ── MONTH-END AUTO-LOCK ───────────────────────────────────────────────
+// On the 1st of the month (UTC), freeze the just-finished month's averages
+// (general + each category) into monthly_scores / monthly_category_scores.
+// Idempotent: skips any (hotel, month) already locked.
+async function lockPreviousMonth() {
+  const now = new Date()
+  if (now.getUTCDate() !== 1) return  // only runs on the 1st
+  const py = now.getUTCMonth() === 0 ? now.getUTCFullYear() - 1 : now.getUTCFullYear()
+  const pm = now.getUTCMonth() === 0 ? 12 : now.getUTCMonth()
+  const monthKey = `${py}-${String(pm).padStart(2, '0')}`
+  const start = `${monthKey}-01`
+  const end = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-01`
+  console.log(`[LOCK] freezing month ${monthKey} (${start} → ${end})`)
+
+  // Pull every partner hotel's general + category rows for the finished month
+  const { data: rows } = await supabase
+    .from('competitor_visibility')
+    .select('competitor_name, category, platform, visibility_score, run_date, checked_at, total_queries')
+    .gte('run_date', start).lt('run_date', end)
+
+  // Map partner hotel names → ids (only partners get locked)
+  const { data: partners } = await supabase
+    .from('hotels').select('id, name').eq('is_partner', true)
+  const idByName = {}
+  for (const h of (partners || [])) idByName[h.name] = h.id
+
+  // Group: name → category(null=general) → platform → [latest-per-day scores]
+  const byKey = {}
+  for (const r of (rows || [])) {
+    if (!idByName[r.name] && !idByName[r.competitor_name]) continue
+    if (typeof r.visibility_score !== 'number' || r.visibility_score < 0) continue
+    if (r.total_queries != null && r.total_queries < 9) continue  // drop malformed runs
+    const cat = r.category || 'general'
+    const day = r.run_date || (r.checked_at || '').split('T')[0]
+    const k = `${r.competitor_name}|${cat}|${r.platform}`
+    if (!byKey[k]) byKey[k] = {}
+    // latest checked_at wins per day
+    if (!byKey[k][day] || new Date(r.checked_at) > new Date(byKey[k][day].checked_at)) {
+      byKey[k][day] = { score: r.visibility_score, checked_at: r.checked_at }
+    }
+  }
+
+  const avg = (obj) => {
+    const vals = Object.values(obj).map((d) => d.score)
+    return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null
+  }
+
+  // Reassemble: name → cat → { chatgpt, perplexity }
+  const byHotelCat = {}
+  for (const [k, days] of Object.entries(byKey)) {
+    const [name, cat, platform] = k.split('|')
+    byHotelCat[name] = byHotelCat[name] || {}
+    byHotelCat[name][cat] = byHotelCat[name][cat] || {}
+    byHotelCat[name][cat][platform] = avg(days)
+  }
+
+  const genRows = [], catRows = []
+  for (const [name, cats] of Object.entries(byHotelCat)) {
+    const hotelId = idByName[name]
+    if (!hotelId) continue
+    for (const [cat, plats] of Object.entries(cats)) {
+      const cg = plats.chatgpt ?? null
+      const pp = plats.perplexity ?? null
+      const both = [cg, pp].filter((v) => v !== null)
+      if (!both.length) continue
+      const blended = Math.round(both.reduce((a, b) => a + b, 0) / both.length)
+      if (cat === 'general') {
+        genRows.push({ hotel_id: hotelId, hotel_name: name, month: monthKey, chatgpt_score: cg, perplexity_score: pp, google_ai_score: null, blended_score: blended })
+      } else {
+        catRows.push({ hotel_id: hotelId, month: monthKey, category: cat, chatgpt_score: cg, perplexity_score: pp, blended_score: blended })
+      }
+    }
+  }
+
+  if (genRows.length) await supabase.from('monthly_scores').upsert(genRows, { onConflict: 'hotel_id,month', ignoreDuplicates: true })
+  if (catRows.length) await supabase.from('monthly_category_scores').upsert(catRows, { onConflict: 'hotel_id,month,category', ignoreDuplicates: true })
+  console.log(`[LOCK] ${monthKey}: ${genRows.length} general + ${catRows.length} category rows frozen`)
+}
+
 async function main() {
   const startedAt = Date.now()
   const regions = Object.entries(CONFIG).filter(([, c]) => c.general).map(([r]) => r)
@@ -198,6 +277,9 @@ async function main() {
     try { await runRegion(region) }
     catch (e) { stats.errors++; console.error(`[REGION FAIL] ${region}: ${e?.message}`) }
   }
+
+  try { await lockPreviousMonth() }
+  catch (e) { console.error('[LOCK] failed (non-fatal):', e?.message) }
 
   await supabase.from('cron_costs').insert({
     hotels_checked: 0, queries_run: stats.queries, platforms_checked: PLATFORMS.length,
