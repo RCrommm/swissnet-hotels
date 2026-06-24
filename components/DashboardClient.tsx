@@ -1956,6 +1956,8 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
 
 function ComparisonReport({ hotelId, hotelName, hotelRegion, overviewRunData, googleAiScores, views, clicks, categoryLabels }: any) {
   const [catHistory, setCatHistory] = useState<any[]>([])
+  const [frozenVis, setFrozenVis] = useState<Record<string, any>>({})
+  const [frozenCat, setFrozenCat] = useState<Record<string, number>>({})
   const [loaded, setLoaded] = useState(false)
   const [monthA, setMonthA] = useState('')
   const [monthB, setMonthB] = useState('')
@@ -1970,6 +1972,18 @@ function ComparisonReport({ hotelId, hotelName, hotelRegion, overviewRunData, go
         .eq('competitor_name', hotelName)
         .not('category', 'is', null)
       setCatHistory(data || [])
+      const { data: fv } = await sb.from('monthly_scores')
+        .select('month, chatgpt_score, perplexity_score, google_ai_score, blended_score')
+        .eq('hotel_id', hotelId)
+      const fvMap: Record<string, any> = {}
+      for (const row of (fv || [])) fvMap[row.month] = row
+      setFrozenVis(fvMap)
+      const { data: fc } = await sb.from('monthly_category_scores')
+        .select('month, category, blended_score')
+        .eq('hotel_id', hotelId)
+      const fcMap: Record<string, number> = {}
+      for (const row of (fc || [])) fcMap[`${row.month}:${row.category}`] = row.blended_score
+      setFrozenCat(fcMap)
       setLoaded(true)
     }
     load()
@@ -2009,6 +2023,16 @@ function ComparisonReport({ hotelId, hotelName, hotelRegion, overviewRunData, go
     }).filter((s): s is number => s !== null)
     const overall = overallVals.length ? Math.round(overallVals.reduce((a, b) => a + b, 0) / overallVals.length) : null
     const appearances = runs.reduce((s: number, r: any) => s + (r.appearances || 0), 0) + (googleAiScores || []).filter((r: any) => { const d = r.checked_at?.split('T')[0]; return d >= start && d < end && r.appeared }).length
+    const fz = frozenVis[start.slice(0, 7)]
+    if (fz) {
+      return {
+        overall: fz.blended_score ?? overall,
+        chatgpt: fz.chatgpt_score ?? chatgpt,
+        perplexity: fz.perplexity_score ?? perplexity,
+        google: fz.google_ai_score ?? google,
+        appearances,
+      }
+    }
     return { overall, chatgpt, perplexity, google, appearances }
   }
 
@@ -2025,6 +2049,8 @@ function ComparisonReport({ hotelId, hotelName, hotelRegion, overviewRunData, go
 
   const catScore = (key: string, category: string) => {
     const { start, end } = winOf(key)
+    const fz = frozenCat[`${start.slice(0, 7)}:${category}`]
+    if (fz !== undefined) return fz
     const rows = catHistory.filter((r: any) => r.category === category && r.checked_at?.split('T')[0] >= start && r.checked_at?.split('T')[0] < end)
     if (!rows.length) return null
     const adj = rows.map((r: any) => r.visibility_score)
