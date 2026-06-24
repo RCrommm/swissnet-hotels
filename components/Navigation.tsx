@@ -196,7 +196,7 @@ export default function Navigation() {
             <div style={{ width: '1px', height: '16px', background: 'rgba(201,169,110,0.3)' }} />
 
             <Link href="/dashboard/login" style={{ ...linkStyle, color: gold }}>
-              Hotel Login
+              Login
             </Link>
 
             <a href="/#contact" style={{ display: 'inline-block', background: gold, color: '#fff', fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.6rem 1.5rem', border: '1px solid ' + gold, textDecoration: 'none' }}>
@@ -233,11 +233,11 @@ export default function Navigation() {
               { label: 'Lausanne', href: '/destinations/lausanne' },
               { label: 'Grindelwald', href: '/destinations/grindelwald' },
               { label: 'Pricing', href: '/#pricing' },
-              { label: 'Hotel Login', href: '/dashboard/login' },
+              { label: 'Login', href: '/dashboard/login' },
             ].map(item => (
               <Link key={item.label} href={item.href} onClick={() => setMenuOpen(false)} style={{
                 fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', letterSpacing: '0.2em',
-                textTransform: 'uppercase', color: item.label === 'Hotel Login' ? gold : 'rgba(255,255,255,0.7)', textDecoration: 'none',
+                textTransform: 'uppercase', color: item.label === 'Login' ? gold : 'rgba(255,255,255,0.7)', textDecoration: 'none',
               }}>
                 {item.label}
               </Link>
