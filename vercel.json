@@ -12,6 +12,10 @@
   },
   "crons": [
     {
+      "path": "/api/cron/trigger-visibility",
+      "schedule": "0 6 * * *"
+    },
+    {
       "path": "/api/cron/check-mentions",
       "schedule": "0 7 * * *"
     },
