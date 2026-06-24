@@ -6,11 +6,14 @@ import crypto from 'crypto'
 
 // ── EDIT to add/remove pages ──
 const LOSCAR_PAGES: { url: string; page_type: string }[] = [
-  { url: 'https://www.loscarlondon.com/',                page_type: 'homepage' },
-  { url: 'https://www.loscarlondon.com/accommodation/',  page_type: 'accommodation' },
-  { url: 'https://www.loscarlondon.com/restaurant/',     page_type: 'restaurant' },
-  { url: 'https://www.loscarlondon.com/events/',         page_type: 'events' },
-  { url: 'https://www.loscarlondon.com/contact/',        page_type: 'contact' },
+  { url: 'https://www.loscarlondon.com/',                                      page_type: 'homepage' },
+  { url: 'https://www.loscarlondon.com/accommodation/',                        page_type: 'accommodation' },
+  { url: 'https://www.loscarlondon.com/restaurants-bars/loscar-restaurant/',   page_type: 'restaurant' },
+  { url: 'https://www.loscarlondon.com/restaurants-bars/afternoon-tea/',       page_type: 'afternoon_tea' },
+  { url: 'https://www.loscarlondon.com/whats-on/',                             page_type: 'whats_on' },
+  { url: 'https://www.loscarlondon.com/meeting/',                              page_type: 'meetings' },
+  { url: 'https://www.loscarlondon.com/private-dining-and-drinks-reception/',  page_type: 'private_dining' },
+  { url: 'https://www.loscarlondon.com/contact/',                              page_type: 'contact' },
 ]
 
 const HOTEL_SLUG = 'loscar-london'
@@ -37,7 +40,11 @@ async function fetchPage(url: string): Promise<{ status: number; html: string }>
   try {
     const res = await fetch(url, {
       signal: controller.signal,
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SwissNetAuditBot/1.0)' },
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-GB,en;q=0.9',
+      },
       redirect: 'follow',
     })
     const html = res.ok ? await res.text() : ''
@@ -71,15 +78,11 @@ export async function GET(request: Request) {
     }
     const content_hash = crypto.createHash('sha256').update(text).digest('hex')
     extracted.push({ url: page.url, page_type: page.page_type, title, text, content_hash })
-    await new Promise(r => setTimeout(r, 300))
+    await new Promise(r => setTimeout(r, 400))
   }
 
   if (extracted.length === 0) {
-    return NextResponse.json({
-      success: false,
-      error: 'No pages scraped — likely JS-rendered or wrong URLs. No audit created.',
-      failed,
-    }, { status: 422 })
+    return NextResponse.json({ success: false, error: 'No pages scraped. No audit created.', failed }, { status: 422 })
   }
 
   const { data: audit, error: auditErr } = await supabase
