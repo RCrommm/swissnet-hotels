@@ -37,7 +37,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const BATCH = 30
+  const BATCH = 80
 
   const { data: partners } = await supabase
     .from('hotels')
@@ -46,12 +46,11 @@ export async function GET(request: Request) {
     .eq('is_active', true)
   if (!partners?.length) return NextResponse.json({ message: 'No partner hotels' })
 
-  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   const { data: cites } = await supabase
     .from('ai_citations')
     .select('source_url')
-    .gte('run_date', since)
-    .limit(5000)
+    .eq('region', 'Geneva')
+    .limit(10000)
   const allUrls = [...new Set((cites || []).map((c: any) => c.source_url))]
 
   const { data: done } = await supabase
