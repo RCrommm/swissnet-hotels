@@ -20,6 +20,7 @@ ABSOLUTE RULES — these define whether you are trustworthy:
 - When the question is about a GAP, a PRIORITY, or "why" — answer from the FINDINGS and ADVISORY, explaining the reasoning that was used.
 - THREE-WAY HONESTY: (a) if the FACTS contain it, answer from them; (b) if the FACTS don't but a FINDING or the ADVISORY addresses it, say what the site currently does/doesn't confirm and that it's flagged — this is more useful than a flat "no"; (c) if NONE of the three sources contains it, say plainly "Your stored data doesn't include anything about that" and, if useful, suggest it could be added. NEVER fill the gap with a plausible guess.
 - A "why is X prioritized over Y" question is answered from the advisory's reasoning + the supporting facts/findings — not from generic hotel knowledge.
+- EVIDENCE-STATE RULE: a finding tagged "[UNVERIFIED — we never crawled a page for this...]" means SwissNet has NOT checked whether the hotel offers it. If asked "do we do X?" and X is only covered by such a finding, you MUST say "I can't verify that from the evidence currently stored — we haven't crawled a page for it, so I can't confirm whether you offer it." NEVER state or imply the hotel lacks X just because a page wasn't found. Absence from the crawl is not absence from the hotel. A "[UNVERIFIED — we crawled where this would appear and found nothing]" finding is a stronger (but still soft) signal you may mention as "your site doesn't appear to cover this."
 - Be concise and specific to THIS hotel. A few sentences. Never write something that could apply to any hotel.
 - You are not a general chatbot. If asked something unrelated to this hotel's AI visibility, facts, findings, or advice, say that's outside what you can answer from the hotel's data.
 
@@ -49,7 +50,11 @@ function buildBrief(facts: any[], findings: any[], advisory: any) {
   const findingLines = (findings || []).map(f => {
     const t = (f.type || '').toUpperCase()
     const aq = (f.affected_queries || []).join('; ')
-    return `${t}: ${f.title}${aq ? ` → ${aq}` : ''}`
+    // Surface evidence state so Ask distinguishes "never crawled" from "checked, absent"
+    let tag = ''
+    if (f.evidence_state === 'unverified' && f.evidence_reason === 'unseen') tag = ' [UNVERIFIED — we never crawled a page for this; we CANNOT confirm whether the hotel offers it]'
+    else if (f.evidence_state === 'unverified' && f.evidence_reason === 'absent') tag = ' [UNVERIFIED — we crawled where this would appear and found nothing]'
+    return `${t}: ${f.title}${aq ? ` → ${aq}` : ''}${tag}`
   })
   const advisoryLines: string[] = []
   if (advisory?.one_line_priority) advisoryLines.push(`PRIORITY: ${advisory.one_line_priority}`)
@@ -77,7 +82,7 @@ export async function POST(req: Request) {
 
     // Latest audit findings (most recent run only)
     let findings: any[] = []
-    const { data: fRows } = await sb.from('audit_findings').select('type, title, affected_queries, audit_run_id, created_at').eq('hotel_id', hotelId).order('created_at', { ascending: false }).limit(400)
+    const { data: fRows } = await sb.from('audit_findings').select('type, title, affected_queries, evidence_state, evidence_reason, audit_run_id, created_at').eq('hotel_id', hotelId).order('created_at', { ascending: false }).limit(400)
     if (fRows && fRows.length) { const lastRun = fRows[0].audit_run_id; findings = fRows.filter((r: any) => r.audit_run_id === lastRun) }
 
     // Latest stored advisory
