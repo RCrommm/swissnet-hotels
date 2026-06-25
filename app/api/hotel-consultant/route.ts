@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { classifyGap, inferTopic } from '@/lib/evidence'
 import { decideAction } from '@/lib/decision'
+import { buildVisibilityModel } from '@/lib/visibility-model'
 
 export const maxDuration = 120
 
@@ -247,10 +248,14 @@ export async function POST(req: Request) {
 
     // Load the latest audit's STRUCTURAL diagnosis (page structure + answerability) and integrate it.
     let auditBrief = { weakPages: [] as string[], unanswered: [] as string[], contentWeak: [] as string[], auditScore: null as number | null }
+    let latestAuditResult: any = null
     try {
       const { data: auditRow } = await sb.from('hotel_audits').select('result').eq('hotel_id', hotelId).order('created_at', { ascending: false }).limit(1).single()
-      if (auditRow?.result) auditBrief = buildAuditBrief(auditRow.result)
+      if (auditRow?.result) { latestAuditResult = auditRow.result; auditBrief = buildAuditBrief(auditRow.result) }
     } catch {}
+
+    // ── AI VISIBILITY MODEL: compute how AI currently "sees" the hotel (deterministic) ──
+    const visibilityModel = buildVisibilityModel(facts || [], latestAuditResult)
 
     if ((!facts || !facts.length) && !findings.length) return NextResponse.json({ error: 'No stored facts or findings for this hotel yet.' }, { status: 404 })
 
@@ -307,6 +312,8 @@ ${auditBrief.contentWeak.length ? auditBrief.contentWeak.join('\n') : '(none fla
       }
     }
     const basedOn = { facts: (facts || []).length, findings: findings.length }
+    // attach the visibility model onto the advisory so it stores + renders with it
+    advisory.visibility_model = visibilityModel
 
     // Persist so the AI Advisor tab can read the latest instantly (no GPT on open)
     await sb.from('hotel_consultant').insert({
