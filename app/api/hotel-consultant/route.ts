@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { classifyGap, inferTopic } from '@/lib/evidence'
 
 export const maxDuration = 120
 
@@ -22,7 +23,8 @@ ABSOLUTE RULES:
 - Be specific to THIS hotel. Never write a sentence that could apply to any hotel.
 
 PRIORITIZE LIKE A HOTEL REVENUE CONSULTANT, not a content checklist:
-1. RELEVANCE GATE — Only rank something a TOP MOVE if the hotel clearly HAS that offer (2+ supporting facts) OR there is a clear commercial finding for it. A single incidental mention (e.g. one yoga class) is NOT a wellness product — put it in what_not_to_do_yet or mark it Low confidence, never a top priority. A revenue-driving category with a clear finding (e.g. weddings with a missing romantic page) CAN be a top move even on fewer facts — the finding is the signal.
+1. RELEVANCE GATE — Only rank something a TOP MOVE if the hotel clearly HAS that offer (2+ supporting facts) OR there is a clear commercial finding for it. A single incidental mention (e.g. one yoga class) is NOT a wellness product — put it in what_not_to_do_yet or mark it Low confidence, never a top priority.
+1a. EVIDENCE-STATE RULE (CRITICAL) — Some findings are marked "UNVERIFIED — NOT CRAWLED". This means the audit never read a page for that topic, so the system does NOT know whether the hotel offers it. You MUST NOT recommend CREATING a page for an unverified-not-crawled topic, and MUST NOT state or imply the hotel lacks it. Absence from the crawl is NOT absence from the hotel. For these, the correct move is to VERIFY: title it like "Confirm and surface your [topic] offering", build_type "Section on existing page" or "New page" ONLY if the hotel confirms they offer it, and phrase why_this_priority around "we could not verify this from your site — confirm whether you offer it; if you do, it needs a crawlable page so AI can find it." A finding marked "LIKELY GAP — CRAWLED, NOT FOUND" CAN justify creating a page (we looked where it would be and found nothing). Never treat NOT-CRAWLED and CRAWLED-NOT-FOUND the same way.
 1b. EXISTING-PAGE AWARENESS — You are told which page topics already exist. If a page for THIS MOVE'S topic already exists, recommend strengthening it (build_type "Section on existing page") and name that page in what_to_build. If the topic has NO existing page of its own, recommend a New page — do NOT graft the topic onto an unrelated existing page just to avoid creating one (e.g. never put wedding/romantic content on the Meetings & Events page, or family content on a Dining page). Match the recommendation to the page whose subject actually fits: strengthen when the right page exists, create when it genuinely doesn't. Recommending creation of a page that already exists destroys trust; so does housing a topic on a page where a guest would never look for it.
 2. COMMERCIAL INTENT — Rank by what drives bookings. Revenue-driving intents come first: rooms, dining, meetings, weddings, business, location, luxury, romantic. Then offers, family, wellness. Practical trust pages (accessibility, parking, pets) matter for completeness but are hygiene, NOT flagship strategic moves — only elevate one if it is a clear booking dealbreaker for this hotel.
 3. PAGE vs SECTION — Do NOT default to "create a page". If the hotel already has related content, the right fix is often a homepage Quick-Facts block, an FAQ answer, or a section on an existing page. Recommend the SMALLEST fix that unlocks the searches, and say which (page / section / FAQ / Quick-Facts).
@@ -164,7 +166,26 @@ function buildBrief(facts: any[], findings: any[]) {
     const p = pathOf(f.page_url || '')
     return `[${f.category}] ${f.fact_value}${q ? `  — "${q}"` : ''}${p ? ` (${p})` : ''}`
   })
-  const missingPages = findings.filter(f => f.type === 'missing_page').map(f => `MISSING PAGE: ${f.title} → affects: ${(f.affected_queries||[]).join('; ')}`)
+  // The crawled-page list = the pages the Brain actually read (from fact URLs).
+  const pagesScraped = Array.from(new Set((facts || []).map(f => f.page_url || '').filter(Boolean)))
+  // ── EVIDENCE GUARD: a "missing_page" finding is only a real gap if the page-type
+  // was actually crawled. If we never crawled it, we CANNOT say the hotel lacks it —
+  // so frame it as VERIFY, not CREATE. Absence from crawl ≠ absence from hotel.
+  const missingPages = findings.filter(f => f.type === 'missing_page').map(f => {
+    // prefer a stored evidence_state if the audit already computed one; else derive it
+    let state = f.evidence_state as string | undefined
+    let reason = f.evidence_reason as string | undefined
+    const topic = inferTopic('', f.title, [])
+    if (!state && topic) { const ev = classifyGap(topic, pagesScraped, facts); state = ev.evidence_state; reason = ev.reason || undefined }
+    const aff = (f.affected_queries || []).join('; ')
+    if (state === 'unverified' && reason === 'unseen') {
+      return `UNVERIFIED — NOT CRAWLED: No ${topic || 'such'} page was among the pages we read, so we CANNOT confirm whether the hotel offers ${topic || 'this'}. Recommend VERIFYING the offering (a "confirm whether you offer X" move), NOT creating a page as if it is absent. Affected searches: ${aff}`
+    }
+    if (state === 'unverified' && reason === 'absent') {
+      return `LIKELY GAP — CRAWLED, NOT FOUND: pages where ${topic || 'this'} would appear were crawled but none confirmed it; a new page may be justified. Affects: ${aff}`
+    }
+    return `MISSING PAGE: ${f.title} → affects: ${aff}`
+  })
   const weakElements = findings.filter(f => f.type === 'missing_element').map(f => `WEAK: ${f.title}`)
   const unanswered = findings.filter(f => f.type === 'unanswered_query').map(f => `UNANSWERED: ${f.title}`)
   const factCountByCat: Record<string, number> = {}
