@@ -32,49 +32,99 @@ PRIORITIZE LIKE A HOTEL REVENUE CONSULTANT, not a content checklist:
 Return STRICTLY this JSON shape:
 {
   "executive_diagnosis": string,
+  "one_line_priority": string,
   "ai_understands": [string],
   "ai_cannot_connect": [string],
+  "work_plan": {
+    "quick_wins": [string],
+    "strategic_projects": [string]
+  },
   "top_moves": [
     {
       "title": string,
+      "why_this_priority": string,
+      "why_ai_cares": string,
+      "what_to_build": string,
+      "build_type": "New page"|"Section on existing page"|"Homepage block"|"FAQ only",
+      "sections_to_add": [string],
+      "implementation_steps": [string],
+      "questions_to_answer": [string],
+      "affected_searches": [string],
+      "expected_ai_effect": string,
+      "success_criteria": string,
       "reasoning": string,
       "evidence": [string],
-      "affected_searches": [string],
       "confidence": "High"|"Medium"|"Low",
       "effort": "Low"|"Medium"|"High",
       "priority": integer
     }
   ],
+  "next_opportunities": [
+    { "title": string, "why": string, "effort": "Low"|"Medium"|"High" }
+  ],
   "what_not_to_do_yet": string
-}`
+}
+
+DEPTH REQUIREMENTS:
+- one_line_priority is the headline a GM reads first — specific and decisive, naming the actual move (e.g. "Your fastest win is a romantic & weddings page — you already have the assets, AI just can't connect them").
+- why_ai_cares must explain AI RETRIEVAL specifically: AI assistants avoid recommending what they cannot confirm. Name what's unconfirmed and why that blocks a confident recommendation.
+- implementation_steps: 3-6 concrete ordered actions a hotel's web person follows — a real checklist, not "add content about X".
+- success_criteria describes the observable result with NO invented numbers — what an AI assistant would be able to answer that it can't today.
+- next_opportunities must be genuinely DIFFERENT findings from the top 3 — the next layer down, not restatements.
+- work_plan.quick_wins are low-effort high-value fixes (an FAQ, a Quick-Facts block); strategic_projects are bigger builds (a new page).
+- Depth does NOT mean inventing — it means fuller reasoning over the SAME facts and findings. Stay grounded.`
 
 function consultantSchema() {
   return {
     type: 'object', additionalProperties: false,
-    required: ['executive_diagnosis','ai_understands','ai_cannot_connect','top_moves','what_not_to_do_yet'],
+    required: ['executive_diagnosis','one_line_priority','ai_understands','ai_cannot_connect','work_plan','top_moves','next_opportunities','what_not_to_do_yet'],
     properties: {
       executive_diagnosis: { type: 'string' },
+      one_line_priority: { type: 'string' },
       ai_understands: { type: 'array', items: { type: 'string' } },
       ai_cannot_connect: { type: 'array', items: { type: 'string' } },
+      work_plan: {
+        type: 'object', additionalProperties: false,
+        required: ['quick_wins','strategic_projects'],
+        properties: {
+          quick_wins: { type: 'array', items: { type: 'string' } },
+          strategic_projects: { type: 'array', items: { type: 'string' } },
+        },
+      },
       top_moves: {
         type: 'array',
         items: {
           type: 'object', additionalProperties: false,
-          required: ['title','why_this_priority','what_to_build','build_type','sections_to_add','questions_to_answer','reasoning','evidence','affected_searches','expected_ai_effect','confidence','effort','priority'],
+          required: ['title','why_this_priority','why_ai_cares','what_to_build','build_type','sections_to_add','implementation_steps','questions_to_answer','affected_searches','expected_ai_effect','success_criteria','reasoning','evidence','confidence','effort','priority'],
           properties: {
             title: { type: 'string' },
             why_this_priority: { type: 'string' },
+            why_ai_cares: { type: 'string' },
             what_to_build: { type: 'string' },
             build_type: { type: 'string', enum: ['New page','Section on existing page','Homepage block','FAQ only'] },
             sections_to_add: { type: 'array', items: { type: 'string' } },
+            implementation_steps: { type: 'array', items: { type: 'string' } },
             questions_to_answer: { type: 'array', items: { type: 'string' } },
-            reasoning: { type: 'string' },
-            evidence: { type: 'array', items: { type: 'string' } },
             affected_searches: { type: 'array', items: { type: 'string' } },
             expected_ai_effect: { type: 'string' },
+            success_criteria: { type: 'string' },
+            reasoning: { type: 'string' },
+            evidence: { type: 'array', items: { type: 'string' } },
             confidence: { type: 'string', enum: ['High','Medium','Low'] },
             effort: { type: 'string', enum: ['Low','Medium','High'] },
             priority: { type: 'integer' },
+          },
+        },
+      },
+      next_opportunities: {
+        type: 'array',
+        items: {
+          type: 'object', additionalProperties: false,
+          required: ['title','why','effort'],
+          properties: {
+            title: { type: 'string' },
+            why: { type: 'string' },
+            effort: { type: 'string', enum: ['Low','Medium','High'] },
           },
         },
       },
