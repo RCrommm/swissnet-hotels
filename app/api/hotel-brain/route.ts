@@ -4,6 +4,37 @@ import { createClient } from '@supabase/supabase-js'
 export const maxDuration = 300
 const CRAWL_LIMIT = 18
 
+// ─── PAGE PRIORITIZATION: spend crawl budget on content pages, skip transactional ones ───
+const EXCLUDE_PAGES = /(\/booking|\/reservation|\/check-rates?|\/my-reservation|\/thank-you|\/post-stay|\/careers?|\/cart|\/checkout|\/login|\/account|\/privacy|\/terms|\/cookie|\/sitemap|\/gift-?card|\/book-now|\/availability)/i
+const PAGE_PRIORITY: { re: RegExp; rank: number }[] = [
+  { re: /(about|story|heritage)/i, rank: 1 },
+  { re: /(accommodation|rooms?|suites?)/i, rank: 2 },
+  { re: /(restaurant|dining|\bbar\b|brasserie|afternoon-tea|tea)/i, rank: 3 },
+  { re: /(spa|wellness)/i, rank: 4 },
+  { re: /(meeting|event|conference|wedding|civil)/i, rank: 4 },
+  { re: /(whats-on|experience|things-to-do)/i, rank: 5 },
+  { re: /(location|neighbourhood|directions|getting-here)/i, rank: 5 },
+  { re: /(offers?|packages?)/i, rank: 6 },
+  { re: /(faq|policies|parking|accessibility|pets)/i, rank: 6 },
+  { re: /(contact)/i, rank: 7 },
+  { re: /(press|news|blog|journal)/i, rank: 9 },
+]
+function rankUrl(u: string, homepage: string): number {
+  const hp = homepage.replace(/\/$/, '')
+  if (u.replace(/\/$/, '') === hp) return 0
+  let path = u
+  try { path = new URL(u).pathname.replace(/\/$/, '') || '/' } catch {}
+  for (const p of PAGE_PRIORITY) { if (p.re.test(path)) return p.rank }
+  return 8
+}
+function selectPages(candidates: string[], homepage: string, limit: number): string[] {
+  const kept = candidates.filter(u => !EXCLUDE_PAGES.test(u))
+  const ranked = kept.map(u => ({ u, r: rankUrl(u, homepage) })).sort((a, b) => a.r - b.r || a.u.length - b.u.length)
+  const seen = new Set<string>(); const out: string[] = []
+  for (const { u } of ranked) { const k = u.replace(/\/$/, ''); if (seen.has(k)) continue; seen.add(k); out.push(u); if (out.length >= limit) break }
+  return out
+}
+
 // ─── LAYERED CRAWLER: cheap first, ScrapingBee only as last resort ───
 async function fetchCheap(url: string): Promise<string | null> {
   try {
@@ -194,7 +225,7 @@ export async function POST(req: Request) {
     const sitemapUrls = await discoverSitemap(origin, apiKey)
     const homeLinks = extractLinks(homeHtml, origin)
     const candidates = Array.from(new Set([url, ...sitemapUrls, ...homeLinks]))
-    const toRead = candidates.slice(0, CRAWL_LIMIT)
+    const toRead = selectPages(candidates, url, CRAWL_LIMIT)
 
     const htmls = await pool(toRead, 5, async (u) => ({ url: u, html: u === url ? homeHtml : await getPage(u, apiKey, state) }))
     const pages = htmls.filter(h => h.html).map(h => ({ url: h.url, headings: extractHeadings(h.html as string), text: extractText(h.html as string) }))
