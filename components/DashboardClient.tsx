@@ -2729,6 +2729,97 @@ function QueryAppearanceBreakdown({ hotelId, hotelName, googleAiScores, onAddFaq
   )
 }
 
+// ── HISTORY PANEL — "since last audit" diff, reads the audit's memory object ──
+function HistoryPanel({ hotel }: any) {
+  const [memory, setMemory] = useState<any>(null)
+  const [prevDate, setPrevDate] = useState<string>('')
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!hotel?.id) { setLoading(false); return }
+    const load = async () => {
+      try {
+        const { createClient } = await import('@supabase/supabase-js')
+        const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+        const { data: rows } = await sb.from('hotel_audits')
+          .select('result, created_at').eq('hotel_id', hotel.id)
+          .order('created_at', { ascending: false }).limit(2)
+        if (rows && rows.length) {
+          setMemory(rows[0].result?.memory || null)
+          if (rows[1]) setPrevDate(rows[1].created_at)
+        }
+      } catch {} finally { setLoading(false) }
+    }
+    load()
+  }, [hotel?.id])
+
+  if (loading || !memory) return null
+
+  const humanizeKey = (k: string) => {
+    const parts = (k || '').split(':')
+    if (parts[0] === 'page') return parts[1].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) + ' page'
+    if (parts[0] === 'query') return parts.slice(2).join(' ').replace(/-/g, ' ').replace(/^./, c => c.toUpperCase())
+    return (k || '').replace(/[:-]/g, ' ')
+  }
+
+  if (memory.isFirstRun) {
+    return (
+      <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.5rem 1.75rem', marginBottom: '1.5rem' }}>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.4rem' }}>Tracking started</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, margin: 0, lineHeight: 1.6 }}>This audit recorded a baseline of {memory.counts?.total ?? 0} findings. From your next audit on, this panel will show exactly what improved, what's still open, and what's new.</p>
+      </div>
+    )
+  }
+
+  const c = memory.counts || { fixed: 0, stillOpen: 0, new: 0 }
+  const Stat = ({ n, label, color }: { n: number; label: string; color: string }) => (
+    <div style={{ flex: 1, textAlign: 'center' }}>
+      <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', color, margin: 0, lineHeight: 1 }}>{n}</p>
+      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0.3rem 0 0' }}>{label}</p>
+    </div>
+  )
+
+  return (
+    <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.5rem' }}>
+      <div style={{ padding: '1.25rem 1.75rem', borderBottom: '1px solid ' + BORDER, background: BG }}>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.3rem' }}>Since last audit{prevDate ? ` · ${new Date(prevDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` : ''}</p>
+        <div style={{ display: 'flex', gap: '1rem', marginTop: '0.75rem' }}>
+          <Stat n={c.fixed} label="Resolved" color={GREEN} />
+          <Stat n={c.stillOpen} label="Still open" color="#d97706" />
+          <Stat n={c.new} label="New" color={BLUE} />
+        </div>
+      </div>
+      <div style={{ padding: '1.25rem 1.75rem' }}>
+        {memory.fixed?.length > 0 && (
+          <div style={{ marginBottom: memory.newlyFound?.length ? '1rem' : 0 }}>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: GREEN, margin: '0 0 0.5rem' }}>✓ Resolved since last audit</p>
+            {memory.fixed.map((k: string, i: number) => (
+              <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, margin: '0.2rem 0', lineHeight: 1.5, display: 'flex', gap: '0.5rem' }}><span style={{ color: GREEN }}>✓</span><span>{humanizeKey(k)}</span></p>
+            ))}
+          </div>
+        )}
+        {memory.newlyFound?.length > 0 && (
+          <div style={{ marginBottom: memory.stillOpen?.length ? '1rem' : 0 }}>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: BLUE, margin: '0 0 0.5rem' }}>New this audit</p>
+            {memory.newlyFound.map((f: any, i: number) => (
+              <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, margin: '0.2rem 0', lineHeight: 1.5, display: 'flex', gap: '0.5rem' }}><span style={{ color: BLUE }}>›</span><span>{f.title}</span></p>
+            ))}
+          </div>
+        )}
+        {memory.stillOpen?.length > 0 && (
+          <div>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#d97706', margin: '0 0 0.5rem' }}>Still open</p>
+            {memory.stillOpen.slice(0, 6).map((f: any, i: number) => (
+              <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT_MUTED, margin: '0.2rem 0', lineHeight: 1.5, display: 'flex', gap: '0.5rem' }}><span style={{ color: '#d97706' }}>•</span><span>{f.title}</span></p>
+            ))}
+            {memory.stillOpen.length > 6 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: '0.4rem 0 0', fontStyle: 'italic' }}>+ {memory.stillOpen.length - 6} more still open</p>}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── AI ADVISOR TAB — reads latest stored consultant advisory, regenerate on demand ──
 function AdvisorTab({ hotel }: any) {
   const [data, setData] = useState<any>(null)
@@ -2771,6 +2862,7 @@ function AdvisorTab({ hotel }: any) {
 
   return (
     <div>
+      <HistoryPanel hotel={hotel} />
       {/* HERO */}
       <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 18, padding: '2.75rem 3.25rem', marginBottom: '1.75rem', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: -40, right: -40, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,169,76,0.08) 0%, transparent 70%)' }} />
