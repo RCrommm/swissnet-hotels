@@ -2729,6 +2729,59 @@ function QueryAppearanceBreakdown({ hotelId, hotelName, googleAiScores, onAddFaq
   )
 }
 
+// ── AI VISIBILITY MODEL — "Current AI Identity", how AI sees the hotel across dimensions ──
+function VisibilityModelPanel({ model }: any) {
+  const [open, setOpen] = useState<string | null>(null)
+  if (!model?.dimensions?.length) return null
+
+  const bandColor = (band: string) => band === 'strong' ? GREEN : band === 'moderate' ? GOLD : band === 'weak' ? '#d97706' : 'rgba(42,26,14,0.3)'
+  const dims = [...model.dimensions].sort((a: any, b: any) => b.score - a.score)
+
+  return (
+    <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 16, overflow: 'hidden', marginBottom: '1.5rem' }}>
+      <div style={{ padding: '1.5rem 1.85rem 1.25rem', borderBottom: '1px solid ' + BORDER, background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)` }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.8)', margin: '0 0 0.35rem' }}>Current AI Identity</p>
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 300, color: WHITE, margin: 0, lineHeight: 1.25 }}>How AI assistants currently see you</p>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.4rem', fontWeight: 300, color: GOLD, margin: 0, lineHeight: 1 }}>{model.overall}<span style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.5)' }}>/100</span></p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', margin: '0.2rem 0 0' }}>Overall AI visibility</p>
+          </div>
+        </div>
+      </div>
+      <div style={{ padding: '1.5rem 1.85rem' }}>
+        {dims.map((d: any) => {
+          const pct = Math.max(2, d.score)
+          const col = bandColor(d.band)
+          const isOpen = open === d.dimension
+          return (
+            <div key={d.dimension} style={{ marginBottom: '0.95rem' }}>
+              <div onClick={() => setOpen(isOpen ? null : d.dimension)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', fontWeight: 600, color: TEXT, width: 145, flexShrink: 0 }}>{d.label}</span>
+                <div style={{ flex: 1, height: 9, background: 'rgba(42,26,14,0.06)', borderRadius: 5, overflow: 'hidden' }}>
+                  <div style={{ width: `${pct}%`, height: '100%', background: col, borderRadius: 5, transition: 'width 0.5s ease' }} />
+                </div>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', fontWeight: 700, color: col, width: 30, textAlign: 'right', flexShrink: 0 }}>{d.score}</span>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: col, width: 60, textAlign: 'right', flexShrink: 0 }}>{d.band}</span>
+              </div>
+              {isOpen && d.evidence?.length > 0 && (
+                <div style={{ marginTop: '0.5rem', marginLeft: 160, background: BG, borderRadius: 8, padding: '0.7rem 1rem', borderLeft: '3px solid ' + col }}>
+                  {d.evidence.map((e: string, i: number) => (
+                    <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', color: TEXT_MUTED, margin: '0.2rem 0', lineHeight: 1.5 }}>{e}</p>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        })}
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: TEXT_MUTED, margin: '0.85rem 0 0', fontStyle: 'italic', lineHeight: 1.5 }}>Each score is computed from your confirmed facts, your pages, and which guest questions AI can answer — tap any dimension to see the evidence behind its score.</p>
+      </div>
+    </div>
+  )
+}
+
 // ── HISTORY PANEL — "since last audit" diff, reads the audit's memory object ──
 function HistoryPanel({ hotel }: any) {
   const [memory, setMemory] = useState<any>(null)
@@ -3131,6 +3184,7 @@ function AdvisorTab({ hotel }: any) {
 
   return (
     <div>
+      {adv?.visibility_model && <VisibilityModelPanel model={adv.visibility_model} />}
       <HistoryPanel hotel={hotel} />
       {/* HERO */}
       <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 18, padding: '2.75rem 3.25rem', marginBottom: '1.75rem', position: 'relative', overflow: 'hidden' }}>
