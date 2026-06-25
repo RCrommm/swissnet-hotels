@@ -2729,6 +2729,163 @@ function QueryAppearanceBreakdown({ hotelId, hotelName, googleAiScores, onAddFaq
   )
 }
 
+// ── AI ADVISOR TAB — reads latest stored consultant advisory, regenerate on demand ──
+function AdvisorTab({ hotel }: any) {
+  const [data, setData] = useState<any>(null)
+  const [savedAt, setSavedAt] = useState<string>('')
+  const [loading, setLoading] = useState(true)
+  const [regenerating, setRegenerating] = useState(false)
+  const [err, setErr] = useState('')
+
+  const loadLatest = async () => {
+    if (!hotel?.id) { setLoading(false); return }
+    try {
+      const { createClient } = await import('@supabase/supabase-js')
+      const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+      const { data: row } = await sb.from('hotel_consultant')
+        .select('advisory, based_on, created_at').eq('hotel_id', hotel.id)
+        .order('created_at', { ascending: false }).limit(1).maybeSingle()
+      if (row) { setData(row); setSavedAt(row.created_at) }
+    } catch {} finally { setLoading(false) }
+  }
+
+  useEffect(() => { loadLatest() }, [hotel?.id])
+
+  const regenerate = async () => {
+    setRegenerating(true); setErr('')
+    try {
+      const res = await fetch('/api/hotel-consultant', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hotelId: hotel.id, password: 'RCrom2004Romeo' }),
+      })
+      const j = await res.json()
+      if (j?.advisory) { await loadLatest() }
+      else setErr(j?.error || 'Could not generate advisory')
+    } catch (e: any) { setErr(e?.message || 'Request failed') }
+    finally { setRegenerating(false) }
+  }
+
+  const adv = data?.advisory
+  const confColor = (c: string) => c === 'High' ? GREEN : c === 'Medium' ? '#d97706' : TEXT_MUTED
+  const buildTypeColor = (t: string) => /new page/i.test(t) ? GOLD : '#3b82f6'
+
+  return (
+    <div>
+      {/* HERO */}
+      <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 18, padding: '2.75rem 3.25rem', marginBottom: '1.75rem', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: -40, right: -40, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,169,76,0.08) 0%, transparent 70%)' }} />
+        <div style={{ position: 'relative' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '2rem' }}>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.75)', margin: '0 0 0.75rem' }}>AI Advisor · Strategic brief</p>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.9rem', fontWeight: 300, color: WHITE, margin: '0 0 0.75rem', lineHeight: 1.35, maxWidth: 620 }}>
+                {adv?.executive_diagnosis || 'Your strategic advisory is ready to generate.'}
+              </p>
+              {data?.based_on && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', margin: 0 }}>Reasoned from {data.based_on.facts} known facts and {data.based_on.findings} open findings about your hotel.</p>}
+            </div>
+            <button onClick={regenerate} disabled={regenerating} style={{ flexShrink: 0, background: GOLD, color: '#1a0e06', border: 'none', borderRadius: 8, padding: '0.7rem 1.4rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', fontWeight: 700, cursor: regenerating ? 'default' : 'pointer', opacity: regenerating ? 0.7 : 1, whiteSpace: 'nowrap' }}>
+              {regenerating ? 'Generating…' : data ? 'Regenerate' : 'Generate advisory'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {err && <div style={{ background: RED + '12', border: '1px solid ' + RED + '30', borderRadius: 8, padding: '0.85rem 1.25rem', marginBottom: '1.25rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: RED }}>{err}</div>}
+
+      {loading && <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}><p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', color: TEXT_MUTED, margin: 0 }}>Loading your advisory…</p></div>}
+
+      {!loading && !adv && (
+        <div style={{ background: WHITE, border: '1px dashed ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', color: TEXT, margin: '0 0 0.5rem' }}>No advisory yet</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6, maxWidth: 440, marginLeft: 'auto', marginRight: 'auto' }}>Click “Generate advisory” to have the AI Advisor reason over what your site tells AI, and produce your top strategic moves.</p>
+        </div>
+      )}
+
+      {!loading && adv && (
+        <>
+          {/* UNDERSTANDS / CANNOT CONNECT */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem', marginBottom: '1.5rem' }}>
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.5rem 1.75rem' }}>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: GREEN, margin: '0 0 0.9rem' }}>What AI understands</p>
+              {(adv.ai_understands || []).map((s: string, i: number) => (
+                <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, margin: '0 0 0.55rem', lineHeight: 1.55, display: 'flex', gap: '0.5rem' }}><span style={{ color: GREEN }}>✓</span><span>{s}</span></p>
+              ))}
+            </div>
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.5rem 1.75rem' }}>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#d97706', margin: '0 0 0.9rem' }}>What AI cannot connect</p>
+              {(adv.ai_cannot_connect || []).map((s: string, i: number) => (
+                <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, margin: '0 0 0.55rem', lineHeight: 1.55, display: 'flex', gap: '0.5rem' }}><span style={{ color: '#d97706' }}>›</span><span>{s}</span></p>
+              ))}
+            </div>
+          </div>
+
+          {/* TOP MOVES */}
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.9rem' }}>Your priorities this month</p>
+          {(adv.top_moves || []).map((m: any, i: number) => (
+            <div key={i} style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '0.95rem' }}>
+              <div style={{ padding: '1.25rem 1.75rem', borderBottom: '1px solid ' + BORDER, background: BG, display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div style={{ width: 34, height: 34, borderRadius: '50%', background: `linear-gradient(135deg, ${GOLD} 0%, #b8923f 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 600, color: WHITE }}>{m.priority ?? i + 1}</span>
+                </div>
+                <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.45rem', color: TEXT, flex: 1 }}>{m.title}</span>
+                <span style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+                  {m.build_type && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: buildTypeColor(m.build_type), border: '1px solid ' + buildTypeColor(m.build_type), borderRadius: 4, padding: '0.2rem 0.6rem' }}>{m.build_type}</span>}
+                  {m.confidence && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: confColor(m.confidence), border: '1px solid ' + confColor(m.confidence), borderRadius: 4, padding: '0.2rem 0.6rem' }}>{m.confidence} confidence</span>}
+                  {m.effort && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: TEXT_MUTED, border: '1px solid ' + BORDER, borderRadius: 4, padding: '0.2rem 0.6rem' }}>{m.effort} effort</span>}
+                </span>
+              </div>
+              <div style={{ padding: '1.25rem 1.75rem' }}>
+                {m.why_this_priority && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.84rem', color: TEXT, margin: '0 0 0.85rem', lineHeight: 1.65 }}><strong>Why now:</strong> {m.why_this_priority}</p>}
+                {m.reasoning && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.84rem', color: TEXT_MUTED, margin: '0 0 0.85rem', lineHeight: 1.65 }}>{m.reasoning}</p>}
+
+                {m.what_to_build && (
+                  <div style={{ background: BG, borderRadius: 10, padding: '1rem 1.25rem', marginBottom: '0.85rem' }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.4rem' }}>Build this</p>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.84rem', color: TEXT, margin: '0 0 0.6rem', lineHeight: 1.55 }}>{m.what_to_build}</p>
+                    {m.sections_to_add?.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                        {m.sections_to_add.map((s: string, j: number) => <span key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT, background: WHITE, border: '1px solid ' + BORDER, borderRadius: 20, padding: '0.3rem 0.8rem' }}>{s}</span>)}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {m.questions_to_answer?.length > 0 && (
+                  <div style={{ marginBottom: '0.85rem' }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Questions it should answer</p>
+                    {m.questions_to_answer.map((q: string, j: number) => <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, margin: '0.2rem 0', lineHeight: 1.5, display: 'flex', gap: '0.5rem' }}><span style={{ color: GOLD }}>›</span><span>{q}</span></p>)}
+                  </div>
+                )}
+
+                {m.affected_searches?.length > 0 && (
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: GREEN, margin: '0 0 0.5rem', lineHeight: 1.55 }}><strong>Unlocks:</strong> {m.affected_searches.join('  ·  ')}</p>
+                )}
+                {m.expected_ai_effect && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.55, fontStyle: 'italic' }}>{m.expected_ai_effect}</p>}
+                {m.evidence?.length > 0 && (
+                  <div style={{ marginTop: '0.85rem', paddingTop: '0.85rem', borderTop: '1px solid ' + BORDER }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.3rem' }}>Based on</p>
+                    {m.evidence.map((e: string, j: number) => <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', color: TEXT_MUTED, margin: '0.12rem 0', lineHeight: 1.4 }}>{e}</p>)}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+
+          {/* WHAT NOT TO DO YET */}
+          {adv.what_not_to_do_yet && (
+            <div style={{ background: GOLD_LIGHT, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${GOLD}`, borderRadius: 10, padding: '1.5rem 1.75rem', marginTop: '0.5rem' }}>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.5rem' }}>Don't do this yet</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.84rem', color: TEXT, margin: 0, lineHeight: 1.7 }}>{adv.what_not_to_do_yet}</p>
+            </div>
+          )}
+
+          {savedAt && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT_MUTED, margin: '1.25rem 0 0', textAlign: 'right' }}>Last generated: {new Date(savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>}
+        </>
+      )}
+    </div>
+  )
+}
+
 // ── MAIN DASHBOARD ────────────────────────────────────────────────────────────
 
 export default function DashboardClient({ hotel, views, clicks, leads, aiVisibility, googleAiScores, bookings, competitors, hotelCatScores, platformScores, overviewRunData, myRankChange, marketAverages, crawlerCount, accessHotels, activeHotelId, tier }: any) {
@@ -2983,6 +3140,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
       { id: 'competitors', label: 'Competitors' },
     ] },
     { heading: 'Improve', items: [
+      { id: 'advisor', label: '✦ AI Advisor', minTier: 2 },
       { id: 'schema', label: 'SwissNet Profile', minTier: 2 },
       { id: 'website', label: 'Official Website', minTier: 2 },
       { id: 'optimise', label: 'Optimise', minTier: 2 },
@@ -3050,6 +3208,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
               {tab === 'schema' && '✦ SwissNet Profile'}
 {tab === 'optimise' && '✦ Optimise'}
 {tab === 'website' && '✦ Official Website'}
+{tab === 'advisor' && '✦ AI Advisor'}
 {tab === 'citations' && '✦ Citation Sources'}
 {tab === 'reports' && 'Reports'}
 {tab === 'settings' && 'Settings'}
@@ -3062,6 +3221,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
               {tab === 'schema' && 'AI readiness score and content recommendations'}
 {tab === 'optimise' && 'Manage your content and FAQs'}
 {tab === 'website' && 'Build AI visibility on your own official site'}
+{tab === 'advisor' && 'Your strategic brief, reasoned from what AI knows about you'}
 {tab === 'citations' && 'Where AI gets its answers — and where to get listed'}
 {tab === 'reports' && 'Compare your performance month over month'}
 {tab === 'settings' && 'Account and hotel settings'}
@@ -3619,6 +3779,7 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
           <CitationSourcesTab hotelName={hotelName} hotelRegion={hotelRegion} hotelId={hotel?.id} />
         )}
         {tab === 'website' && <WebsiteTab hotel={hotel} />}
+        {tab === 'advisor' && <AdvisorTab hotel={hotel} />}
 
         {/* ── REPORTS ── */}
         {tab === 'reports' && (
