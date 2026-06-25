@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { classifyGap, inferTopic } from '@/lib/evidence'
 import { decideAction } from '@/lib/decision'
 import { buildVisibilityModel } from '@/lib/visibility-model'
+import { buildKnowledgeGraph } from '@/lib/knowledge-graph'
 
 export const maxDuration = 120
 
@@ -257,6 +258,15 @@ export async function POST(req: Request) {
     // ── AI VISIBILITY MODEL: compute how AI currently "sees" the hotel (deterministic) ──
     const visibilityModel = buildVisibilityModel(facts || [], latestAuditResult)
 
+    // ── KNOWLEDGE GRAPH: the site's information architecture (deterministic) ──
+    // The consultant CONSUMES this instead of re-inferring website structure.
+    const knowledgeGraph = buildKnowledgeGraph(facts || [], latestAuditResult)
+    // Compact lines the consultant reasons over: only clusters that need action.
+    const graphLines = knowledgeGraph.clusters
+      .filter(c => c.cluster_state !== 'consolidated' && c.cluster_state !== 'absent')
+      .sort((a, b) => (a.commercial_importance === 'High' ? 0 : 1) - (b.commercial_importance === 'High' ? 0 : 1))
+      .map(c => `${c.label} [${c.cluster_state.toUpperCase()}, health ${c.cluster_health}/100, ${c.commercial_importance} importance] → ${c.recommendation}: ${c.explanation}`)
+
     if ((!facts || !facts.length) && !findings.length) return NextResponse.json({ error: 'No stored facts or findings for this hotel yet.' }, { status: 404 })
 
     const brief = buildBrief(facts || [], findings)
@@ -289,7 +299,11 @@ GUEST QUESTIONS THE SITE CANNOT CONFIDENTLY ANSWER (AI-answerability gaps):
 ${auditBrief.unanswered.length ? auditBrief.unanswered.join('\n') : '(none flagged)'}
 
 CONTENT-QUALITY WEAK SPOTS:
-${auditBrief.contentWeak.length ? auditBrief.contentWeak.join('\n') : '(none flagged)'}`
+${auditBrief.contentWeak.length ? auditBrief.contentWeak.join('\n') : '(none flagged)'}
+
+WEBSITE KNOWLEDGE GRAPH — how the site's information is ARCHITECTURALLY organised:
+This is the deterministic analysis of where each topic's facts live and whether AI can form a clean concept. Use it to choose between CONSOLIDATE (facts exist but are scattered — move them onto the canonical page, don't create a new one) vs CREATE (no canonical page exists at all) vs STRENGTHEN (canonical page exists but answerability is weak). A "scattered" topic that already has a canonical page must be CONSOLIDATED, never recreated. A "contaminated" topic (facts only on utility pages like /news or /reservation) needs a real canonical page. When you recommend a move, NAME the architectural problem from below.
+${graphLines.length ? graphLines.join('\n') : '(all commercial clusters are well-consolidated)'}`
 
     const res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
@@ -312,8 +326,9 @@ ${auditBrief.contentWeak.length ? auditBrief.contentWeak.join('\n') : '(none fla
       }
     }
     const basedOn = { facts: (facts || []).length, findings: findings.length }
-    // attach the visibility model onto the advisory so it stores + renders with it
+    // attach the visibility model + knowledge graph onto the advisory so it stores with it
     advisory.visibility_model = visibilityModel
+    advisory.knowledge_graph = knowledgeGraph
 
     // Persist so the AI Advisor tab can read the latest instantly (no GPT on open)
     await sb.from('hotel_consultant').insert({
