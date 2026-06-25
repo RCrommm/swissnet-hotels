@@ -140,6 +140,38 @@ function pathOf(u: string): string {
   try { return new URL(u).pathname.replace(/\/$/, '') || '/' } catch { return u || '' }
 }
 
+// ─── STRUCTURAL DIAGNOSIS: pull the audit's page-structure + answerability findings ───
+// Deterministic, no GPT. Feeds the consultant the audit's real analysis so recommendations
+// cover structure and prompt-answerability, not just topic gaps. Reads hotel_audits.result.
+function buildAuditBrief(result: any): { weakPages: string[]; unanswered: string[]; contentWeak: string[]; auditScore: number | null } {
+  if (!result || typeof result !== 'object') return { weakPages: [], unanswered: [], contentWeak: [], auditScore: null }
+  const weakPages: string[] = []
+  for (const p of (result.importantPages || [])) {
+    if (p.status !== 'Present') continue
+    const missing = Array.isArray(p.missing) ? p.missing : []
+    if (typeof p.score === 'number' && p.score < 75 && missing.length) {
+      const aff = (p.affects || []).slice(0, 3).join('; ')
+      weakPages.push(`${p.displayName || p.label} (${pathOf(p.url || '')}, score ${p.score}/100) is missing: ${missing.join(', ')}.${aff ? ` Blocks searches: ${aff}` : ''}`)
+    }
+  }
+  const unanswered: string[] = []
+  for (const r of (result.recommendation?.results || [])) {
+    if (r.readiness === 'NO' || r.readiness === 'PARTIAL') {
+      const why = (r.reasons || []).slice(0, 2).join('; ')
+      unanswered.push(`[${r.readiness}] "${r.question}" (${r.category})${why ? ` — ${why}` : ''}`)
+    }
+  }
+  const contentWeak: string[] = []
+  const cq = result.contentQuality
+  if (cq && Array.isArray(cq.categories)) {
+    for (const c of cq.categories) {
+      if (typeof c.score === 'number' && c.score < 70) contentWeak.push(`${c.name || c.label || c.category || 'content'}: ${c.score}/100${c.issue ? ` — ${c.issue}` : ''}`)
+    }
+  }
+  const auditScore = typeof result.recommendation?.score === 'number' ? result.recommendation.score : (typeof result.architectureScore === 'number' ? result.architectureScore : null)
+  return { weakPages: weakPages.slice(0, 12), unanswered: unanswered.slice(0, 18), contentWeak: contentWeak.slice(0, 8), auditScore }
+}
+
 // Which page "topics" the site already has, derived from the URLs the Brain crawled.
 const PAGE_TOPICS: { topic: string; re: RegExp }[] = [
   { topic: 'meetings & events', re: /(meeting|event|conference|baptist)/i },
@@ -213,6 +245,13 @@ export async function POST(req: Request) {
     const { data: fRows } = await sb.from('audit_findings').select('finding_key, type, title, affected_queries, audit_run_id, created_at').eq('hotel_id', hotelId).order('created_at', { ascending: false }).limit(400)
     if (fRows && fRows.length) { const lastRun = fRows[0].audit_run_id; findings = fRows.filter((r: any) => r.audit_run_id === lastRun) }
 
+    // Load the latest audit's STRUCTURAL diagnosis (page structure + answerability) and integrate it.
+    let auditBrief = { weakPages: [] as string[], unanswered: [] as string[], contentWeak: [] as string[], auditScore: null as number | null }
+    try {
+      const { data: auditRow } = await sb.from('hotel_audits').select('result').eq('hotel_id', hotelId).order('created_at', { ascending: false }).limit(1).single()
+      if (auditRow?.result) auditBrief = buildAuditBrief(auditRow.result)
+    } catch {}
+
     if ((!facts || !facts.length) && !findings.length) return NextResponse.json({ error: 'No stored facts or findings for this hotel yet.' }, { status: 404 })
 
     const brief = buildBrief(facts || [], findings)
@@ -233,7 +272,19 @@ ${brief.factLines.join('\n')}
 OPEN FINDINGS:
 ${brief.missingPages.join('\n')}
 ${brief.weakElements.join('\n')}
-${brief.unanswered.join('\n')}`
+${brief.unanswered.join('\n')}
+
+STRUCTURAL DIAGNOSIS FROM THE WEBSITE AUDIT${auditBrief.auditScore != null ? ` (overall AI-readiness ${auditBrief.auditScore}/100)` : ''}:
+These are the audit's measured findings about HOW the existing pages are built and which guest questions the site cannot answer. Use them: a recommendation to "strengthen" a page should name the SPECIFIC missing sections below, and a top move should unlock the unanswered questions below.
+
+WEAK EXISTING PAGES (already crawled — strengthen these, don't recreate them):
+${auditBrief.weakPages.length ? auditBrief.weakPages.join('\n') : '(none flagged)'}
+
+GUEST QUESTIONS THE SITE CANNOT CONFIDENTLY ANSWER (AI-answerability gaps):
+${auditBrief.unanswered.length ? auditBrief.unanswered.join('\n') : '(none flagged)'}
+
+CONTENT-QUALITY WEAK SPOTS:
+${auditBrief.contentWeak.length ? auditBrief.contentWeak.join('\n') : '(none flagged)'}`
 
     const res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
