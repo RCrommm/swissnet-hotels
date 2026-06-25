@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { classifyGap, inferTopic } from '@/lib/evidence'
+import { decideAction } from '@/lib/decision'
 
 export const maxDuration = 120
 
@@ -246,6 +247,14 @@ ${brief.unanswered.join('\n')}`
     const c = data?.choices?.[0]?.message?.content
     if (!c) return NextResponse.json({ error: 'Consultant produced no output' }, { status: 502 })
     const advisory = JSON.parse(c)
+    // ─── DECISION LAYER: deterministically attach a concrete action to each move ───
+    // Execute consumes move.decision.action / .target / .generate mechanically.
+    const pagesScraped = Array.from(new Set((facts || []).map((f: any) => f.page_url || '').filter(Boolean)))
+    if (Array.isArray(advisory?.top_moves)) {
+      for (const m of advisory.top_moves) {
+        try { m.decision = decideAction(m, pagesScraped, facts || []) } catch { m.decision = null }
+      }
+    }
     const basedOn = { facts: (facts || []).length, findings: findings.length }
 
     // Persist so the AI Advisor tab can read the latest instantly (no GPT on open)
