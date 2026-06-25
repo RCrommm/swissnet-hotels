@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { classifyGap, honestFindingTitle, inferTopic } from '@/lib/evidence'
 
 // ─── MEMORY LAYER: deterministic finding keys + store + diff vs previous run ───
 function mlSlug(s: string): string {
@@ -11,7 +12,18 @@ function buildFindings(result: any): any[] {
   const push = (f: any) => { if (!seen.has(f.finding_key)) { seen.add(f.finding_key); out.push(f) } }
   for (const p of (result.importantPages || [])) {
     if (p.status === 'Missing') {
-      push({ finding_key: `page:${mlSlug(p.key)}:missing`, type: 'missing_page', title: `Missing ${p.label}`, evidence: p.reason || `No ${(p.label || '').toLowerCase()} found in the crawl.`, recommendation: `Create a ${p.label} page.`, impact: p.impact || 'Medium', category: (p.cats && p.cats[0]) || 'overall', status: 'open', affected_queries: (p.affects || []).slice(0, 6) })
+      {
+        const _topic = inferTopic(p.key, p.label, p.cats || [])
+        const _ev = _topic ? classifyGap(_topic, result.pagesScraped || [], result.facts || []) : null
+        if (!(_ev && _ev.evidence_state === 'confirmed')) {
+          const _title = (_ev && _topic) ? honestFindingTitle(_topic, _ev, `Missing ${p.label}`) : `Missing ${p.label}`
+          const _evidence = _ev ? _ev.why : (p.reason || `No ${(p.label || '').toLowerCase()} found in the crawl.`)
+          const _rec = (_ev && _ev.reason === 'unseen')
+            ? `We could not confirm a ${_topic} offering from your site. Verify whether you offer it; if so, ensure it has a dedicated page so AI can find it.`
+            : `Create a ${p.label} page.`
+          push({ finding_key: `page:${mlSlug(p.key)}:missing`, type: 'missing_page', title: _title, evidence: _evidence, recommendation: _rec, impact: p.impact || 'Medium', category: (p.cats && p.cats[0]) || 'overall', status: 'open', affected_queries: (p.affects || []).slice(0, 6), evidence_state: _ev?.evidence_state || 'unverified', evidence_reason: _ev?.reason || null })
+        }
+      }
     } else if (p.status === 'Present' && !p.notAssessed && typeof p.score === 'number' && p.score < 75) {
       for (const m of (p.missing || [])) {
         push({ finding_key: `page:${mlSlug(p.key)}:${mlSlug(m)}`, type: 'missing_element', title: `${p.displayName || p.label}: add ${m}`, evidence: p.evidence || '', recommendation: `Add ${m} to the ${p.displayName || p.label} page.`, impact: p.impact || 'Medium', category: (p.cats && p.cats[0]) || 'overall', status: 'open', affected_queries: (p.affects || []).slice(0, 6) })
@@ -1090,6 +1102,15 @@ export async function POST(req: Request) {
       try {
         const sb = createClient(sbUrl, sbKey)
         const auditRunId = (globalThis.crypto && globalThis.crypto.randomUUID) ? globalThis.crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+        // Load the Hotel Brain's confirmed facts so the evidence layer can mark
+        // genuinely-confirmed topics as 'confirmed' (shared truth with the consultant).
+        try {
+          const { data: brainRow } = await sb.from('hotel_brains').select('id').eq('hotel_id', hotelId).order('created_at', { ascending: false }).limit(1).maybeSingle()
+          if (brainRow?.id) {
+            const { data: brainFacts } = await sb.from('hotel_facts').select('category, fact_value, evidence_quote, page_url').eq('brain_id', brainRow.id)
+            ;(result as any).facts = brainFacts || []
+          } else { (result as any).facts = [] }
+        } catch { (result as any).facts = [] }
         const findings = buildFindings(result)
         // load previous run's finding keys for this hotel
         let previousKeys: string[] = []
@@ -1102,7 +1123,7 @@ export async function POST(req: Request) {
         } catch {}
         memory = diffFindings(findings, previousKeys)
         // store this run's findings
-        const rows = findings.map(f => ({ audit_run_id: auditRunId, hotel_id: hotelId, finding_key: f.finding_key, type: f.type, title: f.title, evidence: f.evidence, recommendation: f.recommendation, impact: f.impact, category: f.category, status: f.status, affected_queries: f.affected_queries }))
+        const rows = findings.map(f => ({ audit_run_id: auditRunId, hotel_id: hotelId, finding_key: f.finding_key, type: f.type, title: f.title, evidence: f.evidence, recommendation: f.recommendation, impact: f.impact, category: f.category, status: f.status, affected_queries: f.affected_queries, evidence_state: f.evidence_state || null, evidence_reason: f.evidence_reason || null }))
         for (let i = 0; i < rows.length; i += 100) await sb.from('audit_findings').insert(rows.slice(i, i + 100))
         // save the audit with memory attached
         await sb.from('hotel_audits').insert({ hotel_id: hotelId, url, overall: recScore, result: { ...result, memory } })
