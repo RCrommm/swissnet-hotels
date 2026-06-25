@@ -54,12 +54,27 @@ function buildTypeToAction(bt: string): ActionType | null {
   return null
 }
 
+// The consultant frames a move as "Confirm/Verify..." when it could NOT establish the
+// hotel offers the thing. That framing is its relevance judgment — the Decision Layer
+// must respect it and never upgrade it to create/generate from an incidental fact.
+function isVerifyFramed(move: any): boolean {
+  const blob = `${move?.title || ''} ${move?.why_this_priority || ''} ${move?.why_ai_cares || ''}`.toLowerCase()
+  return /\b(confirm whether|verify whether|could not verify|couldn't verify|cannot verify|can't verify|could not confirm|couldn't confirm|^confirm |surface your)\b/.test(blob)
+    || /^(confirm|verify)\b/.test((move?.title || '').toLowerCase())
+}
+
 export function decideAction(move: any, pagesScraped: string[], facts: any[]): DecisionRecord {
   const priority = Number.isFinite(move?.priority) ? move.priority : 99
   const reason = move?.why_this_priority || move?.reasoning || ''
   const generateFromMove: string[] = Array.isArray(move?.sections_to_add) && move.sections_to_add.length
     ? move.sections_to_add
     : (Array.isArray(move?.questions_to_answer) ? move.questions_to_answer.slice(0, 5) : [])
+
+  // GUARD: if the consultant framed this as verify/confirm, it is a verify action.
+  // It generates nothing — the system has not confirmed the hotel offers this.
+  if (isVerifyFramed(move)) {
+    return { action: 'verify', target: null, priority, evidence_state: 'unverified', reason, generate: [] }
+  }
 
   const topic = inferTopic('', move?.title || '', [])
   if (!topic) {
