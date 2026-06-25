@@ -2824,6 +2824,13 @@ function AdvisorV2Body({ adv }: any) {
   const confColor = (c: string) => c === 'High' ? GREEN : c === 'Medium' ? '#d97706' : TEXT_MUTED
   const buildTypeColor = (t: string) => /new page/i.test(t) ? GOLD : '#3b82f6'
   const effortColor = (e: string) => e === 'Low' ? GREEN : e === 'High' ? '#d97706' : TEXT_MUTED
+  // A move is "unverified" when it's a verify-don't-create recommendation —
+  // the consultant frames these with confirm/verify language because the audit
+  // never crawled a page for the topic. Surfacing this keeps the UI honest.
+  const isUnverified = (m: any) => {
+    const blob = `${m.title || ''} ${m.why_this_priority || ''} ${m.why_ai_cares || ''}`.toLowerCase()
+    return /\b(could not verify|couldn't verify|cannot verify|can't verify|confirm whether|verify whether|unverified|we could not confirm|couldn't confirm)\b/.test(blob)
+  }
   return (
     <>
       {adv.one_line_priority && (
@@ -2874,6 +2881,7 @@ function AdvisorV2Body({ adv }: any) {
             </div>
             <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.45rem', color: TEXT, flex: 1 }}>{m.title}</span>
             <span style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+              {isUnverified(m) && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: '#d97706', background: '#d9770612', border: '1px solid #d97706', borderRadius: 4, padding: '0.2rem 0.6rem' }} title="We could not confirm this offering from your site — verify it before building.">⚠ Unverified</span>}
               {m.build_type && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: buildTypeColor(m.build_type), border: '1px solid ' + buildTypeColor(m.build_type), borderRadius: 4, padding: '0.2rem 0.6rem' }}>{m.build_type}</span>}
               {m.confidence && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: confColor(m.confidence), border: '1px solid ' + confColor(m.confidence), borderRadius: 4, padding: '0.2rem 0.6rem' }}>{m.confidence}</span>}
               {m.effort && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: TEXT_MUTED, border: '1px solid ' + BORDER, borderRadius: 4, padding: '0.2rem 0.6rem' }}>{m.effort} effort</span>}
