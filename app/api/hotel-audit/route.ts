@@ -77,6 +77,102 @@ async function fetchRobots(origin: string) {
   } catch { return { found: false, blocked: [] as string[], allowed: bots } }
 }
 
+// ── EVIDENCE NORMALISER: accent/whitespace-insensitive so real quotes aren't wrongly rejected ──
+function normEv(s: string): string {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
+// ── SITEMAP CRAWL: pull the whole site's URL set (sitemap.xml + index + robots-declared) ──
+async function fetchSitemap(origin: string): Promise<string[]> {
+  const host = origin.replace(/^https?:\/\//, '')
+  const out = new Set<string>()
+  const seen = new Set<string>()
+  const queue: string[] = [origin + '/sitemap.xml', origin + '/sitemap_index.xml']
+  try {
+    const rb = await fetch(origin + '/robots.txt')
+    if (rb.ok) { const t = await rb.text(); const re = /sitemap:\s*(\S+)/gi; let m; while ((m = re.exec(t)) !== null) queue.push(m[1].trim()) }
+  } catch {}
+  let budget = 8
+  while (queue.length && budget > 0) {
+    const sm = queue.shift()!
+    if (!sm || seen.has(sm)) continue
+    seen.add(sm); budget--
+    try {
+      const res = await fetch(sm)
+      if (!res.ok) continue
+      const xml = await res.text()
+      const locs = [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)].map(m => m[1].trim())
+      for (const loc of locs) {
+        if (/\.xml(\.gz)?$/i.test(loc)) { if (!seen.has(loc)) queue.push(loc); continue }
+        const clean = loc.split('#')[0].split('?')[0].replace(/\/$/, '')
+        if ((clean.startsWith(origin) || clean.includes(host)) && !/\.(woff2?|ttf|otf|eot|jpg|jpeg|png|gif|svg|webp|ico|css|js|pdf|mp4|webm|zip|json)$/i.test(clean)) out.add(clean)
+      }
+    } catch {}
+  }
+  return [...out]
+}
+
+// ── AMENITY SIGNALS: what the hotel actually offers, read from crawled pages ──
+function detectAmenities(pages: any[]): string[] {
+  const joined = pages.map((p: any) => ((p.url || '') + ' ' + (p.headings || []).join(' ') + ' ' + (p.text || '').slice(0, 2500)).toLowerCase()).join(' ')
+  const checks: [string, RegExp][] = [
+    ['spa & wellness', /\b(spa|wellness|massage|sauna|hammam|treatment)\b/],
+    ['afternoon tea', /afternoon tea/],
+    ['fine dining', /\b(restaurant|fine dining|gastronom|michelin|tasting menu|brasserie)\b/],
+    ['bar / lounge', /\b(bar|cocktail|lounge|speakeasy)\b/],
+    ['meetings & events', /\b(meeting|conference|banquet|boardroom|private dining|event space)\b/],
+    ['weddings', /\b(wedding|civil ceremony|marriage|reception)\b/],
+    ['rooftop', /\broof ?top\b/],
+    ['pool', /\b(swimming pool|indoor pool|outdoor pool)\b/],
+    ['suites', /\bsuite/],
+    ['family', /\b(family|children|kids|connecting room)\b/],
+    ['pet friendly', /\b(pet|dog) ?(friendly|allowed|welcome)\b/],
+  ]
+  return checks.filter(([, re]) => re.test(joined)).map(([k]) => k)
+}
+
+// ── DYNAMIC QUESTION GENERATION: the real guest searches for THIS hotel/city ──
+const QGEN_SYSTEM = `You are a hotel demand strategist. Generate the real questions a guest would type into an AI assistant (ChatGPT, Perplexity, Google AI) when looking for a hotel like this one — the questions whose answers decide whether AI recommends or rejects THIS specific hotel.
+
+You are given the hotel's name, city, type, the pages found on its site, and amenity signals detected on those pages. Make every question SPECIFIC to this hotel and city: use the real city (and neighbourhood when implied by the name/pages), and reflect what the hotel actually offers (afternoon tea, spa, meetings, suites, etc.).
+
+RULES:
+- Generate 26 to 30 questions.
+- Each question gets a "category" — use EXACTLY one of: location, dining, spa, family, romantic, business, luxury, accessibility, parking, pets, overall.
+- Weight toward what this hotel plausibly competes for (more dining/afternoon-tea questions when dining is strong; more spa questions when it has a spa). BUT always include at least one each of: location, luxury, accessibility, parking, pets, family, romantic, business — these are dealbreaker filters AI uses to shortlist, whether or not the hotel currently markets them.
+- Phrase questions the way a guest writes to AI, naturally including the city/area (e.g. "best luxury hotel near Covent Garden London", "afternoon tea with vegan options in London", "hotel near Holborn station with parking"). Mix broad and specific.
+- "priority": "high" for the hotel's core demand and the universal dealbreakers; "medium" otherwise.
+- Do NOT invent named amenities the signals don't support. Ask about guest NEEDS, not claimed features.
+Return STRICTLY the JSON schema.`
+
+function qgenSchema() {
+  return { type: 'object', additionalProperties: false, required: ['questions'], properties: { questions: { type: 'array', items: {
+    type: 'object', additionalProperties: false, required: ['question', 'category', 'priority'],
+    properties: { question: { type: 'string' }, category: { type: 'string', enum: ['location', 'dining', 'spa', 'family', 'romantic', 'business', 'luxury', 'accessibility', 'parking', 'pets', 'overall'] }, priority: { type: 'string', enum: ['high', 'medium'] } },
+  } } } }
+}
+
+async function generateQuestions(ctx: { name: string; city: string; type: string; pages: string[]; amenities: string[] }, openaiKey: string): Promise<any[]> {
+  const user = `HOTEL: ${ctx.name || '(unknown name)'}\nCITY: ${ctx.city || '(unknown city)'}\nTYPE: ${ctx.type || 'luxury hotel'}\nPAGES FOUND: ${ctx.pages.length ? ctx.pages.join(', ') : '(none detected)'}\nAMENITY SIGNALS: ${ctx.amenities.length ? ctx.amenities.join(', ') : '(none detected)'}`
+  try {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
+      body: JSON.stringify({
+        model: 'gpt-4o', temperature: 0.4, max_tokens: 1800,
+        response_format: { type: 'json_schema', json_schema: { name: 'questions', strict: true, schema: qgenSchema() } },
+        messages: [{ role: 'system', content: QGEN_SYSTEM }, { role: 'user', content: user }],
+      }),
+    })
+    const data = await res.json()
+    const c = data?.choices?.[0]?.message?.content
+    if (!c) return []
+    const parsed = JSON.parse(c)
+    const qs = (parsed.questions || []).filter((q: any) => q && q.question).map((q: any) => ({ question: String(q.question).trim(), category: q.category || 'overall', priority: q.priority === 'high' ? 'high' : 'medium' }))
+    const seen = new Set<string>()
+    return qs.filter((q: any) => { const k = q.question.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true })
+  } catch { return [] }
+}
+
 const PRIORITY: { key: string; label: string; kws: string[]; impact: string; cats: string[]; multi?: boolean }[] = [
   { key: 'homepage', label: 'Homepage', kws: [], impact: 'High', cats: ['overall'] },
   { key: 'rooms', label: 'Room pages', kws: ['room', 'suite', 'accommodation', 'chambre', 'zimmer', 'villa'], impact: 'High', cats: ['luxury', 'family', 'romantic'], multi: true },
@@ -165,7 +261,8 @@ RULES:
 - "readiness": "YES" (clear specific quotable evidence), "PARTIAL" (some but thin/incomplete), or "NO" (none).
 - Every YES/PARTIAL MUST include a verbatim quote from the text. No quote = NO.
 - "evidence": the verbatim quote, or "".
-- "reasons": an array of 1-4 short, concrete reasons WHY an AI could not confidently recommend (for YES, may be empty). Phrase as plain factual gaps, e.g. "No parking information found", "No dedicated family page", "No FAQ answering this", "No distinctive features stated". Avoid the generic phrase "comparative claims"; instead say "No distinctive features stated" or "No specific [topic] details".
+- "reasons": an array of 1-4 short, concrete reasons WHY an AI could not confidently recommend (for YES, may be empty). Phrase as plain factual gaps, e.g. "No parking information found", "No dedicated family page", "No FAQ answering this", "No distinctive features stated". - Avoid the generic phrase "comparative claims"; instead say "No distinctive features stated" or "No specific [topic] details".
+- BE HARSH AND SPECIFIC: every reason must name the exact missing fact, page or section for THIS hotel (e.g. "No parking information on any crawled page", "Dining page never states cuisine type or who each restaurant suits"). BAN generic filler that could apply to any hotel ("could be improved", "lacks detail", "not optimised for AI"). A generic reason is not a reason.
 - "confidence": integer 0-100 (NO 0-20, PARTIAL 21-60, YES 61-100), justified by the quote.
 - "url": source URL of the quote; "".
 - "pages": short list of which page TYPES are responsible (e.g. "family page", "room pages", "parking page", "FAQ").
@@ -200,10 +297,16 @@ async function runReadiness(prompts: any[], pages: any[], openaiKey: string) {
     if (!c) throw new Error('empty')
     const parsed = JSON.parse(c)
     const byIdx = new Map<number, any>(); for (const a of (parsed.answers || [])) byIdx.set(a.index, a)
+    const corpusNorm = normEv(pages.map((p: any) => p.text || '').join(' '))
     return prompts.map((q, i) => {
       const a = byIdx.get(i) || {}; const ev = (a.evidence || '').trim()
       let readiness = a.readiness === 'YES' || a.readiness === 'PARTIAL' ? a.readiness : 'NO'
       if ((readiness === 'YES' || readiness === 'PARTIAL') && ev.length === 0) readiness = 'NO'
+      if (readiness !== 'NO' && ev) {
+        const en = normEv(ev)
+        const probe = en.length > 60 ? en.slice(0, 60) : en
+        if (en.length >= 12 && probe && !corpusNorm.includes(probe)) readiness = readiness === 'YES' ? 'PARTIAL' : 'NO'
+      }
       let conf = Number.isFinite(a.confidence) ? Math.max(0, Math.min(100, a.confidence)) : 0
       if (readiness === 'NO') conf = Math.min(conf, 20)
       return { question: q.question, category: q.category || 'overall', priority: q.priority || 'medium', readiness, evidence: readiness === 'NO' ? '' : ev, reasons: Array.isArray(a.reasons) ? a.reasons.slice(0, 4) : [], url: readiness === 'NO' ? '' : (a.url || ''), confidence: conf, pages: Array.isArray(a.pages) ? a.pages.slice(0, 5) : [] }
@@ -417,6 +520,7 @@ STRICT RULES:
 - Order: quick-win projects first, then larger projects by impact (most failed searches first).
 - Keep language simple and concrete. No jargon, no fluff. Each "why" is 1-2 sentences a non-technical marketer instantly understands.
 - Also write a 2-3 sentence "overview": how the site reads to AI today, what it's strong/invisible for, and the single most important thing to do.
+- BE HARSH. Every project must be specific to THIS hotel's findings and materially improve AI recommendation. Cut anything generic that could appear in any audit. Do not include a project unless it (a) unlocks named searches the site currently fails, or (b) creates or fixes a concrete page or section named in the findings. No "review your content", no "ensure consistency", no filler.
 Return STRICTLY the JSON schema.`
 
 function projectsSchema() {
@@ -569,13 +673,13 @@ export async function POST(req: Request) {
     const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-    let effCity = city || '', effType = hotelType || ''
+    let effCity = city || '', effType = hotelType || '', effName = ''
     let overrides: Record<string, string> = {}
     if (hotelId && sbUrl && sbKey) {
       try {
         const sb = createClient(sbUrl, sbKey)
-        const { data: h } = await sb.from('hotels').select('region, location, category').eq('id', hotelId).single()
-        if (h) { effCity = effCity || h.location || h.region || ''; effType = effType || h.category || '' }
+        const { data: h } = await sb.from('hotels').select('name, region, location, category').eq('id', hotelId).single()
+        if (h) { effName = effName || h.name || ''; effCity = effCity || h.location || h.region || ''; effType = effType || h.category || '' }
         try {
           const { data: ov } = await sb.from('hotel_priority_pages').select('page_key, url').eq('hotel_id', hotelId)
           if (ov) for (const row of ov) if (row.page_key && row.url) overrides[row.page_key] = row.url
@@ -586,9 +690,11 @@ export async function POST(req: Request) {
     const homeHtml = await scrape(url, apiKey)
     if (!homeHtml) return NextResponse.json({ error: 'Could not load the website (it may block crawlers or be down).' }, { status: 502 })
     const homeLinks = extractLinks(homeHtml, origin)
+    const sitemapLinks = await fetchSitemap(origin)
+    const discovered = Array.from(new Set([...homeLinks, ...sitemapLinks]))
 
-    const matchLink = (kws: string[]) => homeLinks.find(l => kws.some(k => l.toLowerCase().includes(k)))
-    const matchAll = (kws: string[]) => homeLinks.filter(l => kws.some(k => l.toLowerCase().includes(k)))
+    const matchLink = (kws: string[]) => discovered.find(l => kws.some(k => l.toLowerCase().includes(k)))
+    const matchAll = (kws: string[]) => discovered.filter(l => kws.some(k => l.toLowerCase().includes(k)))
     type Slot = { key: string; label: string; impact: string; cats: string[]; url: string | null; source: string }
     const slots: Slot[] = []
 
@@ -636,9 +742,12 @@ export async function POST(req: Request) {
     const allSchema = new Set<string>()
     for (const p of pages) for (const t of (p.schemaTypes || [])) allSchema.add(t)
 
-    // ── PROMPTS (the 30 predefined) ──
+    // ── PROMPTS: generate per-hotel questions from real site signals; fall back to the question bank ──
     let prompts: any[] = []
-    if (sbUrl && sbKey) {
+    const amenitySignals = detectAmenities(pages)
+    const detectedPages = slots.filter(s => s.url).map(s => (s.label || '').split(' — ')[0]).filter(Boolean)
+    prompts = await generateQuestions({ name: effName, city: effCity, type: effType, pages: detectedPages, amenities: amenitySignals }, openaiKey)
+    if (!prompts.length && sbUrl && sbKey) {
       try {
         const sb = createClient(sbUrl, sbKey)
         const { data } = await sb.from('audit_questions').select('question, city, hotel_type, category, priority').eq('active', true)
