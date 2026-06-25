@@ -134,10 +134,20 @@ ${brief.unanswered.join('\n')}`
     const c = data?.choices?.[0]?.message?.content
     if (!c) return NextResponse.json({ error: 'Consultant produced no output' }, { status: 502 })
     const advisory = JSON.parse(c)
+    const basedOn = { facts: (facts || []).length, findings: findings.length }
+
+    // Persist so the AI Advisor tab can read the latest instantly (no GPT on open)
+    await sb.from('hotel_consultant').insert({
+      hotel_id: hotelId,
+      hotel_name: brain.hotel_name,
+      city: brain.city,
+      based_on: basedOn,
+      advisory,
+    })
 
     return NextResponse.json({
       hotel: brain.hotel_name, city: brain.city,
-      basedOn: { facts: (facts || []).length, findings: findings.length },
+      basedOn,
       advisory,
     })
   } catch (e: any) {
