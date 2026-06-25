@@ -2975,6 +2975,118 @@ function AdvisorV2Body({ adv }: any) {
   )
 }
 
+// ── EXECUTION INBOX — review queue for generated artifacts (FAQs now; schema/pages later) ──
+function InboxTab({ hotel }: any) {
+  const [items, setItems] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [edits, setEdits] = useState<Record<string, string>>({})
+  const [openEv, setOpenEv] = useState<string | null>(null)
+  const [busy, setBusy] = useState<string | null>(null)
+  const [msg, setMsg] = useState('')
+
+  const load = async () => {
+    if (!hotel?.id) { setLoading(false); return }
+    try {
+      const { createClient } = await import('@supabase/supabase-js')
+      const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+      const { data } = await sb.from('execution_queue').select('*').eq('hotel_id', hotel.id).eq('status', 'suggested').order('created_at', { ascending: false })
+      setItems(data || [])
+    } catch {} finally { setLoading(false) }
+  }
+  useEffect(() => { load() }, [hotel?.id])
+
+  const sb = async () => { const { createClient } = await import('@supabase/supabase-js'); return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!) }
+
+  const approve = async (item: any) => {
+    setBusy(item.id)
+    const client = await sb()
+    const finalAnswer = edits[item.id] !== undefined ? edits[item.id] : item.answer
+    const wasEdited = edits[item.id] !== undefined && edits[item.id] !== item.answer
+    // Promote into the live FAQ table (the path the public pages already read).
+    await client.from('hotel_faq_suggestions').insert({ hotel_id: item.hotel_id, hotel_name: item.hotel_name, page_type: item.page_type, question: item.question, answer: finalAnswer, status: 'approved' })
+    await client.from('execution_queue').update({ status: 'approved', edited: wasEdited, answer: finalAnswer, reviewed_at: new Date().toISOString(), approved_at: new Date().toISOString() }).eq('id', item.id)
+    setItems(prev => prev.filter(x => x.id !== item.id))
+    setMsg('Approved and published to your profile.'); setBusy(null); setTimeout(() => setMsg(''), 3500)
+  }
+  const reject = async (item: any) => {
+    setBusy(item.id)
+    const client = await sb()
+    await client.from('execution_queue').update({ status: 'rejected', reviewed_at: new Date().toISOString() }).eq('id', item.id)
+    setItems(prev => prev.filter(x => x.id !== item.id))
+    setMsg('Rejected.'); setBusy(null); setTimeout(() => setMsg(''), 3000)
+  }
+
+  const typeLabel = (t: string) => t === 'faq' ? 'FAQ' : t
+  const actionLabel = (a: string, t: string) => a && t ? `${a.replace(/_/g, ' ')} · ${t}` : (a || '').replace(/_/g, ' ')
+
+  return (
+    <div>
+      {/* HERO */}
+      <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 18, padding: '2.75rem 3.25rem', marginBottom: '1.75rem', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: -40, right: -40, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,169,76,0.08) 0%, transparent 70%)' }} />
+        <div style={{ position: 'relative' }}>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.75)', margin: '0 0 0.75rem' }}>Execution Inbox · Generated for your review</p>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.9rem', fontWeight: 300, color: WHITE, margin: '0 0 0.6rem', lineHeight: 1.3 }}>{items.length > 0 ? `${items.length} item${items.length === 1 ? '' : 's'} ready to review` : 'Nothing waiting'}</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.65, maxWidth: 560 }}>SwissNet generated these from your advisory, grounded only in confirmed facts about your hotel. Review, edit if you like, then approve to publish them to your profile.</p>
+        </div>
+      </div>
+
+      {msg && <div style={{ background: GREEN + '12', border: '1px solid ' + GREEN + '30', borderRadius: 8, padding: '0.85rem 1.25rem', marginBottom: '1.25rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: GREEN }}>{msg}</div>}
+
+      {loading && <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}><p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', color: TEXT_MUTED, margin: 0 }}>Loading your inbox…</p></div>}
+
+      {!loading && items.length === 0 && (
+        <div style={{ background: WHITE, border: '1px dashed ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', color: TEXT, margin: '0 0 0.5rem' }}>Your inbox is empty</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6, maxWidth: 440, marginLeft: 'auto', marginRight: 'auto' }}>When SwissNet generates new content from your advisory, it appears here for your approval before anything goes live.</p>
+        </div>
+      )}
+
+      {!loading && items.map(item => {
+        const edited = edits[item.id] !== undefined
+        const ev = Array.isArray(item.evidence_used) ? item.evidence_used : []
+        return (
+          <div key={item.id} style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '0.95rem' }}>
+            <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG, display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, color: GOLD, background: GOLD_LIGHT, border: '1px solid rgba(201,169,76,0.3)', borderRadius: 4, padding: '0.2rem 0.6rem', textTransform: 'uppercase' }}>{typeLabel(item.artifact_type)}</span>
+              {item.decision_action && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>from {actionLabel(item.decision_action, item.decision_target)}</span>}
+              <span style={{ flex: 1 }} />
+              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED }}>{item.created_at ? new Date(item.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''}</span>
+            </div>
+            <div style={{ padding: '1.25rem 1.5rem' }}>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.3rem' }}>Question</p>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 1rem', lineHeight: 1.4 }}>{item.question}</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.3rem' }}>Answer {edited && <span style={{ color: GOLD }}>· edited</span>}</p>
+              <textarea value={edited ? edits[item.id] : item.answer} onChange={e => setEdits(p => ({ ...p, [item.id]: e.target.value }))} rows={4} style={{ width: '100%', fontFamily: 'Montserrat, sans-serif', fontSize: '0.84rem', color: TEXT, border: '1px solid ' + BORDER, borderRadius: 8, padding: '0.75rem 1rem', background: BG, outline: 'none', boxSizing: 'border-box', resize: 'vertical', lineHeight: 1.6 }} />
+
+              {ev.length > 0 && (
+                <div style={{ marginTop: '0.85rem' }}>
+                  <button onClick={() => setOpenEv(openEv === item.id ? null : item.id)} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 600, color: '#3b82f6', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
+                    {openEv === item.id ? '▾' : '▸'} Evidence used ({ev.length})
+                  </button>
+                  {openEv === item.id && (
+                    <div style={{ marginTop: '0.5rem', background: BG, borderRadius: 8, padding: '0.85rem 1.1rem', borderLeft: '3px solid #3b82f6' }}>
+                      {ev.map((e: any, j: number) => (
+                        <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: TEXT_MUTED, margin: '0.25rem 0', lineHeight: 1.5, fontStyle: 'italic' }}>“{e.quote}”{e.page && <span style={{ fontStyle: 'normal' }}> — {e.page}</span>}</p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.1rem' }}>
+                <button onClick={() => approve(item)} disabled={busy === item.id} style={{ background: GREEN, color: WHITE, fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, padding: '0.55rem 1.25rem', border: 'none', borderRadius: 6, cursor: 'pointer', opacity: busy === item.id ? 0.6 : 1 }}>{busy === item.id ? 'Working…' : edited ? '✓ Approve edited' : '✓ Approve & publish'}</button>
+                <button onClick={() => reject(item)} disabled={busy === item.id} style={{ background: 'transparent', color: RED, fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 600, padding: '0.55rem 1.1rem', border: '1px solid ' + RED + '40', borderRadius: 6, cursor: 'pointer' }}>Reject</button>
+                {edited && <button onClick={() => setEdits(p => { const n = { ...p }; delete n[item.id]; return n })} style={{ background: 'transparent', color: TEXT_MUTED, fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', padding: '0.55rem 1rem', border: '1px solid ' + BORDER, borderRadius: 6, cursor: 'pointer' }}>Undo edit</button>}
+              </div>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // ── AI ADVISOR TAB — reads latest stored consultant advisory, regenerate on demand ──
 function AdvisorTab({ hotel }: any) {
   const [data, setData] = useState<any>(null)
@@ -3312,6 +3424,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
       { id: 'competitors', label: 'Competitors' },
     ] },
     { heading: 'Improve', items: [
+      { id: 'inbox', label: '✦ Execution Inbox', minTier: 2 },
       { id: 'advisor', label: '✦ AI Advisor', minTier: 2 },
       { id: 'schema', label: 'SwissNet Profile', minTier: 2 },
       { id: 'website', label: 'Official Website', minTier: 2 },
@@ -3380,6 +3493,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
               {tab === 'schema' && '✦ SwissNet Profile'}
 {tab === 'optimise' && '✦ Optimise'}
 {tab === 'website' && '✦ Official Website'}
+{tab === 'inbox' && '✦ Execution Inbox'}
 {tab === 'advisor' && '✦ AI Advisor'}
 {tab === 'citations' && '✦ Citation Sources'}
 {tab === 'reports' && 'Reports'}
@@ -3393,6 +3507,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
               {tab === 'schema' && 'AI readiness score and content recommendations'}
 {tab === 'optimise' && 'Manage your content and FAQs'}
 {tab === 'website' && 'Build AI visibility on your own official site'}
+{tab === 'inbox' && 'Review and approve content SwissNet generated for you'}
 {tab === 'advisor' && 'Your strategic brief, reasoned from what AI knows about you'}
 {tab === 'citations' && 'Where AI gets its answers — and where to get listed'}
 {tab === 'reports' && 'Compare your performance month over month'}
@@ -3950,6 +4065,7 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
         {tab === 'citations' && (
           <CitationSourcesTab hotelName={hotelName} hotelRegion={hotelRegion} hotelId={hotel?.id} />
         )}
+        {tab === 'inbox' && <InboxTab hotel={hotel} />}
         {tab === 'website' && <WebsiteTab hotel={hotel} />}
         {tab === 'advisor' && <AdvisorTab hotel={hotel} />}
 
