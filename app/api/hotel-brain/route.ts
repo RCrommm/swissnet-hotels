@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 export const maxDuration = 300
-const CRAWL_LIMIT = 25
+const CRAWL_LIMIT = 18
 
 // ─── LAYERED CRAWLER: cheap first, ScrapingBee only as last resort ───
 async function fetchCheap(url: string): Promise<string | null> {
@@ -31,11 +31,23 @@ async function getPage(url: string, apiKey: string | undefined, state: { beeAllo
   const cheap = await fetchCheap(url)
   if (cheap) return cheap
   if (!apiKey || !state.beeAllowed) return null
+  if (state.premium) { const prem = await fetchBee(url, apiKey, true); if (prem) { state.usedBee = true; return prem } return null }
   const basic = await fetchBee(url, apiKey, false)
   if (basic) { state.usedBee = true; return basic }
   const prem = await fetchBee(url, apiKey, true)
   if (prem) { state.usedBee = true; state.premium = true; return prem }
   return null
+}
+
+// Run async tasks with a concurrency limit — parallelizes without hammering the APIs
+async function pool<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const results: R[] = []
+  let i = 0
+  const workers = new Array(Math.min(limit, items.length)).fill(0).map(async () => {
+    while (i < items.length) { const idx = i++; results[idx] = await fn(items[idx]) }
+  })
+  await Promise.all(workers)
+  return results
 }
 
 function extractText(html: string): string {
@@ -64,7 +76,7 @@ function extractLinks(html: string, origin: string): string[] {
   return [...links]
 }
 
-async function discoverSitemap(origin: string): Promise<string[]> {
+async function discoverSitemap(origin: string, apiKey?: string): Promise<string[]> {
   const host = origin.replace(/^https?:\/\//, '')
   const out = new Set<string>()
   const seen = new Set<string>()
@@ -78,7 +90,8 @@ async function discoverSitemap(origin: string): Promise<string[]> {
     const sm = queue.shift()!
     if (!sm || seen.has(sm)) continue
     seen.add(sm); budget--
-    const xml = await fetchCheap(sm)
+    let xml = await fetchCheap(sm)
+    if (!xml && apiKey) xml = await fetchBee(sm, apiKey, true)
     if (!xml) continue
     const locs = [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)].map(m => m[1].trim())
     for (const loc of locs) {
@@ -178,24 +191,17 @@ export async function POST(req: Request) {
 
     const homeHtml = await getPage(url, apiKey, state)
     if (!homeHtml) return NextResponse.json({ error: 'Could not load the website (all crawl layers failed).' }, { status: 502 })
-    const sitemapUrls = await discoverSitemap(origin)
+    const sitemapUrls = await discoverSitemap(origin, apiKey)
     const homeLinks = extractLinks(homeHtml, origin)
     const candidates = Array.from(new Set([url, ...sitemapUrls, ...homeLinks]))
     const toRead = candidates.slice(0, CRAWL_LIMIT)
 
-    const pages: { url: string; headings: string[]; text: string }[] = []
-    for (const u of toRead) {
-      const html = u === url ? homeHtml : await getPage(u, apiKey, state)
-      if (!html) continue
-      pages.push({ url: u, headings: extractHeadings(html), text: extractText(html) })
-    }
+    const htmls = await pool(toRead, 5, async (u) => ({ url: u, html: u === url ? homeHtml : await getPage(u, apiKey, state) }))
+    const pages = htmls.filter(h => h.html).map(h => ({ url: h.url, headings: extractHeadings(h.html as string), text: extractText(h.html as string) }))
     if (!pages.length) return NextResponse.json({ error: 'Could not read any pages.' }, { status: 502 })
 
-    let allFacts: any[] = []
-    for (const p of pages) {
-      const facts = await extractFacts(p, openaiKey)
-      allFacts.push(...facts)
-    }
+    const factBatches = await pool(pages, 5, async (p) => extractFacts(p, openaiKey))
+    let allFacts: any[] = factBatches.flat()
     const confirmed = allFacts.filter(f => f && (f.evidence_quote || '').trim().length > 0 && Number(f.confidence) >= 80)
 
     const seen = new Set<string>()
