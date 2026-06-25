@@ -68,7 +68,7 @@ export async function POST(req: Request) {
     // Latest advisory (carries the decisions) + Brain facts
     const { data: brain } = await sb.from('hotel_brains').select('id, hotel_name').eq('hotel_id', hotelId).order('created_at', { ascending: false }).limit(1).maybeSingle()
     const { data: facts } = brain ? await sb.from('hotel_facts').select('category, fact_value, evidence_quote, page_url').eq('brain_id', brain.id) : { data: [] as any[] }
-    const { data: advRow } = await sb.from('hotel_consultant').select('advisory').eq('hotel_id', hotelId).order('created_at', { ascending: false }).limit(1).maybeSingle()
+    const { data: advRow } = await sb.from('hotel_consultant').select('advisory, created_at').eq('hotel_id', hotelId).order('created_at', { ascending: false }).limit(1).maybeSingle()
     const advisory = advRow?.advisory
     if (!advisory?.top_moves?.length) return NextResponse.json({ error: 'No advisory with moves found. Generate the advisory first.' }, { status: 404 })
 
@@ -119,10 +119,25 @@ ${factLines.join('\n')}`
         const faqs = (parsed.faqs || []).filter((f: any) => f?.question?.trim() && f?.answer?.trim()).slice(0, 6)
         if (!faqs.length) { refused.push({ move: move.title, reason: 'no FAQs could be grounded in confirmed facts' }); continue }
 
-        // Save as suggested (human approves before live). page_type = the topic bucket.
+        // Save into the EXECUTION QUEUE (not the live FAQ table) so the Optimise
+        // tab's delete-and-replace can never wipe proposed work. page_type = topic bucket.
         const pageType = topic === 'meetings' ? 'events' : topic
-        const rows = faqs.map((f: any) => ({ hotel_id: hotelId, hotel_name: brain?.hotel_name || '', page_type: pageType, question: f.question.trim(), answer: f.answer.trim(), status: 'suggested' }))
-        await sb.from('hotel_faq_suggestions').insert(rows)
+        const evidenceUsed = topicFacts.slice(0, 12).map((f: any) => ({ fact: f.fact_value, quote: (f.evidence_quote || '').slice(0, 200), page: pathOf(f.page_url || '') }))
+        const rows = faqs.map((f: any) => ({
+          hotel_id: hotelId,
+          hotel_name: brain?.hotel_name || '',
+          artifact_type: 'faq',
+          page_type: pageType,
+          question: f.question.trim(),
+          answer: f.answer.trim(),
+          decision_action: d.action || null,
+          decision_target: d.target || null,
+          source_advisory_at: advRow?.created_at || null,
+          source_brain_id: brain?.id || null,
+          evidence_used: evidenceUsed,
+          status: 'suggested',
+        }))
+        await sb.from('execution_queue').insert(rows)
         generated.push({ move: move.title, topic, count: faqs.length, faqs })
       } catch (e: any) {
         refused.push({ move: move.title, reason: `generation error: ${e?.message || 'failed'}` })
