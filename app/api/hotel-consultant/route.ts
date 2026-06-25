@@ -4,6 +4,7 @@ import { classifyGap, inferTopic } from '@/lib/evidence'
 import { decideAction } from '@/lib/decision'
 import { buildVisibilityModel } from '@/lib/visibility-model'
 import { buildKnowledgeGraph } from '@/lib/knowledge-graph'
+import { buildTechnicalReadiness } from '@/lib/technical-readiness'
 
 export const maxDuration = 120
 
@@ -261,6 +262,10 @@ export async function POST(req: Request) {
     // ── KNOWLEDGE GRAPH: the site's information architecture (deterministic) ──
     // The consultant CONSUMES this instead of re-inferring website structure.
     const knowledgeGraph = buildKnowledgeGraph(facts || [], latestAuditResult)
+
+    // ── TECHNICAL AI-READINESS: schema, retrieval blocks, trust signals (from architecture block) ──
+    const technical = buildTechnicalReadiness(latestAuditResult)
+    const techLines = technical.findings.map(f => `[${f.severity}] ${f.layer} → ${f.action}: ${f.fix} (${f.evidence})`)
     // Compact lines the consultant reasons over: only clusters that need action.
     const graphLines = knowledgeGraph.clusters
       .filter(c => c.cluster_state !== 'consolidated' && c.cluster_state !== 'absent')
@@ -303,7 +308,11 @@ ${auditBrief.contentWeak.length ? auditBrief.contentWeak.join('\n') : '(none fla
 
 WEBSITE KNOWLEDGE GRAPH — how the site's information is ARCHITECTURALLY organised:
 This is the deterministic analysis of where each topic's facts live and whether AI can form a clean concept. Use it to choose between CONSOLIDATE (facts exist but are scattered — move them onto the canonical page, don't create a new one) vs CREATE (no canonical page exists at all) vs STRENGTHEN (canonical page exists but answerability is weak). A "scattered" topic that already has a canonical page must be CONSOLIDATED, never recreated. A "contaminated" topic (facts only on utility pages like /news or /reservation) needs a real canonical page. When you recommend a move, NAME the architectural problem from below.
-${graphLines.length ? graphLines.join('\n') : '(all commercial clusters are well-consolidated)'}`
+${graphLines.length ? graphLines.join('\n') : '(all commercial clusters are well-consolidated)'}
+
+TECHNICAL AI-READINESS GAPS${technical.techScore != null ? ` (technical AI-readiness ${technical.techScore}/100)` : ''}:
+These are MACHINE-READABILITY gaps — how well AI systems can parse, trust, and retrieve the site, separate from content. They include missing schema (FAQPage, Review, Restaurant, Event), missing structured retrieval blocks (Quick Facts, AI summary), and missing trust signals. Where relevant, fold these into your moves: a content move to strengthen a page should ALSO note the schema/structured-block it needs (e.g. "add FAQPage schema"). High-severity technical gaps that stand alone (like missing Review schema) can be their own quick-win move with build_type "FAQ only" or a schema note. Do not invent technical detail beyond what's listed.
+${techLines.length ? techLines.join('\n') : '(no technical gaps flagged)'}`
 
     const res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
@@ -329,6 +338,7 @@ ${graphLines.length ? graphLines.join('\n') : '(all commercial clusters are well
     // attach the visibility model + knowledge graph onto the advisory so it stores with it
     advisory.visibility_model = visibilityModel
     advisory.knowledge_graph = knowledgeGraph
+    advisory.technical_readiness = technical
 
     // Persist so the AI Advisor tab can read the latest instantly (no GPT on open)
     await sb.from('hotel_consultant').insert({
