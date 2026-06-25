@@ -2997,16 +2997,17 @@ function InboxTab({ hotel }: any) {
 
   const sb = async () => { const { createClient } = await import('@supabase/supabase-js'); return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!) }
 
-  const approve = async (item: any) => {
+  const accept = async (item: any) => {
     setBusy(item.id)
     const client = await sb()
     const finalAnswer = edits[item.id] !== undefined ? edits[item.id] : item.answer
     const wasEdited = edits[item.id] !== undefined && edits[item.id] !== item.answer
-    // Promote into the live FAQ table (the path the public pages already read).
-    await client.from('hotel_faq_suggestions').insert({ hotel_id: item.hotel_id, hotel_name: item.hotel_name, page_type: item.page_type, question: item.question, answer: finalAnswer, status: 'approved' })
-    await client.from('execution_queue').update({ status: 'approved', edited: wasEdited, answer: finalAnswer, reviewed_at: new Date().toISOString(), approved_at: new Date().toISOString() }).eq('id', item.id)
+    // Mark as accepted in the queue. This is RECOMMENDED content for the hotel's
+    // OWN website — SwissNet does not publish it anywhere. The hotel copies it onto
+    // their official site (e.g. their /meetings page).
+    await client.from('execution_queue').update({ status: 'accepted', edited: wasEdited, answer: finalAnswer, reviewed_at: new Date().toISOString(), approved_at: new Date().toISOString() }).eq('id', item.id)
     setItems(prev => prev.filter(x => x.id !== item.id))
-    setMsg('Approved and published to your profile.'); setBusy(null); setTimeout(() => setMsg(''), 3500)
+    setMsg('Marked as ready. Copy this onto your official website to improve your AI visibility.'); setBusy(null); setTimeout(() => setMsg(''), 4500)
   }
   const reject = async (item: any) => {
     setBusy(item.id)
@@ -3027,7 +3028,7 @@ function InboxTab({ hotel }: any) {
         <div style={{ position: 'relative' }}>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.75)', margin: '0 0 0.75rem' }}>Execution Inbox · Generated for your review</p>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.9rem', fontWeight: 300, color: WHITE, margin: '0 0 0.6rem', lineHeight: 1.3 }}>{items.length > 0 ? `${items.length} item${items.length === 1 ? '' : 's'} ready to review` : 'Nothing waiting'}</p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.65, maxWidth: 560 }}>SwissNet generated these from your advisory, grounded only in confirmed facts about your hotel. Review, edit if you like, then approve to publish them to your profile.</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.65, maxWidth: 560 }}>SwissNet wrote these recommendations from your advisory, grounded only in confirmed facts about your hotel. Review, edit if you like, then copy them onto your official website to improve how AI assistants describe you.</p>
         </div>
       </div>
 
@@ -3075,8 +3076,9 @@ function InboxTab({ hotel }: any) {
               )}
 
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.1rem' }}>
-                <button onClick={() => approve(item)} disabled={busy === item.id} style={{ background: GREEN, color: WHITE, fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, padding: '0.55rem 1.25rem', border: 'none', borderRadius: 6, cursor: 'pointer', opacity: busy === item.id ? 0.6 : 1 }}>{busy === item.id ? 'Working…' : edited ? '✓ Approve edited' : '✓ Approve & publish'}</button>
-                <button onClick={() => reject(item)} disabled={busy === item.id} style={{ background: 'transparent', color: RED, fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 600, padding: '0.55rem 1.1rem', border: '1px solid ' + RED + '40', borderRadius: 6, cursor: 'pointer' }}>Reject</button>
+                <button onClick={() => { navigator.clipboard?.writeText(`Q: ${item.question}\nA: ${edited ? edits[item.id] : item.answer}`); setMsg('Copied — paste this into your website.'); setTimeout(() => setMsg(''), 3000) }} style={{ background: GOLD, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, padding: '0.55rem 1.25rem', border: 'none', borderRadius: 6, cursor: 'pointer' }}>⧉ Copy for my website</button>
+                <button onClick={() => accept(item)} disabled={busy === item.id} style={{ background: GREEN, color: WHITE, fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, padding: '0.55rem 1.25rem', border: 'none', borderRadius: 6, cursor: 'pointer', opacity: busy === item.id ? 0.6 : 1 }}>{busy === item.id ? 'Working…' : '✓ Mark as done'}</button>
+                <button onClick={() => reject(item)} disabled={busy === item.id} style={{ background: 'transparent', color: RED, fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 600, padding: '0.55rem 1.1rem', border: '1px solid ' + RED + '40', borderRadius: 6, cursor: 'pointer' }}>Dismiss</button>
                 {edited && <button onClick={() => setEdits(p => { const n = { ...p }; delete n[item.id]; return n })} style={{ background: 'transparent', color: TEXT_MUTED, fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', padding: '0.55rem 1rem', border: '1px solid ' + BORDER, borderRadius: 6, cursor: 'pointer' }}>Undo edit</button>}
               </div>
             </div>
