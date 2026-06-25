@@ -1,6 +1,38 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+// ─── MEMORY LAYER: deterministic finding keys + store + diff vs previous run ───
+function mlSlug(s: string): string {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40)
+}
+function buildFindings(result: any): any[] {
+  const out: any[] = []
+  const seen = new Set<string>()
+  const push = (f: any) => { if (!seen.has(f.finding_key)) { seen.add(f.finding_key); out.push(f) } }
+  for (const p of (result.importantPages || [])) {
+    if (p.status === 'Missing') {
+      push({ finding_key: `page:${mlSlug(p.key)}:missing`, type: 'missing_page', title: `Missing ${p.label}`, evidence: p.reason || `No ${(p.label || '').toLowerCase()} found in the crawl.`, recommendation: `Create a ${p.label} page.`, impact: p.impact || 'Medium', category: (p.cats && p.cats[0]) || 'overall', status: 'open', affected_queries: (p.affects || []).slice(0, 6) })
+    } else if (p.status === 'Present' && !p.notAssessed && typeof p.score === 'number' && p.score < 75) {
+      for (const m of (p.missing || [])) {
+        push({ finding_key: `page:${mlSlug(p.key)}:${mlSlug(m)}`, type: 'missing_element', title: `${p.displayName || p.label}: add ${m}`, evidence: p.evidence || '', recommendation: `Add ${m} to the ${p.displayName || p.label} page.`, impact: p.impact || 'Medium', category: (p.cats && p.cats[0]) || 'overall', status: 'open', affected_queries: (p.affects || []).slice(0, 6) })
+      }
+    }
+  }
+  for (const r of (result.recommendation?.results || [])) {
+    if (r.readiness !== 'NO') continue
+    push({ finding_key: `query:${mlSlug(r.category)}:${mlSlug(r.question)}`, type: 'unanswered_query', title: r.question, evidence: '', recommendation: (r.reasons && r.reasons[0]) ? `Address: ${r.reasons[0]}` : 'Add content answering this question.', impact: r.priority === 'high' ? 'High' : 'Medium', category: r.category || 'overall', status: 'open', affected_queries: [r.question] })
+  }
+  return out
+}
+function diffFindings(currentFindings: any[], previousKeys: string[]) {
+  const curKeys = new Set(currentFindings.map(f => f.finding_key))
+  const prevKeys = new Set(previousKeys)
+  const stillOpen = currentFindings.filter(f => prevKeys.has(f.finding_key))
+  const newlyFound = currentFindings.filter(f => !prevKeys.has(f.finding_key))
+  const fixed = previousKeys.filter(k => !curKeys.has(k))
+  return { isFirstRun: previousKeys.length === 0, stillOpen: stillOpen.map(f => ({ key: f.finding_key, title: f.title })), newlyFound: newlyFound.map(f => ({ key: f.finding_key, title: f.title })), fixed, counts: { stillOpen: stillOpen.length, new: newlyFound.length, fixed: fixed.length, total: currentFindings.length } }
+}
+
 export const maxDuration = 300
 const CRAWL_LIMIT = 22
 
@@ -1053,10 +1085,30 @@ export async function POST(req: Request) {
       robots, pagesScraped: pages.map((p: any) => p.url), crawlDepth: pages.length, crawlLimit: CRAWL_LIMIT,
     }
 
+    let memory: any = null
     if (hotelId && sbUrl && sbKey) {
-      try { const sb = createClient(sbUrl, sbKey); await sb.from('hotel_audits').insert({ hotel_id: hotelId, url, overall: recScore, result }) } catch {}
+      try {
+        const sb = createClient(sbUrl, sbKey)
+        const auditRunId = (globalThis.crypto && globalThis.crypto.randomUUID) ? globalThis.crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+        const findings = buildFindings(result)
+        // load previous run's finding keys for this hotel
+        let previousKeys: string[] = []
+        try {
+          const { data: prev } = await sb.from('audit_findings').select('finding_key, audit_run_id, created_at').eq('hotel_id', hotelId).order('created_at', { ascending: false }).limit(400)
+          if (prev && prev.length) {
+            const lastRun = prev[0].audit_run_id
+            previousKeys = prev.filter((r: any) => r.audit_run_id === lastRun).map((r: any) => r.finding_key)
+          }
+        } catch {}
+        memory = diffFindings(findings, previousKeys)
+        // store this run's findings
+        const rows = findings.map(f => ({ audit_run_id: auditRunId, hotel_id: hotelId, finding_key: f.finding_key, type: f.type, title: f.title, evidence: f.evidence, recommendation: f.recommendation, impact: f.impact, category: f.category, status: f.status, affected_queries: f.affected_queries }))
+        for (let i = 0; i < rows.length; i += 100) await sb.from('audit_findings').insert(rows.slice(i, i + 100))
+        // save the audit with memory attached
+        await sb.from('hotel_audits').insert({ hotel_id: hotelId, url, overall: recScore, result: { ...result, memory } })
+      } catch {}
     }
-    return NextResponse.json(result)
+    return NextResponse.json({ ...result, memory })
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Audit failed' }, { status: 500 })
   }
