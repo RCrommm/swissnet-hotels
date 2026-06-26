@@ -5,6 +5,7 @@ import { decideAction } from '@/lib/decision'
 import { buildVisibilityModel } from '@/lib/visibility-model'
 import { buildKnowledgeGraph } from '@/lib/knowledge-graph'
 import { buildTechnicalReadiness } from '@/lib/technical-readiness'
+import { assembleRecommendation } from '@/lib/recommendation'
 
 export const maxDuration = 120
 
@@ -347,6 +348,7 @@ ${techLines.length ? techLines.join('\n') : '(no technical gaps flagged)'}`
     if (Array.isArray(advisory?.top_moves)) {
       for (const m of advisory.top_moves) {
         try { m.decision = decideAction(m, pagesScraped, facts || []) } catch { m.decision = null }
+        try { m.recommendation = assembleRecommendation(m, { visibilityModel, knowledgeGraph, technical, auditBrief }) } catch { m.recommendation = null }
       }
     }
     const basedOn = { facts: (facts || []).length, findings: findings.length }
