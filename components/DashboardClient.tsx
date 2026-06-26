@@ -2888,23 +2888,14 @@ function advBandWord(score: number) { return score >= 70 ? 'Strong' : score >= 4
 function advBandColor(score: number) { return score >= 70 ? ADV_GREEN_C : score >= 45 ? GOLD : score >= 25 ? ADV_AMBER : 'rgba(42,26,14,0.4)' }
 function advDimColor(band: string) { return band === 'strong' ? ADV_GREEN_C : band === 'moderate' ? GOLD : band === 'weak' ? ADV_AMBER : 'rgba(42,26,14,0.3)' }
 
-// One strategic priority — collapsed summary that expands to the full consulting analysis
-function PriorityCard({ m, i, open, onToggle }: any) {
+// One strategic priority — compact collapsed tile. Full analysis opens in a modal.
+function PriorityCard({ m, i, onOpen }: any) {
   const rec = m.canonicalRecommendation
   const c = rec.case
-  const verify = rec.confidence?.evidence_state !== 'confirmed'
   const topic = rec.targeting?.affected_entity || m.topic || ''
   const topicLabel = (topic || '').toString().toUpperCase() === '__SITE__' ? 'FOUNDATION' : (topic || '').toString().toUpperCase()
   const POSTURE_LEAD: Record<string, string> = { Commit: 'Protect your strongest advantage', 'Fix-foundation': 'Remove operational AI friction', Confirm: 'Confirm this offering', Defer: 'Hold for later' }
   const lead = m.posture === 'Convert' ? ('Unlock your ' + topic.toLowerCase() + ' opportunity') : m.posture === 'Strengthen' ? ('Deepen your ' + topic.toLowerCase()) : (POSTURE_LEAD[m.posture] || topic)
-  const proof = c.proof || {}
-
-  const Sec = ({ title, children }: any) => (
-    <div style={{ paddingTop: '1rem', borderTop: '1px solid ' + BORDER, marginTop: '1.1rem' }}>
-      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT, margin: '0 0 0.6rem' }}>{title}</p>
-      {children}
-    </div>
-  )
 
   const statusTag = (() => {
     const h = rec.history
@@ -2922,43 +2913,86 @@ function PriorityCard({ m, i, open, onToggle }: any) {
   })()
 
   return (
-    <div id={'case-' + i} style={{ scrollMarginTop: '1.5rem', border: '1px solid ' + (open ? 'rgba(201,169,76,0.45)' : 'rgba(42,26,14,0.10)'), borderLeft: open ? ('4px solid ' + GOLD) : '1px solid rgba(42,26,14,0.10)', background: open ? GOLD_LIGHT : WHITE, borderRadius: 14, overflow: 'hidden', boxShadow: open ? '0 10px 30px rgba(42,26,14,0.10)' : '0 1px 3px rgba(42,26,14,0.04)', transition: 'box-shadow 0.15s, border-color 0.15s' }}>
-      <button onClick={(e) => { const wasOpen = open; onToggle(); if (!wasOpen) { const el = (e.currentTarget.closest('[id^="case-"]') as HTMLElement); if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60) } }} style={{ width: '100%', textAlign: 'left', cursor: 'pointer', background: 'transparent', border: 'none', padding: '1.1rem 1.2rem', display: 'block' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.7rem' }}>
-          <span style={{ width: 24, height: 24, borderRadius: '50%', border: '1.5px solid ' + (open ? GOLD : 'rgba(42,26,14,0.25)'), display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 700, color: open ? '#8A6D1F' : TEXT_MUTED, flexShrink: 0 }}>{i + 1}</span>
-          <span style={{ flex: 1 }} />
-          {statusTag}
-          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.95rem', color: TEXT_MUTED, transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
-        </div>
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.92rem', fontWeight: 700, lineHeight: 1.3, color: open ? '#8A6D1F' : TEXT, margin: '0 0 0.4rem' }}>{lead}</p>
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', lineHeight: 1.5, color: TEXT_MUTED, margin: '0 0 0.7rem' }}>{c.diagnosis}</p>
-        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.54rem', fontWeight: 700, letterSpacing: '0.08em', color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, padding: '3px 9px', borderRadius: 4 }}>{topicLabel}</span>
-      </button>
+    <button onClick={onOpen} style={{ width: '100%', textAlign: 'left', cursor: 'pointer', border: '1px solid rgba(42,26,14,0.10)', background: WHITE, borderRadius: 14, padding: '1.1rem 1.2rem', display: 'block', boxShadow: '0 1px 3px rgba(42,26,14,0.04)', transition: 'box-shadow 0.15s, transform 0.1s' }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 20px rgba(42,26,14,0.10)' }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 3px rgba(42,26,14,0.04)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.7rem' }}>
+        <span style={{ width: 24, height: 24, borderRadius: '50%', border: '1.5px solid rgba(42,26,14,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 700, color: TEXT_MUTED, flexShrink: 0 }}>{i + 1}</span>
+        <span style={{ flex: 1 }} />
+        {statusTag}
+        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.95rem', color: TEXT_MUTED }}>›</span>
+      </div>
+      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.92rem', fontWeight: 700, lineHeight: 1.3, color: TEXT, margin: '0 0 0.4rem' }}>{lead}</p>
+      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', lineHeight: 1.5, color: TEXT_MUTED, margin: '0 0 0.7rem' }}>{c.diagnosis}</p>
+      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.54rem', fontWeight: 700, letterSpacing: '0.08em', color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, padding: '3px 9px', borderRadius: 4 }}>{topicLabel}</span>
+    </button>
+  )
+}
 
-      {open && (
-        <div style={{ padding: '0 1.2rem 1.3rem' }}>
+// Full consulting analysis — rendered in a centered modal over a dark backdrop.
+function CaseModal({ m, i, onClose }: any) {
+  const rec = m.canonicalRecommendation
+  const c = rec.case
+  const verify = rec.confidence?.evidence_state !== 'confirmed'
+  const topic = rec.targeting?.affected_entity || m.topic || ''
+  const topicLabel = (topic || '').toString().toUpperCase() === '__SITE__' ? 'FOUNDATION' : (topic || '').toString().toUpperCase()
+  const POSTURE_LEAD: Record<string, string> = { Commit: 'Protect your strongest advantage', 'Fix-foundation': 'Remove operational AI friction', Confirm: 'Confirm this offering', Defer: 'Hold for later' }
+  const lead = m.posture === 'Convert' ? ('Unlock your ' + topic.toLowerCase() + ' opportunity') : m.posture === 'Strengthen' ? ('Deepen your ' + topic.toLowerCase()) : (POSTURE_LEAD[m.posture] || topic)
+  const proof = c.proof || {}
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    document.body.style.overflow = 'hidden'
+    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = '' }
+  }, [onClose])
+
+  const Sec = ({ title, children }: any) => (
+    <div style={{ paddingTop: '1.2rem', borderTop: '1px solid ' + BORDER, marginTop: '1.4rem' }}>
+      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT, margin: '0 0 0.7rem' }}>{title}</p>
+      {children}
+    </div>
+  )
+
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(26,14,6,0.55)', backdropFilter: 'blur(3px)', zIndex: 1000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '4vh 1.5rem', overflowY: 'auto' }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: WHITE, borderRadius: 18, maxWidth: 720, width: '100%', boxShadow: '0 24px 80px rgba(26,14,6,0.4)', position: 'relative', marginBottom: '4vh' }}>
+        {/* header */}
+        <div style={{ padding: '1.75rem 2rem 1.4rem', borderBottom: '1px solid ' + BORDER, position: 'sticky', top: 0, background: WHITE, borderRadius: '18px 18px 0 0', zIndex: 2 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', marginBottom: '0.85rem' }}>
+            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED }}>Case {String(i + 1).padStart(2, '0')}</span>
+            <span style={{ width: 1, height: 11, background: BORDER }} />
+            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.54rem', fontWeight: 700, letterSpacing: '0.08em', color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, padding: '3px 9px', borderRadius: 4 }}>{topicLabel}</span>
+            <span style={{ flex: 1 }} />
+            <button onClick={onClose} aria-label="Close" style={{ width: 30, height: 30, borderRadius: '50%', border: '1px solid ' + BORDER, background: BG, color: TEXT_MUTED, fontSize: '1.1rem', lineHeight: 1, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>×</button>
+          </div>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '1.25rem', fontWeight: 700, lineHeight: 1.3, color: '#8A6D1F', margin: '0 0 0.5rem' }}>{lead}</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.9rem', lineHeight: 1.55, color: TEXT, margin: 0 }}>{c.diagnosis}</p>
+        </div>
+        {/* body */}
+        <div style={{ padding: '0.6rem 2rem 2rem' }}>
           {c.business_consequence && (
             <Sec title="Why it matters">
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', lineHeight: 1.6, color: TEXT, margin: 0 }}>{c.business_consequence}</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', lineHeight: 1.65, color: TEXT, margin: 0 }}>{c.business_consequence}</p>
             </Sec>
           )}
           <Sec title={verify ? 'What we need' : 'Recommendation'}>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', fontWeight: 600, lineHeight: 1.55, color: TEXT, margin: 0 }}>{c.recommendation}</p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.9rem', fontWeight: 600, lineHeight: 1.6, color: TEXT, margin: 0 }}>{c.recommendation}</p>
             {rec.targeting?.canonical_page && (
-              <code style={{ display: 'inline-block', marginTop: '0.6rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: TEXT, background: BG, padding: '4px 10px', borderRadius: 4, border: '1px solid ' + BORDER, wordBreak: 'break-all' }}>{rec.targeting.canonical_page}</code>
+              <code style={{ display: 'inline-block', marginTop: '0.65rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: TEXT, background: BG, padding: '4px 10px', borderRadius: 4, border: '1px solid ' + BORDER, wordBreak: 'break-all' }}>{rec.targeting.canonical_page}</code>
             )}
           </Sec>
           {c.expected_result && (
             <Sec title="Expected outcome">
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', lineHeight: 1.6, color: TEXT, margin: 0 }}>{c.expected_result}</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', lineHeight: 1.65, color: TEXT, margin: 0 }}>{c.expected_result}</p>
             </Sec>
           )}
           {Array.isArray(m.behavioural_claims) && m.behavioural_claims.length > 0 && (
             <Sec title="Guest behaviour (Google Analytics)">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
                 {m.behavioural_claims.map((b: any, j: number) => (
-                  <div key={j} style={{ padding: '0.6rem 0.85rem', background: BG, borderRadius: 6, border: '1px solid ' + BORDER }}>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', lineHeight: 1.55, color: TEXT, margin: 0 }}>{b.claim}</p>
+                  <div key={j} style={{ padding: '0.7rem 0.95rem', background: BG, borderRadius: 6, border: '1px solid ' + BORDER }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.84rem', lineHeight: 1.6, color: TEXT, margin: 0 }}>{b.claim}</p>
                   </div>
                 ))}
               </div>
@@ -2966,12 +3000,12 @@ function PriorityCard({ m, i, open, onToggle }: any) {
           )}
           {Array.isArray(rec.review_evidence) && rec.review_evidence.length > 0 && (
             <Sec title="Official reviews">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
                 {rec.review_evidence.map((f: any, j: number) => (
-                  <div key={j} style={{ padding: '0.65rem 0.85rem', background: BG, borderRadius: 6, border: '1px solid ' + BORDER }}>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', fontWeight: 500, lineHeight: 1.5, color: TEXT, margin: 0 }}>{f.claim}</p>
+                  <div key={j} style={{ padding: '0.75rem 0.95rem', background: BG, borderRadius: 6, border: '1px solid ' + BORDER }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.84rem', fontWeight: 500, lineHeight: 1.55, color: TEXT, margin: 0 }}>{f.claim}</p>
                     {Array.isArray(f.representative_quotes) && f.representative_quotes.length > 0 && (
-                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT_MUTED, margin: '0.4rem 0 0' }}>&ldquo;{f.representative_quotes[0].text}&rdquo;</p>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: TEXT_MUTED, margin: '0.45rem 0 0' }}>&ldquo;{f.representative_quotes[0].text}&rdquo;</p>
                     )}
                   </div>
                 ))}
@@ -2981,39 +3015,39 @@ function PriorityCard({ m, i, open, onToggle }: any) {
           {((proof.quotes?.length || proof.failed_questions?.length || rec.technical?.causes?.length) > 0) && (
             <Sec title="Supporting evidence">
               {proof.quotes?.length > 0 && (
-                <div style={{ marginBottom: (proof.failed_questions?.length || rec.technical?.causes?.length) ? '1rem' : 0 }}>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 0.45rem' }}>From your website</p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <div style={{ marginBottom: (proof.failed_questions?.length || rec.technical?.causes?.length) ? '1.1rem' : 0 }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 0.5rem' }}>From your website</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
                     {proof.quotes.map((q: any, j: number) => (
-                      <div key={j} style={{ padding: '0.55rem 0.8rem', background: BG, borderRadius: 6, border: '1px solid ' + BORDER }}>
-                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: TEXT, margin: 0 }}>&ldquo;{q.quote}&rdquo;{q.page && <span style={{ color: TEXT_MUTED }}> — {q.page}</span>}</p>
+                      <div key={j} style={{ padding: '0.6rem 0.85rem', background: BG, borderRadius: 6, border: '1px solid ' + BORDER }}>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, margin: 0 }}>&ldquo;{q.quote}&rdquo;{q.page && <span style={{ color: TEXT_MUTED }}> — {q.page}</span>}</p>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
               {proof.failed_questions?.length > 0 && (
-                <div style={{ marginBottom: rec.technical?.causes?.length ? '1rem' : 0 }}>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 0.45rem' }}>Guest questions AI can&rsquo;t answer today</p>
-                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                <div style={{ marginBottom: rec.technical?.causes?.length ? '1.1rem' : 0 }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 0.5rem' }}>Guest questions AI can&rsquo;t answer today</p>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                     {proof.failed_questions.map((q: string, j: number) => (
-                      <li key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, paddingLeft: '0.9rem', position: 'relative' }}><span style={{ position: 'absolute', left: 0, color: TEXT_MUTED }}>•</span>{q}</li>
+                      <li key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, paddingLeft: '0.9rem', position: 'relative' }}><span style={{ position: 'absolute', left: 0, color: TEXT_MUTED }}>•</span>{q}</li>
                     ))}
                   </ul>
                 </div>
               )}
               {!verify && rec.technical?.causes?.length > 0 && (
                 <div>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 0.45rem' }}>What&rsquo;s making AI hesitate</p>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 0.5rem' }}>What&rsquo;s making AI hesitate</p>
                   {rec.technical.causes.map((t: any, j: number) => (
-                    <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', lineHeight: 1.5, color: TEXT, margin: j ? '0.4rem 0 0' : 0 }}>{t.fix}</p>
+                    <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', lineHeight: 1.55, color: TEXT, margin: j ? '0.4rem 0 0' : 0 }}>{t.fix}</p>
                   ))}
                 </div>
               )}
             </Sec>
           )}
         </div>
-      )}
+      </div>
     </div>
   )
 }
@@ -3102,18 +3136,21 @@ function ActivityPanel({ memory }: any) {
       {memory.fixed?.length > 0 && (
         <div style={{ marginBottom: '1rem' }}>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: ADV_GREEN_C, margin: '0 0 0.5rem' }}>Recently resolved</p>
-          {memory.fixed.slice(0, 5).map((k: string, i: number) => (
-            <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT, margin: '0.25rem 0', lineHeight: 1.45, display: 'flex', gap: '0.45rem' }}><span style={{ color: ADV_GREEN_C }}>✓</span><span>{humanizeKey(k)}</span></p>
-          ))}
+          <div style={{ maxHeight: 140, overflowY: 'auto', paddingRight: '0.3rem' }}>
+            {memory.fixed.map((k: string, i: number) => (
+              <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT, margin: '0.25rem 0', lineHeight: 1.45, display: 'flex', gap: '0.45rem' }}><span style={{ color: ADV_GREEN_C, flexShrink: 0 }}>✓</span><span>{humanizeKey(k)}</span></p>
+            ))}
+          </div>
         </div>
       )}
       {memory.stillOpen?.length > 0 && (
         <div>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: ADV_AMBER, margin: '0 0 0.5rem' }}>Still open (top)</p>
-          {memory.stillOpen.slice(0, 4).map((f: any, i: number) => (
-            <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT_MUTED, margin: '0.25rem 0', lineHeight: 1.45, display: 'flex', gap: '0.45rem' }}><span style={{ color: ADV_AMBER }}>•</span><span>{f.title}</span></p>
-          ))}
-          {memory.stillOpen.length > 4 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT_MUTED, margin: '0.4rem 0 0', fontStyle: 'italic' }}>+ {memory.stillOpen.length - 4} more</p>}
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: ADV_AMBER, margin: '0 0 0.5rem' }}>Still open ({memory.stillOpen.length})</p>
+          <div style={{ maxHeight: 180, overflowY: 'auto', paddingRight: '0.3rem' }}>
+            {memory.stillOpen.map((f: any, i: number) => (
+              <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT_MUTED, margin: '0.25rem 0', lineHeight: 1.45, display: 'flex', gap: '0.45rem' }}><span style={{ color: ADV_AMBER, flexShrink: 0 }}>•</span><span>{f.title}</span></p>
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -3160,12 +3197,15 @@ function AdvisorV2Body({ adv, memory, hotel }: any) {
 
   return (
     <div>
+      {openCase !== null && cases[openCase] && (
+        <CaseModal m={cases[openCase]} i={openCase} onClose={() => setOpenCase(null)} />
+      )}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))', gap: '1.25rem', alignItems: 'start', marginBottom: '2rem' }}>
         <div>
           <AdvSectionLabel title="Strategic Priorities" />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
             {cases.map((m: any, i: number) => (
-              <PriorityCard key={i} m={m} i={i} open={openCase === i} onToggle={() => setOpenCase(openCase === i ? null : i)} />
+              <PriorityCard key={i} m={m} i={i} onOpen={() => setOpenCase(i)} />
             ))}
           </div>
           {Array.isArray(adv.emerging_opportunities) && adv.emerging_opportunities.length > 0 && (
@@ -3235,120 +3275,6 @@ function AdvisorV2Body({ adv, memory, hotel }: any) {
           </div>
         </div>
       )}
-    </div>
-  )
-}
-
-// ── EXECUTION INBOX — review queue for generated artifacts (FAQs now; schema/pages later) ──
-function InboxTab({ hotel }: any) {
-  const [items, setItems] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [edits, setEdits] = useState<Record<string, string>>({})
-  const [openEv, setOpenEv] = useState<string | null>(null)
-  const [busy, setBusy] = useState<string | null>(null)
-  const [msg, setMsg] = useState('')
-
-  const load = async () => {
-    if (!hotel?.id) { setLoading(false); return }
-    try {
-      const { createClient } = await import('@supabase/supabase-js')
-      const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-      const { data } = await sb.from('execution_queue').select('*').eq('hotel_id', hotel.id).eq('status', 'suggested').order('created_at', { ascending: false })
-      setItems(data || [])
-    } catch {} finally { setLoading(false) }
-  }
-  useEffect(() => { load() }, [hotel?.id])
-
-  const sb = async () => { const { createClient } = await import('@supabase/supabase-js'); return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!) }
-
-  const accept = async (item: any) => {
-    setBusy(item.id)
-    const client = await sb()
-    const finalAnswer = edits[item.id] !== undefined ? edits[item.id] : item.answer
-    const wasEdited = edits[item.id] !== undefined && edits[item.id] !== item.answer
-    // Mark as accepted in the queue. This is RECOMMENDED content for the hotel's
-    // OWN website — SwissNet does not publish it anywhere. The hotel copies it onto
-    // their official site (e.g. their /meetings page).
-    await client.from('execution_queue').update({ status: 'accepted', edited: wasEdited, answer: finalAnswer, reviewed_at: new Date().toISOString(), approved_at: new Date().toISOString() }).eq('id', item.id)
-    setItems(prev => prev.filter(x => x.id !== item.id))
-    setMsg('Marked as ready. Copy this onto your official website to improve your AI visibility.'); setBusy(null); setTimeout(() => setMsg(''), 4500)
-  }
-  const reject = async (item: any) => {
-    setBusy(item.id)
-    const client = await sb()
-    await client.from('execution_queue').update({ status: 'rejected', reviewed_at: new Date().toISOString() }).eq('id', item.id)
-    setItems(prev => prev.filter(x => x.id !== item.id))
-    setMsg('Rejected.'); setBusy(null); setTimeout(() => setMsg(''), 3000)
-  }
-
-  const typeLabel = (t: string) => t === 'faq' ? 'FAQ' : t
-  const actionLabel = (a: string, t: string) => a && t ? `${a.replace(/_/g, ' ')} · ${t}` : (a || '').replace(/_/g, ' ')
-
-  return (
-    <div>
-      {/* HERO */}
-      <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 18, padding: '2.75rem 3.25rem', marginBottom: '1.75rem', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: -40, right: -40, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,169,76,0.08) 0%, transparent 70%)' }} />
-        <div style={{ position: 'relative' }}>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.75)', margin: '0 0 0.75rem' }}>Execution Inbox · Generated for your review</p>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.9rem', fontWeight: 300, color: WHITE, margin: '0 0 0.6rem', lineHeight: 1.3 }}>{items.length > 0 ? `${items.length} item${items.length === 1 ? '' : 's'} ready to review` : 'Nothing waiting'}</p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.65, maxWidth: 560 }}>SwissNet wrote these recommendations from your advisory, grounded only in confirmed facts about your hotel. Review, edit if you like, then copy them onto your official website to improve how AI assistants describe you.</p>
-        </div>
-      </div>
-
-      {msg && <div style={{ background: GREEN + '12', border: '1px solid ' + GREEN + '30', borderRadius: 8, padding: '0.85rem 1.25rem', marginBottom: '1.25rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: GREEN }}>{msg}</div>}
-
-      {loading && <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}><p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', color: TEXT_MUTED, margin: 0 }}>Loading your inbox…</p></div>}
-
-      {!loading && items.length === 0 && (
-        <div style={{ background: WHITE, border: '1px dashed ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', color: TEXT, margin: '0 0 0.5rem' }}>Your inbox is empty</p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6, maxWidth: 440, marginLeft: 'auto', marginRight: 'auto' }}>When SwissNet generates new content from your advisory, it appears here for your approval before anything goes live.</p>
-        </div>
-      )}
-
-      {!loading && items.map(item => {
-        const edited = edits[item.id] !== undefined
-        const ev = Array.isArray(item.evidence_used) ? item.evidence_used : []
-        return (
-          <div key={item.id} style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '0.95rem' }}>
-            <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG, display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, color: GOLD, background: GOLD_LIGHT, border: '1px solid rgba(201,169,76,0.3)', borderRadius: 4, padding: '0.2rem 0.6rem', textTransform: 'uppercase' }}>{typeLabel(item.artifact_type)}</span>
-              {item.decision_action && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>from {actionLabel(item.decision_action, item.decision_target)}</span>}
-              <span style={{ flex: 1 }} />
-              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED }}>{item.created_at ? new Date(item.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''}</span>
-            </div>
-            <div style={{ padding: '1.25rem 1.5rem' }}>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.3rem' }}>Question</p>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 1rem', lineHeight: 1.4 }}>{item.question}</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.3rem' }}>Answer {edited && <span style={{ color: GOLD }}>· edited</span>}</p>
-              <textarea value={edited ? edits[item.id] : item.answer} onChange={e => setEdits(p => ({ ...p, [item.id]: e.target.value }))} rows={4} style={{ width: '100%', fontFamily: 'Montserrat, sans-serif', fontSize: '0.84rem', color: TEXT, border: '1px solid ' + BORDER, borderRadius: 8, padding: '0.75rem 1rem', background: BG, outline: 'none', boxSizing: 'border-box', resize: 'vertical', lineHeight: 1.6 }} />
-
-              {ev.length > 0 && (
-                <div style={{ marginTop: '0.85rem' }}>
-                  <button onClick={() => setOpenEv(openEv === item.id ? null : item.id)} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 600, color: '#3b82f6', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
-                    {openEv === item.id ? '▾' : '▸'} Evidence used ({ev.length})
-                  </button>
-                  {openEv === item.id && (
-                    <div style={{ marginTop: '0.5rem', background: BG, borderRadius: 8, padding: '0.85rem 1.1rem', borderLeft: '3px solid #3b82f6' }}>
-                      {ev.map((e: any, j: number) => (
-                        <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: TEXT_MUTED, margin: '0.25rem 0', lineHeight: 1.5, fontStyle: 'italic' }}>“{e.quote}”{e.page && <span style={{ fontStyle: 'normal' }}> — {e.page}</span>}</p>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.1rem' }}>
-                <button onClick={() => { navigator.clipboard?.writeText(`Q: ${item.question}\nA: ${edited ? edits[item.id] : item.answer}`); setMsg('Copied — paste this into your website.'); setTimeout(() => setMsg(''), 3000) }} style={{ background: GOLD, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, padding: '0.55rem 1.25rem', border: 'none', borderRadius: 6, cursor: 'pointer' }}>⧉ Copy for my website</button>
-                <button onClick={() => accept(item)} disabled={busy === item.id} style={{ background: GREEN, color: WHITE, fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, padding: '0.55rem 1.25rem', border: 'none', borderRadius: 6, cursor: 'pointer', opacity: busy === item.id ? 0.6 : 1 }}>{busy === item.id ? 'Working…' : '✓ Mark as done'}</button>
-                <button onClick={() => reject(item)} disabled={busy === item.id} style={{ background: 'transparent', color: RED, fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 600, padding: '0.55rem 1.1rem', border: '1px solid ' + RED + '40', borderRadius: 6, cursor: 'pointer' }}>Dismiss</button>
-                {edited && <button onClick={() => setEdits(p => { const n = { ...p }; delete n[item.id]; return n })} style={{ background: 'transparent', color: TEXT_MUTED, fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', padding: '0.55rem 1rem', border: '1px solid ' + BORDER, borderRadius: 6, cursor: 'pointer' }}>Undo edit</button>}
-              </div>
-            </div>
-          </div>
-        )
-      })}
     </div>
   )
 }
@@ -3792,7 +3718,6 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
       { id: 'competitors', label: 'Competitors' },
     ] },
     { heading: 'Improve', items: [
-      { id: 'inbox', label: '✦ Execution Inbox', minTier: 2 },
       { id: 'advisor', label: '✦ AI Advisor', minTier: 2 },
       { id: 'schema', label: 'SwissNet Profile', minTier: 2 },
       { id: 'website', label: 'Official Website', minTier: 2 },
@@ -3861,7 +3786,6 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
               {tab === 'schema' && '✦ SwissNet Profile'}
 {tab === 'optimise' && '✦ Optimise'}
 {tab === 'website' && '✦ Official Website'}
-{tab === 'inbox' && '✦ Execution Inbox'}
 {tab === 'advisor' && '✦ AI Advisor'}
 {tab === 'citations' && '✦ Citation Sources'}
 {tab === 'reports' && 'Reports'}
@@ -3875,7 +3799,6 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
               {tab === 'schema' && 'AI readiness score and content recommendations'}
 {tab === 'optimise' && 'Manage your content and FAQs'}
 {tab === 'website' && 'Build AI visibility on your own official site'}
-{tab === 'inbox' && 'Review and approve content SwissNet generated for you'}
 {tab === 'advisor' && 'Your strategic brief, reasoned from what AI knows about you'}
 {tab === 'citations' && 'Where AI gets its answers — and where to get listed'}
 {tab === 'reports' && 'Compare your performance month over month'}
@@ -4433,7 +4356,6 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
         {tab === 'citations' && (
           <CitationSourcesTab hotelName={hotelName} hotelRegion={hotelRegion} hotelId={hotel?.id} />
         )}
-        {tab === 'inbox' && <InboxTab hotel={hotel} />}
         {tab === 'website' && <WebsiteTab hotel={hotel} />}
         {tab === 'advisor' && <AdvisorTab hotel={hotel} />}
 
