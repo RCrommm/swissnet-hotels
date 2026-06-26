@@ -35,5 +35,20 @@ export interface ExternalSignal {
   authority_gaps: { entity: string; external_richness: string; action: string }[]
   third_party_owned: { question: string; owned_by: string }[]
 }
-export interface BehavioralSignal { landing_sessions: number | null; exit_rate: number | null; conversion_rate: number | null }
+export interface BehavioralSignal {
+  // Current period — what guests do on this Case's pages now.
+  landing_sessions: number | null     // sessions landing on affected_pages
+  exit_rate: number | null            // % who leave from these pages
+  conversion_rate: number | null      // % of those sessions that convert (booking event)
+  // #1 — AI assistants are already sending real visitors here.
+  ai_referred_sessions: number | null // sessions whose source is an AI assistant (chatgpt.com, perplexity.ai, gemini.google.com, etc.)
+  // #3 — before/after a fix shipped (needs two date ranges + a known fix date).
+  previous_period: {
+    landing_sessions: number | null
+    conversion_rate: number | null
+  } | null
+  // Provenance so the Case can cite which GA4 paths it measured (no invention).
+  measured_pages: string[]            // the GA4 page paths that matched affected_pages
+  period_days: number | null          // window length used for the current pull
+}
 export interface SearchSignal { impressions: number | null; ctr: number | null; top_queries: string[] }
