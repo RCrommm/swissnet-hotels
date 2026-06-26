@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { classifyFacts, summarizeClean } from '@/lib/clean-extraction'
+import { buildInventory } from '@/lib/page-discovery'
 
 export const maxDuration = 300
 const CRAWL_LIMIT = 18
@@ -226,7 +227,9 @@ export async function POST(req: Request) {
     const sitemapUrls = await discoverSitemap(origin, apiKey)
     const homeLinks = extractLinks(homeHtml, origin)
     const candidates = Array.from(new Set([url, ...sitemapUrls, ...homeLinks]))
-    const toRead = selectPages(candidates, url, CRAWL_LIMIT)
+    // SHARED PAGE DISCOVERY: one canonical inventory for the whole website (Brain + Audit use the same selected list)
+    const inventory = buildInventory(url, candidates)
+    const toRead = inventory.selected
 
     const htmls = await pool(toRead, 5, async (u) => ({ url: u, html: u === url ? homeHtml : await getPage(u, apiKey, state) }))
     const pages = htmls.filter(h => h.html).map(h => ({ url: h.url, headings: extractHeadings(h.html as string), text: extractText(h.html as string) }))
