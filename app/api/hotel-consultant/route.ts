@@ -218,6 +218,42 @@ function reconcileEvidenceState(move: any, knowledgeGraph: any): { evidence_stat
   return { evidence_state: gptState, evidence_reason: move?.evidence_reason || (gptState === 'confirmed' ? 'confirmed_facts' : 'insufficient_evidence') }
 }
 
+// ─── DECISION → MOVE (Step 2): board decisions drive the moves, GPT only explains ───
+const DM_CONFIRMED = new Set(['Commit', 'Convert', 'Fix-foundation'])
+const DM_BUILD_TYPE: Record<string, string> = { consolidate: 'Section on existing page', add_schema: 'FAQ only', strengthen: 'Section on existing page', verify: 'Section on existing page', investigate: 'Section on existing page', fix_trust: 'FAQ only' }
+const DM_EFFORT: Record<string, string> = { consolidate: 'Medium', add_schema: 'Low', strengthen: 'Medium', verify: 'Low', investigate: 'Low', fix_trust: 'Low' }
+const DM_QRE: Record<string, RegExp> = { rooms: /(rooms?|suite|luxury)/i, dining: /(dining|restaurant|vegan|menu|tea)/i, meetings: /(business|meeting|corporate|event)/i, location: /(location|attraction|near|transport)/i, weddings: /(romantic|wedding)/i, spa: /(spa|wellness)/i, family: /(family)/i }
+function decisionToMove(decision: any, knowledgeGraph: any, auditBrief: any, technical: any): any {
+  const cluster = (knowledgeGraph?.clusters || []).find((c: any) => c.topic === decision.topic) || null
+  const evidence_state = DM_CONFIRMED.has(decision.posture) ? 'confirmed' : 'unverified'
+  const evidence_reason = evidence_state === 'confirmed' ? 'confirmed_facts' : (cluster?.cluster_state === 'absent' ? 'absent' : 'contaminated')
+  let sections: string[] = [], questions: string[] = []
+  if (evidence_state === 'confirmed') {
+    if (decision.posture === 'Fix-foundation') {
+      sections = (technical?.findings || []).filter((f: any) => f.action === 'add_schema').map((f: any) => f.fix).slice(0, 3)
+    } else {
+      const qre = DM_QRE[decision.topic]
+      questions = (auditBrief?.unanswered || []).filter((q: string) => qre && qre.test(q)).slice(0, 5)
+      if (decision.action_intent === 'consolidate') sections = [`Consolidate all ${decision.label.toLowerCase()} content onto one canonical page`]
+      else if (decision.action_intent === 'add_schema') sections = ['Add structured schema', ...questions.slice(0, 2)]
+      else sections = questions.slice(0, 3)
+    }
+  }
+  return {
+    title: decision.headline,
+    what_to_build: decision.rationale,
+    why_this_priority: decision.rationale,
+    evidence_state, evidence_reason,
+    build_type: DM_BUILD_TYPE[decision.action_intent] || 'Section on existing page',
+    effort: DM_EFFORT[decision.action_intent] || 'Medium',
+    confidence: decision.certainty >= 0.85 ? 'High' : decision.certainty >= 0.5 ? 'Medium' : 'Low',
+    sections_to_add: sections,
+    questions_to_answer: questions,
+    evidence: [],
+    posture: decision.posture,
+  }
+}
+
 // Which page "topics" the site already has, derived from the URLs the Brain crawled.
 const PAGE_TOPICS: { topic: string; re: RegExp }[] = [
   { topic: 'meetings & events', re: /(meeting|event|conference|baptist)/i },
@@ -369,6 +405,14 @@ ${techLines.length ? techLines.join('\n') : '(no technical gaps flagged)'}`
     const c = data?.choices?.[0]?.message?.content
     if (!c) return NextResponse.json({ error: 'Consultant produced no output' }, { status: 502 })
     const advisory = JSON.parse(c)
+    // ─── STRATEGIC DECISION LAYER (V4): the board's decisions DRIVE the moves. ───
+    // GPT no longer SELECTS recommendations — it only explains the ones the platform chose.
+    try { advisory.decision_board = selectStrategicDecisions(knowledgeGraph, technical, latestAuditResult) } catch { advisory.decision_board = null }
+    if (advisory.decision_board?.decisions?.length) {
+      advisory.top_moves = advisory.decision_board.decisions.map((dec: any) => decisionToMove(dec, knowledgeGraph, auditBrief, technical))
+      advisory.declined = advisory.decision_board.declined || null
+      advisory.deferred = advisory.decision_board.deferred || []
+    }
     // ─── DECISION LAYER: deterministically attach a concrete action to each move ───
     // Execute consumes move.decision.action / .target / .generate mechanically.
     const pagesScraped = Array.from(new Set((facts || []).map((f: any) => f.page_url || '').filter(Boolean)))
@@ -430,9 +474,7 @@ ${techLines.length ? techLines.join('\n') : '(no technical gaps flagged)'}`
     advisory.visibility_model = visibilityModel
     advisory.knowledge_graph = knowledgeGraph
     advisory.technical_readiness = technical
-    // STRATEGIC DECISION LAYER (Step 1): compute + attach for inspection only.
-    // Does NOT yet drive move selection — that is Step 2.
-    try { advisory.decision_board = selectStrategicDecisions(knowledgeGraph, technical, latestAuditResult) } catch { advisory.decision_board = null }
+    
 
     // Persist so the AI Advisor tab can read the latest instantly (no GPT on open)
     await sb.from('hotel_consultant').insert({
