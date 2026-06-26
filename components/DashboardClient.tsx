@@ -3307,6 +3307,103 @@ function AdvisorTab({ hotel }: any) {
   )
 }
 
+// ── GA4 ANALYTICS CONNECTION CARD ─────────────────────────────────────────────
+// The hotel pastes our shared service-account email as a Viewer on their GA4
+// property, enters their Property ID, and clicks Connect. The route runs one real
+// test-pull to confirm access. Status is stored on the hotels row (ga4_status).
+const GA4_SERVICE_ACCOUNT = 'swissnet-ga4-reader@swissnet-ga4.iam.gserviceaccount.com' // PLACEHOLDER — replace with real service-account email once Google Cloud is set up
+
+function Ga4ConnectCard({ hotel }: any) {
+  const [propertyId, setPropertyId] = useState<string>(hotel?.ga4_property_id || '')
+  const [status, setStatus] = useState<string>(hotel?.ga4_status || 'not_connected')
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState('')
+  const [copied, setCopied] = useState(false)
+
+  const connected = status === 'connected'
+  const error = status === 'error'
+
+  const statusPill = () => {
+    if (connected) return { txt: 'Connected', col: GREEN, bg: GREEN + '15', bd: GREEN + '30' }
+    if (error) return { txt: 'Connection failed', col: RED, bg: RED + '12', bd: RED + '30' }
+    if (status === 'pending') return { txt: 'Checking…', col: '#d97706', bg: '#d9770612', bd: '#d9770630' }
+    return { txt: 'Not connected', col: TEXT_MUTED, bg: BG, bd: BORDER }
+  }
+  const pill = statusPill()
+
+  const copyEmail = () => {
+    navigator.clipboard?.writeText(GA4_SERVICE_ACCOUNT)
+    setCopied(true); setTimeout(() => setCopied(false), 2000)
+  }
+
+  const connect = async () => {
+    const id = propertyId.trim().replace(/[^0-9]/g, '')
+    if (!id) { setMsg('Enter your GA4 Property ID (a number like 123456789).'); setTimeout(() => setMsg(''), 4000); return }
+    setBusy(true); setMsg(''); setStatus('pending')
+    try {
+      const res = await fetch('/api/ga4-connect', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hotelId: hotel?.id, propertyId: id, password: 'RCrom2004Romeo' }),
+      })
+      const j = await res.json()
+      if (res.ok && j?.status === 'connected') {
+        setStatus('connected')
+        setMsg(`Connected — we read ${j.sampleSessions ?? 0} sessions from the last 7 days.`)
+      } else {
+        setStatus('error')
+        setMsg(j?.error || 'We could not read your property. Confirm you added the email as a Viewer, then try again.')
+      }
+    } catch (e: any) {
+      setStatus('error')
+      setMsg(e?.message || 'Request failed. Try again in a moment.')
+    } finally {
+      setBusy(false)
+      setTimeout(() => setMsg(''), 7000)
+    }
+  }
+
+  return (
+    <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, overflow: 'hidden', marginBottom: '1rem' }}>
+      <div style={{ padding: '1rem 1.5rem', background: BG, borderBottom: '1px solid ' + BORDER, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: 0 }}>Connect Google Analytics</p>
+        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, color: pill.col, background: pill.bg, border: '1px solid ' + pill.bd, padding: '3px 10px', borderRadius: 20 }}>{pill.txt}</span>
+      </div>
+      <div style={{ padding: '1.25rem 1.5rem' }}>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT_MUTED, margin: '0 0 1.1rem', lineHeight: 1.7 }}>
+          Connecting GA4 lets SwissNet see how real guests behave on the pages we recommend — so each recommendation can be backed by actual traffic and booking activity. Your data stays read-only and private to your dashboard.
+        </p>
+
+        {/* Step 1 — add our email */}
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Step 1 · Give us read access</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.6 }}>
+          In Google Analytics, open <strong>Admin → Property Access Management</strong>, click <strong>+</strong>, and add this email as a <strong>Viewer</strong>:
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+          <code style={{ fontFamily: 'monospace', fontSize: '0.68rem', color: TEXT, background: BG, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.5rem 0.75rem', flex: 1, minWidth: 220, wordBreak: 'break-all' }}>{GA4_SERVICE_ACCOUNT}</code>
+          <button onClick={copyEmail} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: copied ? GREEN : TEXT_MUTED, background: WHITE, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.5rem 0.9rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>{copied ? '✓ Copied' : 'Copy email'}</button>
+        </div>
+
+        {/* Step 2 — property id */}
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Step 2 · Enter your Property ID</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.6 }}>
+          Find it in <strong>Admin → Property Settings</strong> — it’s a number like <code style={{ fontFamily: 'monospace', fontSize: '0.62rem', background: BG, padding: '1px 5px', borderRadius: 4 }}>123456789</code>.
+        </p>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <input
+            value={propertyId}
+            onChange={e => setPropertyId(e.target.value)}
+            placeholder="e.g. 123456789"
+            style={{ flex: 1, minWidth: 180, fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.55rem 0.875rem', background: BG, outline: 'none', boxSizing: 'border-box' }}
+          />
+          <button onClick={connect} disabled={busy} style={{ background: GOLD, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, padding: '0.55rem 1.4rem', border: 'none', borderRadius: 6, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.7 : 1, whiteSpace: 'nowrap' }}>{busy ? 'Connecting…' : connected ? 'Reconnect' : 'Connect'}</button>
+        </div>
+
+        {msg && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: error ? RED : connected ? GREEN : TEXT_MUTED, margin: '0.9rem 0 0', lineHeight: 1.6 }}>{msg}</p>}
+      </div>
+    </div>
+  )
+}
+
 // ── MAIN DASHBOARD ────────────────────────────────────────────────────────────
 
 export default function DashboardClient({ hotel, views, clicks, leads, aiVisibility, googleAiScores, bookings, competitors, hotelCatScores, platformScores, overviewRunData, myRankChange, marketAverages, crawlerCount, accessHotels, activeHotelId, tier }: any) {
@@ -4267,6 +4364,9 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
                 ))}
               </div>
             </div>
+            {/* ── GA4 ANALYTICS CONNECTION ── */}
+            <Ga4ConnectCard hotel={hotel} />
+
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, overflow: 'hidden', marginBottom: '1rem' }}>
               <div style={{ padding: '1rem 1.5rem', background: BG, borderBottom: '1px solid ' + BORDER }}>
                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: 0 }}>Your SwissNet Pages</p>
