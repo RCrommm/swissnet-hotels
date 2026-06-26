@@ -20,7 +20,7 @@ export interface LinkSignals {
   missingClusterLinks: { fromTopic: string; toTopic: string }[]
 }
 
-const norm = (u: string) => (u || '').replace(/\/$/, '').toLowerCase()
+const norm = (u: any) => (typeof u === 'string' ? u : '').replace(/\/$/, '').toLowerCase()
 
 const HIGH_VALUE = new Set(['rooms', 'dining', 'spa', 'meetings', 'weddings', 'offers'])
 const RELATED_PAIRS: [string, string][] = [
@@ -128,7 +128,8 @@ export function computeLinkSignals(homepage: string, edges: LinkEdge[], clusters
   }
 }
 
-function absolutize(page: string, homepage: string): string {
+function absolutize(page: any, homepage: string): string {
+  if (typeof page !== 'string' || !page) return ''
   if (/^https?:\/\//.test(page)) return page
   try { const o = new URL(homepage); return o.origin + (page.startsWith('/') ? page : '/' + page) } catch { return page }
 }
