@@ -6,7 +6,7 @@ import { buildVisibilityModel } from '@/lib/visibility-model'
 import { buildKnowledgeGraph } from '@/lib/knowledge-graph'
 import { buildTechnicalReadiness } from '@/lib/technical-readiness'
 import { assembleRecommendation } from '@/lib/recommendation'
-import { PROSE_SYSTEM, proseSchema, buildProseInput } from '@/lib/recommendation-prose'
+import { PROSE_SYSTEM, proseSchema, buildProseInput, OPENING_SYSTEM, openingSchema, buildOpeningInput, attachSequence } from '@/lib/recommendation-prose'
 
 export const maxDuration = 120
 
@@ -404,6 +404,25 @@ ${techLines.length ? techLines.join('\n') : '(no technical gaps flagged)'}`
           if (pc) m.recommendation.prose = JSON.parse(pc)
         } catch { m.recommendation.prose = null }
       }))
+
+      // 5) STAGE 3 — sequence labels/transitions (deterministic) + one grounded opening paragraph
+      attachSequence(advisory.top_moves)
+      try {
+        const or = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
+          body: JSON.stringify({
+            model: 'gpt-4o', temperature: 0.3, max_tokens: 300,
+            response_format: { type: 'json_schema', json_schema: { name: 'opening', strict: true, schema: openingSchema() } },
+            messages: [
+              { role: 'system', content: OPENING_SYSTEM },
+              { role: 'user', content: 'Computed briefing inputs:\n' + buildOpeningInput(visibilityModel, advisory.top_moves) + '\n\nReturn only the JSON.' },
+            ],
+          }),
+        })
+        const od = await or.json()
+        const oc = od?.choices?.[0]?.message?.content
+        if (oc) advisory.briefing_opening = JSON.parse(oc).opening
+      } catch { advisory.briefing_opening = null }
     }
     const basedOn = { facts: (facts || []).length, findings: findings.length }
     // attach the visibility model + knowledge graph onto the advisory so it stores with it

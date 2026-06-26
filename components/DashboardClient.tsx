@@ -2874,153 +2874,190 @@ function HistoryPanel({ hotel }: any) {
 }
 
 function AdvisorV2Body({ adv }: any) {
-  const confColor = (c: string) => c === 'High' ? GREEN : c === 'Medium' ? '#d97706' : TEXT_MUTED
-  const buildTypeColor = (t: string) => /new page/i.test(t) ? GOLD : '#3b82f6'
-  const effortColor = (e: string) => e === 'Low' ? GREEN : e === 'High' ? '#d97706' : TEXT_MUTED
-  // A move is "unverified" when it's a verify-don't-create recommendation —
-  // the consultant frames these with confirm/verify language because the audit
-  // never crawled a page for the topic. Surfacing this keeps the UI honest.
-  const isUnverified = (m: any) => {
-    const blob = `${m.title || ''} ${m.why_this_priority || ''} ${m.why_ai_cares || ''}`.toLowerCase()
-    return /\b(could not verify|couldn't verify|cannot verify|can't verify|confirm whether|verify whether|unverified|we could not confirm|couldn't confirm)\b/.test(blob)
+  const [focus, setFocus] = useState(0)
+  const moves = (adv.top_moves || []).filter((m: any) => m.recommendation)
+
+  // fallback: if no assembled recommendations yet (old advisory), show nothing fancy
+  if (!moves.length) {
+    return (
+      <div style={{ background: WHITE, border: '1px dashed ' + BORDER, borderRadius: 14, padding: '2.5rem', textAlign: 'center' }}>
+        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', color: TEXT, margin: '0 0 0.4rem' }}>Regenerate to see your briefing</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6 }}>This advisory predates the new recommendation format. Click Regenerate above to produce your guided strategy briefing.</p>
+      </div>
+    )
   }
+
+  const ACTION_LABEL: Record<string, string> = {
+    strengthen_page: 'Strengthen your existing page',
+    create_page: 'Create a new page',
+    add_section: 'Add a section to this page',
+    add_faq: 'Add an FAQ',
+    add_schema: 'Add structured data',
+    verify: 'Confirm this offering',
+    investigate: 'Resolve conflicting information',
+    do_nothing: 'No action needed',
+  }
+  const BAND_WORD: Record<string, string> = { strong: 'Strongly understood by AI', moderate: 'Moderately understood by AI', weak: 'Barely understood by AI', absent: 'Invisible to AI' }
+  const bandCol = (band: string) => band === 'strong' ? GREEN : band === 'moderate' ? '#9A7B2E' : TEXT_MUTED
+  const AMBER = '#9A7B2E'
+
+  const EvidenceChip = ({ verify }: { verify: boolean }) => (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', padding: '4px 11px', borderRadius: 100, color: verify ? AMBER : GREEN, background: verify ? 'rgba(154,123,46,0.10)' : 'rgba(63,125,91,0.10)', border: `1px solid ${verify ? 'rgba(154,123,46,0.30)' : 'rgba(63,125,91,0.25)'}` }}>
+      {verify ? 'We couldn\u2019t verify this' : 'Confirmed'}
+    </span>
+  )
+
+  const Sec = ({ title, children }: any) => (
+    <div style={{ paddingTop: '1.25rem', borderTop: '1px solid ' + BORDER, marginTop: '1.25rem' }}>
+      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.6rem' }}>{title}</p>
+      {children}
+    </div>
+  )
+
   return (
     <>
-      {adv.one_line_priority && (
-        <div style={{ background: GOLD_LIGHT, border: `1px solid rgba(201,169,76,0.3)`, borderLeft: `3px solid ${GOLD}`, borderRadius: 10, padding: '1.25rem 1.5rem', marginBottom: '1.5rem' }}>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.4rem' }}>This month's priority</p>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.35rem', color: TEXT, margin: 0, lineHeight: 1.4 }}>{adv.one_line_priority}</p>
-        </div>
+      {/* GROUNDED OPENING */}
+      {adv.briefing_opening && (
+        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.35rem', fontWeight: 400, lineHeight: 1.5, color: 'rgba(42,26,14,0.82)', margin: '0 0 1.5rem', maxWidth: '60ch' }}>{adv.briefing_opening}</p>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem', marginBottom: '1.5rem' }}>
-        <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.5rem 1.75rem' }}>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: GREEN, margin: '0 0 0.9rem' }}>What AI understands</p>
-          {(adv.ai_understands || []).map((s: string, i: number) => (
-            <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, margin: '0 0 0.55rem', lineHeight: 1.55, display: 'flex', gap: '0.5rem' }}><span style={{ color: GREEN }}>✓</span><span>{s}</span></p>
-          ))}
-        </div>
-        <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.5rem 1.75rem' }}>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#d97706', margin: '0 0 0.9rem' }}>What AI cannot connect</p>
-          {(adv.ai_cannot_connect || []).map((s: string, i: number) => (
-            <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, margin: '0 0 0.55rem', lineHeight: 1.55, display: 'flex', gap: '0.5rem' }}><span style={{ color: '#d97706' }}>›</span><span>{s}</span></p>
-          ))}
-        </div>
-      </div>
+      {moves.map((m: any, i: number) => {
+        const rec = m.recommendation
+        const p = rec.prose || {}
+        const verify = rec.evidence_state !== 'confirmed'
+        const focused = focus === i
+        const dim = rec.ai_identity?.[0]
+        const bucketCol = rec.bucket === 'Quick Win' ? GREEN : AMBER
 
-      {adv.work_plan && (adv.work_plan.quick_wins?.length || adv.work_plan.strategic_projects?.length) && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem', marginBottom: '1.5rem' }}>
-          <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.5rem 1.75rem' }}>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: GREEN, margin: '0 0 0.9rem' }}>⚡ Quick wins</p>
-            {(adv.work_plan.quick_wins || []).map((s: string, i: number) => (
-              <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.5, display: 'flex', gap: '0.5rem' }}><span style={{ color: GREEN }}>›</span><span>{s}</span></p>
-            ))}
-          </div>
-          <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.5rem 1.75rem' }}>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.9rem' }}>Strategic projects</p>
-            {(adv.work_plan.strategic_projects || []).map((s: string, i: number) => (
-              <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.5, display: 'flex', gap: '0.5rem' }}><span style={{ color: GOLD }}>›</span><span>{s}</span></p>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.9rem' }}>Your priorities this month</p>
-      {(adv.top_moves || []).map((m: any, i: number) => (
-        <div key={i} style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '0.95rem' }}>
-          <div style={{ padding: '1.25rem 1.75rem', borderBottom: '1px solid ' + BORDER, background: BG, display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ width: 34, height: 34, borderRadius: '50%', background: `linear-gradient(135deg, ${GOLD} 0%, #b8923f 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 600, color: WHITE }}>{m.priority ?? i + 1}</span>
+        // COLLAPSED — resting headline (still shows consequence)
+        if (!focused) {
+          return (
+            <div key={i}>
+              {rec.transition && <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.05rem', fontStyle: 'italic', color: 'rgba(42,26,14,0.4)', margin: '1.5rem 0 0.6rem' }}>{rec.transition}</p>}
+              <button onClick={() => setFocus(i)} style={{ width: '100%', textAlign: 'left', cursor: 'pointer', border: `1px solid ${verify ? 'rgba(42,26,14,0.10)' : BORDER}`, background: verify ? 'rgba(42,26,14,0.015)' : WHITE, borderRadius: 14, padding: '1.1rem 1.4rem', display: 'block', marginBottom: '0.4rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem' }}>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase', color: 'rgba(42,26,14,0.4)' }}>{rec.step}</span>
+                  <span style={{ flex: 1 }} />
+                  <EvidenceChip verify={verify} />
+                </div>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', fontWeight: 500, lineHeight: 1.2, color: verify ? 'rgba(42,26,14,0.72)' : TEXT, margin: '0 0 0.35rem' }}>{rec.title}</p>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', lineHeight: 1.5, color: TEXT_MUTED, margin: 0 }}>{p.executive_summary}</p>
+              </button>
             </div>
-            <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.45rem', color: TEXT, flex: 1 }}>{m.title}</span>
-            <span style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
-              {isUnverified(m) && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: '#d97706', background: '#d9770612', border: '1px solid #d97706', borderRadius: 4, padding: '0.2rem 0.6rem' }} title="We could not confirm this offering from your site — verify it before building.">⚠ Unverified</span>}
-              {m.build_type && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: buildTypeColor(m.build_type), border: '1px solid ' + buildTypeColor(m.build_type), borderRadius: 4, padding: '0.2rem 0.6rem' }}>{m.build_type}</span>}
-              {m.confidence && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: confColor(m.confidence), border: '1px solid ' + confColor(m.confidence), borderRadius: 4, padding: '0.2rem 0.6rem' }}>{m.confidence}</span>}
-              {m.effort && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: TEXT_MUTED, border: '1px solid ' + BORDER, borderRadius: 4, padding: '0.2rem 0.6rem' }}>{m.effort} effort</span>}
-            </span>
-          </div>
-          <div style={{ padding: '1.25rem 1.75rem' }}>
-            {m.why_this_priority && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.84rem', color: TEXT, margin: '0 0 0.85rem', lineHeight: 1.65 }}><strong>Why now:</strong> {m.why_this_priority}</p>}
+          )
+        }
 
-            {m.why_ai_cares && (
-              <div style={{ background: BG, borderRadius: 10, padding: '1rem 1.25rem', marginBottom: '0.85rem', borderLeft: '3px solid #3b82f6' }}>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3b82f6', margin: '0 0 0.4rem' }}>Why AI cares</p>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, margin: 0, lineHeight: 1.6 }}>{m.why_ai_cares}</p>
+        // FOCUSED — full depth
+        return (
+          <div key={i}>
+            {rec.transition && <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontStyle: 'italic', color: TEXT_MUTED, margin: '1.75rem 0 0.7rem' }}>{rec.transition}</p>}
+            <div style={{ border: `1px solid ${verify ? 'rgba(154,123,46,0.35)' : BORDER}`, background: verify ? 'rgba(154,123,46,0.035)' : WHITE, borderRadius: 18, overflow: 'hidden', boxShadow: verify ? 'none' : '0 6px 28px rgba(42,26,14,0.07)', marginBottom: '0.4rem' }}>
+              <div style={{ padding: '1.5rem 1.85rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: GOLD }}>{rec.step}</span>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: bucketCol, background: bucketCol + '18', padding: '3px 10px', borderRadius: 100 }}>{rec.bucket}</span>
+                  <span style={{ flex: 1 }} />
+                  <EvidenceChip verify={verify} />
+                </div>
+
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.9rem', fontWeight: 500, lineHeight: 1.15, color: TEXT, margin: '0 0 0.75rem' }}>{rec.title}</p>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.9rem', lineHeight: 1.6, color: 'rgba(42,26,14,0.78)', margin: '0 0 1.4rem', maxWidth: '60ch' }}>{p.executive_summary}</p>
+
+                {/* ACTION BLOCK */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.1rem', padding: '0.9rem 1.1rem', borderRadius: 12, background: verify ? 'rgba(154,123,46,0.07)' : GOLD_LIGHT, border: `1px solid ${BORDER}` }}>
+                  <div>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.2rem' }}>{verify ? 'What we need' : 'Recommended action'}</p>
+                    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', fontWeight: 600, color: TEXT, margin: 0 }}>{ACTION_LABEL[rec.decision?.action] || 'Review'}</p>
+                  </div>
+                  {rec.decision?.target && (<>
+                    <div style={{ width: 1, alignSelf: 'stretch', background: BORDER }} />
+                    <div>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.2rem' }}>Target</p>
+                      <code style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', fontWeight: 600, color: TEXT }}>{rec.decision.target}</code>
+                    </div>
+                  </>)}
+                </div>
               </div>
-            )}
 
-            {m.what_to_build && (
-              <div style={{ background: BG, borderRadius: 10, padding: '1rem 1.25rem', marginBottom: '0.85rem' }}>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.4rem' }}>Build this</p>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.84rem', color: TEXT, margin: '0 0 0.6rem', lineHeight: 1.55 }}>{m.what_to_build}</p>
-                {m.sections_to_add?.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                    {m.sections_to_add.map((s: string, j: number) => <span key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT, background: WHITE, border: '1px solid ' + BORDER, borderRadius: 20, padding: '0.3rem 0.8rem' }}>{s}</span>)}
+              <div style={{ padding: '0 1.85rem 1.75rem' }}>
+                {/* 1. Why we recommend this — woven narrative */}
+                <Sec title="Why we recommend this">
+                  <div style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.84rem', lineHeight: 1.65, color: 'rgba(42,26,14,0.80)' }}>
+                    {p.why_improves_ai && <p style={{ margin: '0 0 0.75rem' }}>{p.why_improves_ai}</p>}
+                    {p.strategic_explanation && <p style={{ margin: 0 }}>{p.strategic_explanation}</p>}
+                  </div>
+                </Sec>
+
+                {/* 2. How AI currently understands this */}
+                {(rec.knowledge_graph?.explanation || dim || rec.affected_pages?.length > 0) && (
+                  <Sec title="How AI currently understands this">
+                    {rec.knowledge_graph?.explanation && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.84rem', lineHeight: 1.65, color: 'rgba(42,26,14,0.80)', margin: '0 0 0.85rem' }}>{rec.knowledge_graph.explanation}</p>}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                      {dim && (
+                        <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: '0.5rem' }}>
+                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: TEXT_MUTED }}>{dim.label}</span>
+                          <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', fontWeight: 600, color: bandCol(dim.band) }}>{dim.score}</span>
+                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: 'rgba(42,26,14,0.4)' }}>{BAND_WORD[dim.band]}</span>
+                        </span>
+                      )}
+                      {rec.affected_pages?.length > 0 && (
+                        <span style={{ display: 'inline-flex', gap: '0.4rem', alignItems: 'center', marginLeft: 'auto', flexWrap: 'wrap' }}>
+                          {rec.affected_pages.map((pg: string) => <code key={pg} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT, background: GOLD_LIGHT, padding: '3px 8px', borderRadius: 6, border: '1px solid ' + BORDER }}>{pg}</code>)}
+                        </span>
+                      )}
+                    </div>
+                  </Sec>
+                )}
+
+                {/* 3. What AI still can't answer */}
+                {rec.questions_unanswered?.length > 0 && (
+                  <Sec title="What AI still can&rsquo;t answer">
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {rec.questions_unanswered.map((q: string, j: number) => (
+                        <li key={j} style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.05rem', color: TEXT, paddingLeft: '1rem', position: 'relative' }}>
+                          <span style={{ position: 'absolute', left: 0, color: GOLD }}>&ldquo;</span>{q.replace(/^\[(NO|PARTIAL|YES)\]\s*/, '').replace(/\s*\([a-z]+\)\s*$/, '')}
+                        </li>
+                      ))}
+                    </ul>
+                  </Sec>
+                )}
+
+                {/* 4. What's limiting AI today — technical, confirmed only */}
+                {!verify && rec.technical?.length > 0 && (
+                  <Sec title="What&rsquo;s limiting AI today">
+                    {rec.technical.map((t: any, j: number) => (
+                      <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', lineHeight: 1.55, color: 'rgba(42,26,14,0.80)', margin: j ? '0.5rem 0 0' : 0 }}>{t.fix}</p>
+                    ))}
+                  </Sec>
+                )}
+
+                {/* 5. Why we're confident — evidence */}
+                {rec.evidence?.length > 0 && (
+                  <Sec title="Why we&rsquo;re confident">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {rec.evidence.map((e: string, j: number) => (
+                        <p key={j} style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', fontStyle: 'italic', color: 'rgba(42,26,14,0.74)', margin: 0, paddingLeft: '0.9rem', borderLeft: '2px solid ' + GOLD }}>{e}</p>
+                      ))}
+                    </div>
+                  </Sec>
+                )}
+
+                {/* What this makes possible — promoted outcome */}
+                {p.expected_outcome && (
+                  <div style={{ marginTop: '1.5rem', padding: '1.1rem 1.25rem', borderRadius: 12, background: 'rgba(42,26,14,0.03)' }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.4rem' }}>What this makes possible</p>
+                    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', fontWeight: 500, lineHeight: 1.4, color: TEXT, margin: 0 }}>{p.expected_outcome}</p>
                   </div>
                 )}
               </div>
-            )}
-
-            {m.implementation_steps?.length > 0 && (
-              <div style={{ marginBottom: '0.85rem' }}>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.5rem' }}>How to build it</p>
-                {m.implementation_steps.map((s: string, j: number) => (
-                  <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, margin: '0.3rem 0', lineHeight: 1.5, display: 'flex', gap: '0.6rem' }}>
-                    <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '0.95rem', color: GOLD, fontWeight: 700, flexShrink: 0 }}>{j + 1}</span><span>{s}</span>
-                  </p>
-                ))}
-              </div>
-            )}
-
-            {m.questions_to_answer?.length > 0 && (
-              <div style={{ marginBottom: '0.85rem' }}>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Questions it should answer</p>
-                {m.questions_to_answer.map((q: string, j: number) => <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, margin: '0.2rem 0', lineHeight: 1.5, display: 'flex', gap: '0.5rem' }}><span style={{ color: GOLD }}>›</span><span>{q}</span></p>)}
-              </div>
-            )}
-
-            {m.affected_searches?.length > 0 && (
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: GREEN, margin: '0 0 0.5rem', lineHeight: 1.55 }}><strong>Unlocks:</strong> {m.affected_searches.join('  ·  ')}</p>
-            )}
-
-            {m.success_criteria && (
-              <div style={{ background: GREEN + '0c', borderRadius: 10, padding: '0.85rem 1.25rem', margin: '0.5rem 0 0.85rem', borderLeft: '3px solid ' + GREEN }}>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: GREEN, margin: '0 0 0.35rem' }}>✓ You'll know it worked when</p>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, margin: 0, lineHeight: 1.55 }}>{m.success_criteria}</p>
-              </div>
-            )}
-
-            {m.expected_ai_effect && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.55, fontStyle: 'italic' }}>{m.expected_ai_effect}</p>}
-
-            {m.evidence?.length > 0 && (
-              <div style={{ marginTop: '0.85rem', paddingTop: '0.85rem', borderTop: '1px solid ' + BORDER }}>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.3rem' }}>Based on</p>
-                {m.evidence.map((e: string, j: number) => <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', color: TEXT_MUTED, margin: '0.12rem 0', lineHeight: 1.4 }}>{e}</p>)}
-              </div>
-            )}
-          </div>
-        </div>
-      ))}
-
-      {adv.next_opportunities?.length > 0 && (
-        <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.5rem 1.75rem', marginTop: '0.5rem', marginBottom: '1rem' }}>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.9rem' }}>After these — your next opportunities</p>
-          {adv.next_opportunities.map((o: any, i: number) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.85rem', padding: '0.7rem 0', borderBottom: i < adv.next_opportunities.length - 1 ? '1px solid ' + BORDER : 'none' }}>
-              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, color: effortColor(o.effort), border: '1px solid ' + effortColor(o.effort), borderRadius: 4, padding: '0.2rem 0.5rem', flexShrink: 0, marginTop: '0.1rem', textTransform: 'uppercase' }}>{o.effort}</span>
-              <div>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', fontWeight: 600, color: TEXT, margin: 0 }}>{o.title}</p>
-                {o.why && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT_MUTED, margin: '0.15rem 0 0', lineHeight: 1.45 }}>{o.why}</p>}
-              </div>
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        )
+      })}
 
       {adv.what_not_to_do_yet && (
-        <div style={{ background: GOLD_LIGHT, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${GOLD}`, borderRadius: 10, padding: '1.5rem 1.75rem', marginTop: '0.5rem' }}>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.5rem' }}>Don't do this yet</p>
+        <div style={{ background: GOLD_LIGHT, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${GOLD}`, borderRadius: 10, padding: '1.5rem 1.75rem', marginTop: '1.25rem' }}>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.5rem' }}>Don&rsquo;t do this yet</p>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.84rem', color: TEXT, margin: 0, lineHeight: 1.7 }}>{adv.what_not_to_do_yet}</p>
         </div>
       )}

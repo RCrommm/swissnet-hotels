@@ -55,3 +55,38 @@ export function buildProseInput(rec: any): string {
     evidence: rec?.evidence,
   }, null, 1)
 }
+// ─── BRIEFING OPENING — one grounded paragraph from deterministic inputs only ───
+export const OPENING_SYSTEM = `You are a senior AI-visibility consultant opening a strategy briefing for a luxury hotel. Write ONE paragraph (2-4 sentences) that situates today's recommendations in how AI currently perceives the hotel. You are given ONLY computed values: an overall AI-visibility score, which dimensions are strong vs weak, the number of recommendations, and how many need confirming. Use ONLY these. NEVER invent revenue, traffic, competitors, bookings, or any context not in the data. If something isn't in the inputs, don't say it. End by pointing to where to start. Plain, confident, specific to this hotel's numbers. No fluff, no generic consultant-speak. Return STRICTLY: {"opening": string}`;
+
+export function openingSchema() {
+  return { type: 'object', additionalProperties: false, required: ['opening'], properties: { opening: { type: 'string' } } };
+}
+
+export function buildOpeningInput(visibilityModel: any, recommendations: any[]): string {
+  const dims = (visibilityModel?.dimensions || []).map((d: any) => ({ label: d.label, score: d.score, band: d.band }));
+  const strong = dims.filter((d: any) => d.band === 'strong').map((d: any) => d.label);
+  const weak = dims.filter((d: any) => d.band === 'weak' || d.band === 'absent').map((d: any) => d.label);
+  const verifyCount = recommendations.filter((r: any) => (r.recommendation?.evidence_state || r.evidence_state) !== 'confirmed').length;
+  return JSON.stringify({
+    overall_ai_visibility: visibilityModel?.overall,
+    strong_dimensions: strong,
+    weak_dimensions: weak,
+    total_recommendations: recommendations.length,
+    needs_confirming: verifyCount,
+  }, null, 1);
+}
+
+// Deterministic transitions + step labels, derived from bucket sequence (no GPT).
+const STEP_BY_INDEX = ['Start here', 'Then', 'After that', 'Also'];
+const TRANSITION_BY_BUCKET: Record<string, string> = {
+  Foundation: 'Before anything else \u2014',
+  'Quick Win': 'Once that\u2019s confirmed, the fastest win is already within reach \u2014',
+  Strategic: 'With the foundations in place, the longer-term build \u2014',
+};
+export function attachSequence(moves: any[]): void {
+  moves.forEach((m: any, i: number) => {
+    if (!m.recommendation) return;
+    m.recommendation.step = STEP_BY_INDEX[i] || 'Also';
+    m.recommendation.transition = i === 0 ? null : (TRANSITION_BY_BUCKET[m.recommendation.bucket] || 'Then \u2014');
+  });
+}
