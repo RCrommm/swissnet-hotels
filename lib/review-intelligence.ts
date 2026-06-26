@@ -133,3 +133,52 @@ export function gateAndPhrase(themes: any[]): ReviewFinding[] {
   // Strongest evidence first (most-supported themes lead).
   return out.sort((a, b) => b.support_count - a.support_count)
 }
+// ── CASE MAPPING ──
+// Routes gated findings to either (a) an existing Case (by topic) as enrichment,
+// or (b) Emerging Opportunities (observational, no recommendation). Review
+// Intelligence NEVER creates a Case — the Decision Layer owns those exclusively.
+
+// Review-engine topics → Decision-Layer Case topics. Only listed mappings can
+// attach to a Case; anything else (or no matching Case present) → Emerging.
+const REVIEW_TOPIC_TO_CASE: Record<string, string[]> = {
+  dining: ['dining'],
+  rooms: ['rooms'],
+  spa: ['spa'],
+  family: ['family'],
+  romantic: ['weddings'],
+  business: ['meetings'],
+  location: ['location'],
+  // facilities / service / value / cleanliness / other have no clean Case topic
+  // → these route to Emerging Opportunities, never force-attached.
+}
+
+export interface ReviewMappingResult {
+  // findingsByCaseTopic: Case topic → findings that enrich it
+  attached: Record<string, ReviewFinding[]>
+  // emerging: strong findings with no matching Case (observational only)
+  emerging: ReviewFinding[]
+}
+
+/**
+ * Map gated findings onto the Cases present in this advisory.
+ * @param findings  output of gateAndPhrase
+ * @param caseTopics the topics of the Cases that actually exist this run
+ */
+export function mapFindingsToCases(findings: ReviewFinding[], caseTopics: string[]): ReviewMappingResult {
+  const present = new Set((caseTopics || []).map(t => (t || '').toLowerCase()))
+  const attached: Record<string, ReviewFinding[]> = {}
+  const emerging: ReviewFinding[] = []
+
+  for (const f of findings || []) {
+    const candidates = REVIEW_TOPIC_TO_CASE[f.topic] || []
+    const match = candidates.find(c => present.has(c))
+    if (match) {
+      if (!attached[match]) attached[match] = []
+      attached[match].push(f)
+    } else {
+      // No matching Case → observational context. Decision Layer may promote later.
+      emerging.push(f)
+    }
+  }
+  return { attached, emerging }
+}
