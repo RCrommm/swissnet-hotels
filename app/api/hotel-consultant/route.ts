@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { classifyFacts, summarizeClean } from '@/lib/clean-extraction'
 import { classifyGap, inferTopic } from '@/lib/evidence'
 import { decideAction } from '@/lib/decision'
 import { buildVisibilityModel } from '@/lib/visibility-model'

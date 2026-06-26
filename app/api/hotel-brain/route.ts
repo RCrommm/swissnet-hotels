@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { classifyFacts, summarizeClean } from '@/lib/clean-extraction'
 
 export const maxDuration = 300
 const CRAWL_LIMIT = 18
@@ -235,10 +236,14 @@ export async function POST(req: Request) {
     let allFacts: any[] = factBatches.flat()
     const confirmed = allFacts.filter(f => f && (f.evidence_quote || '').trim().length > 0 && Number(f.confidence) >= 80)
 
+    // De-duplicate identical (category + fact_key + value)
     const seen = new Set<string>()
     const facts = confirmed.filter(f => { const k = `${f.category}|${f.fact_key}|${f.fact_value}`.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true })
 
-    const knowledge = summarize(facts)
+    // CLEAN EXTRACTION (2B): tag transient pages + conditionally down-weight so
+    // utility pages don't become primary knowledge (contaminated-only topics preserved).
+    classifyFacts(facts)
+    const knowledge = summarizeClean(facts)
 
     let brainId: string | null = null
     if (sbUrl && sbKey) {
@@ -249,7 +254,7 @@ export async function POST(req: Request) {
         }).select('id').single()
         if (brain) {
           brainId = brain.id
-          const rows = facts.map(f => ({ brain_id: brain.id, hotel_id: hotelId || null, category: f.category, fact_key: f.fact_key, fact_value: f.fact_value, page_url: f.page_url || '', evidence_quote: f.evidence_quote || '', confidence: f.confidence }))
+          const rows = facts.map(f => ({ brain_id: brain.id, hotel_id: hotelId || null, category: f.category, fact_key: f.fact_key, fact_value: f.fact_value, page_url: f.page_url || '', evidence_quote: f.evidence_quote || '', confidence: f.confidence, transient: !!f.transient, down_weighted: !!f.down_weighted }))
           if (rows.length) for (let i = 0; i < rows.length; i += 100) await sb.from('hotel_facts').insert(rows.slice(i, i + 100))
         }
       } catch {}
