@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { classifyFacts, summarizeClean } from '@/lib/clean-extraction'
 import { classifyGap, inferTopic } from '@/lib/evidence'
 import { decideAction } from '@/lib/decision'
 import { buildVisibilityModel } from '@/lib/visibility-model'
 import { buildKnowledgeGraph } from '@/lib/knowledge-graph'
 import { buildTechnicalReadiness } from '@/lib/technical-readiness'
+import { selectStrategicDecisions } from '@/lib/recommendation-selection'
 import { assembleRecommendation } from '@/lib/recommendation'
 import { PROSE_SYSTEM, proseSchema, buildProseInput, OPENING_SYSTEM, openingSchema, buildOpeningInput, attachSequence } from '@/lib/recommendation-prose'
 
@@ -430,6 +430,9 @@ ${techLines.length ? techLines.join('\n') : '(no technical gaps flagged)'}`
     advisory.visibility_model = visibilityModel
     advisory.knowledge_graph = knowledgeGraph
     advisory.technical_readiness = technical
+    // STRATEGIC DECISION LAYER (Step 1): compute + attach for inspection only.
+    // Does NOT yet drive move selection — that is Step 2.
+    try { advisory.decision_board = selectStrategicDecisions(knowledgeGraph, technical, latestAuditResult) } catch { advisory.decision_board = null }
 
     // Persist so the AI Advisor tab can read the latest instantly (no GPT on open)
     await sb.from('hotel_consultant').insert({
