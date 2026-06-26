@@ -2931,9 +2931,23 @@ function AdvisorV2Body({ adv }: any) {
 
             {/* CASE HEADER — always visible. Diagnosis is the headline. */}
             <button onClick={() => setOpenCase(open ? null : i)} style={{ width: '100%', textAlign: 'left', cursor: 'pointer', background: 'transparent', border: 'none', padding: '1.5rem 1.75rem', display: 'block' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', marginBottom: '0.7rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', marginBottom: '0.7rem', flexWrap: 'wrap' }}>
                 <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(42,26,14,0.45)' }}>Case {String(i + 1).padStart(2, '0')}</span>
                 <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED }}>{lead}</span>
+                {(() => {
+                  const h = rec.history
+                  if (!h || !h.status) return null
+                  const map: Record<string, { txt: string; col: string }> = {
+                    new: { txt: 'New this month', col: BLUE },
+                    continuing: { txt: 'Continuing from last audit', col: TEXT_MUTED },
+                    improving: { txt: h.changed_metrics?.posture_shift ? `Moved ${h.changed_metrics.posture_shift}` : 'Improving since last audit', col: GREEN_C },
+                    evolved: { txt: h.changed_metrics?.posture_shift ? `Evolved ${h.changed_metrics.posture_shift}` : 'Evolved since last audit', col: GOLD },
+                    regressed: { txt: 'Needs attention since last audit', col: AMBER },
+                  }
+                  const t = map[h.status]
+                  if (!t) return null
+                  return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 600, letterSpacing: '0.04em', color: t.col, background: t.col + '14', padding: '3px 9px', borderRadius: 100 }}>{t.txt}</span>
+                })()}
                 <span style={{ flex: 1 }} />
                 <Confidence verify={verify} />
               </div>
@@ -3007,6 +3021,23 @@ function AdvisorV2Body({ adv }: any) {
           </div>
         )
       })}
+
+    {/* COMPLETED SINCE LAST AUDIT — resolved cases (work that paid off) */}
+      {adv.continuity && !adv.continuity.isFirstRun && adv.continuity.resolved && adv.continuity.resolved.length > 0 && (
+        <div style={{ padding: '1.25rem 1.75rem', border: '1px solid rgba(63,125,91,0.25)', borderRadius: 14, background: 'rgba(63,125,91,0.04)' }}>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: GREEN_C, margin: '0 0 0.6rem' }}>Completed since last audit</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {adv.continuity.resolved.map((d: any, i: number) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: '0.6rem' }}>
+                <span style={{ color: GREEN_C, fontSize: '0.9rem', flexShrink: 0 }}>✓</span>
+                <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT }}>{d.label}</span>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED }}>— now considered complete</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
 
       {/* DECISION BOUNDARY — deliberately declined */}
       {adv.declined && adv.declined.labels && adv.declined.labels.length > 0 && (

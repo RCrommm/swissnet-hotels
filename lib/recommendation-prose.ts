@@ -56,23 +56,47 @@ export function buildProseInput(rec: any): string {
   }, null, 1)
 }
 // ─── BRIEFING OPENING — one grounded paragraph from deterministic inputs only ───
-export const OPENING_SYSTEM = `You are a senior AI-visibility consultant opening a strategy briefing for a luxury hotel. Write ONE paragraph (2-4 sentences) that situates today's recommendations in how AI currently perceives the hotel. You are given ONLY computed values: an overall AI-visibility score, which dimensions are strong vs weak, the number of recommendations, and how many need confirming. Use ONLY these. NEVER invent revenue, traffic, competitors, bookings, or any context not in the data. If something isn't in the inputs, don't say it. End by pointing to where to start. Plain, confident, specific to this hotel's numbers. No fluff, no generic consultant-speak. Return STRICTLY: {"opening": string}`;
+export const OPENING_SYSTEM = `You are a senior hospitality strategy consultant opening this month's briefing for a luxury hotel's General Manager. Write ONE short paragraph (2-3 sentences) — the first thing the GM reads.
+
+It must feel bespoke to THIS hotel and read like a boutique consultancy wrote it, not software.
+
+RULES:
+- NEVER mention scores, numbers, percentages, dimensions, or any metric. No "your AI visibility is 50". No "X recommendations". The GM should not see a single number.
+- NEVER use implementation language: no "knowledge graph", "canonical page", "retrieval", "answerability", "schema", "score". The subject of every sentence is the HOTEL, not AI or the platform.
+- Connect the hotel's STRENGTH to its biggest OPPORTUNITY in one memorable line. Example shape: "AI already understands [hotel]'s [strength] exceptionally well. The biggest opportunity now is [opportunity, in plain hotel language]."
+- CONTINUITY: if "progress_since_last" inputs are present, OPEN by acknowledging progress before stating this month's focus. Example: "Since last month, your rooms have improved and your dining story has moved from opportunity to strength. This month, the next focus is [X]." Use only the progress facts provided — never invent improvement.
+- If it is the first audit (is_first_run true), do NOT claim past progress; simply open with the strength-and-opportunity line.
+- Plain, confident, warm, specific. No generic consultant-speak. No fluff.
+
+Return STRICTLY: {"opening": string}`;
 
 export function openingSchema() {
   return { type: 'object', additionalProperties: false, required: ['opening'], properties: { opening: { type: 'string' } } };
 }
 
-export function buildOpeningInput(visibilityModel: any, recommendations: any[]): string {
-  const dims = (visibilityModel?.dimensions || []).map((d: any) => ({ label: d.label, score: d.score, band: d.band }));
+export function buildOpeningInput(visibilityModel: any, recommendations: any[], continuity?: any, hotelName?: string): string {
+  const dims = (visibilityModel?.dimensions || []).map((d: any) => ({ label: d.label, band: d.band }));
   const strong = dims.filter((d: any) => d.band === 'strong').map((d: any) => d.label);
   const weak = dims.filter((d: any) => d.band === 'weak' || d.band === 'absent').map((d: any) => d.label);
-  const verifyCount = recommendations.filter((r: any) => (r.recommendation?.evidence_state || r.evidence_state) !== 'confirmed').length;
+  // the lead opportunity, in plain hotel words: the first Commit/Convert/Strengthen topic
+  const leadMove = recommendations.find((r: any) => ['Convert', 'Commit', 'Strengthen', 'Fix-foundation'].includes(r.posture)) || recommendations[0];
+  const leadTopic = leadMove?.canonicalRecommendation?.targeting?.affected_entity || leadMove?.topic || null;
+
+  // continuity progress in plain words (only improving/resolved/evolved — the good news)
+  let progress_since_last: any = null;
+  if (continuity && !continuity.isFirstRun) {
+    const improved = (continuity.active || []).filter((c: any) => c.status === 'improving' || c.status === 'evolved').map((c: any) => ({ topic: c.label, summary: c.summary }));
+    const completed = (continuity.resolved || []).map((c: any) => c.label);
+    if (improved.length || completed.length) progress_since_last = { improved, completed };
+  }
+
   return JSON.stringify({
-    overall_ai_visibility: visibilityModel?.overall,
-    strong_dimensions: strong,
-    weak_dimensions: weak,
-    total_recommendations: recommendations.length,
-    needs_confirming: verifyCount,
+    hotel_name: hotelName || null,
+    is_first_run: continuity ? !!continuity.isFirstRun : true,
+    strong_areas: strong,
+    opportunity_areas: weak,
+    lead_opportunity: leadTopic,
+    progress_since_last,
   }, null, 1);
 }
 

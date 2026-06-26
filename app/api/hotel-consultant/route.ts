@@ -489,6 +489,23 @@ ${techLines.length ? techLines.join('\n') : '(no technical gaps flagged)'}`
         try { if (m.canonicalRecommendation) m.canonicalRecommendation.case = await buildCase(m.canonicalRecommendation, openaiKey) } catch {}
       }))
 
+      // 4b) CONTINUITY — compute BEFORE the opening so the briefing can acknowledge progress.
+      // Topic = durable Case identity; posture = chapter. Compares this advisory vs the previous.
+      try {
+        const continuity = computeContinuity(previousAdvisory, advisory, { prevDate: previousAdvisoryDate || undefined })
+        advisory.continuity = continuity
+        for (const m of advisory.top_moves) {
+          const topic = m.topic || m.canonicalRecommendation?.targeting?.topic
+          const cc = continuity.active.find((x: any) => x.topic === topic)
+          if (cc && m.canonicalRecommendation) {
+            m.canonicalRecommendation.history = {
+              status: cc.status, previous_posture: cc.previous_posture, current_posture: cc.current_posture,
+              first_seen: cc.first_seen, last_seen: cc.last_seen, summary: cc.summary, changed_metrics: cc.changed_metrics,
+            }
+          }
+        }
+      } catch {}
+
       // 5) STAGE 3 — sequence labels/transitions (deterministic) + one grounded opening paragraph
       attachSequence(advisory.top_moves)
       try {
@@ -499,7 +516,7 @@ ${techLines.length ? techLines.join('\n') : '(no technical gaps flagged)'}`
             response_format: { type: 'json_schema', json_schema: { name: 'opening', strict: true, schema: openingSchema() } },
             messages: [
               { role: 'system', content: OPENING_SYSTEM },
-              { role: 'user', content: 'Computed briefing inputs:\n' + buildOpeningInput(visibilityModel, advisory.top_moves) + '\n\nReturn only the JSON.' },
+              { role: 'user', content: 'Computed briefing inputs:\n' + buildOpeningInput(visibilityModel, advisory.top_moves, advisory.continuity, brain.hotel_name) + '\n\nReturn only the JSON.' },
             ],
           }),
         })
@@ -514,29 +531,7 @@ ${techLines.length ? techLines.join('\n') : '(no technical gaps flagged)'}`
     advisory.knowledge_graph = knowledgeGraph
     advisory.technical_readiness = technical
 
-    // ── CONTINUITY: compare this advisory against the previous one (topic = durable Case identity) ──
-    try {
-      const continuity = computeContinuity(previousAdvisory, advisory, { prevDate: previousAdvisoryDate || undefined })
-      advisory.continuity = continuity
-      // attach each topic's status onto its canonical recommendation history slot
-      if (Array.isArray(advisory.top_moves)) {
-        for (const m of advisory.top_moves) {
-          const topic = m.topic || m.canonicalRecommendation?.targeting?.topic
-          const cc = continuity.active.find((x: any) => x.topic === topic)
-          if (cc && m.canonicalRecommendation) {
-            m.canonicalRecommendation.history = {
-              status: cc.status,
-              previous_posture: cc.previous_posture,
-              current_posture: cc.current_posture,
-              first_seen: cc.first_seen,
-              last_seen: cc.last_seen,
-              summary: cc.summary,
-              changed_metrics: cc.changed_metrics,
-            }
-          }
-        }
-      }
-    } catch {}
+    
     
 
     // Persist so the AI Advisor tab can read the latest instantly (no GPT on open)
