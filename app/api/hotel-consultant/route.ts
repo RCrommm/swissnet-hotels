@@ -8,6 +8,8 @@ import { buildTechnicalReadiness } from '@/lib/technical-readiness'
 import { selectStrategicDecisions } from '@/lib/recommendation-selection'
 import { assembleRecommendation } from '@/lib/recommendation'
 import { PROSE_SYSTEM, proseSchema, buildProseInput, OPENING_SYSTEM, openingSchema, buildOpeningInput, attachSequence } from '@/lib/recommendation-prose'
+import { toCanonicalRecommendation } from '@/lib/recommendation-assembler'
+import { buildCase } from '@/lib/recommendation-case'
 
 export const maxDuration = 120
 
@@ -452,6 +454,8 @@ ${techLines.length ? techLines.join('\n') : '(no technical gaps flagged)'}`
         if (m.posture === 'Fix-foundation' && m.decision && m.decision.action === 'add_faq') m.decision.action = 'add_schema'
         // 3) assemble the complete recommendation from the (now honest) state
         try { m.recommendation = assembleRecommendation(m, { visibilityModel, knowledgeGraph, technical, auditBrief }) } catch { m.recommendation = null }
+        // 3b) DORMANT: attach the canonical recommendation object (alongside m.recommendation, nothing reads it yet)
+        try { m.canonicalRecommendation = toCanonicalRecommendation(m, { knowledgeGraph, audit: latestAuditResult, technical, facts: facts || [] }) } catch { m.canonicalRecommendation = null }
       }
       // 4) STAGE 2 — prose: GPT explains each ASSEMBLED object (never raw facts), gated by evidence_state
       await Promise.all(advisory.top_moves.map(async (m: any) => {
@@ -472,6 +476,8 @@ ${techLines.length ? techLines.join('\n') : '(no technical gaps flagged)'}`
           const pc = pd?.choices?.[0]?.message?.content
           if (pc) m.recommendation.prose = JSON.parse(pc)
         } catch { m.recommendation.prose = null }
+        // DORMANT: build the 5-section consulting Case on the canonical object (runs concurrently with prose)
+        try { if (m.canonicalRecommendation) m.canonicalRecommendation.case = await buildCase(m.canonicalRecommendation, openaiKey) } catch {}
       }))
 
       // 5) STAGE 3 — sequence labels/transitions (deterministic) + one grounded opening paragraph
