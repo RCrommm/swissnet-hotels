@@ -3055,10 +3055,32 @@ function AdvisorV2Body({ adv }: any) {
         )
       })}
 
-      {adv.what_not_to_do_yet && (
-        <div style={{ background: GOLD_LIGHT, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${GOLD}`, borderRadius: 10, padding: '1.5rem 1.75rem', marginTop: '1.25rem' }}>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.5rem' }}>Don&rsquo;t do this yet</p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.84rem', color: TEXT, margin: 0, lineHeight: 1.7 }}>{adv.what_not_to_do_yet}</p>
+      {/* EXPLICIT DECISION BOUNDARY — deliberately declined (grouped) */}
+      {adv.declined && adv.declined.labels && adv.declined.labels.length > 0 && (
+        <div style={{ marginTop: '1.75rem', padding: '1.5rem 1.75rem', border: '1px solid ' + BORDER, borderRadius: 14, background: 'rgba(42,26,14,0.02)' }}>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.6rem' }}>Deliberately not pursuing</p>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', fontWeight: 500, color: TEXT, margin: '0 0 0.6rem', lineHeight: 1.25 }}>{adv.declined.labels.join('  ·  ')}</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.65, maxWidth: '62ch' }}>{adv.declined.rationale}</p>
+        </div>
+      )}
+
+      {/* HELD / CONFIRM-FIRST TIER */}
+      {adv.deferred && adv.deferred.length > 0 && (
+        <div style={{ marginTop: '1rem', padding: '1.5rem 1.75rem', border: '1px solid ' + BORDER, borderRadius: 14, background: WHITE }}>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.3rem' }}>Held for a later cycle</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: TEXT_MUTED, margin: '0 0 1rem', lineHeight: 1.6, maxWidth: '62ch' }}>Real opportunities, but lower-value than your three priorities this cycle — or needing confirmation before any investment.</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {adv.deferred.map((d: any, i: number) => {
+              const tag = d.posture === 'Confirm' ? 'Confirm first' : d.posture === 'Defer' ? 'Already strong' : 'Lower priority'
+              const tagCol = d.posture === 'Confirm' ? AMBER : TEXT_MUTED
+              return (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.7rem 1rem', background: BG, borderRadius: 8, border: '1px solid ' + BORDER }}>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', fontWeight: 600, color: TEXT }}>{d.label}</span>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: tagCol, background: tagCol + '14', padding: '3px 10px', borderRadius: 100 }}>{tag}</span>
+                </div>
+              )
+            })}
+          </div>
         </div>
       )}
     </>
