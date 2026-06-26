@@ -4,7 +4,7 @@
 // Output: structural signals about how pages connect, to feed the KG + Decision Layer.
 
 export interface LinkEdge { from_url: string; to_url: string }
-export interface LinkCluster { topic: string; canonical_page: string | null; fact_pages?: string[]; cluster_state?: string; commercial_importance?: string }
+export interface LinkCluster { topic: string; canonical_page: any; fact_pages?: any[]; cluster_state?: string; commercial_importance?: string }
 
 export interface LinkSignals {
   pageCount: number
@@ -21,6 +21,20 @@ export interface LinkSignals {
 }
 
 const norm = (u: any) => (typeof u === 'string' ? u : '').replace(/\/$/, '').toLowerCase()
+
+// Non-content URLs that pollute the link graph: language mirrors, WP REST API, feeds, admin.
+const JUNK_URL = /(\/wp-json\/|\/wp-admin\/|\/feed\/?$|\/fr\/|\/de\/|\/es\/|\/it\/|\/zh\/|\.json($|\?)|\/xmlrpc)/i
+const isJunk = (u: string) => JUNK_URL.test(u)
+function pagePath(fp: any): string {
+  if (typeof fp === 'string') return fp
+  if (fp && typeof fp === 'object' && typeof fp.path === 'string') return fp.path
+  return ''
+}
+function canonPath(c: any): string {
+  if (typeof c === 'string') return c
+  if (c && typeof c === 'object' && typeof c.path === 'string') return c.path
+  return ''
+}
 
 const HIGH_VALUE = new Set(['rooms', 'dining', 'spa', 'meetings', 'weddings', 'offers'])
 const RELATED_PAIRS: [string, string][] = [
@@ -39,6 +53,7 @@ export function computeLinkSignals(homepage: string, edges: LinkEdge[], clusters
   for (const e of edges) {
     const f = norm(e.from_url), t = norm(e.to_url)
     if (!f || !t || f === t) continue
+    if (isJunk(f) || isJunk(t)) continue   // drop language-mirror / wp-json / feed nodes
     pages.add(f); pages.add(t)
     outDeg.set(f, (outDeg.get(f) || 0) + 1)
     inDeg.set(t, (inDeg.get(t) || 0) + 1)
@@ -48,8 +63,7 @@ export function computeLinkSignals(homepage: string, edges: LinkEdge[], clusters
   pages.add(hp)
 
   // HUBS: pages that distribute crawl flow (high out-degree). Homepage is ALWAYS the
-  // primary hub structurally — a crawl may not capture every nav backlink to it, so we
-  // don't let degree-counting demote it.
+  // primary hub structurally — a crawl may not capture every nav backlink to it.
   let hubs = [...pages]
     .map(u => ({ url: u, inDegree: inDeg.get(u) || 0, outDegree: outDeg.get(u) || 0 }))
     .filter(h => h.outDegree >= 5)
@@ -58,13 +72,8 @@ export function computeLinkSignals(homepage: string, edges: LinkEdge[], clusters
   const homeHub = { url: hp, inDegree: inDeg.get(hp) || 0, outDegree: outDeg.get(hp) || 0 }
   hubs = [homeHub, ...hubs.filter(h => h.url !== hp)].slice(0, 5)
 
-  // ORPHANS: pages nothing links to (inDegree 0), excluding the homepage itself
   const orphans = [...pages].filter(u => u !== hp && (inDeg.get(u) || 0) === 0)
 
-  // WEAKLY LINKED: exactly one inbound link AND that link is not the homepage.
-  // A page linked from the homepage nav is well-anchored; a page reachable only from a
-  // single deep page is genuinely fragile (crawler may miss it, AI may not associate it).
-  const homeChildren = adj.get(hp) || new Set<string>()
   const weaklyLinked = [...pages].filter(u => {
     if (u === hp) return false
     if ((inDeg.get(u) || 0) !== 1) return false
@@ -75,8 +84,9 @@ export function computeLinkSignals(homepage: string, edges: LinkEdge[], clusters
 
   const pageTopic = new Map<string, string>()
   for (const c of clusters) {
-    if (c.canonical_page) pageTopic.set(norm(absolutize(c.canonical_page, hp)), c.topic)
-    for (const fp of (c.fact_pages || [])) pageTopic.set(norm(fp), c.topic)
+    const canon = canonPath(c.canonical_page)
+    if (canon) pageTopic.set(norm(absolutize(canon, hp)), c.topic)
+    for (const fp of (c.fact_pages || [])) { const p = pagePath(fp); if (p) pageTopic.set(norm(absolutize(p, hp)), c.topic) }
   }
 
   const orphanWeak = new Set([...orphans, ...weaklyLinked])
@@ -89,29 +99,31 @@ export function computeLinkSignals(homepage: string, edges: LinkEdge[], clusters
   const canonicalNotLinkedFromHome: { topic: string; canonical: string }[] = []
   const buriedTopics: { topic: string; canonical: string; inDegree: number }[] = []
   for (const c of clusters) {
-    if (!c.canonical_page || c.cluster_state === 'absent') continue
-    const canon = norm(absolutize(c.canonical_page, hp))
-    if (!homeOut.has(canon) && canon !== hp) canonicalNotLinkedFromHome.push({ topic: c.topic, canonical: c.canonical_page })
+    const canonRaw = canonPath(c.canonical_page)
+    if (!canonRaw || c.cluster_state === 'absent') continue
+    const canon = norm(absolutize(canonRaw, hp))
+    if (!homeOut.has(canon) && canon !== hp) canonicalNotLinkedFromHome.push({ topic: c.topic, canonical: canonRaw })
     const din = inDeg.get(canon) || 0
-    if (HIGH_VALUE.has(c.topic) && din <= 1) buriedTopics.push({ topic: c.topic, canonical: c.canonical_page, inDegree: din })
+    if (HIGH_VALUE.has(c.topic) && din <= 1) buriedTopics.push({ topic: c.topic, canonical: canonRaw, inDegree: din })
   }
 
   const subtreeBacklinks: LinkSignals['subtreeBacklinks'] = []
   for (const c of clusters) {
-    if (!c.canonical_page || c.cluster_state === 'absent') continue
-    const canon = norm(absolutize(c.canonical_page, hp))
-    const supporting = (c.fact_pages || []).map(norm).filter(u => u !== canon)
+    const canonRaw2 = canonPath(c.canonical_page)
+    if (!canonRaw2 || c.cluster_state === 'absent') continue
+    const canon = norm(absolutize(canonRaw2, hp))
+    const supporting = (c.fact_pages || []).map(pagePath).filter((p: string) => p).map((p: string) => norm(absolutize(p, hp))).filter((u: string) => u !== canon && !isJunk(u))
     if (!supporting.length) continue
     let backlinking = 0; const orphanSupporting: string[] = []
     for (const s of supporting) {
       const sOut = adj.get(s) || new Set<string>()
       if (sOut.has(canon)) backlinking++; else orphanSupporting.push(s)
     }
-    subtreeBacklinks.push({ topic: c.topic, canonical: c.canonical_page, supporting: supporting.length, backlinking, orphanSupporting })
+    subtreeBacklinks.push({ topic: c.topic, canonical: canonRaw2, supporting: supporting.length, backlinking, orphanSupporting })
   }
 
   const byTopic = new Map<string, string>()
-  for (const c of clusters) if (c.canonical_page && c.cluster_state !== 'absent') byTopic.set(c.topic, norm(absolutize(c.canonical_page, hp)))
+  for (const c of clusters) { const cp = canonPath(c.canonical_page); if (cp && c.cluster_state !== 'absent') byTopic.set(c.topic, norm(absolutize(cp, hp))) }
   const missingClusterLinks: { fromTopic: string; toTopic: string }[] = []
   for (const [a, b] of RELATED_PAIRS) {
     const ca = byTopic.get(a), cb = byTopic.get(b)
