@@ -14,6 +14,7 @@ import { computeContinuity } from '@/lib/recommendation-continuity'
 import { fetchGa4Rows } from '@/lib/ga4-fetch'
 import { buildBehavioralSignal } from '@/lib/ga4-behavioral'
 import { deriveBehaviouralClaims } from '@/lib/ga4-insight'
+import { analyzeAndMapReviews } from '@/lib/review-analyze'
 
 export const maxDuration = 120
 
@@ -489,6 +490,46 @@ ${techLines.length ? techLines.join('\n') : '(no technical gaps flagged)'}`
           }
         }
       } catch {}
+
+      // 3d) REVIEW INTELLIGENCE ENRICHMENT (DORMANT until a Review Source exists).
+      // Loads stored reviews, runs the engine ONCE, maps findings to the Cases
+      // present this run. No reviews → skipped, run is unchanged. Reviews NEVER
+      // create a Case — matched findings enrich existing Cases; unmatched strong
+      // findings become Emerging Opportunities (observational).
+      try {
+        const { data: reviewRows } = await sb
+          .from('hotel_reviews')
+          .select('source, rating, review_date, language, text')
+          .eq('hotel_id', hotelId)
+          .limit(200)
+        if (reviewRows && reviewRows.length > 0) {
+          const reviews = reviewRows.map((r: any) => ({
+            source: r.source || 'unknown',
+            rating: typeof r.rating === 'number' ? r.rating : (r.rating != null ? Number(r.rating) : null),
+            date: r.review_date || null,
+            language: r.language || null,
+            text: r.text || '',
+          }))
+          // Topics of the Cases present this run (canonical topic, fallback m.topic).
+          const caseTopics = advisory.top_moves
+            .map((m: any) => (m.canonicalRecommendation?.targeting?.topic || m.topic || '').toString().toLowerCase())
+            .filter(Boolean)
+          const result = await analyzeAndMapReviews(reviews, caseTopics, brain.hotel_name)
+          if (result) {
+            // Attach matched findings to each Case's review evidence.
+            for (const m of advisory.top_moves) {
+              const topic = (m.canonicalRecommendation?.targeting?.topic || m.topic || '').toString().toLowerCase()
+              const attached = result.mapping.attached[topic]
+              if (attached && attached.length && m.canonicalRecommendation) {
+                m.canonicalRecommendation.review_evidence = attached
+              }
+            }
+            // Emerging Opportunities — observational, advisory-level, never a Case.
+            advisory.emerging_opportunities = result.mapping.emerging
+          }
+        }
+      } catch {}
+
       // 4) STAGE 2 — prose: GPT explains each ASSEMBLED object (never raw facts), gated by evidence_state
       await Promise.all(advisory.top_moves.map(async (m: any) => {
         if (!m.recommendation) return
