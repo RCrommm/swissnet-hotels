@@ -6,6 +6,7 @@ import { buildVisibilityModel } from '@/lib/visibility-model'
 import { buildKnowledgeGraph } from '@/lib/knowledge-graph'
 import { buildTechnicalReadiness } from '@/lib/technical-readiness'
 import { assembleRecommendation } from '@/lib/recommendation'
+import { PROSE_SYSTEM, proseSchema, buildProseInput } from '@/lib/recommendation-prose'
 
 export const maxDuration = 120
 
@@ -383,6 +384,26 @@ ${techLines.length ? techLines.join('\n') : '(no technical gaps flagged)'}`
         // 3) assemble the complete recommendation from the (now honest) state
         try { m.recommendation = assembleRecommendation(m, { visibilityModel, knowledgeGraph, technical, auditBrief }) } catch { m.recommendation = null }
       }
+      // 4) STAGE 2 — prose: GPT explains each ASSEMBLED object (never raw facts), gated by evidence_state
+      await Promise.all(advisory.top_moves.map(async (m: any) => {
+        if (!m.recommendation) return
+        try {
+          const pr = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
+            body: JSON.stringify({
+              model: 'gpt-4o', temperature: 0.3, max_tokens: 700,
+              response_format: { type: 'json_schema', json_schema: { name: 'prose', strict: true, schema: proseSchema() } },
+              messages: [
+                { role: 'system', content: PROSE_SYSTEM },
+                { role: 'user', content: 'Recommendation object:\n' + buildProseInput(m.recommendation) + '\n\nReturn only the JSON.' },
+              ],
+            }),
+          })
+          const pd = await pr.json()
+          const pc = pd?.choices?.[0]?.message?.content
+          if (pc) m.recommendation.prose = JSON.parse(pc)
+        } catch { m.recommendation.prose = null }
+      }))
     }
     const basedOn = { facts: (facts || []).length, findings: findings.length }
     // attach the visibility model + knowledge graph onto the advisory so it stores with it
