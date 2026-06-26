@@ -7,9 +7,16 @@ import type { Recommendation, SwissCase } from './recommendation-model'
 
 // Deterministic: map a canonical recommendation -> the structured Case input GPT receives.
 export function buildCaseInput(rec: Recommendation) {
+  const POSTURE_MEANING: Record<string,string> = {
+    Commit: 'This topic is ALREADY well-organised on a single canonical page and is a strength — the goal is to lock in and deepen that lead, NOT to fix scattering. Do NOT describe it as scattered or broken.',
+    Convert: 'This topic has real substance but it is SCATTERED across multiple pages with no single hub — the goal is to consolidate it.',
+    'Fix-foundation': 'This is a site-wide trust/structure gap (schema, structured blocks), NOT a single-topic content problem.',
+    Confirm: 'The platform could NOT verify this offering exists — the goal is to verify, not to assert it is missing.',
+  }
   return {
     topic: rec.targeting.affected_entity,
     posture: rec.identity.posture,
+    posture_meaning: POSTURE_MEANING[rec.identity.posture] || '',
     diagnosis_facts: {
       kg_state: rec.knowledge_graph.cluster_state,
       scattered_pages: rec.knowledge_graph.fact_pages,
@@ -52,7 +59,7 @@ export const CASE_SYSTEM = `You are a senior hospitality strategy consultant wri
 You will receive deterministic fields for one strategic decision. Write FOUR short prose sections from those fields ONLY. Never introduce a fact, number, page, or claim that is not in the supplied fields. Never invent amenities, locations, or features.
 
 SECTIONS (return strictly the JSON schema):
-- "diagnosis": ONE sentence naming ONE clear problem. State what is happening structurally (e.g. AI recognises the offering but cannot connect its scattered pages).
+- "diagnosis": ONE sentence naming ONE clear problem. You MUST respect "posture_meaning": a Commit topic is a STRENGTH already consolidated (never call it scattered or broken — the diagnosis is about an opportunity to extend a lead, e.g. "AI understands the rooms well but cannot yet compare them for specific guests"); a Convert topic IS scattered (say so); a Fix-foundation gap is site-wide structure, not one topic. The diagnosis must match the posture_meaning, not contradict it.
 - "business_consequence": ONE short paragraph on why the GM should care. Ground it in the supplied failed guest questions — name the kind of searches the hotel currently loses. Connect to commercial reality (visibility, bookings, being recommended).
 - "recommendation": ONE concrete action. Be specific about WHAT to do (consolidate which pages, add which sections), using the supplied action and pages. No vague "improve" language.
 - "expected_result": ONE specific sentence on what changes — what AI will be able to do that it cannot today.

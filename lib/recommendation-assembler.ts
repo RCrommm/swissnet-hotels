@@ -60,8 +60,22 @@ export function toCanonicalRecommendation(move: any, ctx: Ctx): Recommendation {
   const kg = (ctx.knowledgeGraph?.clusters || []).find((c: any) => c.topic === topic) || {}
   const cat = CAT_OF[topic]
 
+  // Map a recommendation topic to the audit's OWN category vocabulary (the audit files
+  // rooms questions under 'luxury', etc.). Without this, failed_queries never match and
+  // the proof comes back empty while prose still describes failures (no-invention violation).
+  const TOPIC_TO_AUDIT_CATS: Record<string,string[]> = {
+    rooms: ['luxury', 'family', 'romantic', 'rooms'],
+    dining: ['dining'],
+    meetings: ['business', 'meetings'],
+    weddings: ['romantic', 'weddings'],
+    spa: ['spa', 'wellness'],
+    family: ['family'],
+    location: ['location'],
+    offers: ['overall', 'offers'],
+  }
   const auditResults = ctx.audit?.recommendation?.results || []
-  const topicResults = auditResults.filter((r: any) => { const c = (r.category || '').toLowerCase(); return c === topic || c === cat })
+  const wantCats = new Set((TOPIC_TO_AUDIT_CATS[topic] || [topic, cat]).filter(Boolean))
+  const topicResults = auditResults.filter((r: any) => wantCats.has((r.category || '').toLowerCase()))
   const failed = topicResults.filter((r: any) => r.readiness === 'NO').map((r: any) => r.question)
   const partial = topicResults.filter((r: any) => r.readiness === 'PARTIAL').map((r: any) => r.question)
   const totalQ = auditResults.length || 1
