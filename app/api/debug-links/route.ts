@@ -30,6 +30,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       brain_id: brain.id, created_at: brain.created_at, homepage,
       edgeCount: (edges || []).length, clusterCount: clusters.length,
+      sampleCluster: clusters[0] || null,
       signals,
     })
   } catch (e: any) {
