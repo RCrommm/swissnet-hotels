@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { classifyGap, honestFindingTitle, inferTopic } from '@/lib/evidence'
+import { buildInventory } from '@/lib/page-discovery'
+
 
 // ─── MEMORY LAYER: deterministic finding keys + store + diff vs previous run ───
 function mlSlug(s: string): string {
@@ -735,7 +737,10 @@ export async function POST(req: Request) {
     if (!homeHtml) return NextResponse.json({ error: 'Could not load the website (it may block crawlers or be down).' }, { status: 502 })
     const homeLinks = extractLinks(homeHtml, origin)
     const sitemapLinks = await fetchSitemap(origin)
-    const discovered = Array.from(new Set([...homeLinks, ...sitemapLinks]))
+    const candidates = Array.from(new Set([url, ...homeLinks, ...sitemapLinks]))
+    // SHARED PAGE DISCOVERY: classify the SAME canonical inventory the Brain crawls (one truth)
+    const inventory = buildInventory(url, candidates)
+    const discovered = inventory.selected
 
     const matchLink = (kws: string[]) => discovered.find(l => kws.some(k => l.toLowerCase().includes(k)))
     const matchAll = (kws: string[]) => discovered.filter(l => kws.some(k => l.toLowerCase().includes(k)))
