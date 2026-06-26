@@ -191,6 +191,31 @@ function buildAuditBrief(result: any): { weakPages: string[]; unanswered: string
   return { weakPages: weakPages.slice(0, 12), unanswered: unanswered.slice(0, 18), contentWeak: contentWeak.slice(0, 8), auditScore }
 }
 
+// ─── EVIDENCE-STATE RECONCILIATION ───
+// The Knowledge Graph is the source of truth for evidence_state, NOT GPT.
+// absent → unverified. contaminated + thin (<=2 facts) → unverified.
+// Real offerings (enough facts) keep GPT's emitted state. GPT never overrides the graph.
+const RECON_TOPIC_RE: { kgTopic: string; re: RegExp }[] = [
+  { kgTopic: 'meetings', re: /(meeting|business|conference|event|baptist|corporate)/i },
+  { kgTopic: 'dining',   re: /(dining|restaurant|bar|brasserie|afternoon[- ]?tea|cuisine|food)/i },
+  { kgTopic: 'spa',      re: /(spa|wellness|wellbeing|thermal)/i },
+  { kgTopic: 'weddings', re: /(wedding|romance|romantic|honeymoon|civil|ceremon|couple)/i },
+  { kgTopic: 'family',   re: /(family|kids|children)/i },
+  { kgTopic: 'rooms',    re: /(rooms?|suites?|accommodation)/i },
+  { kgTopic: 'location', re: /(location|neighbourhood|attractions?|transport)/i },
+]
+function reconcileEvidenceState(move: any, knowledgeGraph: any): { evidence_state: string; evidence_reason: string } {
+  const gptState = (move?.evidence_state === 'confirmed' || move?.evidence_state === 'contradicted') ? move.evidence_state : 'unverified'
+  const blob = `${move?.title || ''} ${move?.what_to_build || ''}`.toLowerCase()
+  const topic = RECON_TOPIC_RE.find(t => t.re.test(blob))?.kgTopic || null
+  const cluster = topic && knowledgeGraph?.clusters ? knowledgeGraph.clusters.find((c: any) => c.topic === topic) : null
+  if (!cluster) return { evidence_state: gptState, evidence_reason: move?.evidence_reason || (gptState === 'confirmed' ? 'confirmed_facts' : 'insufficient_evidence') }
+  const factCount = cluster.facts || 0
+  if (cluster.cluster_state === 'absent') return { evidence_state: 'unverified', evidence_reason: 'absent' }
+  if (cluster.cluster_state === 'contaminated' && factCount <= 2) return { evidence_state: 'unverified', evidence_reason: 'contaminated' }
+  return { evidence_state: gptState, evidence_reason: move?.evidence_reason || (gptState === 'confirmed' ? 'confirmed_facts' : 'insufficient_evidence') }
+}
+
 // Which page "topics" the site already has, derived from the URLs the Brain crawled.
 const PAGE_TOPICS: { topic: string; re: RegExp }[] = [
   { topic: 'meetings & events', re: /(meeting|event|conference|baptist)/i },
@@ -347,7 +372,15 @@ ${techLines.length ? techLines.join('\n') : '(no technical gaps flagged)'}`
     const pagesScraped = Array.from(new Set((facts || []).map((f: any) => f.page_url || '').filter(Boolean)))
     if (Array.isArray(advisory?.top_moves)) {
       for (const m of advisory.top_moves) {
+        // 1) GRAPH OVERRIDES GPT: compute the TRUE evidence_state before anything consumes it
+        try {
+          const rec = reconcileEvidenceState(m, knowledgeGraph)
+          m.evidence_state = rec.evidence_state
+          m.evidence_reason = rec.evidence_reason
+        } catch {}
+        // 2) decision obeys the reconciled evidence_state
         try { m.decision = decideAction(m, pagesScraped, facts || []) } catch { m.decision = null }
+        // 3) assemble the complete recommendation from the (now honest) state
         try { m.recommendation = assembleRecommendation(m, { visibilityModel, knowledgeGraph, technical, auditBrief }) } catch { m.recommendation = null }
       }
     }
