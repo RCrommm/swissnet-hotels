@@ -254,6 +254,25 @@ function decisionToMove(decision: any, knowledgeGraph: any, auditBrief: any, tec
   }
 }
 
+// Phase 1 Fix 2: real evidence for Commit/Convert decisions, from canonical-page facts (confidence-ranked).
+// Foundation/Confirm stay empty — no confirming evidence to honestly show.
+const DM_EV_CAT: Record<string, string> = { rooms: 'rooms', dining: 'dining', meetings: 'meetings', weddings: 'weddings', spa: 'spa', family: 'family', location: 'location', offers: 'offers' }
+function evidenceForDecision(decision: any, knowledgeGraph: any, facts: any[]): string[] {
+  if (decision?.posture !== 'Commit' && decision?.posture !== 'Convert') return []
+  const cluster = (knowledgeGraph?.clusters || []).find((c: any) => c.topic === decision.topic)
+  if (!cluster) return []
+  const cat = DM_EV_CAT[decision.topic]
+  const topicFacts = (facts || []).filter((f: any) => (f.category || '').toLowerCase() === cat)
+  const toPath = (u: string) => { try { return new URL(u).pathname.replace(/\/$/, '').toLowerCase() } catch { return (u || '').toLowerCase() } }
+  const canonical = cluster.canonical_page ? cluster.canonical_page.toLowerCase() : null
+  const onCanonical = canonical ? topicFacts.filter((f: any) => toPath(f.page_url || '') === canonical) : []
+  const pool = onCanonical.length ? onCanonical : topicFacts
+  return pool
+    .sort((a: any, b: any) => (b.confidence || 0) - (a.confidence || 0))
+    .slice(0, 3)
+    .map((f: any) => f.evidence_quote ? `${f.fact_value} — "${String(f.evidence_quote).slice(0, 90)}"` : f.fact_value)
+}
+
 // Which page "topics" the site already has, derived from the URLs the Brain crawled.
 const PAGE_TOPICS: { topic: string; re: RegExp }[] = [
   { topic: 'meetings & events', re: /(meeting|event|conference|baptist)/i },
@@ -424,8 +443,12 @@ ${techLines.length ? techLines.join('\n') : '(no technical gaps flagged)'}`
           m.evidence_state = rec.evidence_state
           m.evidence_reason = rec.evidence_reason
         } catch {}
+        // 1b) Phase 1 Fix 2: populate real evidence (canonical-page facts) for Commit/Convert
+        try { m.evidence = evidenceForDecision(m, knowledgeGraph, facts || []) } catch {}
         // 2) decision obeys the reconciled evidence_state
         try { m.decision = decideAction(m, pagesScraped, facts || []) } catch { m.decision = null }
+        // 2b) Phase 1 Fix 1: a Fix-foundation move is a schema action, not an FAQ
+        if (m.posture === 'Fix-foundation' && m.decision && m.decision.action === 'add_faq') m.decision.action = 'add_schema'
         // 3) assemble the complete recommendation from the (now honest) state
         try { m.recommendation = assembleRecommendation(m, { visibilityModel, knowledgeGraph, technical, auditBrief }) } catch { m.recommendation = null }
       }
