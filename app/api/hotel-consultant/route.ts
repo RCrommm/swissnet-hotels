@@ -35,6 +35,15 @@ PRIORITIZE LIKE A HOTEL REVENUE CONSULTANT, not a content checklist:
 4. JUSTIFY THE RANK — Each top move's reasoning must answer "why this before the other findings?", referencing how many guest searches it unlocks AND its commercial importance.
 5. Return the 3 (at most 4) highest-leverage moves only — never a long list.
 
+EVIDENCE-STATE CONTRACT (MANDATORY — every move MUST set these three fields honestly):
+- "evidence_state": one of "confirmed" | "unverified" | "contradicted".
+    • "confirmed" = the KNOWN FACTS contain 2+ substantive, on-topic facts that establish the hotel genuinely offers this (e.g. multiple dining facts naming the restaurant). Only "confirmed" may build/strengthen/generate.
+    • "unverified" = you CANNOT establish from the facts that the hotel offers this. Use this when the topic has zero facts, only 1 incidental mention, or facts that appear ONLY on utility pages (news, reservation, careers) — i.e. the Knowledge Graph marks it contaminated/absent. A single yoga mention = unverified, NOT confirmed.
+    • "contradicted" = the facts actively conflict (the site says two incompatible things).
+- "evidence_reason": one of "confirmed_facts" (for confirmed) | "unseen" (no page crawled) | "absent" (looked, found nothing) | "contaminated" (facts only on utility pages) | "insufficient_evidence" (too thin to confirm).
+- "allowed_actions": the actions this evidence permits. If evidence_state is "confirmed": choose from ["strengthen_page","create_page","add_section","add_faq","add_schema"]. If "unverified": MUST be exactly ["verify"]. If "contradicted": MUST be exactly ["investigate","verify"].
+- CRITICAL: a move's build_type and title may be phrased nicely, but evidence_state is the binding field. NEVER mark a topic "confirmed" to justify creating a page when the facts are thin or incidental. When in doubt, mark "unverified". The system will REFUSE to generate content for unverified/contradicted moves — so honesty here protects the hotel from fabricated content.
+
 Return STRICTLY this JSON shape:
 {
   "executive_diagnosis": string,
@@ -52,6 +61,9 @@ Return STRICTLY this JSON shape:
       "why_ai_cares": string,
       "what_to_build": string,
       "build_type": "New page"|"Section on existing page"|"Homepage block"|"FAQ only",
+      "evidence_state": "confirmed"|"unverified"|"contradicted",
+      "evidence_reason": "confirmed_facts"|"unseen"|"absent"|"contaminated"|"insufficient_evidence",
+      "allowed_actions": [string],
       "sections_to_add": [string],
       "implementation_steps": [string],
       "questions_to_answer": [string],
@@ -101,13 +113,16 @@ function consultantSchema() {
         type: 'array',
         items: {
           type: 'object', additionalProperties: false,
-          required: ['title','why_this_priority','why_ai_cares','what_to_build','build_type','sections_to_add','implementation_steps','questions_to_answer','affected_searches','expected_ai_effect','success_criteria','reasoning','evidence','confidence','effort','priority'],
+          required: ['title','why_this_priority','why_ai_cares','what_to_build','build_type','evidence_state','evidence_reason','allowed_actions','sections_to_add','implementation_steps','questions_to_answer','affected_searches','expected_ai_effect','success_criteria','reasoning','evidence','confidence','effort','priority'],
           properties: {
             title: { type: 'string' },
             why_this_priority: { type: 'string' },
             why_ai_cares: { type: 'string' },
             what_to_build: { type: 'string' },
             build_type: { type: 'string', enum: ['New page','Section on existing page','Homepage block','FAQ only'] },
+            evidence_state: { type: 'string', enum: ['confirmed','unverified','contradicted'] },
+            evidence_reason: { type: 'string', enum: ['confirmed_facts','unseen','absent','contaminated','insufficient_evidence'] },
+            allowed_actions: { type: 'array', items: { type: 'string' } },
             sections_to_add: { type: 'array', items: { type: 'string' } },
             implementation_steps: { type: 'array', items: { type: 'string' } },
             questions_to_answer: { type: 'array', items: { type: 'string' } },
