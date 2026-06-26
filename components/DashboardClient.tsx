@@ -2906,8 +2906,8 @@ function AdvisorV2Body({ adv }: any) {
   )
 
   const Sec = ({ title, children }: any) => (
-    <div style={{ paddingTop: '1.2rem', borderTop: '1px solid ' + BORDER, marginTop: '1.2rem' }}>
-      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.6rem' }}>{title}</p>
+    <div style={{ paddingTop: '1.1rem', borderTop: '1px solid ' + BORDER, marginTop: '1.4rem' }}>
+      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT, margin: '0 0 0.7rem' }}>{title}</p>
       {children}
     </div>
   )
@@ -2934,37 +2934,39 @@ function AdvisorV2Body({ adv }: any) {
 
             {/* CASE HEADER — always visible. Diagnosis is the headline. */}
             <button onClick={() => setOpenCase(open ? null : i)} style={{ width: '100%', textAlign: 'left', cursor: 'pointer', background: 'transparent', border: 'none', padding: '1.5rem 1.75rem', display: 'block' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', marginBottom: '0.7rem', flexWrap: 'wrap' }}>
-                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(42,26,14,0.45)' }}>Case {String(i + 1).padStart(2, '0')}</span>
-                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED }}>{lead}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', marginBottom: '0.85rem', flexWrap: 'wrap' }}>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT }}>Case {String(i + 1).padStart(2, '0')}</span>
+                <span style={{ width: 1, height: 11, background: BORDER }} />
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 500, color: TEXT_MUTED }}>{lead}</span>
                 {(() => {
                   const h = rec.history
                   if (!h || !h.status) return null
                   const map: Record<string, { txt: string; col: string }> = {
                     new: { txt: 'New this month', col: BLUE },
-                    continuing: { txt: 'Continuing from last audit', col: TEXT_MUTED },
-                    improving: { txt: h.changed_metrics?.posture_shift ? `Moved ${h.changed_metrics.posture_shift}` : 'Improving since last audit', col: GREEN_C },
-                    evolved: { txt: h.changed_metrics?.posture_shift ? `Evolved ${h.changed_metrics.posture_shift}` : 'Evolved since last audit', col: GOLD },
-                    regressed: { txt: 'Needs attention since last audit', col: AMBER },
+                    continuing: { txt: 'Continuing', col: TEXT_MUTED },
+                    improving: { txt: h.changed_metrics?.posture_shift ? `Moved ${h.changed_metrics.posture_shift}` : 'Improving', col: GREEN_C },
+                    evolved: { txt: h.changed_metrics?.posture_shift ? `Evolved ${h.changed_metrics.posture_shift}` : 'Evolved', col: GOLD },
+                    regressed: { txt: 'Needs attention', col: AMBER },
                   }
                   const t = map[h.status]
                   if (!t) return null
-                  return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 600, letterSpacing: '0.04em', color: t.col, background: t.col + '14', padding: '3px 9px', borderRadius: 100 }}>{t.txt}</span>
+                  return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 600, letterSpacing: '0.04em', color: t.col, background: t.col + '14', padding: '3px 9px', borderRadius: 4 }}>{t.txt}</span>
                 })()}
                 <span style={{ flex: 1 }} />
                 <Confidence verify={verify} />
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '1rem', color: TEXT_MUTED, transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
               </div>
-              {/* DIAGNOSIS = headline */}
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: open ? '1.7rem' : '1.4rem', fontWeight: 500, lineHeight: 1.2, color: TEXT, margin: '0 0 0.5rem' }}>{c.diagnosis}</p>
+              {/* DIAGNOSIS = headline (plain, black, professional) */}
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: open ? '1.15rem' : '1.02rem', fontWeight: 600, lineHeight: 1.35, color: TEXT, margin: '0 0 0.55rem' }}>{c.diagnosis}</p>
               {/* one line of consequence, always */}
-              {c.business_consequence && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', lineHeight: 1.6, color: TEXT_MUTED, margin: 0, maxWidth: '64ch' }}>{c.business_consequence}</p>}
+              {c.business_consequence && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', lineHeight: 1.6, color: TEXT, margin: 0, maxWidth: '70ch' }}>{c.business_consequence}</p>}
 
-              {/* ONE LIVE EVIDENCE ITEM — visible even at rest, proof we read the site */}
+              {/* ONE LIVE EVIDENCE ITEM — visible even at rest */}
               {!open && liveEvidence && (
-                <div style={{ marginTop: '0.9rem', paddingLeft: '0.9rem', borderLeft: '2px solid ' + GOLD }}>
+                <div style={{ marginTop: '0.95rem', padding: '0.6rem 0.85rem', background: BG, borderRadius: 6, border: '1px solid ' + BORDER }}>
                   {liveEvidence.kind === 'quote'
-                    ? <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '0.98rem', fontStyle: 'italic', color: 'rgba(42,26,14,0.7)', margin: 0 }}>&ldquo;{liveEvidence.text}&rdquo;{liveEvidence.src && <span style={{ fontStyle: 'normal', fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED }}> — {liveEvidence.src}</span>}</p>
-                    : <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: TEXT_MUTED, margin: 0 }}>AI can&rsquo;t yet answer: &ldquo;{liveEvidence.text}&rdquo;</p>}
+                    ? <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, margin: 0 }}>&ldquo;{liveEvidence.text}&rdquo;{liveEvidence.src && <span style={{ color: TEXT_MUTED }}> — {liveEvidence.src}</span>}</p>
+                    : <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, margin: 0 }}>AI can&rsquo;t yet answer: &ldquo;{liveEvidence.text}&rdquo;</p>}
                 </div>
               )}
             </button>
@@ -2975,40 +2977,42 @@ function AdvisorV2Body({ adv }: any) {
                 {/* 1. Why it matters (consequence already shown above; expand if more) */}
 
                 {/* 2. What to do */}
-                <Sec title={verify ? 'What we need' : 'What we recommend'}>
-                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', fontWeight: 500, lineHeight: 1.45, color: TEXT, margin: 0 }}>{c.recommendation}</p>
+                <Sec title={verify ? 'What we need' : 'Recommendation'}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.92rem', fontWeight: 600, lineHeight: 1.55, color: TEXT, margin: 0 }}>{c.recommendation}</p>
                   {rec.targeting?.canonical_page && (
-                    <code style={{ display: 'inline-block', marginTop: '0.6rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: TEXT, background: GOLD_LIGHT, padding: '3px 9px', borderRadius: 6, border: '1px solid ' + BORDER }}>{rec.targeting.canonical_page}</code>
+                    <code style={{ display: 'inline-block', marginTop: '0.65rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: TEXT, background: BG, padding: '4px 10px', borderRadius: 4, border: '1px solid ' + BORDER }}>{rec.targeting.canonical_page}</code>
                   )}
                 </Sec>
 
                 {/* 3. What changes */}
                 {c.expected_result && (
-                  <Sec title="What changes if you do">
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.86rem', lineHeight: 1.65, color: 'rgba(42,26,14,0.80)', margin: 0 }}>{c.expected_result}</p>
+                  <Sec title="Expected outcome">
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', lineHeight: 1.65, color: TEXT, margin: 0 }}>{c.expected_result}</p>
                   </Sec>
                 )}
 
-                {/* 3.5 What guests actually do — GA4 behavioural evidence (only if connected & a claim fired) */}
+                {/* 3.5 Website analytics — GA4 behavioural evidence (only if connected & a claim fired) */}
                 {Array.isArray(m.behavioural_claims) && m.behavioural_claims.length > 0 && (
-                  <Sec title="What guests actually do">
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                  <Sec title="Guest behaviour (Google Analytics)">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
                       {m.behavioural_claims.map((b: any, j: number) => (
-                        <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.86rem', lineHeight: 1.65, color: 'rgba(42,26,14,0.80)', margin: 0, paddingLeft: '0.9rem', borderLeft: '2px solid ' + GOLD }}>{b.claim}</p>
+                        <div key={j} style={{ padding: '0.7rem 0.95rem', background: BG, borderRadius: 6, border: '1px solid ' + BORDER }}>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.84rem', lineHeight: 1.6, color: TEXT, margin: 0 }}>{b.claim}</p>
+                        </div>
                       ))}
                     </div>
                   </Sec>
                 )}
 
-                {/* 3.6 What guests say — Review Intelligence evidence (only if reviews mapped to this Case) */}
+                {/* 3.6 Official Reviews — Review Intelligence evidence (only if reviews mapped to this Case) */}
                 {Array.isArray(rec.review_evidence) && rec.review_evidence.length > 0 && (
-                  <Sec title="What guests say">
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+                  <Sec title="Official Reviews">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
                       {rec.review_evidence.map((f: any, j: number) => (
-                        <div key={j} style={{ paddingLeft: '0.9rem', borderLeft: '2px solid ' + GOLD }}>
-                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.86rem', lineHeight: 1.6, color: 'rgba(42,26,14,0.80)', margin: 0 }}>{f.claim}</p>
+                        <div key={j} style={{ padding: '0.75rem 0.95rem', background: BG, borderRadius: 6, border: '1px solid ' + BORDER }}>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.84rem', fontWeight: 500, lineHeight: 1.55, color: TEXT, margin: 0 }}>{f.claim}</p>
                           {Array.isArray(f.representative_quotes) && f.representative_quotes.length > 0 && (
-                            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '0.98rem', fontStyle: 'italic', color: 'rgba(42,26,14,0.6)', margin: '0.35rem 0 0' }}>&ldquo;{f.representative_quotes[0].text}&rdquo;</p>
+                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: TEXT_MUTED, margin: '0.45rem 0 0' }}>&ldquo;{f.representative_quotes[0].text}&rdquo;</p>
                           )}
                         </div>
                       ))}
@@ -3018,29 +3022,34 @@ function AdvisorV2Body({ adv }: any) {
 
                 {/* 4. Evidence — proof, with technical folded in */}
                 {(proof.quotes?.length || proof.failed_questions?.length || rec.technical?.causes?.length) > 0 && (
-                  <Sec title="Why we&rsquo;re confident">
+                  <Sec title="Supporting evidence">
                     {proof.quotes?.length > 0 && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: (proof.failed_questions?.length || rec.technical?.causes?.length) ? '1rem' : 0 }}>
-                        {proof.quotes.map((q: any, j: number) => (
-                          <p key={j} style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', fontStyle: 'italic', color: 'rgba(42,26,14,0.74)', margin: 0, paddingLeft: '0.9rem', borderLeft: '2px solid ' + GOLD }}>&ldquo;{q.quote}&rdquo;{q.page && <span style={{ fontStyle: 'normal', fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED }}> — {q.page}</span>}</p>
-                        ))}
+                      <div style={{ marginBottom: (proof.failed_questions?.length || rec.technical?.causes?.length) ? '1.1rem' : 0 }}>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 0.5rem' }}>From your website</p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                          {proof.quotes.map((q: any, j: number) => (
+                            <div key={j} style={{ padding: '0.6rem 0.85rem', background: BG, borderRadius: 6, border: '1px solid ' + BORDER }}>
+                              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, margin: 0 }}>&ldquo;{q.quote}&rdquo;{q.page && <span style={{ color: TEXT_MUTED }}> — {q.page}</span>}</p>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                     {proof.failed_questions?.length > 0 && (
-                      <div style={{ marginBottom: rec.technical?.causes?.length ? '1rem' : 0 }}>
-                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 600, color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Guest questions AI can&rsquo;t answer today:</p>
-                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <div style={{ marginBottom: rec.technical?.causes?.length ? '1.1rem' : 0 }}>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 0.5rem' }}>Guest questions AI can&rsquo;t answer today</p>
+                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                           {proof.failed_questions.map((q: string, j: number) => (
-                            <li key={j} style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', color: TEXT, paddingLeft: '1rem', position: 'relative' }}><span style={{ position: 'absolute', left: 0, color: GOLD }}>&ldquo;</span>{q}</li>
+                            <li key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, paddingLeft: '0.9rem', position: 'relative' }}><span style={{ position: 'absolute', left: 0, color: TEXT_MUTED }}>•</span>{q}</li>
                           ))}
                         </ul>
                       </div>
                     )}
                     {!verify && rec.technical?.causes?.length > 0 && (
                       <div>
-                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 600, color: TEXT_MUTED, margin: '0 0 0.4rem' }}>What&rsquo;s making AI hesitate:</p>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 0.5rem' }}>What&rsquo;s making AI hesitate</p>
                         {rec.technical.causes.map((t: any, j: number) => (
-                          <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', lineHeight: 1.55, color: 'rgba(42,26,14,0.80)', margin: j ? '0.4rem 0 0' : 0 }}>{t.fix}</p>
+                          <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', lineHeight: 1.55, color: TEXT, margin: j ? '0.4rem 0 0' : 0 }}>{t.fix}</p>
                         ))}
                       </div>
                     )}
@@ -3062,7 +3071,7 @@ function AdvisorV2Body({ adv }: any) {
               <div key={i} style={{ paddingLeft: '0.9rem', borderLeft: '2px solid ' + BORDER }}>
                 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.84rem', lineHeight: 1.6, color: 'rgba(42,26,14,0.80)', margin: 0 }}>{f.claim}</p>
                 {Array.isArray(f.representative_quotes) && f.representative_quotes.length > 0 && (
-                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '0.96rem', fontStyle: 'italic', color: 'rgba(42,26,14,0.6)', margin: '0.3rem 0 0' }}>&ldquo;{f.representative_quotes[0].text}&rdquo;</p>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: TEXT_MUTED, margin: '0.35rem 0 0' }}>&ldquo;{f.representative_quotes[0].text}&rdquo;</p>
                 )}
               </div>
             ))}
@@ -3282,12 +3291,9 @@ function AdvisorTab({ hotel }: any) {
         <div style={{ position: 'relative' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '2rem', marginBottom: adv ? '1.75rem' : 0 }}>
             <div style={{ flex: 1 }}>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.6rem', fontWeight: 400, color: WHITE, margin: '0 0 0.15rem', lineHeight: 1.1 }}>{hotel?.name || 'Your hotel'}</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '1.5rem', fontWeight: 600, color: WHITE, margin: '0 0 0.25rem', lineHeight: 1.15 }}>{hotel?.name || 'Your hotel'}</p>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.75)', margin: 0 }}>This month&rsquo;s strategic briefing</p>
             </div>
-            <button onClick={regenerate} disabled={regenerating} style={{ flexShrink: 0, background: GOLD, color: '#1a0e06', border: 'none', borderRadius: 8, padding: '0.7rem 1.4rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', fontWeight: 700, cursor: regenerating ? 'default' : 'pointer', opacity: regenerating ? 0.7 : 1, whiteSpace: 'nowrap' }}>
-              {regenerating ? 'Generating…' : data ? 'Regenerate' : 'Generate advisory'}
-            </button>
           </div>
 
           {adv && (() => {
@@ -3296,20 +3302,21 @@ function AdvisorTab({ hotel }: any) {
             const openingLine = adv.briefing_opening || adv.executive_diagnosis || ''
             return (
               <>
-                {openingLine && <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 300, color: WHITE, margin: '0 0 1.5rem', lineHeight: 1.5, maxWidth: '46ch' }}>{openingLine}</p>}
+                {openingLine && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.95rem', fontWeight: 400, color: 'rgba(255,255,255,0.92)', margin: '0 0 1.5rem', lineHeight: 1.65, maxWidth: '68ch' }}>{openingLine}</p>}
                 {cases.length > 0 && (
                   <>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: 'rgba(255,255,255,0.5)', margin: '0 0 0.9rem' }}>This month, {cases.length === 1 ? 'one strategic case' : cases.length === 2 ? 'two strategic cases' : 'three strategic cases'}.</p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0 0 0.6rem' }}>{cases.length === 1 ? 'One strategic case' : `${cases.length} strategic cases`} this month</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
                       {cases.map((m: any, i: number) => {
                         const topic = m.canonicalRecommendation?.targeting?.affected_entity || m.topic || ''
                         const posture = m.posture
                         const lead = posture === 'Convert' ? `Unlock your ${topic.toLowerCase()} opportunity` : posture === 'Strengthen' ? `Deepen your ${topic.toLowerCase()}` : (POSTURE_LEAD[posture] || topic)
+                        const topicLabel = (topic || '').toString().toUpperCase() === '__SITE__' ? 'FOUNDATION' : (topic || '').toString().toUpperCase()
                         return (
-                          <button key={i} onClick={() => { const el = document.getElementById('case-' + i); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }} style={{ display: 'flex', alignItems: 'baseline', gap: '0.85rem', padding: '0.6rem 0', background: 'transparent', border: 'none', borderTop: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer', textAlign: 'left', width: '100%' }}>
-                            <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: GOLD, flexShrink: 0 }}>{['①','②','③','④'][i]}</span>
-                            <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: WHITE, flex: 1 }}>{lead}</span>
-                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', flexShrink: 0 }}>{topic}</span>
+                          <button key={i} onClick={() => { const el = document.getElementById('case-' + i); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }} style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', padding: '0.8rem 0', background: 'transparent', border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', textAlign: 'left', width: '100%' }}>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 700, color: 'rgba(255,255,255,0.4)', minWidth: '1.4rem', flexShrink: 0 }}>{String(i + 1).padStart(2, '0')}</span>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.88rem', fontWeight: 500, color: WHITE, flex: 1 }}>{lead}</span>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 600, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.4)', flexShrink: 0 }}>{topicLabel}</span>
                           </button>
                         )
                       })}
@@ -3327,9 +3334,9 @@ function AdvisorTab({ hotel }: any) {
       {loading && <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}><p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', color: TEXT_MUTED, margin: 0 }}>Loading your advisory…</p></div>}
 
       {!loading && !adv && (
-        <div style={{ background: WHITE, border: '1px dashed ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', color: TEXT, margin: '0 0 0.5rem' }}>No advisory yet</p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6, maxWidth: 440, marginLeft: 'auto', marginRight: 'auto' }}>Click “Generate advisory” to have the AI Advisor reason over what your site tells AI, and produce your top strategic moves.</p>
+        <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '1.1rem', fontWeight: 600, color: TEXT, margin: '0 0 0.5rem' }}>Your briefing is being prepared</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6, maxWidth: 440, marginLeft: 'auto', marginRight: 'auto' }}>Your SwissNet specialist is preparing your strategic briefing. Your latest analysis will appear here.</p>
         </div>
       )}
 
