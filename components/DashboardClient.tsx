@@ -3000,6 +3000,22 @@ function AdvisorV2Body({ adv }: any) {
                   </Sec>
                 )}
 
+                {/* 3.6 What guests say — Review Intelligence evidence (only if reviews mapped to this Case) */}
+                {Array.isArray(rec.review_evidence) && rec.review_evidence.length > 0 && (
+                  <Sec title="What guests say">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+                      {rec.review_evidence.map((f: any, j: number) => (
+                        <div key={j} style={{ paddingLeft: '0.9rem', borderLeft: '2px solid ' + GOLD }}>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.86rem', lineHeight: 1.6, color: 'rgba(42,26,14,0.80)', margin: 0 }}>{f.claim}</p>
+                          {Array.isArray(f.representative_quotes) && f.representative_quotes.length > 0 && (
+                            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '0.98rem', fontStyle: 'italic', color: 'rgba(42,26,14,0.6)', margin: '0.35rem 0 0' }}>&ldquo;{f.representative_quotes[0].text}&rdquo;</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </Sec>
+                )}
+
                 {/* 4. Evidence — proof, with technical folded in */}
                 {(proof.quotes?.length || proof.failed_questions?.length || rec.technical?.causes?.length) > 0 && (
                   <Sec title="Why we&rsquo;re confident">
@@ -3036,6 +3052,25 @@ function AdvisorV2Body({ adv }: any) {
         )
       })}
 
+    {/* EMERGING OPPORTUNITIES — strong review themes with no matching Case (observational only) */}
+      {Array.isArray(adv.emerging_opportunities) && adv.emerging_opportunities.length > 0 && (
+        <div style={{ padding: '1.5rem 1.75rem', border: '1px solid ' + BORDER, borderRadius: 14, background: WHITE }}>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.3rem' }}>Emerging opportunities</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: TEXT_MUTED, margin: '0 0 1rem', lineHeight: 1.6, maxWidth: '62ch' }}>Recurring themes guests raise that aren&rsquo;t yet strategic priorities. Observational only — not recommendations. If other evidence later reinforces one, it may become a full case.</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
+            {adv.emerging_opportunities.map((f: any, i: number) => (
+              <div key={i} style={{ paddingLeft: '0.9rem', borderLeft: '2px solid ' + BORDER }}>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.84rem', lineHeight: 1.6, color: 'rgba(42,26,14,0.80)', margin: 0 }}>{f.claim}</p>
+                {Array.isArray(f.representative_quotes) && f.representative_quotes.length > 0 && (
+                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '0.96rem', fontStyle: 'italic', color: 'rgba(42,26,14,0.6)', margin: '0.3rem 0 0' }}>&ldquo;{f.representative_quotes[0].text}&rdquo;</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+    
     {/* COMPLETED SINCE LAST AUDIT — resolved cases (work that paid off) */}
       {adv.continuity && !adv.continuity.isFirstRun && adv.continuity.resolved && adv.continuity.resolved.length > 0 && (
         <div style={{ padding: '1.25rem 1.75rem', border: '1px solid rgba(63,125,91,0.25)', borderRadius: 14, background: 'rgba(63,125,91,0.04)' }}>
