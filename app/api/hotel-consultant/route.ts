@@ -251,6 +251,7 @@ function decisionToMove(decision: any, knowledgeGraph: any, auditBrief: any, tec
     questions_to_answer: questions,
     evidence: [],
     posture: decision.posture,
+    topic: decision.topic,
   }
 }
 
