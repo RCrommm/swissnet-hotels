@@ -11,6 +11,8 @@ import { PROSE_SYSTEM, proseSchema, buildProseInput, OPENING_SYSTEM, openingSche
 import { toCanonicalRecommendation } from '@/lib/recommendation-assembler'
 import { buildCase } from '@/lib/recommendation-case'
 import { computeContinuity } from '@/lib/recommendation-continuity'
+import { fetchGa4Rows } from '@/lib/ga4-fetch'
+import { buildBehavioralSignal } from '@/lib/ga4-behavioral'
 
 export const maxDuration = 120
 
@@ -466,6 +468,23 @@ ${techLines.length ? techLines.join('\n') : '(no technical gaps flagged)'}`
         // 3b) DORMANT: attach the canonical recommendation object (alongside m.recommendation, nothing reads it yet)
         try { m.canonicalRecommendation = toCanonicalRecommendation(m, { knowledgeGraph, audit: latestAuditResult, technical, facts: facts || [] }) } catch { m.canonicalRecommendation = null }
       }
+
+      // 3c) GA4 BEHAVIOURAL ENRICHMENT (DORMANT) — fill future.behavioral per Case.
+      // ONE pull for the hotel, reused across every move. Only runs if the hotel's
+      // GA4 is connected; otherwise every behavioral slot stays null (today's behaviour).
+      try {
+        const { data: ga4Hotel } = await sb.from('hotels').select('ga4_property_id, ga4_status').eq('id', hotelId).single()
+        if (ga4Hotel?.ga4_status === 'connected' && ga4Hotel?.ga4_property_id) {
+          const ga4 = await fetchGa4Rows(ga4Hotel.ga4_property_id, { days: 28, previous: true })
+          if (ga4) {
+            for (const m of advisory.top_moves) {
+              const affected = m.canonicalRecommendation?.targeting?.affected_pages || []
+              const signal = buildBehavioralSignal(ga4.rows, affected, { periodDays: ga4.periodDays, previousRows: ga4.previousRows })
+              if (m.canonicalRecommendation?.future) m.canonicalRecommendation.future.behavioral = signal
+            }
+          }
+        }
+      } catch {}
       // 4) STAGE 2 — prose: GPT explains each ASSEMBLED object (never raw facts), gated by evidence_state
       await Promise.all(advisory.top_moves.map(async (m: any) => {
         if (!m.recommendation) return
