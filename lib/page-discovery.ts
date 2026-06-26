@@ -8,7 +8,7 @@
 export const INVENTORY_CEILING = 28
 
 // Transactional / legal pages worth no crawl budget (Brain's EXCLUDE_PAGES)
-const EXCLUDE_PAGES = /(\/booking|\/reservation|\/check-rates?|\/my-reservation|\/thank-you|\/post-stay|\/careers?|\/cart|\/checkout|\/login|\/account|\/privacy|\/terms|\/cookie|\/sitemap|\/gift-?card|\/book-now|\/availability)/i
+const EXCLUDE_PAGES = /(\/booking|\/reservation|\/check-rates?|\/my-reservation|\/thank-you|\/post-stay|\/careers?|\/cart|\/checkout|\/login|\/account|\/privacy|\/terms|\/cookie|\/sitemap|\/gift-?card|\/book-now|\/availability|\/article\/|\/articles?\/|\/blog\/|\/news\/|\/press\/|\/journal\/|\/competition|\/offer\/)/i
 
 // Audit page-TYPES that must each be represented if a candidate exists (the coverage guarantee).
 const TYPE_PATTERNS: { type: string; re: RegExp }[] = [
