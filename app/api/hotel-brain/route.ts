@@ -232,6 +232,21 @@ export async function POST(req: Request) {
     const pages = htmls.filter(h => h.html).map(h => ({ url: h.url, headings: extractHeadings(h.html as string), text: extractText(h.html as string) }))
     if (!pages.length) return NextResponse.json({ error: 'Could not read any pages.' }, { status: 502 })
 
+    // INTERNAL LINK CAPTURE (2C): record Page A -> Page B for every crawled page.
+    // Store-only, no analysis yet. Reuses extractLinks (same-origin, assets stripped).
+    const linkEdges: { from_url: string; to_url: string }[] = []
+    const seenEdge = new Set<string>()
+    for (const h of htmls) {
+      if (!h.html) continue
+      for (const t of extractLinks(h.html as string, origin)) {
+        if (t === h.url) continue
+        const k = `${h.url} -> ${t}`
+        if (seenEdge.has(k)) continue
+        seenEdge.add(k)
+        linkEdges.push({ from_url: h.url, to_url: t })
+      }
+    }
+
     const factBatches = await pool(pages, 5, async (p) => extractFacts(p, openaiKey))
     let allFacts: any[] = factBatches.flat()
     const confirmed = allFacts.filter(f => f && (f.evidence_quote || '').trim().length > 0 && Number(f.confidence) >= 80)
@@ -256,6 +271,9 @@ export async function POST(req: Request) {
           brainId = brain.id
           const rows = facts.map(f => ({ brain_id: brain.id, hotel_id: hotelId || null, category: f.category, fact_key: f.fact_key, fact_value: f.fact_value, page_url: f.page_url || '', evidence_quote: f.evidence_quote || '', confidence: f.confidence, transient: !!f.transient, down_weighted: !!f.down_weighted }))
           if (rows.length) for (let i = 0; i < rows.length; i += 100) await sb.from('hotel_facts').insert(rows.slice(i, i + 100))
+          // store internal link graph (capture only)
+          const linkRows = linkEdges.map(e => ({ brain_id: brain.id, hotel_id: hotelId || null, from_url: e.from_url, to_url: e.to_url }))
+          if (linkRows.length) for (let i = 0; i < linkRows.length; i += 200) await sb.from('page_links').insert(linkRows.slice(i, i + 200))
         }
       } catch {}
     }
@@ -265,6 +283,7 @@ export async function POST(req: Request) {
       pagesRead: pages.map(p => p.url), pagesReadCount: pages.length,
       crawlMethod: state.usedBee ? (state.premium ? 'scrapingbee_premium' : 'scrapingbee_basic') : 'free_fetch',
       factCount: facts.length, rawFactCount: allFacts.length, discardedLowConfidence: allFacts.length - facts.length,
+      linkEdges: linkEdges.length,
       knowledge,
     })
   } catch (e: any) {
