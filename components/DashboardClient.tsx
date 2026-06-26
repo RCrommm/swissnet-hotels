@@ -2989,6 +2989,17 @@ function AdvisorV2Body({ adv }: any) {
                   </Sec>
                 )}
 
+                {/* 3.5 What guests actually do — GA4 behavioural evidence (only if connected & a claim fired) */}
+                {Array.isArray(m.behavioural_claims) && m.behavioural_claims.length > 0 && (
+                  <Sec title="What guests actually do">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                      {m.behavioural_claims.map((b: any, j: number) => (
+                        <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.86rem', lineHeight: 1.65, color: 'rgba(42,26,14,0.80)', margin: 0, paddingLeft: '0.9rem', borderLeft: '2px solid ' + GOLD }}>{b.claim}</p>
+                      ))}
+                    </div>
+                  </Sec>
+                )}
+
                 {/* 4. Evidence — proof, with technical folded in */}
                 {(proof.quotes?.length || proof.failed_questions?.length || rec.technical?.causes?.length) > 0 && (
                   <Sec title="Why we&rsquo;re confident">

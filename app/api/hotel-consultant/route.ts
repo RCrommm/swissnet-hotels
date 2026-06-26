@@ -13,6 +13,7 @@ import { buildCase } from '@/lib/recommendation-case'
 import { computeContinuity } from '@/lib/recommendation-continuity'
 import { fetchGa4Rows } from '@/lib/ga4-fetch'
 import { buildBehavioralSignal } from '@/lib/ga4-behavioral'
+import { deriveBehaviouralClaims } from '@/lib/ga4-insight'
 
 export const maxDuration = 120
 
@@ -481,6 +482,9 @@ ${techLines.length ? techLines.join('\n') : '(no technical gaps flagged)'}`
               const affected = m.canonicalRecommendation?.targeting?.affected_pages || []
               const signal = buildBehavioralSignal(ga4.rows, affected, { periodDays: ga4.periodDays, previousRows: ga4.previousRows })
               if (m.canonicalRecommendation?.future) m.canonicalRecommendation.future.behavioral = signal
+              // Platform-decided behavioural claims (deterministic, no GPT) for the Advisor.
+              const topicLabel = (m.canonicalRecommendation?.targeting?.topic || m.topic || 'these').toString().toLowerCase()
+              m.behavioural_claims = deriveBehaviouralClaims(signal, { topicLabel, posture: m.posture })
             }
           }
         }
