@@ -2930,10 +2930,10 @@ function AdvisorV2Body({ adv }: any) {
           : null
 
         return (
-          <div key={i} id={'case-' + i} style={{ scrollMarginTop: '1.5rem', border: `1px solid ${open ? BORDER : 'rgba(42,26,14,0.10)'}`, background: WHITE, borderRadius: 16, overflow: 'hidden', boxShadow: open ? '0 6px 28px rgba(42,26,14,0.07)' : 'none' }}>
+          <div key={i} id={'case-' + i} style={{ scrollMarginTop: '1.5rem', border: `1px solid ${open ? 'rgba(201,169,76,0.45)' : 'rgba(42,26,14,0.10)'}`, borderLeft: open ? `4px solid ${GOLD}` : '1px solid rgba(42,26,14,0.10)', background: WHITE, borderRadius: 16, overflow: 'hidden', boxShadow: open ? '0 10px 36px rgba(42,26,14,0.12)' : 'none', transition: 'box-shadow 0.15s, border-color 0.15s' }}>
 
             {/* CASE HEADER — always visible. Diagnosis is the headline. */}
-            <button onClick={() => setOpenCase(open ? null : i)} style={{ width: '100%', textAlign: 'left', cursor: 'pointer', background: 'transparent', border: 'none', padding: '1.5rem 1.75rem', display: 'block' }}>
+            <button onClick={(e) => { const wasOpen = open; setOpenCase(wasOpen ? null : i); if (!wasOpen) { const el = (e.currentTarget.closest('[id^="case-"]') as HTMLElement); if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60) } }} style={{ width: '100%', textAlign: 'left', cursor: 'pointer', background: 'transparent', border: 'none', padding: '1.5rem 1.75rem', display: 'block' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', marginBottom: '0.85rem', flexWrap: 'wrap' }}>
                 <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT }}>Case {String(i + 1).padStart(2, '0')}</span>
                 <span style={{ width: 1, height: 11, background: BORDER }} />
@@ -2956,8 +2956,8 @@ function AdvisorV2Body({ adv }: any) {
                 <Confidence verify={verify} />
                 <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '1rem', color: TEXT_MUTED, transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
               </div>
-              {/* DIAGNOSIS = headline (plain, black, professional) */}
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: open ? '1.15rem' : '1.02rem', fontWeight: 600, lineHeight: 1.35, color: TEXT, margin: '0 0 0.55rem' }}>{c.diagnosis}</p>
+              {/* DIAGNOSIS = headline — open card's title pops in gold-brown */}
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: open ? '1.18rem' : '1.02rem', fontWeight: 700, lineHeight: 1.35, color: open ? '#8A6D1F' : TEXT, margin: '0 0 0.55rem', transition: 'color 0.15s' }}>{c.diagnosis}</p>
               {/* one line of consequence, always */}
               {c.business_consequence && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', lineHeight: 1.6, color: TEXT, margin: 0, maxWidth: '70ch' }}>{c.business_consequence}</p>}
 
