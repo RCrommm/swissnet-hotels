@@ -10,6 +10,7 @@ import { assembleRecommendation } from '@/lib/recommendation'
 import { PROSE_SYSTEM, proseSchema, buildProseInput, OPENING_SYSTEM, openingSchema, buildOpeningInput, attachSequence } from '@/lib/recommendation-prose'
 import { toCanonicalRecommendation } from '@/lib/recommendation-assembler'
 import { buildCase } from '@/lib/recommendation-case'
+import { computeContinuity } from '@/lib/recommendation-continuity'
 
 export const maxDuration = 120
 
@@ -357,6 +358,14 @@ export async function POST(req: Request) {
       if (auditRow?.result) { latestAuditResult = auditRow.result; auditBrief = buildAuditBrief(auditRow.result) }
     } catch {}
 
+    // CONTINUITY: load the most recent PRIOR advisory so this run can compare against it.
+    let previousAdvisory: any = null
+    let previousAdvisoryDate: string | null = null
+    try {
+      const { data: prevRows } = await sb.from('hotel_consultant').select('advisory, created_at').eq('hotel_id', hotelId).order('created_at', { ascending: false }).limit(1)
+      if (prevRows && prevRows.length) { previousAdvisory = prevRows[0].advisory; previousAdvisoryDate = prevRows[0].created_at }
+    } catch {}
+
     // ── AI VISIBILITY MODEL: compute how AI currently "sees" the hotel (deterministic) ──
     const visibilityModel = buildVisibilityModel(facts || [], latestAuditResult)
 
@@ -504,6 +513,30 @@ ${techLines.length ? techLines.join('\n') : '(no technical gaps flagged)'}`
     advisory.visibility_model = visibilityModel
     advisory.knowledge_graph = knowledgeGraph
     advisory.technical_readiness = technical
+
+    // ── CONTINUITY: compare this advisory against the previous one (topic = durable Case identity) ──
+    try {
+      const continuity = computeContinuity(previousAdvisory, advisory, { prevDate: previousAdvisoryDate || undefined })
+      advisory.continuity = continuity
+      // attach each topic's status onto its canonical recommendation history slot
+      if (Array.isArray(advisory.top_moves)) {
+        for (const m of advisory.top_moves) {
+          const topic = m.topic || m.canonicalRecommendation?.targeting?.topic
+          const cc = continuity.active.find((x: any) => x.topic === topic)
+          if (cc && m.canonicalRecommendation) {
+            m.canonicalRecommendation.history = {
+              status: cc.status,
+              previous_posture: cc.previous_posture,
+              current_posture: cc.current_posture,
+              first_seen: cc.first_seen,
+              last_seen: cc.last_seen,
+              summary: cc.summary,
+              changed_metrics: cc.changed_metrics,
+            }
+          }
+        }
+      }
+    } catch {}
     
 
     // Persist so the AI Advisor tab can read the latest instantly (no GPT on open)
