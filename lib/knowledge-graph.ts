@@ -35,7 +35,7 @@ const TRANSIENT = /(news|careers?|press|thank-you|post-stay|reservation|booking|
 const TOPICS: { topic: string; label: string; homeRe: RegExp; catRe: RegExp; importance: 'High'|'Medium'|'Low'; qRe: RegExp }[] = [
   { topic: 'rooms',    label: 'Rooms & suites',    homeRe: /(accommodation|rooms?|suites?)/i,             catRe: /(rooms?)/i,                 importance: 'High',   qRe: /(rooms?|luxury|overall)/i },
   { topic: 'dining',   label: 'Dining',            homeRe: /(restaurant|dining|bar|brasserie|afternoon)/i, catRe: /(dining|restaurant|bar)/i, importance: 'High',   qRe: /(dining)/i },
-  { topic: 'meetings', label: 'Business & meetings', homeRe: /(meeting|event|conference|baptist)/i,        catRe: /(meeting|business)/i,       importance: 'High',   qRe: /(business)/i },
+  { topic: 'meetings', label: 'Business & meetings', homeRe: /(meeting|event|conference|private-dining|banquet|venue)/i, catRe: /(meeting|business)/i, importance: 'High', qRe: /(business)/i },
   { topic: 'weddings', label: 'Weddings & romance', homeRe: /(wedding|civil|ceremon|romantic)/i,           catRe: /(wedding|romantic)/i,       importance: 'High',   qRe: /(romantic)/i },
   { topic: 'spa',      label: 'Spa & wellness',    homeRe: /(spa|wellness)/i,                              catRe: /(spa|wellness)/i,          importance: 'Medium', qRe: /(spa)/i },
   { topic: 'family',   label: 'Family',            homeRe: /(family|kids|children)/i,                      catRe: /(family)/i,                importance: 'Medium', qRe: /(family)/i },
@@ -45,6 +45,14 @@ const TOPICS: { topic: string; label: string; homeRe: RegExp; catRe: RegExp; imp
 
 function pathOf(u: string): string {
   try { return new URL(u).pathname.replace(/\/$/, '').toLowerCase() || '/' } catch { return (u || '').toLowerCase() }
+}
+// The subtree root of a path: first segment. '/accommodation/duplex-suite' -> '/accommodation'.
+// Generic URL-structure only — no hotel-specific slugs — so child pages count toward their parent.
+function sectionOf(p: string): string {
+  const x = (p || '/').replace(/\/$/, '').toLowerCase() || '/'
+  if (x === '/') return '/'
+  const seg = x.split('/').filter(Boolean)
+  return '/' + (seg[0] || '')
 }
 
 export function buildKnowledgeGraph(facts: any[], auditResult: any): KnowledgeGraph {
@@ -65,7 +73,14 @@ export function buildKnowledgeGraph(facts: any[], auditResult: any): KnowledgeGr
     for (const f of tFacts) { const p = pathOf(f.page_url || ''); if (p) byPage[p] = (byPage[p] || 0) + 1 }
     const fact_pages = Object.entries(byPage).map(([path, count]) => ({ path, count, transient: TRANSIENT.test(path) || path === '/' })).sort((a, b) => b.count - a.count)
 
-    const canonical_page = Object.keys(byPage).find(p => T.homeRe.test(p) && !TRANSIENT.test(p)) || null
+    // Subtree-aware: group this topic's facts by SECTION (subtree root), pick the dominant
+    // non-transient section as the canonical home so a parent + its children count together.
+    const bySection: Record<string, number> = {}
+    for (const f of tFacts) { const sec = sectionOf(pathOf(f.page_url || '')); if (sec === '/' || TRANSIENT.test(sec)) continue; bySection[sec] = (bySection[sec] || 0) + 1 }
+    const dominantSection = Object.entries(bySection).sort((a, b) => b[1] - a[1])[0] || null
+    // canonical = a slug-matched page if one exists, else the dominant fact-bearing subtree root
+    const canonical_page = Object.keys(byPage).find(p => T.homeRe.test(p) && !TRANSIENT.test(p)) || (dominantSection ? dominantSection[0] : null)
+    const subtreeShare = (canonical_page && facts_n) ? (bySection[sectionOf(canonical_page)] || byPage[canonical_page] || 0) / facts_n : 0
     const realPages = fact_pages.filter(p => !p.transient)
 
     const dimQ = qResults.filter((r: any) => T.qRe.test((r.category || '').toLowerCase()))
@@ -77,12 +92,10 @@ export function buildKnowledgeGraph(facts: any[], auditResult: any): KnowledgeGr
     let cluster_state: ClusterState
     if (facts_n === 0) cluster_state = 'absent'
     else if (canonical_page) {
-      const homeShare = byPage[canonical_page] / facts_n
-      cluster_state = homeShare >= 0.6 ? 'consolidated' : 'scattered'
+      cluster_state = subtreeShare >= 0.6 ? 'consolidated' : 'scattered'
     } else if (realPages.length > 0) cluster_state = 'scattered'
     else cluster_state = 'contaminated'
-
-    const homeShare = canonical_page ? byPage[canonical_page] / facts_n : 0
+    const homeShare = subtreeShare
     const healthCanonical = canonical_page ? 40 : 0
     const healthConsolidation = canonical_page ? Math.round(homeShare * 35) : (realPages.length === 1 ? 12 : 0)
     const healthCoverage = Math.round((coverage / 100) * 25)
