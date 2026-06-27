@@ -3628,206 +3628,153 @@ function AiPerformancePanel({ perf, ga4Connected }: any) {
 function GuestReviewCard({ adv }: any) {
   const [open, setOpen] = useState(false)
 
-  const findings: any[] = []
-  const seen = new Set<string>()
-  const push = (f: any) => {
-    if (!f || !f.theme) return
-    const key = (f.topic || '') + '|' + f.theme
-    if (seen.has(key)) return
-    seen.add(key)
-    findings.push(f)
+  const GOLD = '#C9A84C', BG = '#F8F5EF', CARD = '#FFFFFF', TEXT = '#2A1A0E'
+  const MUTED = 'rgba(42,26,14,0.62)', BORDER = 'rgba(201,169,76,0.22)'
+  const GREEN = '#3F7D5B', AMBER = '#9A7B2E', RED = '#B4452F'
+
+  // Collect every review finding: advisory-level emerging + per-Case review_evidence
+  const moves: any[] = Array.isArray(adv?.top_moves) ? adv.top_moves : []
+  const raw: any[] = []
+  for (const f of (adv?.emerging_opportunities || [])) raw.push(f)
+  for (const m of moves) {
+    const ev = m?.canonicalRecommendation?.review_evidence
+    if (Array.isArray(ev)) for (const f of ev) raw.push(f)
   }
-  for (const m of (adv?.top_moves || [])) {
-    for (const f of (m?.canonicalRecommendation?.review_evidence || [])) push(f)
+  const byKey: Record<string, any> = {}
+  for (const f of raw) {
+    if (!f || !f.theme) continue
+    const k = `${(f.topic || '').toLowerCase()}|${(f.theme || '').toLowerCase()}`
+    if (!byKey[k] || (f.support_count || 0) > (byKey[k].support_count || 0)) byKey[k] = f
   }
-  for (const f of (adv?.emerging_opportunities || [])) push(f)
+  const findings: any[] = Object.values(byKey)
+  if (!findings.length) return null
 
-  findings.sort((a, b) => (b.support_count || 0) - (a.support_count || 0))
+  const POS = new Set(['recurring_strength', 'emerging_reputation'])
+  const strengths = findings.filter((f: any) => POS.has(f.kind)).sort((a: any, b: any) => (b.support_count || 0) - (a.support_count || 0))
+  const concerns = findings.filter((f: any) => !POS.has(f.kind)).sort((a: any, b: any) => (b.support_count || 0) - (a.support_count || 0))
 
-  const POSITIVE = new Set(['recurring_strength', 'emerging_reputation'])
-  const strengths = findings.filter(f => POSITIVE.has(f.kind))
-  const issues = findings.filter(f => !POSITIVE.has(f.kind))
-  const total = findings.length
-  const top = findings[0]
+  const totalMentions = findings.reduce((s: number, f: any) => s + (f.support_count || 0), 0) || 1
+  const share = (n: number) => Math.round(((n || 0) / totalMentions) * 100)
 
-  const totalMentions = findings.reduce((s, f) => s + (f.support_count || 0), 0)
-  const sources = new Set<string>()
-  for (const f of findings) for (const q of (f.representative_quotes || [])) if (q.source) sources.add(q.source)
-  const sourceCount = sources.size
-
-  const dims = (adv?.visibility_model?.dimensions || []).filter((d: any) => d.applicable !== false && d.band !== 'na')
-  const themeTopics = new Set(findings.map((f: any) => (f.topic || '').toLowerCase()).filter(Boolean))
-  const themeThemesLc = strengths.map((f: any) => (f.theme || '').toLowerCase())
-  const dimSupported = (d: any) => {
-    const dl = (d.label || d.dimension || '').toLowerCase()
-    if (themeTopics.has((d.dimension || '').toLowerCase())) return true
-    return themeThemesLc.some(t => t.includes(dl) || dl.includes(t.split(' ')[0]))
+  // Map a theme to an on-site visibility dimension -> can AI read this strength today?
+  const dims: any[] = adv?.visibility_model?.dimensions || []
+  const dimScore = (key: string) => {
+    const d = dims.find((x: any) => x.dimension === key)
+    if (!d) return null
+    return d.applicable === false ? null : (typeof d.score === 'number' ? d.score : null)
   }
-  const supportedDims = dims.filter(dimSupported)
-  const rarelyHeardDims = dims.filter((d: any) => !dimSupported(d))
-  const maxSupport = top?.support_count || 1
-
-  useEffect(() => {
-    if (!open) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [open])
-
-  if (!total) return null
-
-  const kindLabel: any = {
-    recurring_strength: 'Recurring strength',
-    emerging_reputation: 'Emerging',
-    recurring_complaint: 'Recurring concern',
-    expectation_gap: 'Expectation gap',
+  const trust = dimScore('trust')
+  function themeDim(f: any): string {
+    const blob = `${f.topic || ''} ${f.theme || ''}`.toLowerCase()
+    if (/(dining|food|restaurant|breakfast|tea|cocktail|\bbar\b|cuisine|menu|champagne)/.test(blob)) return 'dining'
+    if (/(romantic|wedding|honeymoon|couple|anniversary)/.test(blob)) return 'romantic'
+    if (/(location|central|tube|holborn|station|walk|quiet)/.test(blob)) return 'location'
+    if (/(business|meeting|conference|event)/.test(blob)) return 'business'
+    if (/(family|kids|child)/.test(blob)) return 'family'
+    return 'luxury'
   }
+  const onSite = (f: any) => { const s = dimScore(themeDim(f)); return typeof s === 'number' && s >= 50 }
+
+  const loudest = strengths[0] || concerns[0]
+  const loudestShare = loudest ? share(loudest.support_count) : 0
+  const reviewsReadable = typeof trust === 'number' && trust >= 50
+
+  const Bar = ({ v, color }: { v: number; color: string }) => (
+    <div style={{ height: 6, background: 'rgba(42,26,14,0.07)', borderRadius: 4, overflow: 'hidden', flex: 1 }}>
+      <div style={{ width: `${Math.max(6, v)}%`, height: '100%', background: color, borderRadius: 4 }} />
+    </div>
+  )
 
   return (
     <>
-      <button onClick={() => setOpen(true)} style={{ width: '100%', textAlign: 'left', cursor: 'pointer', background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.25rem 1.4rem', display: 'block', marginTop: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.6rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: GOLD, flexShrink: 0 }} />
-            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 700, color: TEXT }}>Guest Review Intelligence</span>
-          </div>
-          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.95rem', color: TEXT_MUTED }}>{'\u203a'}</span>
+      <div onClick={() => setOpen(true)} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: '20px 22px', cursor: 'pointer', marginTop: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <span style={{ width: 7, height: 7, borderRadius: '50%', background: GOLD }} />
+          <span style={{ fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: MUTED, fontWeight: 600 }}>Reputation vs AI visibility</span>
         </div>
-        {top && (
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: TEXT, margin: '0.7rem 0 0', lineHeight: 1.5 }}>
-            <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: GOLD, fontWeight: 600 }}>{top.support_count}</span>
-            {' guests highlight '}<strong>{top.theme.toLowerCase()}</strong>{' \u2014 your loudest guest signal. Tap for the full review analysis.'}
-          </p>
+        {loudest && (
+          <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 22, lineHeight: 1.25, color: TEXT, marginBottom: 8 }}>
+            {loudest.theme.charAt(0).toUpperCase() + loudest.theme.slice(1)} is your loudest signal — <span style={{ color: GOLD, fontWeight: 600 }}>{loudestShare}%</span> of everything guests talk about.
+          </div>
         )}
-      </button>
+        <div style={{ fontSize: 13.5, lineHeight: 1.5, color: MUTED, marginBottom: 14 }}>
+          {reviewsReadable
+            ? 'Your reviews are machine-readable, so AI can draw on this reputation when recommending hotels.'
+            : 'But AI can’t read a word of it — with no review schema, your reputation is invisible to the assistants guests ask.'}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: 12.5, color: TEXT, fontWeight: 600 }}>{strengths.length} strengths · {concerns.length} concerns guests raise</span>
+          <span style={{ fontSize: 12.5, color: GOLD, fontWeight: 600 }}>View the gap →</span>
+        </div>
+      </div>
 
       {open && (
-        <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(42,26,14,0.55)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '4vh 1rem', zIndex: 1000, overflowY: 'auto' }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: BG, borderRadius: 18, maxWidth: 1080, width: '100%', boxShadow: '0 20px 60px rgba(42,26,14,0.3)', overflow: 'hidden', marginBottom: '4vh' }}>
-            <div style={{ background: WHITE, padding: '2rem 2.5rem 1.5rem', position: 'relative', borderBottom: '1px solid ' + BORDER }}>
-              <button onClick={() => setOpen(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.6rem', width: 34, height: 34, borderRadius: '50%', border: '1px solid ' + BORDER, background: WHITE, color: TEXT_MUTED, fontSize: '1.2rem', lineHeight: 1, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{'\u00d7'}</button>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 600, color: TEXT, margin: '0 0 0.3rem', lineHeight: 1.1 }}>Reviews Analysis</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.5 }}>{'What guests consistently say \u2014 and how it shapes AI visibility.'}</p>
+        <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(20,12,4,0.55)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '40px 16px', zIndex: 1000, overflowY: 'auto' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: BG, borderRadius: 16, maxWidth: 720, width: '100%', boxShadow: '0 24px 70px rgba(0,0,0,0.3)' }}>
+            <div style={{ background: TEXT, color: '#fff', padding: '22px 26px', borderRadius: '16px 16px 0 0', position: 'relative' }}>
+              <div style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', opacity: 0.7, marginBottom: 6 }}>Reputation vs AI visibility</div>
+              <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 26 }}>What guests say — and whether AI can use it</div>
+              <div onClick={() => setOpen(false)} style={{ position: 'absolute', top: 18, right: 20, cursor: 'pointer', fontSize: 22, opacity: 0.7 }}>×</div>
             </div>
 
-            <div style={{ padding: '1.75rem 2.5rem 2.25rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.85rem', marginBottom: '1.75rem' }}>
-                {[
-                  { label: 'Review themes', value: total, sub: 'distinct themes found' },
-                  { label: 'Total mentions', value: totalMentions, sub: 'across all themes' },
-                  { label: 'Praised themes', value: strengths.length, sub: 'guests speak positively' },
-                  { label: 'Sources', value: sourceCount || '\u2014', sub: sourceCount ? 'platforms quoted' : 'no source tags' },
-                ].map((k, i) => (
-                  <div key={i} style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1.1rem 1.3rem' }}>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.55rem' }}>{k.label}</p>
-                    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.1rem', fontWeight: 400, color: TEXT, margin: '0 0 0.15rem', lineHeight: 1 }}>{k.value}</p>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED, margin: 0 }}>{k.sub}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.75rem' }}>
-                <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.5rem 1.6rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', marginBottom: '1.25rem' }}>
-                    <span style={{ color: ADV_GREEN_C, fontSize: '0.95rem' }}>{'\u2661'}</span>
-                    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', color: TEXT, margin: 0 }}>What guests love</p>
-                  </div>
-                  {strengths.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
-                      {strengths.map((f, i) => (
-                        <div key={'s' + i}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.4rem', gap: '0.6rem' }}>
-                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', fontWeight: 600, color: TEXT }}>{f.theme}</span>
-                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 700, color: ADV_GREEN_C, flexShrink: 0 }}>{f.support_count} {f.support_count === 1 ? 'mention' : 'mentions'}</span>
-                          </div>
-                          <div style={{ height: 7, background: 'rgba(42,26,14,0.06)', borderRadius: 4, overflow: 'hidden' }}>
-                            <div style={{ width: Math.max(6, Math.round((f.support_count / maxSupport) * 100)) + '%', height: '100%', background: ADV_GREEN_C, borderRadius: 4 }} />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', color: TEXT_MUTED, margin: 0, fontStyle: 'italic' }}>No recurring praise themes have cleared the support threshold yet.</p>
-                  )}
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED, margin: '1.1rem 0 0', lineHeight: 1.5 }}>Number of guest reviews raising each theme.</p>
-                </div>
-
-                <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.5rem 1.6rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', marginBottom: '1.25rem' }}>
-                    <span style={{ color: ADV_AMBER, fontSize: '0.95rem' }}>{'\u2299'}</span>
-                    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', color: TEXT, margin: 0 }}>What guests raise</p>
-                  </div>
-                  {issues.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
-                      {issues.map((f, i) => (
-                        <div key={'i' + i}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.4rem', gap: '0.6rem' }}>
-                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', fontWeight: 600, color: TEXT }}>{f.theme}</span>
-                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 700, color: ADV_AMBER, flexShrink: 0 }}>{f.support_count} {f.support_count === 1 ? 'mention' : 'mentions'}</span>
-                          </div>
-                          <div style={{ height: 7, background: 'rgba(42,26,14,0.06)', borderRadius: 4, overflow: 'hidden' }}>
-                            <div style={{ width: Math.max(6, Math.round((f.support_count / maxSupport) * 100)) + '%', height: '100%', background: ADV_AMBER, borderRadius: 4 }} />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', color: TEXT_MUTED, margin: 0, fontStyle: 'italic' }}>No recurring concerns have cleared the support threshold.</p>
-                  )}
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED, margin: '1.1rem 0 0', lineHeight: 1.5 }}>Themes guests raise as concerns or expectation gaps.</p>
+            <div style={{ padding: '24px 26px' }}>
+              <div style={{ background: reviewsReadable ? 'rgba(63,125,91,0.08)' : 'rgba(201,169,76,0.12)', border: `1px solid ${reviewsReadable ? 'rgba(63,125,91,0.3)' : BORDER}`, borderRadius: 12, padding: '16px 18px', marginBottom: 24 }}>
+                <div style={{ fontSize: 14.5, lineHeight: 1.55, color: TEXT }}>
+                  {loudest && (<>Guests talk about <b>{loudest.theme}</b> more than anything else ({loudestShare}% of all commentary). </>)}
+                  {reviewsReadable
+                    ? 'Your reviews are machine-readable, so this reputation reinforces how AI recommends you.'
+                    : <>But none of it is machine-readable. With no review schema, your <b>Trust &amp; Authority score is {typeof trust === 'number' ? trust : 0}</b> — so when a traveller asks an assistant for the best hotel for any of these, AI has nothing of yours to cite.</>}
                 </div>
               </div>
 
-              {findings.some((f: any) => (f.representative_quotes || []).length > 0) && (
-                <div style={{ marginBottom: '1.75rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', marginBottom: '1.1rem' }}>
-                    <span style={{ color: GOLD, fontSize: '0.9rem' }}>{'\u25a4'}</span>
-                    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', color: TEXT, margin: 0 }}>Top themes in reviews</p>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.85rem' }}>
-                    {findings.filter((f: any) => (f.representative_quotes || []).length > 0).map((f, i) => {
-                      const q = f.representative_quotes[0]
-                      const col = POSITIVE.has(f.kind) ? ADV_GREEN_C : ADV_AMBER
+              <div style={{ fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: MUTED, fontWeight: 700, marginBottom: 12 }}>What guests praise — and whether it lives on your site</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 26 }}>
+                {strengths.map((f: any, i: number) => {
+                  const sv = share(f.support_count)
+                  const live = onSite(f)
+                  return (
+                    <div key={i}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
+                        <span style={{ fontSize: 13.5, color: TEXT, fontWeight: 600, textTransform: 'capitalize' }}>{f.theme}</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: live ? GREEN : AMBER, background: live ? 'rgba(63,125,91,0.1)' : 'rgba(154,123,46,0.12)', padding: '2px 9px', borderRadius: 20 }}>{live ? 'On your site' : 'Missing from your site'}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <Bar v={sv} color={live ? GREEN : GOLD} />
+                        <span style={{ fontSize: 12.5, color: TEXT, fontWeight: 700, width: 38, textAlign: 'right' }}>{sv}%</span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {concerns.length > 0 && (
+                <>
+                  <div style={{ fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: MUTED, fontWeight: 700, marginBottom: 6 }}>What guests raise — AI can repeat these</div>
+                  <div style={{ fontSize: 12.5, color: MUTED, marginBottom: 12, lineHeight: 1.5 }}>If a guest asks an assistant whether you're worth it, these are part of what it draws on. Address them on-site to set the right expectation.</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 26 }}>
+                    {concerns.map((f: any, i: number) => {
+                      const sv = share(f.support_count)
+                      const q = (f.representative_quotes || [])[0]
                       return (
-                        <div key={'t' + i} style={{ background: WHITE, border: '1px solid ' + BORDER, borderTop: '3px solid ' + col, borderRadius: 12, padding: '1.1rem 1.25rem' }}>
-                          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', fontWeight: 700, color: TEXT }}>{f.theme}</span>
-                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, color: col, flexShrink: 0 }}>{f.support_count}{'\u00d7'}</span>
+                        <div key={i} style={{ borderLeft: `3px solid ${RED}`, paddingLeft: 12 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <span style={{ fontSize: 13.5, color: TEXT, fontWeight: 600, textTransform: 'capitalize' }}>{f.theme}</span>
+                            <span style={{ fontSize: 12.5, color: RED, fontWeight: 700 }}>{sv}%</span>
                           </div>
-                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', fontStyle: 'italic', color: TEXT_MUTED, margin: 0, lineHeight: 1.5 }}>{'\u201c'}{q.text}{'\u201d'}</p>
-                          {q.source && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED, margin: '0.5rem 0 0' }}>{kindLabel[f.kind] || 'Theme'}{' \u00b7 '}{q.source}</p>}
+                          {q && <div style={{ fontSize: 12.5, color: MUTED, fontStyle: 'italic', marginTop: 3 }}>“{q.text}”</div>}
                         </div>
                       )
                     })}
                   </div>
-                </div>
+                </>
               )}
 
-              {(supportedDims.length > 0 || rarelyHeardDims.length > 0) && (
-                <div style={{ background: GOLD_LIGHT, border: '1px solid ' + BORDER, borderLeft: '3px solid ' + GOLD, borderRadius: 12, padding: '1.5rem 1.75rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', marginBottom: '0.7rem' }}>
-                    <span style={{ color: GOLD, fontSize: '0.9rem' }}>{'\u2737'}</span>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT, margin: 0 }}>Impact on AI visibility</p>
-                  </div>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, margin: '0 0 1rem', lineHeight: 1.65 }}>{'Reviews are reputation AI can only use if it\u2019s machine-readable. Where guests consistently praise a strength, that signal reinforces how AI recommends you. Where reviews are quiet, AI has little to draw on.'}</p>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    <div>
-                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: ADV_GREEN_C, margin: '0 0 0.6rem' }}>Reviews strengthen confidence in</p>
-                      {supportedDims.length > 0 ? supportedDims.map((d: any, i: number) => (
-                        <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT, margin: '0.3rem 0', display: 'flex', gap: '0.5rem', lineHeight: 1.4 }}><span style={{ color: ADV_GREEN_C }}>{'\u2713'}</span>{d.label || d.dimension}</p>
-                      )) : <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: 0, fontStyle: 'italic' }}>None yet.</p>}
-                    </div>
-                    <div>
-                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: TEXT_MUTED, margin: '0 0 0.6rem' }}>Little review evidence for</p>
-                      {rarelyHeardDims.length > 0 ? rarelyHeardDims.map((d: any, i: number) => (
-                        <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT, margin: '0.3rem 0', display: 'flex', gap: '0.5rem', lineHeight: 1.4 }}><span style={{ color: TEXT_MUTED }}>{'\u2022'}</span>{d.label || d.dimension}</p>
-                      )) : <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: 0, fontStyle: 'italic' }}>Every tracked dimension has review support.</p>}
-                    </div>
-                  </div>
+              {!reviewsReadable && (
+                <div style={{ background: TEXT, color: '#fff', borderRadius: 12, padding: '18px 20px' }}>
+                  <div style={{ fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: GOLD, fontWeight: 700, marginBottom: 8 }}>The one change that unlocks all of this</div>
+                  <div style={{ fontSize: 14, lineHeight: 1.6, opacity: 0.92 }}>Your reputation already exists — it just isn’t in a form AI can read. Adding <b>Review &amp; AggregateRating schema</b> (your “Fix the AI-trust foundation” priority) turns these guest voices into machine-readable proof, so AI can finally cite them when recommending you.</div>
                 </div>
               )}
-
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: TEXT_MUTED, margin: '1.5rem 0 0', lineHeight: 1.5, fontStyle: 'italic' }}>Based on {total} review theme{total > 1 ? 's' : ''} across guest reviews. Each theme needs multiple supporting reviews to appear.</p>
             </div>
           </div>
         </div>
