@@ -3224,6 +3224,23 @@ function FoundationsPanel({ foundations }: any) {
               </div>
               {isOpen && (
                 <div style={{ padding: '0.3rem 0.9rem 1rem', borderTop: '1px solid ' + BORDER }}>
+                  {Array.isArray(f.components) && f.components.length > 0 && (
+                    <div style={{ marginTop: '0.8rem' }}>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.45rem' }}>Underlying components</p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                        {f.components.map((cmp: any, i: number) => {
+                          const cmpCol = cmp.ok ? ADV_GREEN_C : ADV_AMBER
+                          return (
+                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <span style={{ color: cmpCol, fontSize: '0.74rem', width: 14, flexShrink: 0 }}>{cmp.ok ? '✓' : '⚠'}</span>
+                              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', color: TEXT, flex: 1 }}>{cmp.name}</span>
+                              {cmp.score != null && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: cmpCol }}>{cmp.score}</span>}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
                   {f.why_it_matters && (
                     <div style={{ marginTop: '0.8rem' }}>
                       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.3rem' }}>Why this matters</p>
