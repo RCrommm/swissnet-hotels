@@ -3194,6 +3194,74 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
   )
 }
 
+// AI FOUNDATIONS — the explainability layer under the visibility score. Reads
+// adv.foundations (real architecture layers + KG + question coverage). Each row is
+// clickable, expanding to why/assessment/evidence/recommendation. No invented data:
+// renders only foundations the platform actually computed.
+function FoundationsPanel({ foundations }: any) {
+  const [open, setOpen] = useState<string | null>(null)
+  if (!Array.isArray(foundations) || foundations.length === 0) return null
+
+  const bandCol = (band: string) => band === 'strong' ? ADV_GREEN_C : band === 'moderate' ? GOLD : band === 'weak' ? ADV_AMBER : 'rgba(42,26,14,0.35)'
+  const bandWord = (band: string) => band === 'strong' ? 'Strong' : band === 'moderate' ? 'Moderate' : band === 'weak' ? 'Weak' : 'Absent'
+  const dims = [...foundations].sort((a: any, b: any) => (b.score ?? -1) - (a.score ?? -1))
+
+  return (
+    <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.5rem 1.6rem', marginTop: '1.25rem' }}>
+      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: TEXT, margin: '0 0 0.3rem' }}>AI Foundations</p>
+      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT_MUTED, margin: '0 0 1.1rem', lineHeight: 1.5 }}>What gives your hotel this visibility score — tap any foundation to see the evidence.</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+        {dims.map((f: any) => {
+          const col = bandCol(f.band)
+          const isOpen = open === f.key
+          return (
+            <div key={f.key} style={{ borderRadius: 10, border: '1px solid ' + (isOpen ? 'rgba(201,169,76,0.3)' : 'transparent'), background: isOpen ? BG : 'transparent', overflow: 'hidden' }}>
+              <div onClick={() => setOpen(isOpen ? null : f.key)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.7rem', padding: '0.6rem 0.7rem' }}>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', fontWeight: 500, color: TEXT, flex: 1 }}>{f.name}</span>
+                {f.score != null && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', fontWeight: 700, color: col }}>{f.score}</span>}
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', color: col, width: 64, textAlign: 'right' }}>{bandWord(f.band)}</span>
+                <span style={{ color: TEXT_MUTED, fontSize: '0.9rem', transform: isOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
+              </div>
+              {isOpen && (
+                <div style={{ padding: '0.3rem 0.9rem 1rem', borderTop: '1px solid ' + BORDER }}>
+                  {f.why_it_matters && (
+                    <div style={{ marginTop: '0.8rem' }}>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.3rem' }}>Why this matters</p>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: TEXT, margin: 0, lineHeight: 1.55 }}>{f.why_it_matters}</p>
+                    </div>
+                  )}
+                  {f.assessment && (
+                    <div style={{ marginTop: '0.85rem' }}>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: col, margin: '0 0 0.3rem' }}>Current assessment</p>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: TEXT, margin: 0, lineHeight: 1.55 }}>{f.assessment}</p>
+                    </div>
+                  )}
+                  {Array.isArray(f.evidence) && f.evidence.length > 0 && (
+                    <div style={{ marginTop: '0.85rem' }}>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Evidence</p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                        {f.evidence.map((e: string, i: number) => (
+                          <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.45, paddingLeft: '0.8rem', position: 'relative' }}><span style={{ position: 'absolute', left: 0, color: col }}>•</span>{e}</p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {f.recommendation && (
+                    <div style={{ marginTop: '0.85rem', padding: '0.65rem 0.85rem', background: WHITE, borderRadius: 8, border: '1px solid ' + BORDER, borderLeft: '3px solid ' + GOLD }}>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#8A6D1F', margin: '0 0 0.3rem' }}>Recommendation</p>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: TEXT, margin: 0, lineHeight: 1.55 }}>{f.recommendation}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function ScorePanel({ model }: any) {
   const [showAll, setShowAll] = useState(false)
   if (!model?.dimensions?.length) return (
@@ -3463,6 +3531,7 @@ function AdvisorV2Body({ adv, memory, hotel, savedAt }: any) {
         <div>
           <AdvSectionLabel title="AI Visibility Score" />
           <ScorePanel model={adv.visibility_model} />
+          <FoundationsPanel foundations={adv.foundations} />
         </div>
 
         <div>

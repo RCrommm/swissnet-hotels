@@ -5,6 +5,7 @@ import { decideAction } from '@/lib/decision'
 import { buildVisibilityModel } from '@/lib/visibility-model'
 import { buildKnowledgeGraph } from '@/lib/knowledge-graph'
 import { buildTechnicalReadiness } from '@/lib/technical-readiness'
+import { buildFoundations } from '@/lib/foundations'
 import { selectStrategicDecisions } from '@/lib/recommendation-selection'
 import { assembleRecommendation } from '@/lib/recommendation'
 import { PROSE_SYSTEM, proseSchema, buildProseInput, OPENING_SYSTEM, openingSchema, buildOpeningInput, attachSequence } from '@/lib/recommendation-prose'
@@ -598,6 +599,7 @@ ${techLines.length ? techLines.join('\n') : '(no technical gaps flagged)'}`
     advisory.visibility_model = visibilityModel
     advisory.knowledge_graph = knowledgeGraph
     advisory.technical_readiness = technical
+    advisory.foundations = buildFoundations(latestAuditResult, knowledgeGraph)
 
     
     
