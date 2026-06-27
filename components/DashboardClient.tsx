@@ -3624,6 +3624,137 @@ function AiPerformancePanel({ perf, ga4Connected }: any) {
 }
 
 // ── AI KNOWLEDGE INTEGRITY (manual, read-only) ──
+// ── GUEST REVIEW INTELLIGENCE (reads advisory blob; no DB, no re-analysis) ──
+function GuestReviewCard({ adv }: any) {
+  const [open, setOpen] = useState(false)
+
+  // Collect every review finding: per-Case review_evidence + advisory-level emerging_opportunities.
+  const findings: any[] = []
+  const seen = new Set<string>()
+  const push = (f: any) => {
+    if (!f || !f.theme) return
+    const key = (f.topic || '') + '|' + f.theme
+    if (seen.has(key)) return
+    seen.add(key)
+    findings.push(f)
+  }
+  for (const m of (adv?.top_moves || [])) {
+    for (const f of (m?.canonicalRecommendation?.review_evidence || [])) push(f)
+  }
+  for (const f of (adv?.emerging_opportunities || [])) push(f)
+
+  // Sort by support strength so the loudest guest signal leads.
+  findings.sort((a, b) => (b.support_count || 0) - (a.support_count || 0))
+
+  const POSITIVE = new Set(['recurring_strength', 'emerging_reputation'])
+  const strengths = findings.filter(f => POSITIVE.has(f.kind))
+  const issues = findings.filter(f => !POSITIVE.has(f.kind))
+  const total = findings.length
+  const top = findings[0]
+
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
+
+  if (!total) return null
+
+  const kindLabel: any = {
+    recurring_strength: 'Strength',
+    emerging_reputation: 'Emerging',
+    recurring_complaint: 'Complaint',
+    expectation_gap: 'Expectation gap',
+  }
+  const kindColor = (k: string) => POSITIVE.has(k) ? ADV_GREEN_C : RED
+
+  return (
+    <>
+      <button onClick={() => setOpen(true)} style={{ width: '100%', textAlign: 'left', cursor: 'pointer', background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.25rem 1.4rem', display: 'block', marginTop: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.6rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: GOLD, flexShrink: 0 }} />
+            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 700, color: TEXT }}>Guest Review Intelligence</span>
+          </div>
+          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.95rem', color: TEXT_MUTED }}>\u203a</span>
+        </div>
+        {top && (
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: TEXT, margin: '0.7rem 0 0', lineHeight: 1.5 }}>
+            <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: GOLD, fontWeight: 600 }}>{top.support_count}</span>
+            {' '}guests highlight <strong>{top.theme.toLowerCase()}</strong> \u2014 your loudest guest signal. Tap to see what guests say and how it affects AI visibility.
+          </p>
+        )}
+      </button>
+
+      {open && (
+        <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(42,26,14,0.55)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '4vh 1rem', zIndex: 1000, overflowY: 'auto' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: BG, borderRadius: 18, maxWidth: 760, width: '100%', boxShadow: '0 20px 60px rgba(42,26,14,0.3)', overflow: 'hidden' }}>
+            <div style={{ background: 'linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)', padding: '1.75rem 2rem', position: 'relative' }}>
+              <button onClick={() => setOpen(false)} style={{ position: 'absolute', top: '1.1rem', right: '1.25rem', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.7)', fontSize: '1.4rem', cursor: 'pointer', lineHeight: 1 }}>\u00d7</button>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.75)', margin: '0 0 0.4rem' }}>Guest Review Intelligence</p>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.7rem', fontWeight: 400, color: WHITE, margin: 0, lineHeight: 1.15 }}>What guests consistently say</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: 'rgba(255,255,255,0.8)', margin: '0.6rem 0 0', lineHeight: 1.55, maxWidth: '60ch' }}>Themes raised across real guest reviews, with how each affects whether AI can recommend you for it.</p>
+            </div>
+            <div style={{ padding: '1.75rem 2rem', display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+              {top && (
+                <div style={{ border: '1px solid rgba(201,169,76,0.3)', borderRadius: 12, background: 'rgba(201,169,76,0.06)', padding: '1.1rem 1.3rem' }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.4rem' }}>What this means for AI visibility</p>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.84rem', color: TEXT, margin: 0, lineHeight: 1.55 }}>
+                    Your strongest guest signal is <strong>{top.theme.toLowerCase()}</strong> ({top.support_count} reviews). If your website doesn&rsquo;t state this in a clear, retrievable way, AI assistants can&rsquo;t use your single biggest strength when deciding whether to recommend you \u2014 the reputation exists, but the machine-readable proof doesn&rsquo;t.
+                  </p>
+                </div>
+              )}
+
+              {strengths.length > 0 && (
+                <div>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: ADV_GREEN_C, margin: '0 0 0.7rem' }}>What guests praise</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                    {strengths.map((f, i) => (
+                      <div key={'s' + i} style={{ border: '1px solid ' + BORDER, borderLeft: '4px solid ' + kindColor(f.kind), borderRadius: 10, background: WHITE, padding: '0.9rem 1.1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.6rem', marginBottom: '0.35rem' }}>
+                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.84rem', fontWeight: 700, color: TEXT }}>{f.theme}</span>
+                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, color: kindColor(f.kind), whiteSpace: 'nowrap' }}>{f.support_count} reviews \u00b7 {kindLabel[f.kind] || 'Signal'}</span>
+                        </div>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.5 }}>{f.claim}</p>
+                        {(f.representative_quotes || []).slice(0, 1).map((q: any, j: number) => (
+                          <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontStyle: 'italic', fontSize: '0.76rem', color: TEXT, margin: '0.5rem 0 0', lineHeight: 1.5 }}>&ldquo;{q.text}&rdquo;</p>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {issues.length > 0 && (
+                <div>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: RED, margin: '0 0 0.7rem' }}>What guests raise</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                    {issues.map((f, i) => (
+                      <div key={'i' + i} style={{ border: '1px solid ' + BORDER, borderLeft: '4px solid ' + kindColor(f.kind), borderRadius: 10, background: WHITE, padding: '0.9rem 1.1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.6rem', marginBottom: '0.35rem' }}>
+                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.84rem', fontWeight: 700, color: TEXT }}>{f.theme}</span>
+                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, color: kindColor(f.kind), whiteSpace: 'nowrap' }}>{f.support_count} reviews \u00b7 {kindLabel[f.kind] || 'Signal'}</span>
+                        </div>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.5 }}>{f.claim}</p>
+                        {(f.representative_quotes || []).slice(0, 1).map((q: any, j: number) => (
+                          <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontStyle: 'italic', fontSize: '0.76rem', color: TEXT, margin: '0.5rem 0 0', lineHeight: 1.5 }}>&ldquo;{q.text}&rdquo;</p>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.5, fontStyle: 'italic' }}>Based on {total} review theme{total > 1 ? 's' : ''} found across guest reviews. Themes need multiple supporting reviews to appear.</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
 function KnowledgeIntegrityCard({ hotelId }: any) {
   const [rows, setRows] = useState<any[]>([])
   const [loaded, setLoaded] = useState(false)
@@ -3766,6 +3897,7 @@ function AdvisorV2Body({ adv, memory, hotel, savedAt }: any) {
           <AdvSectionLabel title="Activity Since Last Audit" />
           <ActivityPanel memory={memory} />
           <div style={{ marginTop: '1rem' }}><KnowledgeIntegrityCard hotelId={hotel?.id} /></div>
+          <GuestReviewCard adv={adv} />
         </div>
       </div>
 
