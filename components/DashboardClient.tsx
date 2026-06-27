@@ -2587,6 +2587,75 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId }: { hotelName: st
         <KPICard label="Cited but Missing You" value={mentionNo} sub="outreach targets" color={RED} />
       </div>
 
+      {/* ── AI OUTREACH PRIORITIES ── */}
+      {/* Pure re-presentation of byDomain. Missing-you sources only — pages AI already
+          trusts that don't yet mention this hotel. Ranked by real signals (citation
+          count, query coverage, source type). No invented numbers. The "Incorrect
+          information" category is architected here but stays empty until AI Knowledge
+          Integrity exists. */}
+      {(() => {
+        const TYPE_WEIGHT: Record<string, number> = { Guide: 1.3, 'Editorial / blog': 1.2, OTA: 1.15, 'Brand / loyalty': 1.1, Other: 1.0, Social: 0.9 }
+        const APPROACH: Record<string, string> = {
+          OTA: 'Update your listing or distribution so this page carries your hotel',
+          Guide: 'Pitch editorial inclusion — usually a longer submission process',
+          'Editorial / blog': 'Contact the author or editor to request inclusion',
+          Social: 'Engage with or claim your presence on this platform',
+          'Brand / loyalty': 'Request your hotel be added to this partner listing',
+          Other: 'Request a listing or mention on this page',
+        }
+        const targets = Object.entries(byDomain)
+          .filter(([domain, v]) => v.mentioned === false && domain !== ownDomain)
+          .map(([domain, v]) => {
+            const t = sourceType(domain)
+            const queries = v.queries.size
+            const coverage = Math.round((queries / totalQueries) * 100)
+            const score = v.count * (TYPE_WEIGHT[t.label] ?? 1) * (1 + queries / totalQueries)
+            return { domain, count: v.count, queries, coverage, type: t, score, approach: APPROACH[t.label] || APPROACH.Other }
+          })
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 8)
+
+        // Deferred — filled later by AI Knowledge Integrity. Empty today, renders nothing.
+        const incorrectFindings: any[] = []
+
+        if (targets.length === 0 && incorrectFindings.length === 0) return null
+        const topScore = targets[0]?.score || 1
+        const tierOf = (s: number) => s >= topScore * 0.6 ? { txt: 'High', icon: '🔥', col: RED } : { txt: 'Medium', icon: '⭐', col: GOLD }
+
+        return (
+          <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.5rem' }}>
+            <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG }}>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>AI Outreach Priorities</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.5 }}>Where to spend your outreach time first — high-authority pages AI cites for {hotelRegion} that don&rsquo;t yet mention {hotelName}.</p>
+            </div>
+            {targets.length > 0 ? (
+              <div>
+                {targets.map((t, i) => {
+                  const tier = tierOf(t.score)
+                  return (
+                    <div key={t.domain} style={{ padding: '1.1rem 1.5rem', borderBottom: i < targets.length - 1 ? '1px solid ' + BORDER : 'none', display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, color: tier.col, background: tier.col + '12', border: '1px solid ' + tier.col + '30', padding: '4px 10px', borderRadius: 20, whiteSpace: 'nowrap', flexShrink: 0, marginTop: '0.1rem' }}>{tier.icon} {tier.txt}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.3rem', flexWrap: 'wrap' }}>
+                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', fontWeight: 700, color: TEXT }}>{t.domain}</span>
+                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 600, color: t.type.color, background: t.type.color + '14', padding: '2px 9px', borderRadius: 20 }}>{t.type.label}</span>
+                        </div>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: TEXT_MUTED, margin: '0 0 0.4rem', lineHeight: 1.5 }}>Cited {t.count}× across {t.queries} of your tracked {hotelRegion} {t.queries === 1 ? 'search' : 'searches'} — but doesn&rsquo;t mention you.</p>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT, margin: 0, lineHeight: 1.5 }}><span style={{ fontWeight: 700, color: GOLD }}>Recommended:</span> {t.approach}</p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div style={{ padding: '1.75rem 1.5rem', textAlign: 'center' }}>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6 }}>No outreach targets yet — every checked source that AI cites already mentions {hotelName}, or pages haven&rsquo;t been scanned for your name yet.</p>
+              </div>
+            )}
+          </div>
+        )
+      })()}
+
       {/* Source list */}
       <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.5rem' }}>
         <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG }}>
