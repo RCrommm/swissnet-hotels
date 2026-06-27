@@ -20,13 +20,13 @@ const CATEGORY_COMPETITORS: Record<string, { label: string; hotels: string[] }> 
   spa: {
     label: 'Spa & Wellness',
     hotels: [
-      'BÃ¼rgenstock Resort',
+      'Bürgenstock Resort',
       'The Dolder Grand',
       'Six Senses Crans-Montana',
       'Grand Resort Bad Ragaz',
       'The Chedi Andermatt',
       'Clinique La Prairie',
-      'La RÃ©serve GenÃ¨ve',
+      'La Réserve Genève',
       'Le Grand Bellevue Gstaad',
       'Suvretta House',
     ],
@@ -54,7 +54,7 @@ const CATEGORY_COMPETITORS: Record<string, { label: string; hotels: string[] }> 
       'Giardino Mountain St. Moritz',
       'Carlton Hotel St. Moritz',
       'Baur au Lac',
-      'La RÃ©serve GenÃ¨ve',
+      'La Réserve Genève',
       'Victoria-Jungfrau Grand Hotel Interlaken',
       'Beau-Rivage Palace Lausanne',
     ],
@@ -67,10 +67,10 @@ const CATEGORY_COMPETITORS: Record<string, { label: string; hotels: string[] }> 
       'The Dolder Grand',
       'Mandarin Oriental Geneva',
       'Widder Hotel Zurich',
-      'La RÃ©serve GenÃ¨ve',
+      'La Réserve Genève',
       'Park Hyatt Zurich',
       'Bellevue Palace',
-      'La RÃ©serve Eden au Lac Zurich',
+      'La Réserve Eden au Lac Zurich',
     ],
   },
   romantic: {
@@ -78,7 +78,7 @@ const CATEGORY_COMPETITORS: Record<string, { label: string; hotels: string[] }> 
     hotels: [
       'The Alpina Gstaad',
       "Badrutt's Palace Hotel",
-      'La RÃ©serve GenÃ¨ve',
+      'La Réserve Genève',
       'Mont Cervin Palace',
       'Eden Roc Ascona',
       'Castello del Sole Ascona',
@@ -90,10 +90,10 @@ const CATEGORY_COMPETITORS: Record<string, { label: string; hotels: string[] }> 
   lake: {
     label: 'Lake Hotel',
     hotels: [
-      'BÃ¼rgenstock Resort',
-      'La RÃ©serve GenÃ¨ve',
+      'Bürgenstock Resort',
+      'La Réserve Genève',
       'Beau-Rivage Palace Lausanne',
-      'La RÃ©serve Eden au Lac Zurich',
+      'La Réserve Eden au Lac Zurich',
       'Fairmont Le Montreux Palace',
       'Eden Roc Ascona',
       'Castello del Sole Ascona',
@@ -105,8 +105,8 @@ const CATEGORY_COMPETITORS: Record<string, { label: string; hotels: string[] }> 
 
 // Max 2 categories per hotel + region always shown
 const HOTEL_CATEGORIES: Record<string, string[]> = {
-  'La RÃ©serve GenÃ¨ve': ['spa', 'dining', 'romantic', 'lake', 'business', 'family'],
-  'La RÃ©serve Eden au Lac Zurich': ['business', 'romantic', 'lake', 'dining'],
+  'La Réserve Genève': ['spa', 'dining', 'romantic', 'lake', 'business', 'family'],
+  'La Réserve Eden au Lac Zurich': ['business', 'romantic', 'lake', 'dining'],
   'Mont Cervin Palace': ['ski', 'dining', 'romantic', 'family'],
   'Monte Rosa Zermatt': ['ski', 'romantic'],
   'Schweizerhof Zermatt': ['ski', 'spa', 'family'],
@@ -589,7 +589,7 @@ const saveHotelInfo = async () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
             <div>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Events & Time-Limited Offers</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>e.g. Watches & Wonders, Christmas Gala, Ski Weekend Â· Appear on /events page Â· Max 3 active</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>e.g. Watches & Wonders, Christmas Gala, Ski Weekend · Appear on /events page · Max 3 active</p>
             </div>
             {activeOffers.length < 3 && !offerForm && (
               <button onClick={() => setOfferForm({ name: '', description: '', start_date: today, end_date: '' })} style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer', flexShrink: 0, marginLeft: '1rem' }}>+ Add Event</button>
@@ -599,7 +599,7 @@ const saveHotelInfo = async () => {
             <div style={{ background: WHITE, border: '1px solid ' + GOLD + '40', borderRadius: 10, padding: '1.25rem 1.5rem', marginBottom: '1.25rem' }}>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', color: TEXT, margin: '0 0 1rem' }}>{offerForm.id ? 'Edit Event' : 'New Event or Offer'}</p>
               <div style={{ display: 'grid', gap: '0.75rem' }}>
-                <div><label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Title *</label><input value={offerForm.name} onChange={e => setOfferForm((p: any) => ({ ...p, name: e.target.value }))} placeholder="e.g. Watches & Wonders Geneva Â· Christmas Gala Dinner" style={inp} /></div>
+                <div><label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Title *</label><input value={offerForm.name} onChange={e => setOfferForm((p: any) => ({ ...p, name: e.target.value }))} placeholder="e.g. Watches & Wonders Geneva · Christmas Gala Dinner" style={inp} /></div>
                 <div><label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Description *</label><textarea value={offerForm.description} onChange={e => setOfferForm((p: any) => ({ ...p, description: e.target.value }))} rows={3} style={{ ...inp, resize: 'vertical' }} /></div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                   <div><label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Start Date</label><input type="date" value={offerForm.start_date} onChange={e => setOfferForm((p: any) => ({ ...p, start_date: e.target.value }))} style={inp} /></div>
@@ -656,7 +656,7 @@ const saveHotelInfo = async () => {
     <div style={{ display: 'grid', gap: '1rem' }}>
       
       <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1.25rem' }}>
-        <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Languages Spoken <span style={{ color: GOLD }}>Â· Medium AI Impact</span></label>
+        <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Languages Spoken <span style={{ color: GOLD }}>· Medium AI Impact</span></label>
         <input value={hotelInfo.languages} onChange={e => setHotelInfo(p => ({ ...p, languages: e.target.value }))} placeholder="e.g. French, English, German, Italian, Japanese" style={inp} />
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -670,8 +670,8 @@ const saveHotelInfo = async () => {
         </div>
       </div>
       <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1.25rem' }}>
-        <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>About Us â AI Schema Only <span style={{ color: GOLD }}>Â· High AI Impact</span></label>
-        <textarea value={hotelInfo.about_us} onChange={e => setHotelInfo(p => ({ ...p, about_us: e.target.value }))} rows={4} placeholder="e.g. La RÃ©serve GenÃ¨ve is the only resort-style hotel in Geneva set within a 10-acre private lakefront park, combining resort tranquility with 3 minutes from Geneva Airport." style={{ ...inp, resize: 'vertical' }} />
+        <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>About Us â AI Schema Only <span style={{ color: GOLD }}>· High AI Impact</span></label>
+        <textarea value={hotelInfo.about_us} onChange={e => setHotelInfo(p => ({ ...p, about_us: e.target.value }))} rows={4} placeholder="e.g. La Réserve Genève is the only resort-style hotel in Geneva set within a 10-acre private lakefront park, combining resort tranquility with 3 minutes from Geneva Airport." style={{ ...inp, resize: 'vertical' }} />
         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', color: TEXT_MUTED, margin: '0.3rem 0 0' }}>â  This does <strong>not</strong> appear on your public page â it is embedded in your AI schema only. AI bots read it when crawling your profile. Be specific and factual, not marketing language.</p>
       </div>
       <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1.25rem' }}>
@@ -721,7 +721,7 @@ const saveHotelInfo = async () => {
         <input value={hotelInfo.seasonal_notes} onChange={e => setHotelInfo(p => ({ ...p, seasonal_notes: e.target.value }))} placeholder="e.g. Outdoor pool open MayâSeptember, ski access DecemberâApril" style={inp} />
       </div>
       <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1.25rem' }}>
-        <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Direct Booking Benefits <span style={{ color: GOLD }}>Â· High AI Impact</span></label>
+        <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Direct Booking Benefits <span style={{ color: GOLD }}>· High AI Impact</span></label>
         <textarea value={hotelInfo.booking_benefits} onChange={e => setHotelInfo(p => ({ ...p, booking_benefits: e.target.value }))} rows={3} placeholder="e.g. Complimentary welcome drink, early check-in from 12pm, late check-out until 2pm, no booking fees" style={{ ...inp, resize: 'vertical' }} />
       </div>
     </div>
@@ -748,18 +748,18 @@ const saveHotelInfo = async () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
             <div>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Spa & Wellness Venues</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Add spa, gym, hair salon and other wellness venues Â· Changes update live in schema</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Add spa, gym, hair salon and other wellness venues · Changes update live in schema</p>
             </div>
             {!spaForm && <button onClick={() => setSpaForm({ name: '', description: '', treatments: '', wellness_philosophy: '', size_sqm: '', pool: false, sauna: false, hammam: false, price_from: '', opening_hours: '' })} style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer', flexShrink: 0, marginLeft: '1rem' }}>+ Add</button>}
           </div>
           {spaForm && (
             <div style={{ background: WHITE, border: '1px solid ' + GOLD + '40', borderRadius: 10, padding: '1.25rem 1.5rem', marginBottom: '1.25rem' }}>
               <div style={{ display: 'grid', gap: '0.75rem' }}>
-                <div><label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Name *</label><input value={spaForm.name} onChange={e => setSpaForm((p: any) => ({ ...p, name: e.target.value }))} placeholder="e.g. Spa Nescens Â· Gym Â· Hair Salon" style={inp} /></div>
+                <div><label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Name *</label><input value={spaForm.name} onChange={e => setSpaForm((p: any) => ({ ...p, name: e.target.value }))} placeholder="e.g. Spa Nescens · Gym · Hair Salon" style={inp} /></div>
                 <div><label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Description</label><textarea value={spaForm.description} onChange={e => setSpaForm((p: any) => ({ ...p, description: e.target.value }))} rows={3} style={{ ...inp, resize: 'vertical' }} /></div>
                 <div><label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Treatments / Services</label><textarea value={spaForm.treatments} onChange={e => setSpaForm((p: any) => ({ ...p, treatments: e.target.value }))} placeholder="e.g. Deep tissue massage, Hot stone therapy..." rows={2} style={{ ...inp, resize: 'vertical' }} /></div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
-                  <div><label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Size (mÂ²)</label><input type="number" value={spaForm.size_sqm} onChange={e => setSpaForm((p: any) => ({ ...p, size_sqm: e.target.value }))} placeholder="e.g. 2500" style={inp} /></div>
+                  <div><label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Size (m²)</label><input type="number" value={spaForm.size_sqm} onChange={e => setSpaForm((p: any) => ({ ...p, size_sqm: e.target.value }))} placeholder="e.g. 2500" style={inp} /></div>
                   <div><label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Price from (CHF)</label><input type="number" value={spaForm.price_from} onChange={e => setSpaForm((p: any) => ({ ...p, price_from: e.target.value }))} placeholder="e.g. 150" style={inp} /></div>
                   <div><label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Opening Hours</label><input value={spaForm.opening_hours} onChange={e => setSpaForm((p: any) => ({ ...p, opening_hours: e.target.value }))} placeholder="e.g. 9am â 9pm daily" style={inp} /></div>
                 </div>
@@ -790,7 +790,7 @@ const saveHotelInfo = async () => {
                   <div style={{ flex: 1 }}>
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: TEXT, margin: '0 0 0.25rem' }}>{spa.name}</p>
                     <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.3rem', flexWrap: 'wrap' }}>
-                      {spa.size_sqm && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>{spa.size_sqm} mÂ²</span>}
+                      {spa.size_sqm && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>{spa.size_sqm} m²</span>}
                       {spa.pool && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>Pool</span>}
                       {spa.sauna && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>Sauna</span>}
                       {spa.hammam && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>Hammam</span>}
@@ -816,7 +816,7 @@ const saveHotelInfo = async () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
             <div>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Experiences & Activities</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Permanent curated experiences on your /experiences page Â· Changes live immediately</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Permanent curated experiences on your /experiences page · Changes live immediately</p>
             </div>
             {!expForm && <button onClick={() => setExpForm({ name: '', description: '', category: '', duration: '', price_from: '' })} style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer', flexShrink: 0, marginLeft: '1rem' }}>+ Add</button>}
           </div>
@@ -877,7 +877,7 @@ const saveHotelInfo = async () => {
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>
                 {mainTab === 'overview' ? 'Overview FAQs' : mainTab === 'events' ? 'Events & Offers FAQs' : `${mainTab.charAt(0).toUpperCase() + mainTab.slice(1)} FAQs`}
               </p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Changes go live immediately Â· Max 12 per page Â· Appear in FAQPage schema</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Changes go live immediately · Max 12 per page · Appear in FAQPage schema</p>
             </div>
             {(faqs[faqPageKey] || []).length < 12 && (
               <button onClick={() => addFaq(faqPageKey)} style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer', flexShrink: 0, marginLeft: '1rem' }}>+ Add FAQ</button>
@@ -1034,7 +1034,7 @@ function CategoryTrendChart({ category, hotelName, hotels }: { category: string;
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
         <div>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 0.2rem' }}>Category Trend</p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: 0, letterSpacing: '0.03em' }}>AI visibility score over time Â· click legend to filter</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: 0, letterSpacing: '0.03em' }}>AI visibility score over time · click legend to filter</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           {delta !== null && (
@@ -1358,7 +1358,7 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
       done: !!hotel?.description,
       score: hotel?.description ? Math.min(100, Math.round((hotel.description.split(' ').length / 80) * 100)) : 0,
       detail: hotel?.description ? `${hotel.description.split(' ').length} words` : 'Missing',
-      tip: 'Include specific facts: mÂ², distances, number of rooms, awards',
+      tip: 'Include specific facts: m², distances, number of rooms, awards',
       fix: null,
     },
     {
@@ -1393,7 +1393,7 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
       impact: 'High',
       done: (data.rooms?.length || 0) > 0,
       score: data.rooms?.length === 0 ? 0 : Math.min(100, Math.round((roomsWithDetail / Math.max(data.rooms?.length || 1, 4)) * 100)),
-      detail: `${data.rooms?.length || 0} rooms Â· ${roomsWithDetail} with full detail`,
+      detail: `${data.rooms?.length || 0} rooms · ${roomsWithDetail} with full detail`,
       tip: 'Add size, bed type and price to every room for maximum AI retrieval',
       fix: null,
     },
@@ -1402,7 +1402,7 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
       impact: 'Medium',
       done: (data.restaurants?.length || 0) > 0,
       score: data.restaurants?.length === 0 ? 0 : Math.min(100, Math.round((restaurantsWithDetail / Math.max(data.restaurants?.length || 1, 2)) * 100) + (data.restaurants?.some((r: any) => r.michelin_stars > 0) ? 20 : 0)),
-      detail: `${data.restaurants?.length || 0} restaurants Â· ${restaurantsWithDetail} with full detail`,
+      detail: `${data.restaurants?.length || 0} restaurants · ${restaurantsWithDetail} with full detail`,
       tip: 'Add cuisine type, description and Michelin stars to each restaurant',
       fix: 'dining',
     },
@@ -1625,7 +1625,7 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
                   <div style={{ width: 7, height: 7, borderRadius: '50%', background: f.impact === 'High' ? RED : f.impact === 'Medium' ? GOLD : BLUE, flexShrink: 0 }} />
                   <div>
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 600, color: TEXT, margin: 0 }}>{f.label}</p>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: '0.1rem 0 0' }}>{f.impact === 'High' ? 'Essential' : f.impact === 'Medium' ? 'Enriching' : 'Refining'} Â· {f.tip || 'Adds depth to your AI profile'}</p>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: '0.1rem 0 0' }}>{f.impact === 'High' ? 'Essential' : f.impact === 'Medium' ? 'Enriching' : 'Refining'} · {f.tip || 'Adds depth to your AI profile'}</p>
                   </div>
                 </div>
                 {f.fix ? (
@@ -1680,7 +1680,7 @@ function getCategoryRec(cat: string, hotelName: string) {
   const h = hotelName
   const lib: Record<string, { faq: string; words: string; campaign: string; ad: string }> = {
     spa: {
-      faq: `Add an FAQ: "What makes the spa at ${h} special?" â answer with the spa's size in mÂ², signature treatments, and thermal facilities (pool, sauna, hammam).`,
+      faq: `Add an FAQ: "What makes the spa at ${h} special?" â answer with the spa's size in m², signature treatments, and thermal facilities (pool, sauna, hammam).`,
       words: `Use these in your spa description & FAQs: "wellness retreat", "thermal spa", "signature treatment", "spa day pass", "detox programme".`,
       campaign: `Launch a "Midweek Wellness Escape" package â 2 nights with daily spa access and one signature treatment.`,
       ad: `Post title: "A Day of Calm at ${h}". Content: a 20â30s Instagram Reel â slow shots of the spa, pool and a treatment, captioned with the spa size and one signature treatment. Boost to ages 30â55 within 100km. Wellness ads work best as quiet, sensory video.`,
@@ -1874,7 +1874,7 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
       <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 16, padding: '2.5rem', marginBottom: '1.75rem', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: -50, right: -30, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,169,76,0.08) 0%, transparent 70%)' }} />
         <div style={{ position: 'relative' }}>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0 0 0.9rem' }}>{monthName} {now.getFullYear()} Â· Your focus this month</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0 0 0.9rem' }}>{monthName} {now.getFullYear()} · Your focus this month</p>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.65rem', fontWeight: 300, color: WHITE, margin: '0 0 1.5rem', lineHeight: 1.4, maxWidth: 560 }}>Three actions, each chosen from where {hotelName} is weakest right now.</p>
           <div style={{ display: 'flex', gap: '2.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
             {[
@@ -2240,7 +2240,7 @@ function WebsiteTab({ hotel }: any) {
         <div style={{ position: 'absolute', top: -40, right: -40, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,169,76,0.08) 0%, transparent 70%)' }} />
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '2rem' }}>
           <div style={{ flex: 1 }}>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.75)', margin: '0 0 0.75rem' }}>Your own website Â· AI visibility audit</p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.75)', margin: '0 0 0.75rem' }}>Your own website · AI visibility audit</p>
             <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.25rem', fontWeight: 300, color: WHITE, margin: '0 0 0.6rem', lineHeight: 1.2 }}>How {domain || 'your website'} reads to AI</p>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.88rem', color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.65, maxWidth: 560 }}>We read your pages the way ChatGPT, Perplexity and Google AI do â then tell you exactly what to fix first.</p>
           </div>
@@ -2271,7 +2271,7 @@ function WebsiteTab({ hotel }: any) {
           {/* HEADLINE SCORES */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '0.85rem', marginBottom: '1.75rem' }}>
             {[
-              { label: 'Recommendation readiness', value: r.recommendation?.score, suffix: '/100', sub: `${r.recommendation?.yes || 0} yes Â· ${r.recommendation?.partial || 0} partial Â· ${r.recommendation?.no || 0} no` },
+              { label: 'Recommendation readiness', value: r.recommendation?.score, suffix: '/100', sub: `${r.recommendation?.yes || 0} yes · ${r.recommendation?.partial || 0} partial · ${r.recommendation?.no || 0} no` },
               { label: 'Content quality', value: cq?.score, suffix: '%', sub: 'how quotable your writing is' },
               { label: 'AI architecture', value: r.architectureScore, suffix: '/100', sub: '14 layers evaluated' },
               { label: 'Question coverage', value: answer?.score, suffix: '%', sub: `${(answer?.yes || 0) + (answer?.partial || 0)}/${answer?.total || 30} answered` },
@@ -2283,7 +2283,7 @@ function WebsiteTab({ hotel }: any) {
               </div>
             ))}
           </div>
-          {savedAt && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: TEXT_MUTED, margin: '0 0 1.5rem' }}>Last audit: {new Date(savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} Â· {(r.pagesScraped || []).length} pages reviewed</p>}
+          {savedAt && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: TEXT_MUTED, margin: '0 0 1.5rem' }}>Last audit: {new Date(savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} · {(r.pagesScraped || []).length} pages reviewed</p>}
 
           {/* WHAT TO DO FIRST (always open) */}
           {proj?.projects?.length > 0 && (
@@ -2320,7 +2320,7 @@ function WebsiteTab({ hotel }: any) {
             </div>
           )}
 
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.9rem' }}>The detail Â· tap any section</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.9rem' }}>The detail · tap any section</p>
 
           {/* CONTENT QUALITY */}
           {cq?.categories?.length > 0 && (
@@ -2343,7 +2343,7 @@ function WebsiteTab({ hotel }: any) {
 
           {/* PROMPT COVERAGE */}
           {orderedPrompts.length > 0 && (
-            <Section id="prompts" title="Prompt coverage" subtitle={`Every guest search, and why AI answered that way Â· ${answer ? `${(answer.yes || 0) + (answer.partial || 0)}/${answer.total}` : ''} answered`} score={answer?.score ?? r.recommendation?.score}>
+            <Section id="prompts" title="Prompt coverage" subtitle={`Every guest search, and why AI answered that way · ${answer ? `${(answer.yes || 0) + (answer.partial || 0)}/${answer.total}` : ''} answered`} score={answer?.score ?? r.recommendation?.score}>
               <div style={{ padding: '0.6rem 1.75rem 1.5rem' }}>
                 {orderedPrompts.map((c: any, i: number) => (
                   <div key={i} style={{ padding: '1rem 0', borderBottom: i < orderedPrompts.length - 1 ? '1px solid ' + BORDER : 'none' }}>
@@ -2375,7 +2375,7 @@ function WebsiteTab({ hotel }: any) {
                       <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.88rem', fontWeight: 700, color: scoreColor(it.coverage) }}>{it.coverage}%</span>
                     </div>
                     {it.definition && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT_MUTED, margin: '0 0 0.3rem', lineHeight: 1.55 }}>{it.definition} <span style={{ fontStyle: 'italic' }}>{it.why}</span></p>}
-                    {it.evidence?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: GREEN, margin: '0.25rem 0 0', lineHeight: 1.55 }}>Evidence: â{it.evidence.join('â Â· â')}â</p>}
+                    {it.evidence?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: GREEN, margin: '0.25rem 0 0', lineHeight: 1.55 }}>Evidence: â{it.evidence.join('â · â')}â</p>}
                     {it.missing?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: '#d97706', margin: '0.25rem 0 0', lineHeight: 1.55 }}>Missing: {it.missing.join('; ')}</p>}
                     {it.fix && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, margin: '0.25rem 0 0', lineHeight: 1.55 }}><strong>Fix:</strong> {it.fix}</p>}
                   </div>
@@ -2386,7 +2386,7 @@ function WebsiteTab({ hotel }: any) {
 
           {/* TECHNICAL ARCHITECTURE */}
           {arch?.layers?.length > 0 && (
-            <Section id="arch" title="Technical AI-readiness" subtitle="14 architecture layers Â· tap a layer for what, why and how to fix" score={arch.score} suffix="/100">
+            <Section id="arch" title="Technical AI-readiness" subtitle="14 architecture layers · tap a layer for what, why and how to fix" score={arch.score} suffix="/100">
               <div>
                 {arch.layers.map((l: any, i: number) => {
                   const lOpen = openLayer === l.n
@@ -2574,7 +2574,7 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId }: { hotelName: st
       <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 16, padding: '2.5rem', marginBottom: '1.5rem', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: -40, right: -40, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,169,76,0.08) 0%, transparent 70%)' }} />
         <div style={{ position: 'relative' }}>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0 0 0.6rem' }}>Citation Sources Â· Last 90 Days</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0 0 0.6rem' }}>Citation Sources · Last 90 Days</p>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 300, color: WHITE, margin: '0 0 0.6rem', lineHeight: 1.3, maxWidth: 560 }}>Where AI gets its answers for {hotelRegion}</p>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.7, maxWidth: 560 }}>The publisher pages cited in ChatGPT and Perplexity answers for {hotelRegion} hotel searches. The ones that don't mention {hotelName} are your outreach targets â get placed there to improve your odds of being cited.</p>
         </div>
@@ -2582,7 +2582,7 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId }: { hotelName: st
 
       {/* Metric cards */}
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-        <KPICard label="Sources Cited" value={totalSources} sub="distinct pages Â· all time" color={GOLD} />
+        <KPICard label="Sources Cited" value={totalSources} sub="distinct pages · all time" color={GOLD} />
         <KPICard label="Already Mention You" value={mentionYes} sub="sources mentioning you" color={GREEN} />
         <KPICard label="Cited but Missing You" value={mentionNo} sub="outreach targets" color={RED} />
       </div>
@@ -2640,7 +2640,7 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId }: { hotelName: st
                           <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', fontWeight: 700, color: TEXT }}>{t.domain}</span>
                           <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 600, color: t.type.color, background: t.type.color + '14', padding: '2px 9px', borderRadius: 20 }}>{t.type.label}</span>
                         </div>
-                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: TEXT_MUTED, margin: '0 0 0.4rem', lineHeight: 1.5 }}>Cited {t.count}Ã across {t.queries} of your tracked {hotelRegion} {t.queries === 1 ? 'search' : 'searches'} â but doesn&rsquo;t mention you.</p>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: TEXT_MUTED, margin: '0 0 0.4rem', lineHeight: 1.5 }}>Cited {t.count}× across {t.queries} of your tracked {hotelRegion} {t.queries === 1 ? 'search' : 'searches'} â but doesn&rsquo;t mention you.</p>
                         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT, margin: 0, lineHeight: 1.5 }}><span style={{ fontWeight: 700, color: GOLD }}>Recommended:</span> {t.approach}</p>
                       </div>
                     </div>
@@ -2660,7 +2660,7 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId }: { hotelName: st
       <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.5rem' }}>
         <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG }}>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT, margin: '0 0 0.2rem' }}>Most-cited sources</p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Share of all citations Â· top 10 domains</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Share of all citations · top 10 domains</p>
         </div>
         <div>
           {ranked.map((r, i) => {
@@ -2673,7 +2673,7 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId }: { hotelName: st
                   {isOwn && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.48rem', fontWeight: 700, color: GOLD, background: WHITE, border: '1px solid rgba(201,169,76,0.3)', padding: '2px 7px', borderRadius: 10, flexShrink: 0 }}>YOUR PAGE</span>}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
-                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>cited {r.count}Ã</span>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>cited {r.count}×</span>
                   <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', fontWeight: 600, color: GOLD, minWidth: 52, textAlign: 'right' }}>{Math.round((r.count / top10CiteTotal) * 100)}%</span>
                   {(() => { const t = sourceType(r.domain); return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, color: t.color, background: t.color + '14', padding: '3px 10px', borderRadius: 20, minWidth: 80, textAlign: 'center' }}>{t.label}</span> })()}
                 </div>
@@ -2702,7 +2702,7 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId }: { hotelName: st
                   <a href={r.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', color: TEXT, textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{short}</a>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
-                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>cited {r.count}Ã</span>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>cited {r.count}×</span>
                   <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', fontWeight: 600, color: GOLD, minWidth: 52, textAlign: 'right' }}>{Math.round((r.count / urlsCiteTotal) * 100)}%</span>
                   <StatusPill m={r.mentioned} />
                 </div>
@@ -2908,7 +2908,7 @@ function HistoryPanel({ hotel }: any) {
   return (
     <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.5rem' }}>
       <div style={{ padding: '1.25rem 1.75rem', borderBottom: '1px solid ' + BORDER, background: BG }}>
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.3rem' }}>Since last audit{prevDate ? ` Â· ${new Date(prevDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` : ''}</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.3rem' }}>Since last audit{prevDate ? ` · ${new Date(prevDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` : ''}</p>
         <div style={{ display: 'flex', gap: '1rem', marginTop: '0.75rem' }}>
           <Stat n={c.fixed} label="Resolved" color={GREEN} />
           <Stat n={c.stillOpen} label="Still open" color="#d97706" />
@@ -3064,7 +3064,7 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
       <div onClick={(e) => e.stopPropagation()} style={{ background: WHITE, borderRadius: 20, maxWidth: 1080, width: '100%', boxShadow: '0 24px 80px rgba(26,14,6,0.4)', position: 'relative', marginBottom: '3vh' }}>
         {/* HEADER */}
         <div style={{ padding: '2rem 2.5rem 1.5rem', position: 'relative' }}>
-          <button onClick={onClose} aria-label="Close" style={{ position: 'absolute', top: '1.6rem', right: '1.8rem', width: 34, height: 34, borderRadius: '50%', border: '1px solid ' + BORDER, background: WHITE, color: TEXT_MUTED, fontSize: '1.2rem', lineHeight: 1, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Ã</button>
+          <button onClick={onClose} aria-label="Close" style={{ position: 'absolute', top: '1.6rem', right: '1.8rem', width: 34, height: 34, borderRadius: '50%', border: '1px solid ' + BORDER, background: WHITE, color: TEXT_MUTED, fontSize: '1.2rem', lineHeight: 1, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', marginBottom: '1rem' }}>
             <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED }}>Case {String(i + 1).padStart(2, '0')}</span>
             <span style={{ width: 1, height: 12, background: BORDER }} />
@@ -3126,7 +3126,7 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
               </Sec>
             )}
             {Array.isArray(m.behavioural_claims) && m.behavioural_claims.length > 0 && (
-              <Sec icon="â¤" title="Guest behaviour Â· Google Analytics">
+              <Sec icon="â¤" title="Guest behaviour · Google Analytics">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
                   {m.behavioural_claims.map((b: any, j: number) => (
                     <div key={j} style={{ padding: '0.75rem 0.95rem', background: BG, borderRadius: 8, border: '1px solid ' + BORDER }}>
@@ -3142,7 +3142,7 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
               const fmtN = (n: number | null) => n === null || n === undefined ? 'â' : n.toLocaleString()
               const chg = sd.impressions_change_pct
               return (
-                <Sec icon="â´" title="Search demand Â· Google Search Console">
+                <Sec icon="â´" title="Search demand · Google Search Console">
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(96px, 1fr))', gap: '0.55rem', marginBottom: sd.top_queries?.length ? '0.85rem' : 0 }}>
                     {[
                       { label: 'Impressions', value: fmtN(sd.impressions), sub: chg !== null && chg !== undefined ? ((chg >= 0 ? 'â ' : 'â ') + Math.abs(chg) + '%') : 'this period', col: chg !== null && chg !== undefined ? (chg >= 0 ? ADV_GREEN_C : RED) : TEXT_MUTED },
@@ -3164,7 +3164,7 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
                         {sd.top_queries.map((q: any, j: number) => (
                           <div key={j} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.6rem', padding: '0.55rem 0.85rem', background: BG, borderRadius: 7, border: '1px solid ' + BORDER }}>
                             <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{q.query}</span>
-                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: TEXT_MUTED, flexShrink: 0 }}>{q.impressions.toLocaleString()} impressions Â· pos {q.position}</span>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: TEXT_MUTED, flexShrink: 0 }}>{q.impressions.toLocaleString()} impressions · pos {q.position}</span>
                           </div>
                         ))}
                       </div>
@@ -4150,7 +4150,7 @@ function Ga4ConnectCard({ hotel }: any) {
         </p>
 
         {/* Step 1 â add our email */}
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Step 1 Â· Give us read access</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Step 1 · Give us read access</p>
         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.6 }}>
           In Google Analytics, open <strong>Admin â Property Access Management</strong>, click <strong>+</strong>, and add this email as a <strong>Viewer</strong>:
         </p>
@@ -4160,7 +4160,7 @@ function Ga4ConnectCard({ hotel }: any) {
         </div>
 
         {/* Step 2 â property id */}
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Step 2 Â· Enter your Property ID</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Step 2 · Enter your Property ID</p>
         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.6 }}>
           Find it in <strong>Admin â Property Settings</strong> â itâs a number like <code style={{ fontFamily: 'monospace', fontSize: '0.62rem', background: BG, padding: '1px 5px', borderRadius: 4 }}>123456789</code>.
         </p>
@@ -4241,7 +4241,7 @@ function GscConnectCard({ hotel }: any) {
           Search Console shows what guests actually search before they click â the impressions, click-through rate and exact queries your pages appear for. It lets each recommendation show the real search demand behind it. Read-only and private to your dashboard.
         </p>
 
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Step 1 Â· Give us read access</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Step 1 · Give us read access</p>
         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.6 }}>
           In Search Console, open <strong>Settings â Users and permissions</strong>, click <strong>Add user</strong>, and add this email with <strong>Full</strong> or <strong>Restricted</strong> access:
         </p>
@@ -4250,7 +4250,7 @@ function GscConnectCard({ hotel }: any) {
           <button onClick={copyEmail} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: copied ? GREEN : TEXT_MUTED, background: WHITE, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.5rem 0.9rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>{copied ? 'â Copied' : 'Copy email'}</button>
         </div>
 
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Step 2 Â· Enter your property</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Step 2 · Enter your property</p>
         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.6 }}>
           Copy it exactly as shown at the top of Search Console â a URL-prefix property like <code style={{ fontFamily: 'monospace', fontSize: '0.62rem', background: BG, padding: '1px 5px', borderRadius: 4 }}>https://www.yourhotel.com/</code> (keep the trailing slash) or a Domain property like <code style={{ fontFamily: 'monospace', fontSize: '0.62rem', background: BG, padding: '1px 5px', borderRadius: 4 }}>sc-domain:yourhotel.com</code>.
         </p>
@@ -4593,7 +4593,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
 {tab === 'settings' && 'Settings'}
             </h1>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0 }}>
-              {tab === 'overview' && `${customRange ? `${customRange.start} â ${customRange.end}` : `Last ${period} days`} Â· ${hotelRegion}, Switzerland`}
+              {tab === 'overview' && `${customRange ? `${customRange.start} â ${customRange.end}` : `Last ${period} days`} · ${hotelRegion}, Switzerland`}
               {tab === 'ai-visibility' && 'Your presence across AI search platforms'}
               {tab === 'performance' && 'Clicks, leads and conversion tracking'}
               {tab === 'competitors' && 'AI visibility rankings across categories'}
@@ -4747,7 +4747,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
   <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.25rem 1.5rem', flex: 1, minWidth: 0 }}>
     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.75rem' }}>AI Appearances</p>
     <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 400, color: TEXT, margin: 0, lineHeight: 1 }}>{appearedQueries}</p>
-    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: GOLD, margin: '0.2rem 0 0' }}>{`query appearances Â· last ${period}d`}</p>
+    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: GOLD, margin: '0.2rem 0 0' }}>{`query appearances · last ${period}d`}</p>
   </div>
 </div>
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', marginBottom: '1.5rem' }}>
@@ -4863,7 +4863,7 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
                 if (realPoints.length === 1) return (
                   <div style={{ height: 160, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
                     <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.5rem', color: GOLD, margin: 0 }}>{realPoints[0].score}%</p>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Recorded on {new Date(realPoints[0].date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })} Â· More runs needed to show trend</p>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Recorded on {new Date(realPoints[0].date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })} · More runs needed to show trend</p>
                   </div>
                 )
 
@@ -4940,7 +4940,7 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
         {tab === 'performance' && (
           <div>
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-              <KPICard label="Profile Views" value={recentViews.length} sub={`page visits Â· last ${period} days`} color={GOLD} spark={viewsByDay} />
+              <KPICard label="Profile Views" value={recentViews.length} sub={`page visits · last ${period} days`} color={GOLD} spark={viewsByDay} />
               <KPICard label="Conversions" value={recentBookings.length} sub={`last ${period} days`} color={GREEN} spark={bookingsByDay} />
               <KPICard label="Conversion Rate" value={recentBookings.length > 0 ? conversionRate + '%' : 'â'} sub="clicks to enquiries" color={PURPLE} />
             </div>
@@ -5247,7 +5247,7 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
               </div>
             </div>
             {[
-              { title: 'Subscription', desc: 'AI Visibility Growth Programme Â· CHF 699/month Â· No commission', badge: 'Active' },
+              { title: 'Subscription', desc: 'AI Visibility Growth Programme · CHF 699/month · No commission', badge: 'Active' },
               { title: 'Monthly Reports', desc: 'Automated performance reports sent each month' },
               { title: 'Integrations', desc: 'Connect your booking system for live rate sync', badge: 'Coming Soon' },
             ].map(s => (
