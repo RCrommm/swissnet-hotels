@@ -14,19 +14,19 @@ const RED = '#dc2626'
 const BLUE = '#3b82f6'
 const PURPLE = '#8B5CF6'
 
-// ── CATEGORY COMPETITOR DATA ──────────────────────────────────────────────────
+// ââ CATEGORY COMPETITOR DATA ââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 const CATEGORY_COMPETITORS: Record<string, { label: string; hotels: string[] }> = {
   spa: {
     label: 'Spa & Wellness',
     hotels: [
-      'Bürgenstock Resort',
+      'BÃ¼rgenstock Resort',
       'The Dolder Grand',
       'Six Senses Crans-Montana',
       'Grand Resort Bad Ragaz',
       'The Chedi Andermatt',
       'Clinique La Prairie',
-      'La Réserve Genève',
+      'La RÃ©serve GenÃ¨ve',
       'Le Grand Bellevue Gstaad',
       'Suvretta House',
     ],
@@ -54,7 +54,7 @@ const CATEGORY_COMPETITORS: Record<string, { label: string; hotels: string[] }> 
       'Giardino Mountain St. Moritz',
       'Carlton Hotel St. Moritz',
       'Baur au Lac',
-      'La Réserve Genève',
+      'La RÃ©serve GenÃ¨ve',
       'Victoria-Jungfrau Grand Hotel Interlaken',
       'Beau-Rivage Palace Lausanne',
     ],
@@ -67,10 +67,10 @@ const CATEGORY_COMPETITORS: Record<string, { label: string; hotels: string[] }> 
       'The Dolder Grand',
       'Mandarin Oriental Geneva',
       'Widder Hotel Zurich',
-      'La Réserve Genève',
+      'La RÃ©serve GenÃ¨ve',
       'Park Hyatt Zurich',
       'Bellevue Palace',
-      'La Réserve Eden au Lac Zurich',
+      'La RÃ©serve Eden au Lac Zurich',
     ],
   },
   romantic: {
@@ -78,7 +78,7 @@ const CATEGORY_COMPETITORS: Record<string, { label: string; hotels: string[] }> 
     hotels: [
       'The Alpina Gstaad',
       "Badrutt's Palace Hotel",
-      'La Réserve Genève',
+      'La RÃ©serve GenÃ¨ve',
       'Mont Cervin Palace',
       'Eden Roc Ascona',
       'Castello del Sole Ascona',
@@ -90,10 +90,10 @@ const CATEGORY_COMPETITORS: Record<string, { label: string; hotels: string[] }> 
   lake: {
     label: 'Lake Hotel',
     hotels: [
-      'Bürgenstock Resort',
-      'La Réserve Genève',
+      'BÃ¼rgenstock Resort',
+      'La RÃ©serve GenÃ¨ve',
       'Beau-Rivage Palace Lausanne',
-      'La Réserve Eden au Lac Zurich',
+      'La RÃ©serve Eden au Lac Zurich',
       'Fairmont Le Montreux Palace',
       'Eden Roc Ascona',
       'Castello del Sole Ascona',
@@ -105,8 +105,8 @@ const CATEGORY_COMPETITORS: Record<string, { label: string; hotels: string[] }> 
 
 // Max 2 categories per hotel + region always shown
 const HOTEL_CATEGORIES: Record<string, string[]> = {
-  'La Réserve Genève': ['spa', 'dining', 'romantic', 'lake', 'business', 'family'],
-  'La Réserve Eden au Lac Zurich': ['business', 'romantic', 'lake', 'dining'],
+  'La RÃ©serve GenÃ¨ve': ['spa', 'dining', 'romantic', 'lake', 'business', 'family'],
+  'La RÃ©serve Eden au Lac Zurich': ['business', 'romantic', 'lake', 'dining'],
   'Mont Cervin Palace': ['ski', 'dining', 'romantic', 'family'],
   'Monte Rosa Zermatt': ['ski', 'romantic'],
   'Schweizerhof Zermatt': ['ski', 'spa', 'family'],
@@ -117,7 +117,7 @@ const HOTEL_CATEGORIES: Record<string, string[]> = {
   'Hotel Adula': ['spa', 'ski', 'family'],
 }
 
-// ── CHART COMPONENTS ──────────────────────────────────────────────────────────
+// ââ CHART COMPONENTS ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 function SparkLine({ data, color }: { data: number[]; color: string }) {
   if (!data || data.length < 2) return null
@@ -282,7 +282,7 @@ function DualAxisChart({ datasets, labels, height = 160, hotelId }: { datasets: 
   )
 }
 
-// ── SMALL COMPONENTS ──────────────────────────────────────────────────────────
+// ââ SMALL COMPONENTS ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 function KPICard({ label, value, sub, color, spark }: { label: string; value: string | number; sub: string; color: string; spark?: number[] }) {
   return (
@@ -333,7 +333,7 @@ function CountryBreakdown({ hotelId, period }: { hotelId: string; period: number
   const countryName = (code: string) => { try { return new Intl.DisplayNames(['en'], { type: 'region' }).of(code) || code } catch { return code } }
 
   if (!loaded) return <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>Loading...</p>
-  if (data.length === 0) return <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>No country data yet — new visits will be tracked automatically.</p>
+  if (data.length === 0) return <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>No country data yet â new visits will be tracked automatically.</p>
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -352,7 +352,7 @@ function CountryBreakdown({ hotelId, period }: { hotelId: string; period: number
   )
 }
 
-// ── OPTIMISE TAB ──────────────────────────────────────────────────────────────
+// ââ OPTIMISE TAB ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 function OptimiseTab({ hotelId, hotelName, hotelSlug, hotel, onSchemaRefresh, initialTab }: { hotelId: string; hotelName: string; hotelSlug: string; hotel: any; onSchemaRefresh?: () => void; initialTab?: string }) {
   const [mainTab, setMainTab] = useState<'overview' | 'events' | 'rooms' | 'dining' | 'spa' | 'experiences' | 'hotel-info'>(initialTab as any || 'overview')
@@ -589,7 +589,7 @@ const saveHotelInfo = async () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
             <div>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Events & Time-Limited Offers</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>e.g. Watches & Wonders, Christmas Gala, Ski Weekend · Appear on /events page · Max 3 active</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>e.g. Watches & Wonders, Christmas Gala, Ski Weekend Â· Appear on /events page Â· Max 3 active</p>
             </div>
             {activeOffers.length < 3 && !offerForm && (
               <button onClick={() => setOfferForm({ name: '', description: '', start_date: today, end_date: '' })} style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer', flexShrink: 0, marginLeft: '1rem' }}>+ Add Event</button>
@@ -599,7 +599,7 @@ const saveHotelInfo = async () => {
             <div style={{ background: WHITE, border: '1px solid ' + GOLD + '40', borderRadius: 10, padding: '1.25rem 1.5rem', marginBottom: '1.25rem' }}>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1rem', color: TEXT, margin: '0 0 1rem' }}>{offerForm.id ? 'Edit Event' : 'New Event or Offer'}</p>
               <div style={{ display: 'grid', gap: '0.75rem' }}>
-                <div><label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Title *</label><input value={offerForm.name} onChange={e => setOfferForm((p: any) => ({ ...p, name: e.target.value }))} placeholder="e.g. Watches & Wonders Geneva · Christmas Gala Dinner" style={inp} /></div>
+                <div><label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Title *</label><input value={offerForm.name} onChange={e => setOfferForm((p: any) => ({ ...p, name: e.target.value }))} placeholder="e.g. Watches & Wonders Geneva Â· Christmas Gala Dinner" style={inp} /></div>
                 <div><label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Description *</label><textarea value={offerForm.description} onChange={e => setOfferForm((p: any) => ({ ...p, description: e.target.value }))} rows={3} style={{ ...inp, resize: 'vertical' }} /></div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                   <div><label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Start Date</label><input type="date" value={offerForm.start_date} onChange={e => setOfferForm((p: any) => ({ ...p, start_date: e.target.value }))} style={inp} /></div>
@@ -630,7 +630,7 @@ const saveHotelInfo = async () => {
                         {expired ? <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.48rem', fontWeight: 700, textTransform: 'uppercase', color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, padding: '2px 6px', borderRadius: 10 }}>Expired</span> : <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.48rem', fontWeight: 700, textTransform: 'uppercase', color: GREEN, background: GREEN + '12', padding: '2px 6px', borderRadius: 10 }}>Live</span>}
                       </div>
                       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: '0 0 0.3rem', lineHeight: 1.5 }}>{offer.description}</p>
-                      {(offer.start_date || offer.end_date) && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: 0 }}>{offer.start_date}{offer.start_date && offer.end_date && ' → '}{offer.end_date}</p>}
+                      {(offer.start_date || offer.end_date) && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: 0 }}>{offer.start_date}{offer.start_date && offer.end_date && ' â '}{offer.end_date}</p>}
                     </div>
                     <div style={{ display: 'flex', gap: '0.4rem', marginLeft: '1rem', flexShrink: 0 }}>
                       {!expired && <button onClick={() => setOfferForm({ ...offer })} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, padding: '0.28rem 0.65rem', borderRadius: 4, cursor: 'pointer' }}>Edit</button>}
@@ -656,7 +656,7 @@ const saveHotelInfo = async () => {
     <div style={{ display: 'grid', gap: '1rem' }}>
       
       <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1.25rem' }}>
-        <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Languages Spoken <span style={{ color: GOLD }}>· Medium AI Impact</span></label>
+        <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Languages Spoken <span style={{ color: GOLD }}>Â· Medium AI Impact</span></label>
         <input value={hotelInfo.languages} onChange={e => setHotelInfo(p => ({ ...p, languages: e.target.value }))} placeholder="e.g. French, English, German, Italian, Japanese" style={inp} />
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -670,9 +670,9 @@ const saveHotelInfo = async () => {
         </div>
       </div>
       <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1.25rem' }}>
-        <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>About Us — AI Schema Only <span style={{ color: GOLD }}>· High AI Impact</span></label>
-        <textarea value={hotelInfo.about_us} onChange={e => setHotelInfo(p => ({ ...p, about_us: e.target.value }))} rows={4} placeholder="e.g. La Réserve Genève is the only resort-style hotel in Geneva set within a 10-acre private lakefront park, combining resort tranquility with 3 minutes from Geneva Airport." style={{ ...inp, resize: 'vertical' }} />
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', color: TEXT_MUTED, margin: '0.3rem 0 0' }}>⚠ This does <strong>not</strong> appear on your public page — it is embedded in your AI schema only. AI bots read it when crawling your profile. Be specific and factual, not marketing language.</p>
+        <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>About Us â AI Schema Only <span style={{ color: GOLD }}>Â· High AI Impact</span></label>
+        <textarea value={hotelInfo.about_us} onChange={e => setHotelInfo(p => ({ ...p, about_us: e.target.value }))} rows={4} placeholder="e.g. La RÃ©serve GenÃ¨ve is the only resort-style hotel in Geneva set within a 10-acre private lakefront park, combining resort tranquility with 3 minutes from Geneva Airport." style={{ ...inp, resize: 'vertical' }} />
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', color: TEXT_MUTED, margin: '0.3rem 0 0' }}>â  This does <strong>not</strong> appear on your public page â it is embedded in your AI schema only. AI bots read it when crawling your profile. Be specific and factual, not marketing language.</p>
       </div>
       <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1.25rem' }}>
         <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Parking</label>
@@ -718,10 +718,10 @@ const saveHotelInfo = async () => {
       </div>
       <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1.25rem' }}>
         <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Seasonal Notes</label>
-        <input value={hotelInfo.seasonal_notes} onChange={e => setHotelInfo(p => ({ ...p, seasonal_notes: e.target.value }))} placeholder="e.g. Outdoor pool open May–September, ski access December–April" style={inp} />
+        <input value={hotelInfo.seasonal_notes} onChange={e => setHotelInfo(p => ({ ...p, seasonal_notes: e.target.value }))} placeholder="e.g. Outdoor pool open MayâSeptember, ski access DecemberâApril" style={inp} />
       </div>
       <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, padding: '1.25rem' }}>
-        <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Direct Booking Benefits <span style={{ color: GOLD }}>· High AI Impact</span></label>
+        <label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Direct Booking Benefits <span style={{ color: GOLD }}>Â· High AI Impact</span></label>
         <textarea value={hotelInfo.booking_benefits} onChange={e => setHotelInfo(p => ({ ...p, booking_benefits: e.target.value }))} rows={3} placeholder="e.g. Complimentary welcome drink, early check-in from 12pm, late check-out until 2pm, no booking fees" style={{ ...inp, resize: 'vertical' }} />
       </div>
     </div>
@@ -748,20 +748,20 @@ const saveHotelInfo = async () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
             <div>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Spa & Wellness Venues</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Add spa, gym, hair salon and other wellness venues · Changes update live in schema</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Add spa, gym, hair salon and other wellness venues Â· Changes update live in schema</p>
             </div>
             {!spaForm && <button onClick={() => setSpaForm({ name: '', description: '', treatments: '', wellness_philosophy: '', size_sqm: '', pool: false, sauna: false, hammam: false, price_from: '', opening_hours: '' })} style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer', flexShrink: 0, marginLeft: '1rem' }}>+ Add</button>}
           </div>
           {spaForm && (
             <div style={{ background: WHITE, border: '1px solid ' + GOLD + '40', borderRadius: 10, padding: '1.25rem 1.5rem', marginBottom: '1.25rem' }}>
               <div style={{ display: 'grid', gap: '0.75rem' }}>
-                <div><label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Name *</label><input value={spaForm.name} onChange={e => setSpaForm((p: any) => ({ ...p, name: e.target.value }))} placeholder="e.g. Spa Nescens · Gym · Hair Salon" style={inp} /></div>
+                <div><label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Name *</label><input value={spaForm.name} onChange={e => setSpaForm((p: any) => ({ ...p, name: e.target.value }))} placeholder="e.g. Spa Nescens Â· Gym Â· Hair Salon" style={inp} /></div>
                 <div><label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Description</label><textarea value={spaForm.description} onChange={e => setSpaForm((p: any) => ({ ...p, description: e.target.value }))} rows={3} style={{ ...inp, resize: 'vertical' }} /></div>
                 <div><label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Treatments / Services</label><textarea value={spaForm.treatments} onChange={e => setSpaForm((p: any) => ({ ...p, treatments: e.target.value }))} placeholder="e.g. Deep tissue massage, Hot stone therapy..." rows={2} style={{ ...inp, resize: 'vertical' }} /></div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
-                  <div><label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Size (m²)</label><input type="number" value={spaForm.size_sqm} onChange={e => setSpaForm((p: any) => ({ ...p, size_sqm: e.target.value }))} placeholder="e.g. 2500" style={inp} /></div>
+                  <div><label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Size (mÂ²)</label><input type="number" value={spaForm.size_sqm} onChange={e => setSpaForm((p: any) => ({ ...p, size_sqm: e.target.value }))} placeholder="e.g. 2500" style={inp} /></div>
                   <div><label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Price from (CHF)</label><input type="number" value={spaForm.price_from} onChange={e => setSpaForm((p: any) => ({ ...p, price_from: e.target.value }))} placeholder="e.g. 150" style={inp} /></div>
-                  <div><label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Opening Hours</label><input value={spaForm.opening_hours} onChange={e => setSpaForm((p: any) => ({ ...p, opening_hours: e.target.value }))} placeholder="e.g. 9am – 9pm daily" style={inp} /></div>
+                  <div><label style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, display: 'block', marginBottom: '0.3rem' }}>Opening Hours</label><input value={spaForm.opening_hours} onChange={e => setSpaForm((p: any) => ({ ...p, opening_hours: e.target.value }))} placeholder="e.g. 9am â 9pm daily" style={inp} /></div>
                 </div>
                 <div style={{ display: 'flex', gap: '1.5rem' }}>
                   {[{ key: 'pool', label: 'Pool' }, { key: 'sauna', label: 'Sauna' }, { key: 'hammam', label: 'Hammam' }].map(f => (
@@ -790,7 +790,7 @@ const saveHotelInfo = async () => {
                   <div style={{ flex: 1 }}>
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: TEXT, margin: '0 0 0.25rem' }}>{spa.name}</p>
                     <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.3rem', flexWrap: 'wrap' }}>
-                      {spa.size_sqm && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>{spa.size_sqm} m²</span>}
+                      {spa.size_sqm && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>{spa.size_sqm} mÂ²</span>}
                       {spa.pool && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>Pool</span>}
                       {spa.sauna && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>Sauna</span>}
                       {spa.hammam && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>Hammam</span>}
@@ -816,7 +816,7 @@ const saveHotelInfo = async () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
             <div>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Experiences & Activities</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Permanent curated experiences on your /experiences page · Changes live immediately</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Permanent curated experiences on your /experiences page Â· Changes live immediately</p>
             </div>
             {!expForm && <button onClick={() => setExpForm({ name: '', description: '', category: '', duration: '', price_from: '' })} style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer', flexShrink: 0, marginLeft: '1rem' }}>+ Add</button>}
           </div>
@@ -854,7 +854,7 @@ const saveHotelInfo = async () => {
                     </div>
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: '0 0 0.3rem', lineHeight: 1.5 }}>{exp.description}</p>
                     <div style={{ display: 'flex', gap: '1rem' }}>
-                      {exp.duration && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED }}>⏱ {exp.duration}</span>}
+                      {exp.duration && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED }}>â± {exp.duration}</span>}
                       {exp.price_from && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: GOLD, fontWeight: 600 }}>From CHF {Number(exp.price_from).toLocaleString()}</span>}
                     </div>
                   </div>
@@ -877,7 +877,7 @@ const saveHotelInfo = async () => {
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>
                 {mainTab === 'overview' ? 'Overview FAQs' : mainTab === 'events' ? 'Events & Offers FAQs' : `${mainTab.charAt(0).toUpperCase() + mainTab.slice(1)} FAQs`}
               </p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Changes go live immediately · Max 12 per page · Appear in FAQPage schema</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Changes go live immediately Â· Max 12 per page Â· Appear in FAQPage schema</p>
             </div>
             {(faqs[faqPageKey] || []).length < 12 && (
               <button onClick={() => addFaq(faqPageKey)} style={{ background: GOLD, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.55rem 1.125rem', border: 'none', borderRadius: 4, cursor: 'pointer', flexShrink: 0, marginLeft: '1rem' }}>+ Add FAQ</button>
@@ -897,7 +897,7 @@ const saveHotelInfo = async () => {
                   <button onClick={() => removeFaq(faqPageKey, idx)} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: RED, background: 'transparent', border: 'none', cursor: 'pointer' }}>Remove</button>
                 </div>
                 <input value={faq.q} onChange={e => updateFaq(faqPageKey, idx, 'q', e.target.value)} placeholder="Question" style={{ ...inp, marginBottom: '0.5rem' }} />
-                <textarea value={faq.a} onChange={e => updateFaq(faqPageKey, idx, 'a', e.target.value)} placeholder="Answer — be specific and factual..." rows={3} style={{ ...inp, resize: 'vertical' }} />
+                <textarea value={faq.a} onChange={e => updateFaq(faqPageKey, idx, 'a', e.target.value)} placeholder="Answer â be specific and factual..." rows={3} style={{ ...inp, resize: 'vertical' }} />
               </div>
             ))}
           </div>
@@ -910,7 +910,7 @@ const saveHotelInfo = async () => {
   )
 }
 
-// ── CATEGORY TREND CHART ─────────────────────────────────────────────────────
+// ââ CATEGORY TREND CHART âââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 const CHART_COLORS = [
   '#C9A84C',
@@ -947,7 +947,7 @@ function CategoryTrendChart({ category, hotelName, hotels }: { category: string;
 
       if (!data) { setLoaded(true); return }
 
-      // Group by hotel → by date → average chatgpt+perplexity
+      // Group by hotel â by date â average chatgpt+perplexity
       const grouped: Record<string, Record<string, number[]>> = {}
       for (const row of data) {
         if (!grouped[row.competitor_name]) grouped[row.competitor_name] = {}
@@ -1034,12 +1034,12 @@ function CategoryTrendChart({ category, hotelName, hotels }: { category: string;
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
         <div>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 0.2rem' }}>Category Trend</p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: 0, letterSpacing: '0.03em' }}>AI visibility score over time · click legend to filter</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: 0, letterSpacing: '0.03em' }}>AI visibility score over time Â· click legend to filter</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           {delta !== null && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.3rem 0.75rem', borderRadius: 20, background: delta >= 0 ? GREEN + '12' : RED + '12', border: `1px solid ${delta >= 0 ? GREEN + '30' : RED + '30'}` }}>
-              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, color: delta >= 0 ? GREEN : RED }}>{delta >= 0 ? '↑' : '↓'} {Math.abs(delta)}pts</span>
+              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, color: delta >= 0 ? GREEN : RED }}>{delta >= 0 ? 'â' : 'â'} {Math.abs(delta)}pts</span>
               <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', color: TEXT_MUTED }}>{chartDays}d</span>
             </div>
           )}
@@ -1069,7 +1069,7 @@ function CategoryTrendChart({ category, hotelName, hotels }: { category: string;
                 </g>
               ))}
 
-              {/* Competitor lines — muted */}
+              {/* Competitor lines â muted */}
               {datasets.filter(ds => ds.name !== hotelName && !hidden.has(ds.name)).map(ds => {
                 if (ds.points.length < 2) return null
                 return (
@@ -1077,7 +1077,7 @@ function CategoryTrendChart({ category, hotelName, hotels }: { category: string;
                 )
               })}
 
-              {/* Your hotel — dominant */}
+              {/* Your hotel â dominant */}
               {currentHotelDataset && !hidden.has(hotelName) && currentHotelDataset.points.length >= 2 && (() => {
                 const path = smooth(currentHotelDataset.points)
                 const lastPt = currentHotelDataset.points[currentHotelDataset.points.length - 1]
@@ -1113,7 +1113,7 @@ function CategoryTrendChart({ category, hotelName, hotels }: { category: string;
             return (
               <div key={ds.name} onClick={() => toggleHotel(ds.name)} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.5rem 0.6rem', borderRadius: 6, cursor: 'pointer', background: isHidden ? 'transparent' : GOLD_LIGHT, border: `1px solid ${isHidden ? BORDER : 'rgba(201,169,76,0.3)'}`, marginBottom: '0.5rem', opacity: isHidden ? 0.4 : 1 }}>
                 <div style={{ width: 14, height: 3, borderRadius: 2, background: isHidden ? 'transparent' : GOLD, border: isHidden ? `1.5px solid ${GOLD}` : 'none', flexShrink: 0 }} />
-                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: GOLD, fontWeight: 700, flex: 1, lineHeight: 1.3 }}>{ds.name} ✦</span>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: GOLD, fontWeight: 700, flex: 1, lineHeight: 1.3 }}>{ds.name} â¦</span>
               </div>
             )
           })}
@@ -1138,7 +1138,7 @@ function CategoryTrendChart({ category, hotelName, hotels }: { category: string;
   )
 }
 
-// ── SOURCE PAGE CHART ─────────────────────────────────────────────────────────
+// ââ SOURCE PAGE CHART âââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 function SourcePageChart({ hotelId, period }: { hotelId: string; period: number }) {
   const [data, setData] = useState<{ page: string; count: number }[]>([])
@@ -1284,7 +1284,7 @@ function SchemaVisualizer({ hotelId, hotelSlug }: { hotelId: string; hotelSlug: 
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>The exact structured data AI bots read when crawling your page</p>
         </div>
         <button onClick={fetchSchema} disabled={loading} style={{ background: open ? BG : GOLD, color: open ? TEXT_MUTED : '#1a0e06', border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.5rem 1.25rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, cursor: 'pointer' }}>
-          {loading ? 'Loading...' : open ? 'Hide Schema' : 'View My Schema →'}
+          {loading ? 'Loading...' : open ? 'Hide Schema' : 'View My Schema â'}
         </button>
       </div>
       {open && schema && !schema.error && (
@@ -1304,7 +1304,7 @@ function SchemaVisualizer({ hotelId, hotelSlug }: { hotelId: string; hotelSlug: 
           </div>
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
             <button onClick={copy} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: copied ? GREEN : TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, borderRadius: 4, padding: '0.3rem 0.75rem', cursor: 'pointer' }}>
-              {copied ? '✓ Copied' : 'Copy JSON'}
+              {copied ? 'â Copied' : 'Copy JSON'}
             </button>
           </div>
           <pre style={{ background: '#1a0e06', color: '#C9A84C', fontFamily: 'monospace', fontSize: '0.6rem', padding: '1.25rem', borderRadius: 8, overflow: 'auto', maxHeight: 400, margin: 0, lineHeight: 1.6 }}>
@@ -1314,7 +1314,7 @@ function SchemaVisualizer({ hotelId, hotelSlug }: { hotelId: string; hotelSlug: 
       )}
       {open && schema?.error && (
         <div style={{ padding: '1.25rem 1.5rem' }}>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: RED }}>Could not load schema — check that your hotel page is live.</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: RED }}>Could not load schema â check that your hotel page is live.</p>
         </div>
       )}
     </div>
@@ -1358,7 +1358,7 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
       done: !!hotel?.description,
       score: hotel?.description ? Math.min(100, Math.round((hotel.description.split(' ').length / 80) * 100)) : 0,
       detail: hotel?.description ? `${hotel.description.split(' ').length} words` : 'Missing',
-      tip: 'Include specific facts: m², distances, number of rooms, awards',
+      tip: 'Include specific facts: mÂ², distances, number of rooms, awards',
       fix: null,
     },
     {
@@ -1367,7 +1367,7 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
       done: !!hotel?.about_us,
       score: hotel?.about_us ? Math.min(100, Math.round((hotel.about_us.split(' ').length / 50) * 100)) : 0,
       detail: hotel?.about_us ? `${hotel.about_us.split(' ').length} words` : 'Missing',
-      tip: 'Your unique story — specific facts AI can quote',
+      tip: 'Your unique story â specific facts AI can quote',
       fix: 'hotel-info',
     },
     {
@@ -1393,7 +1393,7 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
       impact: 'High',
       done: (data.rooms?.length || 0) > 0,
       score: data.rooms?.length === 0 ? 0 : Math.min(100, Math.round((roomsWithDetail / Math.max(data.rooms?.length || 1, 4)) * 100)),
-      detail: `${data.rooms?.length || 0} rooms · ${roomsWithDetail} with full detail`,
+      detail: `${data.rooms?.length || 0} rooms Â· ${roomsWithDetail} with full detail`,
       tip: 'Add size, bed type and price to every room for maximum AI retrieval',
       fix: null,
     },
@@ -1402,7 +1402,7 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
       impact: 'Medium',
       done: (data.restaurants?.length || 0) > 0,
       score: data.restaurants?.length === 0 ? 0 : Math.min(100, Math.round((restaurantsWithDetail / Math.max(data.restaurants?.length || 1, 2)) * 100) + (data.restaurants?.some((r: any) => r.michelin_stars > 0) ? 20 : 0)),
-      detail: `${data.restaurants?.length || 0} restaurants · ${restaurantsWithDetail} with full detail`,
+      detail: `${data.restaurants?.length || 0} restaurants Â· ${restaurantsWithDetail} with full detail`,
       tip: 'Add cuisine type, description and Michelin stars to each restaurant',
       fix: 'dining',
     },
@@ -1439,7 +1439,7 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
       done: !!hotel?.cancellation_policy,
       score: hotel?.cancellation_policy ? 100 : 0,
       detail: hotel?.cancellation_policy || 'Missing',
-      tip: 'One of the most common guest questions — AI quotes this directly',
+      tip: 'One of the most common guest questions â AI quotes this directly',
       fix: 'hotel-info',
     },
     {
@@ -1448,7 +1448,7 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
       done: !!hotel?.booking_benefits,
       score: hotel?.booking_benefits ? 100 : 0,
       detail: hotel?.booking_benefits ? `${hotel.booking_benefits.split(' ').slice(0, 5).join(' ')}...` : 'Missing',
-      tip: 'Why book direct — AI uses this to differentiate from OTAs',
+      tip: 'Why book direct â AI uses this to differentiate from OTAs',
       fix: 'hotel-info',
     },
     {
@@ -1457,7 +1457,7 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
       done: !!hotel?.seasonal_notes,
       score: hotel?.seasonal_notes ? 100 : 0,
       detail: hotel?.seasonal_notes || 'Missing',
-      tip: 'Pool dates, ski season, terrace — guests ask AI about this',
+      tip: 'Pool dates, ski season, terrace â guests ask AI about this',
       fix: 'hotel-info',
     },
     {
@@ -1466,7 +1466,7 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
       done: !!hotel?.accessibility,
       score: hotel?.accessibility ? 100 : 0,
       detail: hotel?.accessibility || 'Missing',
-      tip: 'Growing search category — wheelchair access, lift, accessible spa',
+      tip: 'Growing search category â wheelchair access, lift, accessible spa',
       fix: 'hotel-info',
     },
     {
@@ -1492,7 +1492,7 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
       impact: 'High',
       done: !!hotel?.direct_booking_url,
       score: hotel?.direct_booking_url ? 100 : 0,
-      detail: hotel?.direct_booking_url ? 'Connected ✓' : 'Missing',
+      detail: hotel?.direct_booking_url ? 'Connected â' : 'Missing',
       tip: null,
       fix: null,
     },
@@ -1541,7 +1541,7 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
 
   return (
     <div>
-      {/* ── HERO: AI Knowledge Profile ── */}
+      {/* ââ HERO: AI Knowledge Profile ââ */}
       <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 16, padding: '2.5rem', marginBottom: '1.5rem', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: -40, right: -40, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,169,76,0.08) 0%, transparent 70%)' }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '3rem', position: 'relative' }}>
@@ -1560,7 +1560,7 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
           <div style={{ flex: 1 }}>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0 0 0.6rem' }}>AI Knowledge Profile</p>
             <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 300, color: WHITE, margin: '0 0 0.6rem', lineHeight: 1.3 }}>
-              {overallScore >= 80 ? 'AI systems understand your hotel in depth.' : overallScore >= 50 ? 'AI systems understand your hotel well — with room to deepen.' : 'AI systems have a partial picture of your hotel.'}
+              {overallScore >= 80 ? 'AI systems understand your hotel in depth.' : overallScore >= 50 ? 'AI systems understand your hotel well â with room to deepen.' : 'AI systems have a partial picture of your hotel.'}
             </p>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.7, maxWidth: 480 }}>
               This score reflects how completely the structured data behind your profile describes your hotel to AI assistants. The richer it is, the more confidently they can recommend you.
@@ -1589,7 +1589,7 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
 
       
 
-      {/* ── KNOWLEDGE LAYERS ── */}
+      {/* ââ KNOWLEDGE LAYERS ââ */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
         {themes.map(t => {
           const sc = themeScore(t.fields)
@@ -1611,7 +1611,7 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
         })}
       </div>
 
-      {/* ── COMPLETE YOUR PROFILE (recommendations) ── */}
+      {/* ââ COMPLETE YOUR PROFILE (recommendations) ââ */}
       {missing.length > 0 && (
         <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.75rem', marginBottom: '1.5rem' }}>
           <div style={{ marginBottom: '1.25rem' }}>
@@ -1625,11 +1625,11 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
                   <div style={{ width: 7, height: 7, borderRadius: '50%', background: f.impact === 'High' ? RED : f.impact === 'Medium' ? GOLD : BLUE, flexShrink: 0 }} />
                   <div>
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 600, color: TEXT, margin: 0 }}>{f.label}</p>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: '0.1rem 0 0' }}>{f.impact === 'High' ? 'Essential' : f.impact === 'Medium' ? 'Enriching' : 'Refining'} · {f.tip || 'Adds depth to your AI profile'}</p>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, margin: '0.1rem 0 0' }}>{f.impact === 'High' ? 'Essential' : f.impact === 'Medium' ? 'Enriching' : 'Refining'} Â· {f.tip || 'Adds depth to your AI profile'}</p>
                   </div>
                 </div>
                 {f.fix ? (
-                  <button onClick={() => { onGoToOptimise(f.fix!); }} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: GOLD, background: GOLD_LIGHT, border: '1px solid rgba(201,169,76,0.3)', borderRadius: 6, padding: '0.4rem 0.9rem', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, marginLeft: '1rem' }}>Complete →</button>
+                  <button onClick={() => { onGoToOptimise(f.fix!); }} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: GOLD, background: GOLD_LIGHT, border: '1px solid rgba(201,169,76,0.3)', borderRadius: 6, padding: '0.4rem 0.9rem', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, marginLeft: '1rem' }}>Complete â</button>
                 ) : (
                   <a href="mailto:contact@swissnethotels.com" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.4rem 0.9rem', textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0, marginLeft: '1rem' }}>Contact us</a>
                 )}
@@ -1639,7 +1639,7 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
         </div>
       )}
 
-      {/* ── WHAT AI UNDERSTANDS (full breakdown) ── */}
+      {/* ââ WHAT AI UNDERSTANDS (full breakdown) ââ */}
       <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.5rem' }}>
         <div style={{ padding: '1.5rem 1.75rem', borderBottom: '1px solid ' + BORDER }}>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>What AI Understands About Your Hotel</p>
@@ -1654,7 +1654,7 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: f.done ? GREEN : scColor, flexShrink: 0, opacity: f.done ? 1 : 0.4 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: TEXT, margin: 0 }}>{f.label}</p>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: '0.1rem 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.detail || '—'}</p>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: '0.1rem 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.detail || 'â'}</p>
                 </div>
                 <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: f.impact === 'High' ? RED : f.impact === 'Medium' ? GOLD : BLUE, flexShrink: 0, width: 70, textAlign: 'right' }}>{f.impact === 'High' ? 'Essential' : f.impact === 'Medium' ? 'Enriching' : 'Refining'}</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexShrink: 0, width: 90 }}>
@@ -1674,52 +1674,52 @@ function SchemaTab({ hotel, hotelId, onGoToOptimise }: { hotel: any; hotelId: st
   )
 }
 
-// ── GOALS TAB ─────────────────────────────────────────────────────────────────
+// ââ GOALS TAB âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 function getCategoryRec(cat: string, hotelName: string) {
   const h = hotelName
   const lib: Record<string, { faq: string; words: string; campaign: string; ad: string }> = {
     spa: {
-      faq: `Add an FAQ: "What makes the spa at ${h} special?" — answer with the spa's size in m², signature treatments, and thermal facilities (pool, sauna, hammam).`,
+      faq: `Add an FAQ: "What makes the spa at ${h} special?" â answer with the spa's size in mÂ², signature treatments, and thermal facilities (pool, sauna, hammam).`,
       words: `Use these in your spa description & FAQs: "wellness retreat", "thermal spa", "signature treatment", "spa day pass", "detox programme".`,
-      campaign: `Launch a "Midweek Wellness Escape" package — 2 nights with daily spa access and one signature treatment.`,
-      ad: `Post title: "A Day of Calm at ${h}". Content: a 20–30s Instagram Reel — slow shots of the spa, pool and a treatment, captioned with the spa size and one signature treatment. Boost to ages 30–55 within 100km. Wellness ads work best as quiet, sensory video.`,
+      campaign: `Launch a "Midweek Wellness Escape" package â 2 nights with daily spa access and one signature treatment.`,
+      ad: `Post title: "A Day of Calm at ${h}". Content: a 20â30s Instagram Reel â slow shots of the spa, pool and a treatment, captioned with the spa size and one signature treatment. Boost to ages 30â55 within 100km. Wellness ads work best as quiet, sensory video.`,
     },
     dining: {
-      faq: `Add an FAQ: "Does ${h} have a notable restaurant?" — name the chef, cuisine style, and any Michelin stars or awards.`,
+      faq: `Add an FAQ: "Does ${h} have a notable restaurant?" â name the chef, cuisine style, and any Michelin stars or awards.`,
       words: `Use these: "gastronomic", "tasting menu", "Michelin", "chef's table", "seasonal Swiss produce".`,
       campaign: `Create a "Gourmet Stay" offer pairing one night with a tasting menu for two.`,
-      ad: `Post title: "Dinner Worth the Journey". Content: an Instagram carousel of 4–5 plated dishes plus one of the chef, captioned with the tasting-menu name and chef. Also post as a Google Business update. Food carousels earn strong saves and shares.`,
+      ad: `Post title: "Dinner Worth the Journey". Content: an Instagram carousel of 4â5 plated dishes plus one of the chef, captioned with the tasting-menu name and chef. Also post as a Google Business update. Food carousels earn strong saves and shares.`,
     },
     romantic: {
-      faq: `Add an FAQ: "Is ${h} good for a honeymoon or romantic getaway?" — mention private terraces, couples spa treatments, and lake or mountain views.`,
+      faq: `Add an FAQ: "Is ${h} good for a honeymoon or romantic getaway?" â mention private terraces, couples spa treatments, and lake or mountain views.`,
       words: `Use these: "romantic getaway", "honeymoon suite", "couples retreat", "private dinner", "sunset terrace".`,
-      campaign: `Build a "Romantic Escape" package — champagne on arrival, a couples massage, and a private candlelit dinner.`,
-      ad: `Post title: "Two Nights, Just the Two of You". Content: a soft-lit Reel or photo set — champagne on a terrace, the suite, a candlelit table at dusk — captioned with the inclusions and price. Target couples 28–50, with an anniversary/Valentine's push. Romantic ads win on emotion, not detail.`,
+      campaign: `Build a "Romantic Escape" package â champagne on arrival, a couples massage, and a private candlelit dinner.`,
+      ad: `Post title: "Two Nights, Just the Two of You". Content: a soft-lit Reel or photo set â champagne on a terrace, the suite, a candlelit table at dusk â captioned with the inclusions and price. Target couples 28â50, with an anniversary/Valentine's push. Romantic ads win on emotion, not detail.`,
     },
     lake: {
-      faq: `Add an FAQ: "Does ${h} have lake views and lake access?" — specify which rooms have views, and any private beach, pontoon, or boat access.`,
+      faq: `Add an FAQ: "Does ${h} have lake views and lake access?" â specify which rooms have views, and any private beach, pontoon, or boat access.`,
       words: `Use these: "lakefront", "lake-view rooms", "private beach", "waterfront dining", "Lake Geneva".`,
-      campaign: `Add a "Lakeside Summer" experience — a private boat cruise with a lakefront lunch.`,
-      ad: `Post title: "Wake Up to the Lake". Content: a sunrise or sunset Reel from a lake-view room or terrace, plus a still of waterfront dining, captioned with which rooms have the view. Run May–September when lake searches peak. Golden-hour water footage stops the scroll.`,
+      campaign: `Add a "Lakeside Summer" experience â a private boat cruise with a lakefront lunch.`,
+      ad: `Post title: "Wake Up to the Lake". Content: a sunrise or sunset Reel from a lake-view room or terrace, plus a still of waterfront dining, captioned with which rooms have the view. Run MayâSeptember when lake searches peak. Golden-hour water footage stops the scroll.`,
     },
     business: {
-      faq: `Add an FAQ: "Is ${h} suitable for business travel and meetings?" — give meeting-room capacities, airport distance, and late check-out for corporate guests.`,
+      faq: `Add an FAQ: "Is ${h} suitable for business travel and meetings?" â give meeting-room capacities, airport distance, and late check-out for corporate guests.`,
       words: `Use these: "conference facilities", "meeting rooms", "business centre", "airport transfer", "executive".`,
       campaign: `Publish your meeting-room capacities and add a "Corporate Rate" booking benefit.`,
-      ad: `Post title: "Meetings That Run Themselves". Content: a LinkedIn post (not Instagram) — one clean photo of the meeting room set up, with text listing capacity, airport distance and the corporate rate. Target HR, EA and event-planner titles nearby. Business travel is decided on LinkedIn.`,
+      ad: `Post title: "Meetings That Run Themselves". Content: a LinkedIn post (not Instagram) â one clean photo of the meeting room set up, with text listing capacity, airport distance and the corporate rate. Target HR, EA and event-planner titles nearby. Business travel is decided on LinkedIn.`,
     },
     family: {
-      faq: `Add an FAQ: "Is ${h} family-friendly?" — mention connecting rooms, kids' club, family activities, and babysitting.`,
+      faq: `Add an FAQ: "Is ${h} family-friendly?" â mention connecting rooms, kids' club, family activities, and babysitting.`,
       words: `Use these: "family suite", "kids club", "connecting rooms", "child-friendly", "family activities".`,
-      campaign: `Add a "Family Summer" package — connecting rooms, kids eat free, and one family activity.`,
-      ad: `Post title: "A Holiday the Kids Remember". Content: a warm Reel of families by the pool or at kids' activities, captioned with "kids eat free" and connecting rooms. Target parents 30–45 during school-holiday windows. Family ads sell the parents' ease as much as the kids' fun.`,
+      campaign: `Add a "Family Summer" package â connecting rooms, kids eat free, and one family activity.`,
+      ad: `Post title: "A Holiday the Kids Remember". Content: a warm Reel of families by the pool or at kids' activities, captioned with "kids eat free" and connecting rooms. Target parents 30â45 during school-holiday windows. Family ads sell the parents' ease as much as the kids' fun.`,
     },
     ski: {
-      faq: `Add an FAQ: "Is ${h} ski-in/ski-out?" — state distance to the nearest lift, ski storage, and any ski concierge service.`,
+      faq: `Add an FAQ: "Is ${h} ski-in/ski-out?" â state distance to the nearest lift, ski storage, and any ski concierge service.`,
       words: `Use these: "ski-in ski-out", "slopeside", "ski concierge", "boot room", "alpine".`,
       campaign: `Add a "Ski Week" package with lift passes and ski storage, and publish your exact distance to the nearest lift.`,
-      ad: `Post title: "Skis On, Straight to the Lift". Content: a fast-cut Reel — fresh snow, the boot room, someone clicking into skis at the door — captioned with exact distance to the lift and the Ski Week price. Run Nov–Feb. Ski buyers want proof of proximity, shown not told.`,
+      ad: `Post title: "Skis On, Straight to the Lift". Content: a fast-cut Reel â fresh snow, the boot room, someone clicking into skis at the door â captioned with exact distance to the lift and the Ski Week price. Run NovâFeb. Ski buyers want proof of proximity, shown not told.`,
     },
   }
   return lib[cat] || lib.spa
@@ -1735,10 +1735,10 @@ function getQueryRec(query: string, hotelName: string) {
   if (q.includes('dining') || q.includes('restaurant') || q.includes('michelin') || q.includes('food')) return getCategoryRec('dining', hotelName)
   if (q.includes('ski') || q.includes('slope') || q.includes('alpine')) return getCategoryRec('ski', hotelName)
   return {
-    faq: `Add an FAQ that directly answers "${query}" — use the exact phrasing of the question and give a specific, factual answer AI can quote.`,
+    faq: `Add an FAQ that directly answers "${query}" â use the exact phrasing of the question and give a specific, factual answer AI can quote.`,
     words: `Mirror the language of the search itself: include the key words from "${query}" naturally in your description and FAQs.`,
     campaign: `Add a time-limited Event or package themed around this search. Fresh, dated, specific content is what tips a "not appearing" query into appearing.`,
-    ad: `Post built around "${query}" — lead the title with that exact phrase. Content: one strong hero image or short Reel matching the search, captioned with those exact words. Post on Instagram and as a Google Business update so the language appears on indexed pages.`,
+    ad: `Post built around "${query}" â lead the title with that exact phrase. Content: one strong hero image or short Reel matching the search, captioned with those exact words. Post on Instagram and as a Google Business update so the language appears on indexed pages.`,
   }
 }
 
@@ -1776,13 +1776,13 @@ function GoalCard({ num, kicker, title, chips, actions, status }: any) {
                 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.2rem' }}>Now</p>
                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 400, color: TEXT, margin: 0, lineHeight: 1 }}>{status.current}</p>
               </div>
-              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '1rem', color: status.reached ? GREEN : GOLD }}>→</span>
+              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '1rem', color: status.reached ? GREEN : GOLD }}>â</span>
               <div style={{ textAlign: 'center' }}>
                 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.2rem' }}>Goal</p>
                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 400, color: GOLD, margin: 0, lineHeight: 1 }}>{status.goal}</p>
               </div>
             </div>
-            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.35rem 0.9rem', borderRadius: 20, color: status.reached ? GREEN : '#d97706', background: (status.reached ? GREEN : '#d97706') + '14', border: `1px solid ${(status.reached ? GREEN : '#d97706')}40` }}>{status.reached ? '✓ Goal reached' : '◷ In progress'}</span>
+            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, padding: '0.35rem 0.9rem', borderRadius: 20, color: status.reached ? GREEN : '#d97706', background: (status.reached ? GREEN : '#d97706') + '14', border: `1px solid ${(status.reached ? GREEN : '#d97706')}40` }}>{status.reached ? 'â Goal reached' : 'â· In progress'}</span>
           </div>
         )}
       </div>
@@ -1807,7 +1807,7 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
   const cur = periodScore ?? null
   const scoreTarget = prevScore !== null ? Math.min(100, prevScore + 5) : (cur !== null ? cur + 5 : null)
 
-  // GOAL 2 — weakest tracked category + rank
+  // GOAL 2 â weakest tracked category + rank
   const catRank = (cat: string) => {
     const list = [
       { name: hotelName, score: hotelCatScores?.[cat] ?? null, mine: true },
@@ -1825,7 +1825,7 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
   const weakCatLabel = weakestCat ? (categoryLabels?.[weakestCat] || weakestCat) : ''
   const targetRank = weakCatRank ? Math.max(1, weakCatRank.rank - (weakCatRank.rank > 2 ? 2 : 1)) : null
 
-  // GOAL 3 — a genuinely missed query (appeared === false), latest per query, distinct theme from goal 2
+  // GOAL 3 â a genuinely missed query (appeared === false), latest per query, distinct theme from goal 2
   const catKeywords: Record<string, string[]> = {
     spa: ['spa', 'wellness', 'thermal'], romantic: ['honeymoon', 'romantic', 'couple'],
     lake: ['lake', 'waterfront'], family: ['family', 'kids', 'children'],
@@ -1837,7 +1837,7 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
   // Monthly-locked selection: pick a query that was MISSED as of the start of this month
   // (its last run before the current month, or its first-ever run if tracking began this month).
   // That anchor is immutable, so the chosen query stays fixed all month. We then check whether
-  // the hotel appears NOW → goal achieved. Next calendar month, a fresh miss is selected.
+  // the hotel appears NOW â goal achieved. Next calendar month, a fresh miss is selected.
   const g3Now = new Date()
   const g3MonthStart = `${g3Now.getFullYear()}-${String(g3Now.getMonth() + 1).padStart(2, '0')}-01`
 
@@ -1874,7 +1874,7 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
       <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 16, padding: '2.5rem', marginBottom: '1.75rem', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: -50, right: -30, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,169,76,0.08) 0%, transparent 70%)' }} />
         <div style={{ position: 'relative' }}>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0 0 0.9rem' }}>{monthName} {now.getFullYear()} · Your focus this month</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0 0 0.9rem' }}>{monthName} {now.getFullYear()} Â· Your focus this month</p>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.65rem', fontWeight: 300, color: WHITE, margin: '0 0 1.5rem', lineHeight: 1.4, maxWidth: 560 }}>Three actions, each chosen from where {hotelName} is weakest right now.</p>
           <div style={{ display: 'flex', gap: '2.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
             {[
@@ -1901,8 +1901,8 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
         ].filter(Boolean)}
         status={cur !== null && scoreTarget !== null ? { current: `${cur}%`, goal: `${scoreTarget}%`, reached: cur >= scoreTarget } : null}
         actions={[
-          { label: 'Add FAQs', text: `Add 2 new guest FAQs this ${monthName}. Each one widens the questions AI can match you to — the single highest-impact move on your score.` },
-          { label: 'Complete content', text: 'In Content, fill any field still marked "Missing" — about, cancellation policy, booking benefits. The more complete your profile, the more often AI quotes you.' },
+          { label: 'Add FAQs', text: `Add 2 new guest FAQs this ${monthName}. Each one widens the questions AI can match you to â the single highest-impact move on your score.` },
+          { label: 'Complete content', text: 'In Content, fill any field still marked "Missing" â about, cancellation policy, booking benefits. The more complete your profile, the more often AI quotes you.' },
           { label: 'Stay current', text: 'Publish one dated offer or event. Fresh, dated content signals an active hotel, which AI systems favour.' },
         ]}
       />
@@ -1953,7 +1953,7 @@ function GoalsTab({ hotelName, hotelRegion, periodScore, prevPeriodScore, hotelC
   )
 }
 
-// ── COMPARISON REPORT (Reports tab) ──────────────────────────────────────────
+// ââ COMPARISON REPORT (Reports tab) ââââââââââââââââââââââââââââââââââââââââââ
 
 function ComparisonReport({ hotelId, hotelName, hotelRegion, overviewRunData, googleAiScores, views, clicks, categoryLabels }: any) {
   const [catHistory, setCatHistory] = useState<any[]>([])
@@ -2076,7 +2076,7 @@ function ComparisonReport({ hotelId, hotelName, hotelRegion, overviewRunData, go
     }
   }, [loaded, monthKeys.join(',')])
 
-  if (!loaded) return <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>Loading report…</p>
+  if (!loaded) return <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>Loading reportâ¦</p>
   if (monthKeys.length < 1) return (
     <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}>
       <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Not enough data yet</p>
@@ -2091,13 +2091,13 @@ function ComparisonReport({ hotelId, hotelName, hotelRegion, overviewRunData, go
   const cats = [...new Set(catHistory.map((r: any) => r.category))].sort()
 
   const Change = ({ a, b, suffix = '' }: { a: number | null; b: number | null; suffix?: string }) => {
-    if (a === null || b === null) return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT_MUTED }}>—</span>
+    if (a === null || b === null) return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT_MUTED }}>â</span>
     const d = b - a
     if (d === 0) return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, fontWeight: 600 }}>No change</span>
     const up = d > 0
-    return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 700, color: up ? GREEN : RED, background: (up ? GREEN : RED) + '14', padding: '2px 9px', borderRadius: 20 }}>{up ? '↑' : '↓'} {Math.abs(d)}{suffix}</span>
+    return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 700, color: up ? GREEN : RED, background: (up ? GREEN : RED) + '14', padding: '2px 9px', borderRadius: 20 }}>{up ? 'â' : 'â'} {Math.abs(d)}{suffix}</span>
   }
-  const val = (v: number | null, suffix = '') => v === null ? <span style={{ color: TEXT_MUTED }}>—</span> : <>{v}{suffix}</>
+  const val = (v: number | null, suffix = '') => v === null ? <span style={{ color: TEXT_MUTED }}>â</span> : <>{v}{suffix}</>
 
   const Row = ({ label, a, b, suffix = '' }: { label: string; a: number | null; b: number | null; suffix?: string }) => (
     <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr 1fr', alignItems: 'center', padding: '0.85rem 1.5rem', borderBottom: '1px solid ' + BORDER }}>
@@ -2163,12 +2163,12 @@ function ComparisonReport({ hotelId, hotelName, hotelRegion, overviewRunData, go
         </Section>
       )}
 
-      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, lineHeight: 1.6, margin: '0.5rem 0.5rem 0' }}>A dash (—) means no data was recorded for that metric in that month. Scores are monthly averages across daily measurements.</p>
+      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: TEXT_MUTED, lineHeight: 1.6, margin: '0.5rem 0.5rem 0' }}>A dash (â) means no data was recorded for that metric in that month. Scores are monthly averages across daily measurements.</p>
     </div>
   )
 }
 
-// ── YOUR WEBSITE TAB — UNIFIED AI VISIBILITY AUDIT ───────────────────────────
+// ââ YOUR WEBSITE TAB â UNIFIED AI VISIBILITY AUDIT âââââââââââââââââââââââââââ
 function WebsiteTab({ hotel }: any) {
   const officialUrl = hotel?.direct_booking_url || ''
   const domain = (() => { try { return officialUrl ? new URL(officialUrl).hostname.replace('www.', '') : '' } catch { return '' } })()
@@ -2226,7 +2226,7 @@ function WebsiteTab({ hotel }: any) {
             {subtitle && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: TEXT_MUTED, margin: '0.2rem 0 0', lineHeight: 1.4 }}>{subtitle}</p>}
           </div>
           {typeof score === 'number' && <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.85rem', color: scoreColor(score), flexShrink: 0 }}>{score}<span style={{ fontSize: '0.9rem', color: TEXT_MUTED }}>{suffix}</span></span>}
-          <span style={{ color: TEXT_MUTED, fontSize: '1.1rem', flexShrink: 0, transform: isOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
+          <span style={{ color: TEXT_MUTED, fontSize: '1.1rem', flexShrink: 0, transform: isOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>âº</span>
         </div>
         {isOpen && <div style={{ borderTop: '1px solid ' + BORDER }}>{children}</div>}
       </div>
@@ -2240,9 +2240,9 @@ function WebsiteTab({ hotel }: any) {
         <div style={{ position: 'absolute', top: -40, right: -40, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,169,76,0.08) 0%, transparent 70%)' }} />
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '2rem' }}>
           <div style={{ flex: 1 }}>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.75)', margin: '0 0 0.75rem' }}>Your own website · AI visibility audit</p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.75)', margin: '0 0 0.75rem' }}>Your own website Â· AI visibility audit</p>
             <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.25rem', fontWeight: 300, color: WHITE, margin: '0 0 0.6rem', lineHeight: 1.2 }}>How {domain || 'your website'} reads to AI</p>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.88rem', color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.65, maxWidth: 560 }}>We read your pages the way ChatGPT, Perplexity and Google AI do — then tell you exactly what to fix first.</p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.88rem', color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.65, maxWidth: 560 }}>We read your pages the way ChatGPT, Perplexity and Google AI do â then tell you exactly what to fix first.</p>
           </div>
           {typeof overall === 'number' && (
             <div style={{ flexShrink: 0, textAlign: 'center', border: '1px solid rgba(201,169,76,0.35)', borderRadius: 16, padding: '1.25rem 1.5rem', minWidth: 130 }}>
@@ -2255,7 +2255,7 @@ function WebsiteTab({ hotel }: any) {
 
       {loading && (
         <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.9rem', color: TEXT_MUTED, margin: 0 }}>Loading your latest audit…</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.9rem', color: TEXT_MUTED, margin: 0 }}>Loading your latest auditâ¦</p>
         </div>
       )}
 
@@ -2271,19 +2271,19 @@ function WebsiteTab({ hotel }: any) {
           {/* HEADLINE SCORES */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '0.85rem', marginBottom: '1.75rem' }}>
             {[
-              { label: 'Recommendation readiness', value: r.recommendation?.score, suffix: '/100', sub: `${r.recommendation?.yes || 0} yes · ${r.recommendation?.partial || 0} partial · ${r.recommendation?.no || 0} no` },
+              { label: 'Recommendation readiness', value: r.recommendation?.score, suffix: '/100', sub: `${r.recommendation?.yes || 0} yes Â· ${r.recommendation?.partial || 0} partial Â· ${r.recommendation?.no || 0} no` },
               { label: 'Content quality', value: cq?.score, suffix: '%', sub: 'how quotable your writing is' },
               { label: 'AI architecture', value: r.architectureScore, suffix: '/100', sub: '14 layers evaluated' },
               { label: 'Question coverage', value: answer?.score, suffix: '%', sub: `${(answer?.yes || 0) + (answer?.partial || 0)}/${answer?.total || 30} answered` },
             ].map((t, i) => (
               <div key={i} style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.35rem 1.5rem' }}>
                 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.6rem' }}>{t.label}</p>
-                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.3rem', color: scoreColor(t.value ?? 0), margin: 0, lineHeight: 1 }}>{typeof t.value === 'number' ? t.value : '—'}<span style={{ fontSize: '0.95rem', color: TEXT_MUTED }}>{typeof t.value === 'number' ? t.suffix : ''}</span></p>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.3rem', color: scoreColor(t.value ?? 0), margin: 0, lineHeight: 1 }}>{typeof t.value === 'number' ? t.value : 'â'}<span style={{ fontSize: '0.95rem', color: TEXT_MUTED }}>{typeof t.value === 'number' ? t.suffix : ''}</span></p>
                 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: '0.45rem 0 0' }}>{t.sub}</p>
               </div>
             ))}
           </div>
-          {savedAt && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: TEXT_MUTED, margin: '0 0 1.5rem' }}>Last audit: {new Date(savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} · {(r.pagesScraped || []).length} pages reviewed</p>}
+          {savedAt && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: TEXT_MUTED, margin: '0 0 1.5rem' }}>Last audit: {new Date(savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} Â· {(r.pagesScraped || []).length} pages reviewed</p>}
 
           {/* WHAT TO DO FIRST (always open) */}
           {proj?.projects?.length > 0 && (
@@ -2310,7 +2310,7 @@ function WebsiteTab({ hotel }: any) {
                     <div style={{ padding: '1.1rem 1.75rem 1.3rem' }}>
                       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.92rem', color: TEXT, margin: '0 0 0.7rem', lineHeight: 1.65 }}>{p.why}</p>
                       {p.steps?.length > 0 && p.steps.map((s: string, j: number) => (
-                        <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.86rem', color: TEXT, margin: '0.3rem 0', lineHeight: 1.55, display: 'flex', gap: '0.5rem' }}><span style={{ color: ec }}>›</span><span>{s}</span></p>
+                        <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.86rem', color: TEXT, margin: '0.3rem 0', lineHeight: 1.55, display: 'flex', gap: '0.5rem' }}><span style={{ color: ec }}>âº</span><span>{s}</span></p>
                       ))}
                       {p.unlocks?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: '#d97706', margin: '0.6rem 0 0', lineHeight: 1.55 }}><strong>Unlocks:</strong> {p.unlocks.join('; ')}</p>}
                     </div>
@@ -2320,11 +2320,11 @@ function WebsiteTab({ hotel }: any) {
             </div>
           )}
 
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.9rem' }}>The detail · tap any section</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.9rem' }}>The detail Â· tap any section</p>
 
           {/* CONTENT QUALITY */}
           {cq?.categories?.length > 0 && (
-            <Section id="content" title="Content quality" subtitle="How quotable your writing is — every score cites a real line" score={cq.score}>
+            <Section id="content" title="Content quality" subtitle="How quotable your writing is â every score cites a real line" score={cq.score}>
               <div style={{ padding: '1rem 1.75rem 1.25rem' }}>
                 {cq.categories.map((c: any, i: number) => (
                   <div key={i} style={{ padding: '0.9rem 0', borderBottom: i < cq.categories.length - 1 ? '1px solid ' + BORDER : 'none' }}>
@@ -2334,7 +2334,7 @@ function WebsiteTab({ hotel }: any) {
                     </div>
                     <div style={{ height: 6, background: BG, borderRadius: 3, overflow: 'hidden', marginBottom: '0.5rem' }}><div style={{ width: c.score + '%', height: '100%', background: scoreColor(c.score) }} /></div>
                     {c.comment && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', color: TEXT, margin: '0 0 0.3rem', lineHeight: 1.55 }}>{c.comment}</p>}
-                    {c.evidence && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT_MUTED, margin: 0, fontStyle: 'italic', lineHeight: 1.45 }}>“{c.evidence}”</p>}
+                    {c.evidence && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT_MUTED, margin: 0, fontStyle: 'italic', lineHeight: 1.45 }}>â{c.evidence}â</p>}
                   </div>
                 ))}
               </div>
@@ -2343,7 +2343,7 @@ function WebsiteTab({ hotel }: any) {
 
           {/* PROMPT COVERAGE */}
           {orderedPrompts.length > 0 && (
-            <Section id="prompts" title="Prompt coverage" subtitle={`Every guest search, and why AI answered that way · ${answer ? `${(answer.yes || 0) + (answer.partial || 0)}/${answer.total}` : ''} answered`} score={answer?.score ?? r.recommendation?.score}>
+            <Section id="prompts" title="Prompt coverage" subtitle={`Every guest search, and why AI answered that way Â· ${answer ? `${(answer.yes || 0) + (answer.partial || 0)}/${answer.total}` : ''} answered`} score={answer?.score ?? r.recommendation?.score}>
               <div style={{ padding: '0.6rem 1.75rem 1.5rem' }}>
                 {orderedPrompts.map((c: any, i: number) => (
                   <div key={i} style={{ padding: '1rem 0', borderBottom: i < orderedPrompts.length - 1 ? '1px solid ' + BORDER : 'none' }}>
@@ -2351,7 +2351,7 @@ function WebsiteTab({ hotel }: any) {
                       <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.92rem', color: TEXT, fontWeight: 600, flex: 1 }}>{c.question}</span>
                       <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 700, color: statusColor(c.readiness), border: '1px solid ' + statusColor(c.readiness), borderRadius: 4, padding: '0.18rem 0.6rem', flexShrink: 0 }}>{c.readiness}</span>
                     </div>
-                    {c.evidence && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT_MUTED, margin: '0.4rem 0 0', lineHeight: 1.5, fontStyle: 'italic' }}>“{c.evidence}”{c.url && <span style={{ fontStyle: 'normal' }}> — {path(c.url)}</span>}</p>}
+                    {c.evidence && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT_MUTED, margin: '0.4rem 0 0', lineHeight: 1.5, fontStyle: 'italic' }}>â{c.evidence}â{c.url && <span style={{ fontStyle: 'normal' }}> â {path(c.url)}</span>}</p>}
                     {c.reasons?.length > 0 && c.readiness !== 'YES' && (
                       <div style={{ margin: '0.45rem 0 0' }}>
                         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', fontWeight: 700, color: TEXT, margin: '0 0 0.2rem' }}>{c.readiness === 'NO' ? 'AI could not recommend because:' : 'Holding it back from a strong yes:'}</p>
@@ -2375,7 +2375,7 @@ function WebsiteTab({ hotel }: any) {
                       <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.88rem', fontWeight: 700, color: scoreColor(it.coverage) }}>{it.coverage}%</span>
                     </div>
                     {it.definition && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT_MUTED, margin: '0 0 0.3rem', lineHeight: 1.55 }}>{it.definition} <span style={{ fontStyle: 'italic' }}>{it.why}</span></p>}
-                    {it.evidence?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: GREEN, margin: '0.25rem 0 0', lineHeight: 1.55 }}>Evidence: “{it.evidence.join('” · “')}”</p>}
+                    {it.evidence?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: GREEN, margin: '0.25rem 0 0', lineHeight: 1.55 }}>Evidence: â{it.evidence.join('â Â· â')}â</p>}
                     {it.missing?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: '#d97706', margin: '0.25rem 0 0', lineHeight: 1.55 }}>Missing: {it.missing.join('; ')}</p>}
                     {it.fix && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, margin: '0.25rem 0 0', lineHeight: 1.55 }}><strong>Fix:</strong> {it.fix}</p>}
                   </div>
@@ -2386,7 +2386,7 @@ function WebsiteTab({ hotel }: any) {
 
           {/* TECHNICAL ARCHITECTURE */}
           {arch?.layers?.length > 0 && (
-            <Section id="arch" title="Technical AI-readiness" subtitle="14 architecture layers · tap a layer for what, why and how to fix" score={arch.score} suffix="/100">
+            <Section id="arch" title="Technical AI-readiness" subtitle="14 architecture layers Â· tap a layer for what, why and how to fix" score={arch.score} suffix="/100">
               <div>
                 {arch.layers.map((l: any, i: number) => {
                   const lOpen = openLayer === l.n
@@ -2396,7 +2396,7 @@ function WebsiteTab({ hotel }: any) {
                         <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', fontWeight: 700, color: TEXT_MUTED, width: 22 }}>{l.n}</span>
                         <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.9rem', fontWeight: 600, color: TEXT, flex: 1 }}>{l.layer}{typeof l.score === 'number' ? <span style={{ color: TEXT_MUTED, fontWeight: 400 }}>  {l.score}%</span> : null}</span>
                         <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 700, color: statusColor(l.status), border: '1px solid ' + statusColor(l.status), borderRadius: 4, padding: '0.18rem 0.6rem' }}>{l.status}</span>
-                        <span style={{ color: TEXT_MUTED, fontSize: '0.95rem', transform: lOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
+                        <span style={{ color: TEXT_MUTED, fontSize: '0.95rem', transform: lOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>âº</span>
                       </div>
                       {lOpen && (
                         <div style={{ padding: '0 1.75rem 1.3rem 3.5rem', background: BG }}>
@@ -2424,7 +2424,7 @@ function WebsiteTab({ hotel }: any) {
                 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', color: TEXT_MUTED, margin: '0 0 0.9rem', lineHeight: 1.6 }}>{trust.why}</p>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', marginBottom: trust.missing?.length ? '0.9rem' : 0 }}>
                   {[{ k: 'Review schema', v: trust.reviewSchema }, { k: 'Awards', v: trust.awards }, { k: 'Ratings', v: trust.ratings }].map((t, i) => (
-                    <span key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', fontWeight: 600, color: t.v ? GREEN : RED, background: (t.v ? GREEN : RED) + '12', border: '1px solid ' + (t.v ? GREEN : RED) + '30', borderRadius: 16, padding: '0.35rem 0.85rem' }}>{t.v ? '✓' : '✗'} {t.k}</span>
+                    <span key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', fontWeight: 600, color: t.v ? GREEN : RED, background: (t.v ? GREEN : RED) + '12', border: '1px solid ' + (t.v ? GREEN : RED) + '30', borderRadius: 16, padding: '0.35rem 0.85rem' }}>{t.v ? 'â' : 'â'} {t.k}</span>
                   ))}
                 </div>
                 {trust.missing?.length > 0 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: '#d97706', margin: 0, lineHeight: 1.55 }}><strong>To add:</strong> {trust.missing.join(', ')}</p>}
@@ -2450,7 +2450,7 @@ function WebsiteTab({ hotel }: any) {
   )
 }
 
-// ── CITATION SOURCES TAB ──────────────────────────────────────────────────────
+// ââ CITATION SOURCES TAB ââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 function CitationSourcesTab({ hotelName, hotelRegion, hotelId }: { hotelName: string; hotelRegion: string; hotelId: string }) {
   const [rows, setRows] = useState<any[]>([])
@@ -2511,7 +2511,7 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId }: { hotelName: st
   const allQueries = new Set(rows.map((r: any) => r.query).filter(Boolean))
   const totalQueries = allQueries.size || 1
 
-  // Aggregate by domain → citation count + distinct queries + mention status
+  // Aggregate by domain â citation count + distinct queries + mention status
   const byDomain: Record<string, { count: number; queries: Set<string>; urls: Set<string>; mentioned: boolean | null }> = {}
   for (const r of rows) {
     const d = r.source_domain || ''
@@ -2531,7 +2531,7 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId }: { hotelName: st
     .slice(0, 10)
   const top10CiteTotal = ranked.reduce((s, r) => s + r.count, 0) || 1
 
-  // Page-level aggregation → every distinct cited URL, ranked by all-time usage
+  // Page-level aggregation â every distinct cited URL, ranked by all-time usage
   const byUrl: Record<string, { count: number; queries: Set<string>; domain: string; mentioned: boolean | null }> = {}
   for (const r of rows) {
     const u = r.source_url || ''
@@ -2551,13 +2551,13 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId }: { hotelName: st
   const mentionYes = Math.round((rankedUrls.filter(r => r.mentioned === true).length / totalUrls) * 100) + '%'
   const mentionNo = Math.round((rankedUrls.filter(r => r.mentioned === false).length / totalUrls) * 100) + '%'
 
-  if (!loaded) return <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>Loading citation sources…</p>
+  if (!loaded) return <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>Loading citation sourcesâ¦</p>
 
   if (rows.length === 0) return (
     <div style={{ background: WHITE, border: '1px dashed ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}>
       <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.4rem' }}>No citation data yet</p>
       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6, maxWidth: 440, marginLeft: 'auto', marginRight: 'auto' }}>
-        As the daily visibility run records which pages ChatGPT and Perplexity cite for {hotelRegion} hotel searches, the most-cited sources will appear here — and whether {hotelName} is mentioned on each.
+        As the daily visibility run records which pages ChatGPT and Perplexity cite for {hotelRegion} hotel searches, the most-cited sources will appear here â and whether {hotelName} is mentioned on each.
       </p>
     </div>
   )
@@ -2574,21 +2574,21 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId }: { hotelName: st
       <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 16, padding: '2.5rem', marginBottom: '1.5rem', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: -40, right: -40, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,169,76,0.08) 0%, transparent 70%)' }} />
         <div style={{ position: 'relative' }}>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0 0 0.6rem' }}>Citation Sources · Last 90 Days</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0 0 0.6rem' }}>Citation Sources Â· Last 90 Days</p>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 300, color: WHITE, margin: '0 0 0.6rem', lineHeight: 1.3, maxWidth: 560 }}>Where AI gets its answers for {hotelRegion}</p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.7, maxWidth: 560 }}>The publisher pages cited in ChatGPT and Perplexity answers for {hotelRegion} hotel searches. The ones that don't mention {hotelName} are your outreach targets — get placed there to improve your odds of being cited.</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.7, maxWidth: 560 }}>The publisher pages cited in ChatGPT and Perplexity answers for {hotelRegion} hotel searches. The ones that don't mention {hotelName} are your outreach targets â get placed there to improve your odds of being cited.</p>
         </div>
       </div>
 
       {/* Metric cards */}
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-        <KPICard label="Sources Cited" value={totalSources} sub="distinct pages · all time" color={GOLD} />
+        <KPICard label="Sources Cited" value={totalSources} sub="distinct pages Â· all time" color={GOLD} />
         <KPICard label="Already Mention You" value={mentionYes} sub="sources mentioning you" color={GREEN} />
         <KPICard label="Cited but Missing You" value={mentionNo} sub="outreach targets" color={RED} />
       </div>
 
-      {/* ── AI OUTREACH PRIORITIES ── */}
-      {/* Pure re-presentation of byDomain. Missing-you sources only — pages AI already
+      {/* ââ AI OUTREACH PRIORITIES ââ */}
+      {/* Pure re-presentation of byDomain. Missing-you sources only â pages AI already
           trusts that don't yet mention this hotel. Ranked by real signals (citation
           count, query coverage, source type). No invented numbers. The "Incorrect
           information" category is architected here but stays empty until AI Knowledge
@@ -2597,7 +2597,7 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId }: { hotelName: st
         const TYPE_WEIGHT: Record<string, number> = { Guide: 1.3, 'Editorial / blog': 1.2, OTA: 1.15, 'Brand / loyalty': 1.1, Other: 1.0, Social: 0.9 }
         const APPROACH: Record<string, string> = {
           OTA: 'Update your listing or distribution so this page carries your hotel',
-          Guide: 'Pitch editorial inclusion — usually a longer submission process',
+          Guide: 'Pitch editorial inclusion â usually a longer submission process',
           'Editorial / blog': 'Contact the author or editor to request inclusion',
           Social: 'Engage with or claim your presence on this platform',
           'Brand / loyalty': 'Request your hotel be added to this partner listing',
@@ -2615,18 +2615,18 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId }: { hotelName: st
           .sort((a, b) => b.score - a.score)
           .slice(0, 8)
 
-        // Deferred — filled later by AI Knowledge Integrity. Empty today, renders nothing.
+        // Deferred â filled later by AI Knowledge Integrity. Empty today, renders nothing.
         const incorrectFindings: any[] = []
 
         if (targets.length === 0 && incorrectFindings.length === 0) return null
         const topScore = targets[0]?.score || 1
-        const tierOf = (s: number) => s >= topScore * 0.6 ? { txt: 'High', icon: '🔥', col: RED } : { txt: 'Medium', icon: '⭐', col: GOLD }
+        const tierOf = (s: number) => s >= topScore * 0.6 ? { txt: 'High', icon: 'ð¥', col: RED } : { txt: 'Medium', icon: 'â­', col: GOLD }
 
         return (
           <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.5rem' }}>
             <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG }}>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>AI Outreach Priorities</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.5 }}>Where to spend your outreach time first — high-authority pages AI cites for {hotelRegion} that don&rsquo;t yet mention {hotelName}.</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.5 }}>Where to spend your outreach time first â high-authority pages AI cites for {hotelRegion} that don&rsquo;t yet mention {hotelName}.</p>
             </div>
             {targets.length > 0 ? (
               <div>
@@ -2640,7 +2640,7 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId }: { hotelName: st
                           <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', fontWeight: 700, color: TEXT }}>{t.domain}</span>
                           <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 600, color: t.type.color, background: t.type.color + '14', padding: '2px 9px', borderRadius: 20 }}>{t.type.label}</span>
                         </div>
-                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: TEXT_MUTED, margin: '0 0 0.4rem', lineHeight: 1.5 }}>Cited {t.count}× across {t.queries} of your tracked {hotelRegion} {t.queries === 1 ? 'search' : 'searches'} — but doesn&rsquo;t mention you.</p>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: TEXT_MUTED, margin: '0 0 0.4rem', lineHeight: 1.5 }}>Cited {t.count}Ã across {t.queries} of your tracked {hotelRegion} {t.queries === 1 ? 'search' : 'searches'} â but doesn&rsquo;t mention you.</p>
                         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT, margin: 0, lineHeight: 1.5 }}><span style={{ fontWeight: 700, color: GOLD }}>Recommended:</span> {t.approach}</p>
                       </div>
                     </div>
@@ -2649,7 +2649,7 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId }: { hotelName: st
               </div>
             ) : (
               <div style={{ padding: '1.75rem 1.5rem', textAlign: 'center' }}>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6 }}>No outreach targets yet — every checked source that AI cites already mentions {hotelName}, or pages haven&rsquo;t been scanned for your name yet.</p>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6 }}>No outreach targets yet â every checked source that AI cites already mentions {hotelName}, or pages haven&rsquo;t been scanned for your name yet.</p>
               </div>
             )}
           </div>
@@ -2660,7 +2660,7 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId }: { hotelName: st
       <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.5rem' }}>
         <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG }}>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT, margin: '0 0 0.2rem' }}>Most-cited sources</p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Share of all citations · top 10 domains</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Share of all citations Â· top 10 domains</p>
         </div>
         <div>
           {ranked.map((r, i) => {
@@ -2673,7 +2673,7 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId }: { hotelName: st
                   {isOwn && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.48rem', fontWeight: 700, color: GOLD, background: WHITE, border: '1px solid rgba(201,169,76,0.3)', padding: '2px 7px', borderRadius: 10, flexShrink: 0 }}>YOUR PAGE</span>}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
-                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>cited {r.count}×</span>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>cited {r.count}Ã</span>
                   <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', fontWeight: 600, color: GOLD, minWidth: 52, textAlign: 'right' }}>{Math.round((r.count / top10CiteTotal) * 100)}%</span>
                   {(() => { const t = sourceType(r.domain); return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, color: t.color, background: t.color + '14', padding: '3px 10px', borderRadius: 20, minWidth: 80, textAlign: 'center' }}>{t.label}</span> })()}
                 </div>
@@ -2683,14 +2683,14 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId }: { hotelName: st
         </div>
       </div>
 
-      {/* All cited pages — actual URLs */}
+      {/* All cited pages â actual URLs */}
       <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.5rem' }}>
         <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
           <div>
             <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT, margin: '0 0 0.15rem' }}>Every cited page</p>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>The exact pages ChatGPT and Perplexity cited across your queries — click to open</p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>The exact pages ChatGPT and Perplexity cited across your queries â click to open</p>
           </div>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search pages…" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.45rem 0.75rem', background: WHITE, outline: 'none', minWidth: 180 }} />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search pagesâ¦" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.45rem 0.75rem', background: WHITE, outline: 'none', minWidth: 180 }} />
         </div>
         <div>
           {rankedUrls.filter(r => !search || r.url.toLowerCase().includes(search.toLowerCase())).map((r, i) => {
@@ -2702,7 +2702,7 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId }: { hotelName: st
                   <a href={r.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', color: TEXT, textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{short}</a>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
-                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>cited {r.count}×</span>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>cited {r.count}Ã</span>
                   <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', fontWeight: 600, color: GOLD, minWidth: 52, textAlign: 'right' }}>{Math.round((r.count / urlsCiteTotal) * 100)}%</span>
                   <StatusPill m={r.mentioned} />
                 </div>
@@ -2767,14 +2767,14 @@ function QueryAppearanceBreakdown({ hotelId, hotelName, googleAiScores, onAddFaq
       <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 0.25rem' }}>{type === 'appeared' ? 'Where You Appear' : 'Queries to Improve'}</p>
       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: '0 0 1rem' }}>{type === 'appeared' ? `Searches where ${hotelName} was recommended` : 'Searches where your hotel did not appear'}</p>
       {items.length === 0 ? (
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>{type === 'appeared' ? 'No appearances recorded yet for this platform.' : 'No missed queries — excellent coverage.'}</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>{type === 'appeared' ? 'No appearances recorded yet for this platform.' : 'No missed queries â excellent coverage.'}</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: 210, overflowY: 'auto' }}>
           {items.map((row: any, i: number) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0', borderBottom: '1px solid ' + BORDER }}>
               <div style={{ width: 6, height: 6, borderRadius: '50%', background: type === 'appeared' ? GREEN : RED, flexShrink: 0 }} />
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, margin: 0, flex: 1 }}>{row.query}</p>
-              {type === 'missed' && <button onClick={onAddFaq} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, color: GOLD, background: GOLD_LIGHT, border: '1px solid ' + BORDER, borderRadius: 4, padding: '0.2rem 0.6rem', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>Add FAQ →</button>}
+              {type === 'missed' && <button onClick={onAddFaq} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, color: GOLD, background: GOLD_LIGHT, border: '1px solid ' + BORDER, borderRadius: 4, padding: '0.2rem 0.6rem', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>Add FAQ â</button>}
             </div>
           ))}
         </div>
@@ -2791,7 +2791,7 @@ function QueryAppearanceBreakdown({ hotelId, hotelName, googleAiScores, onAddFaq
         </select>
       </div>
       {platform !== 'google_ai' && !loaded ? (
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>Loading…</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>Loadingâ¦</p>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <List items={appeared} type="appeared" />
@@ -2802,7 +2802,7 @@ function QueryAppearanceBreakdown({ hotelId, hotelName, googleAiScores, onAddFaq
   )
 }
 
-// ── AI VISIBILITY MODEL — "Current AI Identity", how AI sees the hotel across dimensions ──
+// ââ AI VISIBILITY MODEL â "Current AI Identity", how AI sees the hotel across dimensions ââ
 function VisibilityModelPanel({ model }: any) {
   const [open, setOpen] = useState<string | null>(null)
   if (!model?.dimensions?.length) return null
@@ -2849,13 +2849,13 @@ function VisibilityModelPanel({ model }: any) {
             </div>
           )
         })}
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: TEXT_MUTED, margin: '0.85rem 0 0', fontStyle: 'italic', lineHeight: 1.5 }}>Each score is computed from your confirmed facts, your pages, and which guest questions AI can answer — tap any dimension to see the evidence behind its score.</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: TEXT_MUTED, margin: '0.85rem 0 0', fontStyle: 'italic', lineHeight: 1.5 }}>Each score is computed from your confirmed facts, your pages, and which guest questions AI can answer â tap any dimension to see the evidence behind its score.</p>
       </div>
     </div>
   )
 }
 
-// ── HISTORY PANEL — "since last audit" diff, reads the audit's memory object ──
+// ââ HISTORY PANEL â "since last audit" diff, reads the audit's memory object ââ
 function HistoryPanel({ hotel }: any) {
   const [memory, setMemory] = useState<any>(null)
   const [prevDate, setPrevDate] = useState<string>('')
@@ -2908,7 +2908,7 @@ function HistoryPanel({ hotel }: any) {
   return (
     <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.5rem' }}>
       <div style={{ padding: '1.25rem 1.75rem', borderBottom: '1px solid ' + BORDER, background: BG }}>
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.3rem' }}>Since last audit{prevDate ? ` · ${new Date(prevDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` : ''}</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.3rem' }}>Since last audit{prevDate ? ` Â· ${new Date(prevDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` : ''}</p>
         <div style={{ display: 'flex', gap: '1rem', marginTop: '0.75rem' }}>
           <Stat n={c.fixed} label="Resolved" color={GREEN} />
           <Stat n={c.stillOpen} label="Still open" color="#d97706" />
@@ -2918,9 +2918,9 @@ function HistoryPanel({ hotel }: any) {
       <div style={{ padding: '1.25rem 1.75rem' }}>
         {memory.fixed?.length > 0 && (
           <div style={{ marginBottom: memory.newlyFound?.length ? '1rem' : 0 }}>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: GREEN, margin: '0 0 0.5rem' }}>✓ Resolved since last audit</p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: GREEN, margin: '0 0 0.5rem' }}>â Resolved since last audit</p>
             {memory.fixed.map((k: string, i: number) => (
-              <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, margin: '0.2rem 0', lineHeight: 1.5, display: 'flex', gap: '0.5rem' }}><span style={{ color: GREEN }}>✓</span><span>{humanizeKey(k)}</span></p>
+              <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, margin: '0.2rem 0', lineHeight: 1.5, display: 'flex', gap: '0.5rem' }}><span style={{ color: GREEN }}>â</span><span>{humanizeKey(k)}</span></p>
             ))}
           </div>
         )}
@@ -2928,7 +2928,7 @@ function HistoryPanel({ hotel }: any) {
           <div style={{ marginBottom: memory.stillOpen?.length ? '1rem' : 0 }}>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: BLUE, margin: '0 0 0.5rem' }}>New this audit</p>
             {memory.newlyFound.map((f: any, i: number) => (
-              <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, margin: '0.2rem 0', lineHeight: 1.5, display: 'flex', gap: '0.5rem' }}><span style={{ color: BLUE }}>›</span><span>{f.title}</span></p>
+              <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, margin: '0.2rem 0', lineHeight: 1.5, display: 'flex', gap: '0.5rem' }}><span style={{ color: BLUE }}>âº</span><span>{f.title}</span></p>
             ))}
           </div>
         )}
@@ -2936,7 +2936,7 @@ function HistoryPanel({ hotel }: any) {
           <div>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#d97706', margin: '0 0 0.5rem' }}>Still open</p>
             {memory.stillOpen.slice(0, 6).map((f: any, i: number) => (
-              <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT_MUTED, margin: '0.2rem 0', lineHeight: 1.5, display: 'flex', gap: '0.5rem' }}><span style={{ color: '#d97706' }}>•</span><span>{f.title}</span></p>
+              <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT_MUTED, margin: '0.2rem 0', lineHeight: 1.5, display: 'flex', gap: '0.5rem' }}><span style={{ color: '#d97706' }}>â¢</span><span>{f.title}</span></p>
             ))}
             {memory.stillOpen.length > 6 && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: '0.4rem 0 0', fontStyle: 'italic' }}>+ {memory.stillOpen.length - 6} more still open</p>}
           </div>
@@ -2946,7 +2946,7 @@ function HistoryPanel({ hotel }: any) {
   )
 }
 
-// ── ADVISOR EXECUTIVE DASHBOARD ──
+// ââ ADVISOR EXECUTIVE DASHBOARD ââ
 const ADV_GREEN_C = '#3F7D5B'
 const ADV_AMBER = '#9A7B2E'
 
@@ -2958,7 +2958,7 @@ function advBandWord(score: number) { return score >= 70 ? 'Strong' : score >= 4
 function advBandColor(score: number) { return score >= 70 ? ADV_GREEN_C : score >= 45 ? GOLD : score >= 25 ? ADV_AMBER : 'rgba(42,26,14,0.4)' }
 function advDimColor(band: string) { return band === 'strong' ? ADV_GREEN_C : band === 'moderate' ? GOLD : band === 'weak' ? ADV_AMBER : 'rgba(42,26,14,0.3)' }
 
-// One strategic priority — compact collapsed tile. Full analysis opens in a modal.
+// One strategic priority â compact collapsed tile. Full analysis opens in a modal.
 function PriorityCard({ m, i, onOpen }: any) {
   const rec = m.canonicalRecommendation
   const c = rec.case
@@ -2990,7 +2990,7 @@ function PriorityCard({ m, i, onOpen }: any) {
         <span style={{ width: 24, height: 24, borderRadius: '50%', border: '1.5px solid rgba(42,26,14,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 700, color: TEXT_MUTED, flexShrink: 0 }}>{i + 1}</span>
         <span style={{ flex: 1 }} />
         {statusTag}
-        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.95rem', color: TEXT_MUTED }}>›</span>
+        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.95rem', color: TEXT_MUTED }}>âº</span>
       </div>
       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.92rem', fontWeight: 700, lineHeight: 1.3, color: TEXT, margin: '0 0 0.4rem' }}>{lead}</p>
       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', lineHeight: 1.5, color: TEXT_MUTED, margin: '0 0 0.7rem' }}>{c.diagnosis}</p>
@@ -2999,7 +2999,7 @@ function PriorityCard({ m, i, onOpen }: any) {
   )
 }
 
-// Full consulting analysis — wide two-column executive modal over a dark backdrop.
+// Full consulting analysis â wide two-column executive modal over a dark backdrop.
 function CaseModal({ m, i, onClose, model, savedAt }: any) {
   const rec = m.canonicalRecommendation
   const c = rec.case
@@ -3030,7 +3030,7 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
     return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = '' }
   }, [onClose])
 
-  // LEFT — narrative section
+  // LEFT â narrative section
   const Sec = ({ icon, title, children }: any) => (
     <div style={{ paddingTop: '1.5rem', borderTop: '1px solid ' + BORDER, marginTop: '1.5rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.7rem' }}>
@@ -3040,7 +3040,7 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
       {children}
     </div>
   )
-  // RIGHT — rail card
+  // RIGHT â rail card
   const Rail = ({ icon, title, children }: any) => (
     <div style={{ paddingBottom: '1.4rem', borderBottom: '1px solid ' + BORDER, marginBottom: '1.4rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.9rem' }}>
@@ -3064,7 +3064,7 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
       <div onClick={(e) => e.stopPropagation()} style={{ background: WHITE, borderRadius: 20, maxWidth: 1080, width: '100%', boxShadow: '0 24px 80px rgba(26,14,6,0.4)', position: 'relative', marginBottom: '3vh' }}>
         {/* HEADER */}
         <div style={{ padding: '2rem 2.5rem 1.5rem', position: 'relative' }}>
-          <button onClick={onClose} aria-label="Close" style={{ position: 'absolute', top: '1.6rem', right: '1.8rem', width: 34, height: 34, borderRadius: '50%', border: '1px solid ' + BORDER, background: WHITE, color: TEXT_MUTED, fontSize: '1.2rem', lineHeight: 1, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+          <button onClick={onClose} aria-label="Close" style={{ position: 'absolute', top: '1.6rem', right: '1.8rem', width: 34, height: 34, borderRadius: '50%', border: '1px solid ' + BORDER, background: WHITE, color: TEXT_MUTED, fontSize: '1.2rem', lineHeight: 1, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Ã</button>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', marginBottom: '1rem' }}>
             <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED }}>Case {String(i + 1).padStart(2, '0')}</span>
             <span style={{ width: 1, height: 12, background: BORDER }} />
@@ -3080,17 +3080,17 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
 
         {/* TWO COLUMNS */}
         <div style={{ display: 'grid', gridTemplateColumns: '1.55fr 1fr', gap: 0, borderTop: '1px solid ' + BORDER }}>
-          {/* LEFT — narrative */}
+          {/* LEFT â narrative */}
           <div style={{ padding: '0.5rem 2rem 2.25rem', borderRight: '1px solid ' + BORDER }}>
             {c.business_consequence && (
-              <Sec icon="◎" title="Why it matters">
+              <Sec icon="â" title="Why it matters">
                 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', lineHeight: 1.65, color: TEXT, margin: 0 }}>{c.business_consequence}</p>
               </Sec>
             )}
-            <Sec icon="✸" title={verify ? 'What we need' : 'Recommendation'}>
+            <Sec icon="â¸" title={verify ? 'What we need' : 'Recommendation'}>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.9rem', fontWeight: 600, lineHeight: 1.6, color: TEXT, margin: 0 }}>{c.recommendation}</p>
               {rec.targeting?.canonical_page && (
-                <code style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.7rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: TEXT, background: BG, padding: '5px 11px', borderRadius: 5, border: '1px solid ' + BORDER, wordBreak: 'break-all' }}>{rec.targeting.canonical_page} <span style={{ color: TEXT_MUTED }}>⊘</span></code>
+                <code style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.7rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: TEXT, background: BG, padding: '5px 11px', borderRadius: 5, border: '1px solid ' + BORDER, wordBreak: 'break-all' }}>{rec.targeting.canonical_page} <span style={{ color: TEXT_MUTED }}>â</span></code>
               )}
             </Sec>
             {(() => {
@@ -3113,20 +3113,20 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
                 </div>
               )
               return (
-                <Sec icon="⛓" title="Implementation roadmap">
+                <Sec icon="â" title="Implementation roadmap">
                   <Tier label="QUICK WINS" time="~30 min each" steps={rm.quickWins} col={ADV_GREEN_C} />
-                  <Tier label="NEXT IMPROVEMENTS" time="2–3 hours" steps={rm.nextImprovements} col={GOLD} />
-                  {rm.strategicProject && <Tier label="STRATEGIC PROJECT" time="1–2 days" steps={[rm.strategicProject]} col={'#8A6D1F'} />}
+                  <Tier label="NEXT IMPROVEMENTS" time="2â3 hours" steps={rm.nextImprovements} col={GOLD} />
+                  {rm.strategicProject && <Tier label="STRATEGIC PROJECT" time="1â2 days" steps={[rm.strategicProject]} col={'#8A6D1F'} />}
                 </Sec>
               )
             })()}
             {c.expected_result && (
-              <Sec icon="◷" title="Expected outcome">
+              <Sec icon="â·" title="Expected outcome">
                 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', lineHeight: 1.65, color: TEXT, margin: 0 }}>{c.expected_result}</p>
               </Sec>
             )}
             {Array.isArray(m.behavioural_claims) && m.behavioural_claims.length > 0 && (
-              <Sec icon="▤" title="Guest behaviour · Google Analytics">
+              <Sec icon="â¤" title="Guest behaviour Â· Google Analytics">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
                   {m.behavioural_claims.map((b: any, j: number) => (
                     <div key={j} style={{ padding: '0.75rem 0.95rem', background: BG, borderRadius: 8, border: '1px solid ' + BORDER }}>
@@ -3139,16 +3139,16 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
             {(() => {
               const sd = rec.future?.search
               if (!sd || !sd.measured_pages || sd.measured_pages.length === 0 || sd.impressions === null) return null
-              const fmtN = (n: number | null) => n === null || n === undefined ? '—' : n.toLocaleString()
+              const fmtN = (n: number | null) => n === null || n === undefined ? 'â' : n.toLocaleString()
               const chg = sd.impressions_change_pct
               return (
-                <Sec icon="◴" title="Search demand · Google Search Console">
+                <Sec icon="â´" title="Search demand Â· Google Search Console">
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(96px, 1fr))', gap: '0.55rem', marginBottom: sd.top_queries?.length ? '0.85rem' : 0 }}>
                     {[
-                      { label: 'Impressions', value: fmtN(sd.impressions), sub: chg !== null && chg !== undefined ? ((chg >= 0 ? '↑ ' : '↓ ') + Math.abs(chg) + '%') : 'this period', col: chg !== null && chg !== undefined ? (chg >= 0 ? ADV_GREEN_C : RED) : TEXT_MUTED },
+                      { label: 'Impressions', value: fmtN(sd.impressions), sub: chg !== null && chg !== undefined ? ((chg >= 0 ? 'â ' : 'â ') + Math.abs(chg) + '%') : 'this period', col: chg !== null && chg !== undefined ? (chg >= 0 ? ADV_GREEN_C : RED) : TEXT_MUTED },
                       { label: 'Clicks', value: fmtN(sd.clicks), sub: '', col: TEXT_MUTED },
-                      { label: 'CTR', value: sd.ctr === null ? '—' : sd.ctr + '%', sub: '', col: TEXT_MUTED },
-                      { label: 'Avg position', value: sd.avg_position === null ? '—' : sd.avg_position, sub: '', col: TEXT_MUTED },
+                      { label: 'CTR', value: sd.ctr === null ? 'â' : sd.ctr + '%', sub: '', col: TEXT_MUTED },
+                      { label: 'Avg position', value: sd.avg_position === null ? 'â' : sd.avg_position, sub: '', col: TEXT_MUTED },
                     ].map((k, j) => (
                       <div key={j} style={{ padding: '0.65rem 0.8rem', background: BG, borderRadius: 8, border: '1px solid ' + BORDER }}>
                         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.54rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.3rem' }}>{k.label}</p>
@@ -3164,7 +3164,7 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
                         {sd.top_queries.map((q: any, j: number) => (
                           <div key={j} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.6rem', padding: '0.55rem 0.85rem', background: BG, borderRadius: 7, border: '1px solid ' + BORDER }}>
                             <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{q.query}</span>
-                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: TEXT_MUTED, flexShrink: 0 }}>{q.impressions.toLocaleString()} impressions · pos {q.position}</span>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: TEXT_MUTED, flexShrink: 0 }}>{q.impressions.toLocaleString()} impressions Â· pos {q.position}</span>
                           </div>
                         ))}
                       </div>
@@ -3174,7 +3174,7 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
               )
             })()}
             {Array.isArray(rec.review_evidence) && rec.review_evidence.length > 0 && (
-              <Sec icon="★" title="Official reviews">
+              <Sec icon="â" title="Official reviews">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
                   {rec.review_evidence.map((f: any, j: number) => (
                     <div key={j} style={{ padding: '0.8rem 1rem', background: BG, borderRadius: 8, border: '1px solid ' + BORDER }}>
@@ -3188,15 +3188,15 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
               </Sec>
             )}
             {((proof.quotes?.length || proof.failed_questions?.length || rec.technical?.causes?.length) > 0) && (
-              <Sec icon="▦" title="Supporting evidence">
+              <Sec icon="â¦" title="Supporting evidence">
                 {proof.quotes?.length > 0 && (
                   <div style={{ marginBottom: (proof.failed_questions?.length || rec.technical?.causes?.length) ? '1.2rem' : 0 }}>
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 0.5rem' }}>From your website</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                       {proof.quotes.map((q: any, j: number) => (
                         <div key={j} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 0.9rem', background: BG, borderRadius: 8, border: '1px solid ' + BORDER }}>
-                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, margin: 0 }}>&ldquo;{q.quote}&rdquo;{q.page && <span style={{ color: TEXT_MUTED }}> — {q.page}</span>}</p>
-                          <span style={{ color: TEXT_MUTED, flexShrink: 0 }}>›</span>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, margin: 0 }}>&ldquo;{q.quote}&rdquo;{q.page && <span style={{ color: TEXT_MUTED }}> â {q.page}</span>}</p>
+                          <span style={{ color: TEXT_MUTED, flexShrink: 0 }}>âº</span>
                         </div>
                       ))}
                     </div>
@@ -3207,7 +3207,7 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 0.5rem' }}>Guest questions AI can&rsquo;t answer today</p>
                     <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                       {proof.failed_questions.map((q: string, j: number) => (
-                        <li key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, paddingLeft: '0.95rem', position: 'relative', lineHeight: 1.5 }}><span style={{ position: 'absolute', left: 0, color: TEXT_MUTED }}>•</span>{q}</li>
+                        <li key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, paddingLeft: '0.95rem', position: 'relative', lineHeight: 1.5 }}><span style={{ position: 'absolute', left: 0, color: TEXT_MUTED }}>â¢</span>{q}</li>
                       ))}
                     </ul>
                   </div>
@@ -3216,7 +3216,7 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
                   <div>
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 0.5rem' }}>What&rsquo;s making AI hesitate</p>
                     {rec.technical.causes.map((t: any, j: number) => (
-                      <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', lineHeight: 1.55, color: TEXT, margin: j ? '0.45rem 0 0' : 0, paddingLeft: '0.95rem', position: 'relative' }}><span style={{ position: 'absolute', left: 0, color: ADV_AMBER }}>◔</span>{t.fix}</p>
+                      <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', lineHeight: 1.55, color: TEXT, margin: j ? '0.45rem 0 0' : 0, paddingLeft: '0.95rem', position: 'relative' }}><span style={{ position: 'absolute', left: 0, color: ADV_AMBER }}>â</span>{t.fix}</p>
                     ))}
                   </div>
                 )}
@@ -3224,15 +3224,15 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
             )}
           </div>
 
-          {/* RIGHT — rail */}
+          {/* RIGHT â rail */}
           <div style={{ padding: '1.5rem 2rem 2.25rem', background: 'rgba(248,245,239,0.4)' }}>
-            <Rail icon="⤢" title="AI Visibility Contribution">
+            <Rail icon="â¤¢" title="AI Visibility Contribution">
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: '0 0 0.6rem' }}>This case strengthens how AI understands your:</p>
               <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: TEXT, background: WHITE, border: '1px solid ' + BORDER, padding: '4px 11px', borderRadius: 6, display: 'inline-block' }}>{topicLabel.charAt(0) + topicLabel.slice(1).toLowerCase()}</span>
             </Rail>
 
             {dims.length > 0 && (
-              <Rail icon="▤" title="Evidence at a glance">
+              <Rail icon="â¤" title="Evidence at a glance">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
                   {dims.map((d: any) => {
                     const col = advDimColor(d.band)
@@ -3256,19 +3256,19 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
             )}
 
             {relatedActions.length > 0 && (
-              <Rail icon="◈" title="Related actions">
+              <Rail icon="â" title="Related actions">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   {relatedActions.map((a: string, j: number) => (
                     <div key={j} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.65rem 0.8rem', background: WHITE, borderRadius: 8, border: '1px solid ' + BORDER }}>
                       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT, margin: 0, lineHeight: 1.4, flex: 1 }}>{a}</p>
-                      <span style={{ color: TEXT_MUTED, flexShrink: 0 }}>›</span>
+                      <span style={{ color: TEXT_MUTED, flexShrink: 0 }}>âº</span>
                     </div>
                   ))}
                 </div>
               </Rail>
             )}
 
-            {/* Evidence sources — always present, show state */}
+            {/* Evidence sources â always present, show state */}
             <div>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT, margin: '0 0 0.7rem' }}>Evidence sources</p>
               {(() => {
@@ -3301,7 +3301,7 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
   )
 }
 
-// AI FOUNDATIONS — the explainability layer under the visibility score. Reads
+// AI FOUNDATIONS â the explainability layer under the visibility score. Reads
 // adv.foundations (real architecture layers + KG + question coverage). Each row is
 // clickable, expanding to why/assessment/evidence/recommendation. No invented data:
 // renders only foundations the platform actually computed.
@@ -3316,7 +3316,7 @@ function FoundationsPanel({ foundations }: any) {
   return (
     <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.5rem 1.6rem', marginTop: '1.25rem' }}>
       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: TEXT, margin: '0 0 0.3rem' }}>AI Foundations</p>
-      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT_MUTED, margin: '0 0 1.1rem', lineHeight: 1.5 }}>What gives your hotel this visibility score — tap any foundation to see the evidence.</p>
+      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT_MUTED, margin: '0 0 1.1rem', lineHeight: 1.5 }}>What gives your hotel this visibility score â tap any foundation to see the evidence.</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
         {dims.map((f: any) => {
           const col = bandCol(f.band)
@@ -3327,7 +3327,7 @@ function FoundationsPanel({ foundations }: any) {
                 <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', fontWeight: 500, color: TEXT, flex: 1 }}>{f.name}</span>
                 {f.score != null && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', fontWeight: 700, color: col }}>{f.score}</span>}
                 <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', color: col, width: 64, textAlign: 'right' }}>{bandWord(f.band)}</span>
-                <span style={{ color: TEXT_MUTED, fontSize: '0.9rem', transform: isOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
+                <span style={{ color: TEXT_MUTED, fontSize: '0.9rem', transform: isOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>âº</span>
               </div>
               {isOpen && (
                 <div style={{ padding: '0.3rem 0.9rem 1rem', borderTop: '1px solid ' + BORDER }}>
@@ -3339,7 +3339,7 @@ function FoundationsPanel({ foundations }: any) {
                           const cmpCol = cmp.ok ? ADV_GREEN_C : ADV_AMBER
                           return (
                             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                              <span style={{ color: cmpCol, fontSize: '0.74rem', width: 14, flexShrink: 0 }}>{cmp.ok ? '✓' : '⚠'}</span>
+                              <span style={{ color: cmpCol, fontSize: '0.74rem', width: 14, flexShrink: 0 }}>{cmp.ok ? 'â' : 'â '}</span>
                               <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', color: TEXT, flex: 1 }}>{cmp.name}</span>
                               {cmp.score != null && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: cmpCol }}>{cmp.score}</span>}
                             </div>
@@ -3365,7 +3365,7 @@ function FoundationsPanel({ foundations }: any) {
                       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Evidence</p>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                         {f.evidence.map((e: string, i: number) => (
-                          <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.45, paddingLeft: '0.8rem', position: 'relative' }}><span style={{ position: 'absolute', left: 0, color: col }}>•</span>{e}</p>
+                          <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.45, paddingLeft: '0.8rem', position: 'relative' }}><span style={{ position: 'absolute', left: 0, color: col }}>â¢</span>{e}</p>
                         ))}
                       </div>
                     </div>
@@ -3481,7 +3481,7 @@ function ActivityPanel({ memory }: any) {
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: ADV_GREEN_C, margin: '0 0 0.5rem' }}>Recently resolved</p>
           <div style={{ maxHeight: 140, overflowY: 'auto', paddingRight: '0.3rem' }}>
             {memory.fixed.map((k: string, i: number) => (
-              <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT, margin: '0.25rem 0', lineHeight: 1.45, display: 'flex', gap: '0.45rem' }}><span style={{ color: ADV_GREEN_C, flexShrink: 0 }}>✓</span><span>{humanizeKey(k)}</span></p>
+              <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT, margin: '0.25rem 0', lineHeight: 1.45, display: 'flex', gap: '0.45rem' }}><span style={{ color: ADV_GREEN_C, flexShrink: 0 }}>â</span><span>{humanizeKey(k)}</span></p>
             ))}
           </div>
         </div>
@@ -3491,7 +3491,7 @@ function ActivityPanel({ memory }: any) {
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: ADV_AMBER, margin: '0 0 0.5rem' }}>Still open ({memory.stillOpen.length})</p>
           <div style={{ maxHeight: 180, overflowY: 'auto', paddingRight: '0.3rem' }}>
             {memory.stillOpen.map((f: any, i: number) => (
-              <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT_MUTED, margin: '0.25rem 0', lineHeight: 1.45, display: 'flex', gap: '0.45rem' }}><span style={{ color: ADV_AMBER, flexShrink: 0 }}>•</span><span>{f.title}</span></p>
+              <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT_MUTED, margin: '0.25rem 0', lineHeight: 1.45, display: 'flex', gap: '0.45rem' }}><span style={{ color: ADV_AMBER, flexShrink: 0 }}>â¢</span><span>{f.title}</span></p>
             ))}
           </div>
         </div>
@@ -3526,7 +3526,7 @@ function EvidenceRow({ adv, hotel }: any) {
   )
 }
 
-// AI Performance Intelligence — measurement bubble. Reads adv.ai_performance (real
+// AI Performance Intelligence â measurement bubble. Reads adv.ai_performance (real
 // GA4 data when connected). No causal language; reports what happened only. When not
 // connected, shows a connect state. Every number traces to a real GA4 aggregation.
 function AiPerformancePanel({ perf, ga4Connected }: any) {
@@ -3541,7 +3541,7 @@ function AiPerformancePanel({ perf, ga4Connected }: any) {
     </div>
   )
 
-  // Not connected (or no usable data yet) → honest connect state, no fabricated numbers.
+  // Not connected (or no usable data yet) â honest connect state, no fabricated numbers.
   if (!measured) {
     return (
       <Wrap>
@@ -3549,14 +3549,14 @@ function AiPerformancePanel({ perf, ga4Connected }: any) {
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.86rem', color: TEXT, margin: '0 0 0.5rem', fontWeight: 600 }}>{ga4Connected ? 'Measuring your AI traffic' : 'Connect Google Analytics to see results'}</p>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT_MUTED, margin: '0 auto', lineHeight: 1.6, maxWidth: 460 }}>{ga4Connected
             ? 'Your property is connected. As soon as your next analysis runs, this will show how much traffic AI assistants send to your website, which platforms, and how it trends.'
-            : 'Once you connect your Google Analytics in Settings, SwissNet will measure how much traffic ChatGPT, Perplexity, Google AI and others send directly to your website — and whether it converts.'}</p>
+            : 'Once you connect your Google Analytics in Settings, SwissNet will measure how much traffic ChatGPT, Perplexity, Google AI and others send directly to your website â and whether it converts.'}</p>
         </div>
       </Wrap>
     )
   }
 
-  const fmt = (n: number | null) => n === null || n === undefined ? '—' : n.toLocaleString()
-  const pct = (n: number | null) => n === null || n === undefined ? '—' : n + '%'
+  const fmt = (n: number | null) => n === null || n === undefined ? 'â' : n.toLocaleString()
+  const pct = (n: number | null) => n === null || n === undefined ? 'â' : n + '%'
   const change = perf.ai_sessions_change_pct
   const PLAT_COL: Record<string, string> = { ChatGPT: '#10a37f', Perplexity: '#20808d', Gemini: '#4285f4', Claude: GOLD, Copilot: '#0078d4', 'Bing / Copilot': '#0078d4' }
 
@@ -3566,7 +3566,7 @@ function AiPerformancePanel({ perf, ga4Connected }: any) {
         {/* Headline numbers */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
           {[
-            { label: 'AI sessions', value: fmt(perf.ai_sessions), sub: change !== null ? ((change >= 0 ? '↑ ' : '↓ ') + Math.abs(change) + '% vs last period') : 'this period', subcol: change !== null ? (change >= 0 ? ADV_GREEN_C : RED) : TEXT_MUTED },
+            { label: 'AI sessions', value: fmt(perf.ai_sessions), sub: change !== null ? ((change >= 0 ? 'â ' : 'â ') + Math.abs(change) + '% vs last period') : 'this period', subcol: change !== null ? (change >= 0 ? ADV_GREEN_C : RED) : TEXT_MUTED },
             { label: 'Share of all traffic', value: pct(perf.ai_share_pct), sub: 'of total sessions', subcol: TEXT_MUTED },
             { label: 'AI conversion rate', value: pct(perf.ai_conversion_rate), sub: perf.ai_conversions !== null ? fmt(perf.ai_conversions) + ' conversions' : '', subcol: TEXT_MUTED },
             { label: 'AI revenue', value: perf.ai_revenue === null ? 'Not tracked' : ('CHF ' + fmt(perf.ai_revenue)), sub: perf.ai_revenue === null ? 'connect revenue tracking' : 'this period', subcol: TEXT_MUTED },
@@ -3617,14 +3617,14 @@ function AiPerformancePanel({ perf, ga4Connected }: any) {
           </div>
         )}
 
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: TEXT_MUTED, margin: '1.25rem 0 0', lineHeight: 1.5, fontStyle: 'italic' }}>Measured from your Google Analytics over the last {perf.period_days || 28} days. This reports what happened — it does not claim a cause.</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: TEXT_MUTED, margin: '1.25rem 0 0', lineHeight: 1.5, fontStyle: 'italic' }}>Measured from your Google Analytics over the last {perf.period_days || 28} days. This reports what happened â it does not claim a cause.</p>
       </div>
     </Wrap>
   )
 }
 
-// ── AI KNOWLEDGE INTEGRITY (manual, read-only) ──
-// ── GUEST REVIEW INTELLIGENCE (reads advisory blob; no DB, no re-analysis) ──
+// ââ AI KNOWLEDGE INTEGRITY (manual, read-only) ââ
+// ââ GUEST REVIEW INTELLIGENCE (reads advisory blob; no DB, no re-analysis) ââ
 function GuestReviewCard({ adv }: any) {
   const [open, setOpen] = useState(false)
 
@@ -3652,6 +3652,36 @@ function GuestReviewCard({ adv }: any) {
   const total = findings.length
   const top = findings[0]
 
+  // Dimensions reviews support vs don't — derived from the visibility model.
+  // A dimension "supported" if any strength theme maps to its topic; "rarely heard"
+  // if it's a real scored dimension with no review theme. No invented numbers.
+  const dims = (adv?.visibility_model?.dimensions || []).filter((d: any) => d.applicable !== false && d.band !== 'na')
+  const themeTopics = new Set(findings.map((f: any) => (f.topic || '').toLowerCase()).filter(Boolean))
+  const themeThemesLc = strengths.map((f: any) => (f.theme || '').toLowerCase())
+  const dimSupported = (d: any) => {
+    const dl = (d.label || d.dimension || '').toLowerCase()
+    if (themeTopics.has((d.dimension || '').toLowerCase())) return true
+    return themeThemesLc.some(t => t.includes(dl) || dl.includes(t.split(' ')[0]))
+  }
+  const supportedDims = dims.filter(dimSupported)
+  const rarelyHeardDims = dims.filter((d: any) => !dimSupported(d))
+
+  // Recommendations — derived from real themes. 3–5 max.
+  const recs: string[] = []
+  if (top) recs.push('Surface your strongest guest theme \u2014 ' + top.theme.toLowerCase() + ' \u2014 prominently across your website so AI can retrieve it.')
+  if (strengths[1]) recs.push('Reflect recurring guest language about ' + strengths[1].theme.toLowerCase() + ' naturally within the relevant pages.')
+  if (rarelyHeardDims[0]) recs.push('Encourage guests to mention ' + (rarelyHeardDims[0].label || rarelyHeardDims[0].dimension).toLowerCase() + ' in reviews \u2014 AI has little review evidence for it today.')
+  if (issues[0]) recs.push('Address the recurring guest concern around ' + issues[0].theme.toLowerCase() + ', then let improved reviews rebuild that signal.')
+  if (strengths.length >= 3) recs.push('Keep your strongest review themes visible on the pages guests book from \u2014 reputation only helps AI if the website states it.')
+  const recList = recs.slice(0, 5)
+
+  // Status — Strong / Moderate / Weak from how many strength themes cleared the gate.
+  const statusWord = strengths.length >= 3 ? 'Strong' : strengths.length >= 1 ? 'Moderate' : 'Weak'
+  const statusCol = strengths.length >= 3 ? ADV_GREEN_C : strengths.length >= 1 ? GOLD : ADV_AMBER
+  const execLine = top
+    ? 'Guest reviews consistently reinforce ' + strengths.slice(0, 3).map((f: any) => f.theme.toLowerCase()).join(', ') + '. These themes strengthen AI confidence when recommending you, while some dimensions receive little guest discussion.'
+    : 'A few guest themes have emerged, but there is not yet enough consistent review evidence for AI to draw on.'
+
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
@@ -3677,76 +3707,125 @@ function GuestReviewCard({ adv }: any) {
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: GOLD, flexShrink: 0 }} />
             <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 700, color: TEXT }}>Guest Review Intelligence</span>
           </div>
-          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.95rem', color: TEXT_MUTED }}>\u203a</span>
+          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.95rem', color: TEXT_MUTED }}>›</span>
         </div>
         {top && (
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: TEXT, margin: '0.7rem 0 0', lineHeight: 1.5 }}>
             <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: GOLD, fontWeight: 600 }}>{top.support_count}</span>
-            {' '}guests highlight <strong>{top.theme.toLowerCase()}</strong> \u2014 your loudest guest signal. Tap to see what guests say and how it affects AI visibility.
+            {' '}guests highlight <strong>{top.theme.toLowerCase()}</strong> — your loudest guest signal. Tap to see what guests say and how it affects AI visibility.
           </p>
         )}
       </button>
 
       {open && (
         <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(42,26,14,0.55)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '4vh 1rem', zIndex: 1000, overflowY: 'auto' }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: BG, borderRadius: 18, maxWidth: 760, width: '100%', boxShadow: '0 20px 60px rgba(42,26,14,0.3)', overflow: 'hidden' }}>
-            <div style={{ background: 'linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)', padding: '1.75rem 2rem', position: 'relative' }}>
-              <button onClick={() => setOpen(false)} style={{ position: 'absolute', top: '1.1rem', right: '1.25rem', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.7)', fontSize: '1.4rem', cursor: 'pointer', lineHeight: 1 }}>\u00d7</button>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.75)', margin: '0 0 0.4rem' }}>Guest Review Intelligence</p>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.7rem', fontWeight: 400, color: WHITE, margin: 0, lineHeight: 1.15 }}>What guests consistently say</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: 'rgba(255,255,255,0.8)', margin: '0.6rem 0 0', lineHeight: 1.55, maxWidth: '60ch' }}>Themes raised across real guest reviews, with how each affects whether AI can recommend you for it.</p>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: BG, borderRadius: 18, maxWidth: 880, width: '100%', boxShadow: '0 20px 60px rgba(42,26,14,0.3)', overflow: 'hidden', marginBottom: '4vh' }}>
+            {/* HEADER */}
+            <div style={{ background: 'linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)', padding: '2rem 2.5rem', position: 'relative' }}>
+              <button onClick={() => setOpen(false)} style={{ position: 'absolute', top: '1.25rem', right: '1.4rem', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.7)', fontSize: '1.5rem', cursor: 'pointer', lineHeight: 1 }}>\u00d7</button>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.75)', margin: '0 0 0.5rem' }}>Review Intelligence</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', marginBottom: '0.7rem' }}>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.9rem', fontWeight: 400, color: WHITE, margin: 0, lineHeight: 1.1 }}>What guest reviews teach AI</p>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: statusCol, background: 'rgba(255,255,255,0.1)', border: '1px solid ' + statusCol, padding: '4px 12px', borderRadius: 20 }}>{statusWord}</span>
+              </div>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: 'rgba(255,255,255,0.82)', margin: 0, lineHeight: 1.6, maxWidth: '64ch' }}>{execLine}</p>
             </div>
-            <div style={{ padding: '1.75rem 2rem', display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
-              {top && (
-                <div style={{ border: '1px solid rgba(201,169,76,0.3)', borderRadius: 12, background: 'rgba(201,169,76,0.06)', padding: '1.1rem 1.3rem' }}>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.4rem' }}>What this means for AI visibility</p>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.84rem', color: TEXT, margin: 0, lineHeight: 1.55 }}>
-                    Your strongest guest signal is <strong>{top.theme.toLowerCase()}</strong> ({top.support_count} reviews). If your website doesn&rsquo;t state this in a clear, retrievable way, AI assistants can&rsquo;t use your single biggest strength when deciding whether to recommend you \u2014 the reputation exists, but the machine-readable proof doesn&rsquo;t.
-                  </p>
-                </div>
-              )}
 
+            <div style={{ padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '2.25rem' }}>
+
+              {/* 1 — WHAT AI LEARNS */}
               {strengths.length > 0 && (
                 <div>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: ADV_GREEN_C, margin: '0 0 0.7rem' }}>What guests praise</p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT, margin: '0 0 0.3rem' }}>What AI learns from guests</p>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', color: TEXT_MUTED, margin: '0 0 1rem', lineHeight: 1.5 }}>The themes guests raise most consistently \u2014 the strengths AI can draw on.</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.8rem' }}>
                     {strengths.map((f, i) => (
-                      <div key={'s' + i} style={{ border: '1px solid ' + BORDER, borderLeft: '4px solid ' + kindColor(f.kind), borderRadius: 10, background: WHITE, padding: '0.9rem 1.1rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.6rem', marginBottom: '0.35rem' }}>
-                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.84rem', fontWeight: 700, color: TEXT }}>{f.theme}</span>
-                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, color: kindColor(f.kind), whiteSpace: 'nowrap' }}>{f.support_count} reviews \u00b7 {kindLabel[f.kind] || 'Signal'}</span>
+                      <div key={'l' + i} style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1.1rem 1.25rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.45rem' }}>
+                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', fontWeight: 700, color: TEXT }}>{f.theme}</span>
+                          <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 600, color: GOLD, lineHeight: 1, flexShrink: 0 }}>{f.support_count}<span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', color: TEXT_MUTED, fontWeight: 600 }}> mentions</span></span>
                         </div>
-                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.5 }}>{f.claim}</p>
-                        {(f.representative_quotes || []).slice(0, 1).map((q: any, j: number) => (
-                          <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontStyle: 'italic', fontSize: '0.76rem', color: TEXT, margin: '0.5rem 0 0', lineHeight: 1.5 }}>&ldquo;{q.text}&rdquo;</p>
-                        ))}
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.5 }}>{f.claim}</p>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
 
-              {issues.length > 0 && (
+              {/* 2 — WHAT AI RARELY HEARS */}
+              {rarelyHeardDims.length > 0 && (
                 <div>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: RED, margin: '0 0 0.7rem' }}>What guests raise</p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                    {issues.map((f, i) => (
-                      <div key={'i' + i} style={{ border: '1px solid ' + BORDER, borderLeft: '4px solid ' + kindColor(f.kind), borderRadius: 10, background: WHITE, padding: '0.9rem 1.1rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.6rem', marginBottom: '0.35rem' }}>
-                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.84rem', fontWeight: 700, color: TEXT }}>{f.theme}</span>
-                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, color: kindColor(f.kind), whiteSpace: 'nowrap' }}>{f.support_count} reviews \u00b7 {kindLabel[f.kind] || 'Signal'}</span>
-                        </div>
-                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.5 }}>{f.claim}</p>
-                        {(f.representative_quotes || []).slice(0, 1).map((q: any, j: number) => (
-                          <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontStyle: 'italic', fontSize: '0.76rem', color: TEXT, margin: '0.5rem 0 0', lineHeight: 1.5 }}>&ldquo;{q.text}&rdquo;</p>
-                        ))}
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT, margin: '0 0 0.3rem' }}>What AI rarely hears</p>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', color: TEXT_MUTED, margin: '0 0 1rem', lineHeight: 1.5 }}>Dimensions guests seldom discuss \u2014 so AI has weaker confidence recommending you for them.</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.8rem' }}>
+                    {rarelyHeardDims.map((d: any, i: number) => (
+                      <div key={'r' + i} style={{ background: 'rgba(42,26,14,0.02)', border: '1px solid ' + BORDER, borderRadius: 12, padding: '1.1rem 1.25rem' }}>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', fontWeight: 700, color: TEXT, margin: '0 0 0.35rem' }}>{d.label || d.dimension}</p>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.5 }}>Few reviews discuss this \u2014 little guest evidence for AI to draw on.</p>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
 
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.5, fontStyle: 'italic' }}>Based on {total} review theme{total > 1 ? 's' : ''} found across guest reviews. Themes need multiple supporting reviews to appear.</p>
+              {/* 3 — AI VISIBILITY IMPACT */}
+              {(supportedDims.length > 0 || rarelyHeardDims.length > 0) && (
+                <div>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT, margin: '0 0 1rem' }}>How reviews shape AI visibility</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
+                    <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderLeft: '3px solid ' + ADV_GREEN_C, borderRadius: 12, padding: '1.25rem 1.4rem' }}>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', fontWeight: 700, color: ADV_GREEN_C, margin: '0 0 0.8rem', lineHeight: 1.4 }}>Reviews strengthen AI confidence in</p>
+                      {supportedDims.length > 0 ? supportedDims.map((d: any, i: number) => (
+                        <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, margin: '0.35rem 0', display: 'flex', gap: '0.5rem', lineHeight: 1.4 }}><span style={{ color: ADV_GREEN_C }}>\u2713</span>{d.label || d.dimension}</p>
+                      )) : <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT_MUTED, margin: 0, fontStyle: 'italic' }}>No dimensions are review-supported yet.</p>}
+                    </div>
+                    <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderLeft: '3px solid rgba(42,26,14,0.2)', borderRadius: 12, padding: '1.25rem 1.4rem' }}>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', fontWeight: 700, color: TEXT_MUTED, margin: '0 0 0.8rem', lineHeight: 1.4 }}>Reviews provide little evidence for</p>
+                      {rarelyHeardDims.length > 0 ? rarelyHeardDims.map((d: any, i: number) => (
+                        <p key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, margin: '0.35rem 0', display: 'flex', gap: '0.5rem', lineHeight: 1.4 }}><span style={{ color: TEXT_MUTED }}>\u2022</span>{d.label || d.dimension}</p>
+                      )) : <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT_MUTED, margin: 0, fontStyle: 'italic' }}>Every tracked dimension has review support.</p>}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 4 — RECOMMENDATIONS */}
+              {recList.length > 0 && (
+                <div>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT, margin: '0 0 1rem' }}>Recommendations</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                    {recList.map((rText, i) => (
+                      <div key={'rec' + i} style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start', background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '0.9rem 1.1rem' }}>
+                        <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 600, color: GOLD, lineHeight: 1.3, flexShrink: 0 }}>{i + 1}</span>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, margin: 0, lineHeight: 1.55 }}>{rText}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 5 — SUPPORTING EVIDENCE */}
+              {findings.some((f: any) => (f.representative_quotes || []).length > 0) && (
+                <div>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT, margin: '0 0 1rem' }}>Supporting evidence</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
+                    {findings.filter((f: any) => (f.representative_quotes || []).length > 0).map((f, i) => {
+                      const q = f.representative_quotes[0]
+                      return (
+                        <div key={'e' + i} style={{ background: WHITE, border: '1px solid ' + BORDER, borderLeft: '4px solid ' + (POSITIVE.has(f.kind) ? ADV_GREEN_C : RED), borderRadius: 10, padding: '0.95rem 1.2rem' }}>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontStyle: 'italic', fontSize: '0.82rem', color: TEXT, margin: '0 0 0.4rem', lineHeight: 1.55 }}>\u201c{q.text}\u201d</p>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', fontWeight: 700, color: TEXT_MUTED }}>{f.theme}</span>
+                            {q.source && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED }}>\u00b7 {q.source}</span>}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.5, fontStyle: 'italic' }}>Based on {total} review theme{total > 1 ? 's' : ''} found across guest reviews. Themes need multiple supporting reviews to appear.</p>
             </div>
           </div>
         </div>
@@ -3792,7 +3871,7 @@ function KnowledgeIntegrityCard({ hotelId }: any) {
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: accent, flexShrink: 0 }} />
             <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 700, color: TEXT }}>AI Knowledge Integrity</span>
           </div>
-          {hasIssues && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.95rem', color: TEXT_MUTED }}>\u203a</span>}
+          {hasIssues && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.95rem', color: TEXT_MUTED }}>›</span>}
         </div>
         {!loaded && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: '0.7rem 0 0' }}>Checking\u2026</p>}
         {loaded && hasIssues && (
@@ -3810,7 +3889,7 @@ function KnowledgeIntegrityCard({ hotelId }: any) {
         <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(42,26,14,0.55)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '4vh 1rem', zIndex: 1000, overflowY: 'auto' }}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: BG, borderRadius: 18, maxWidth: 760, width: '100%', boxShadow: '0 20px 60px rgba(42,26,14,0.3)', overflow: 'hidden' }}>
             <div style={{ background: 'linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)', padding: '1.75rem 2rem', position: 'relative' }}>
-              <button onClick={() => setOpen(false)} style={{ position: 'absolute', top: '1.1rem', right: '1.25rem', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.7)', fontSize: '1.4rem', cursor: 'pointer', lineHeight: 1 }}>\u00d7</button>
+              <button onClick={() => setOpen(false)} style={{ position: 'absolute', top: '1.1rem', right: '1.25rem', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.7)', fontSize: '1.4rem', cursor: 'pointer', lineHeight: 1 }}>×</button>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.75)', margin: '0 0 0.4rem' }}>AI Knowledge Integrity</p>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.7rem', fontWeight: 400, color: WHITE, margin: 0, lineHeight: 1.15 }}>What external sources are teaching AI</p>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: 'rgba(255,255,255,0.8)', margin: '0.6rem 0 0', lineHeight: 1.55, maxWidth: '60ch' }}>These pages are cited by AI assistants but contain information that conflicts with this hotel&rsquo;s confirmed facts.</p>
@@ -3874,17 +3953,7 @@ function AdvisorV2Body({ adv, memory, hotel, savedAt }: any) {
               <PriorityCard key={i} m={m} i={i} onOpen={() => setOpenCase(i)} />
             ))}
           </div>
-          {Array.isArray(adv.emerging_opportunities) && adv.emerging_opportunities.length > 0 && (
-            <div style={{ marginTop: '0.85rem', padding: '1.1rem 1.2rem', border: '1px solid ' + BORDER, borderRadius: 14, background: WHITE }}>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.6rem' }}>Emerging opportunities</p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.6rem' }}>
-                {adv.emerging_opportunities.slice(0, 4).map((f: any, i: number) => (
-                  <span key={i} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', fontWeight: 600, color: TEXT, background: BG, border: '1px solid ' + BORDER, padding: '4px 10px', borderRadius: 20 }}>{f.topic_label || f.label || (f.claim ? f.claim.slice(0, 28) : 'Theme')}</span>
-                ))}
-              </div>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.55 }}>Not current priorities, but guests consistently mention these.</p>
-            </div>
-          )}
+          
         </div>
 
         <div>
@@ -3910,37 +3979,21 @@ function AdvisorV2Body({ adv, memory, hotel, savedAt }: any) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
             {adv.continuity.resolved.map((d: any, i: number) => (
               <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: '0.55rem' }}>
-                <span style={{ color: ADV_GREEN_C, fontSize: '0.85rem', flexShrink: 0 }}>✓</span>
+                <span style={{ color: ADV_GREEN_C, fontSize: '0.85rem', flexShrink: 0 }}>â</span>
                 <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', fontWeight: 600, color: TEXT }}>{d.label}</span>
-                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT_MUTED }}>— now complete</span>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT_MUTED }}>â now complete</span>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {((adv.deferred && adv.deferred.length > 0) || (adv.declined && adv.declined.labels && adv.declined.labels.length > 0)) && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.75rem', padding: '1.1rem 1.4rem', border: '1px solid ' + BORDER, borderRadius: 14, background: 'rgba(42,26,14,0.015)' }}>
-          {adv.deferred && adv.deferred.length > 0 && (
-            <div style={{ flex: '1 1 260px' }}>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.54rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.4rem' }}>Held for later</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', fontWeight: 500, color: TEXT, margin: 0, lineHeight: 1.6 }}>{adv.deferred.map((d: any) => d.label).join('  \u00b7  ')}</p>
-            </div>
-          )}
-          {adv.declined && adv.declined.labels && adv.declined.labels.length > 0 && (
-            <div style={{ flex: '1 1 260px' }}>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.54rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Not pursuing</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', fontWeight: 500, color: TEXT, margin: '0 0 0.3rem', lineHeight: 1.6 }}>{adv.declined.labels.join('  \u00b7  ')}</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.5, maxWidth: '52ch' }}>{adv.declined.rationale}</p>
-            </div>
-          )}
-        </div>
-      )}
+      
     </div>
   )
 }
 
-// ── AI ADVISOR TAB — executive dashboard ──
+// ââ AI ADVISOR TAB â executive dashboard ââ
 function AdvisorTab({ hotel }: any) {
   const [data, setData] = useState<any>(null)
   const [memory, setMemory] = useState<any>(null)
@@ -3997,7 +4050,7 @@ function AdvisorTab({ hotel }: any) {
         </div>
       </div>
 
-      {loading && <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}><p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', color: TEXT_MUTED, margin: 0 }}>Loading your advisory…</p></div>}
+      {loading && <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}><p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', color: TEXT_MUTED, margin: 0 }}>Loading your advisoryâ¦</p></div>}
 
       {!loading && !adv && (
         <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}>
@@ -4030,11 +4083,11 @@ function AdvisorTab({ hotel }: any) {
   )
 }
 
-// ── GA4 ANALYTICS CONNECTION CARD ─────────────────────────────────────────────
+// ââ GA4 ANALYTICS CONNECTION CARD âââââââââââââââââââââââââââââââââââââââââââââ
 // The hotel pastes our shared service-account email as a Viewer on their GA4
 // property, enters their Property ID, and clicks Connect. The route runs one real
 // test-pull to confirm access. Status is stored on the hotels row (ga4_status).
-const GA4_SERVICE_ACCOUNT = 'swissnet-ga4-reader@swissnet-ga4.iam.gserviceaccount.com' // PLACEHOLDER — replace with real service-account email once Google Cloud is set up
+const GA4_SERVICE_ACCOUNT = 'swissnet-ga4-reader@swissnet-ga4.iam.gserviceaccount.com' // PLACEHOLDER â replace with real service-account email once Google Cloud is set up
 
 function Ga4ConnectCard({ hotel }: any) {
   const [propertyId, setPropertyId] = useState<string>(hotel?.ga4_property_id || '')
@@ -4049,7 +4102,7 @@ function Ga4ConnectCard({ hotel }: any) {
   const statusPill = () => {
     if (connected) return { txt: 'Connected', col: GREEN, bg: GREEN + '15', bd: GREEN + '30' }
     if (error) return { txt: 'Connection failed', col: RED, bg: RED + '12', bd: RED + '30' }
-    if (status === 'pending') return { txt: 'Checking…', col: '#d97706', bg: '#d9770612', bd: '#d9770630' }
+    if (status === 'pending') return { txt: 'Checkingâ¦', col: '#d97706', bg: '#d9770612', bd: '#d9770630' }
     return { txt: 'Not connected', col: TEXT_MUTED, bg: BG, bd: BORDER }
   }
   const pill = statusPill()
@@ -4071,7 +4124,7 @@ function Ga4ConnectCard({ hotel }: any) {
       const j = await res.json()
       if (res.ok && j?.status === 'connected') {
         setStatus('connected')
-        setMsg(`Connected — we read ${j.sampleSessions ?? 0} sessions from the last 7 days.`)
+        setMsg(`Connected â we read ${j.sampleSessions ?? 0} sessions from the last 7 days.`)
       } else {
         setStatus('error')
         setMsg(j?.error || 'We could not read your property. Confirm you added the email as a Viewer, then try again.')
@@ -4093,23 +4146,23 @@ function Ga4ConnectCard({ hotel }: any) {
       </div>
       <div style={{ padding: '1.25rem 1.5rem' }}>
         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT_MUTED, margin: '0 0 1.1rem', lineHeight: 1.7 }}>
-          Connecting GA4 lets SwissNet see how real guests behave on the pages we recommend — so each recommendation can be backed by actual traffic and booking activity. Your data stays read-only and private to your dashboard.
+          Connecting GA4 lets SwissNet see how real guests behave on the pages we recommend â so each recommendation can be backed by actual traffic and booking activity. Your data stays read-only and private to your dashboard.
         </p>
 
-        {/* Step 1 — add our email */}
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Step 1 · Give us read access</p>
+        {/* Step 1 â add our email */}
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Step 1 Â· Give us read access</p>
         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.6 }}>
-          In Google Analytics, open <strong>Admin → Property Access Management</strong>, click <strong>+</strong>, and add this email as a <strong>Viewer</strong>:
+          In Google Analytics, open <strong>Admin â Property Access Management</strong>, click <strong>+</strong>, and add this email as a <strong>Viewer</strong>:
         </p>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
           <code style={{ fontFamily: 'monospace', fontSize: '0.68rem', color: TEXT, background: BG, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.5rem 0.75rem', flex: 1, minWidth: 220, wordBreak: 'break-all' }}>{GA4_SERVICE_ACCOUNT}</code>
-          <button onClick={copyEmail} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: copied ? GREEN : TEXT_MUTED, background: WHITE, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.5rem 0.9rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>{copied ? '✓ Copied' : 'Copy email'}</button>
+          <button onClick={copyEmail} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: copied ? GREEN : TEXT_MUTED, background: WHITE, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.5rem 0.9rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>{copied ? 'â Copied' : 'Copy email'}</button>
         </div>
 
-        {/* Step 2 — property id */}
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Step 2 · Enter your Property ID</p>
+        {/* Step 2 â property id */}
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Step 2 Â· Enter your Property ID</p>
         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.6 }}>
-          Find it in <strong>Admin → Property Settings</strong> — it’s a number like <code style={{ fontFamily: 'monospace', fontSize: '0.62rem', background: BG, padding: '1px 5px', borderRadius: 4 }}>123456789</code>.
+          Find it in <strong>Admin â Property Settings</strong> â itâs a number like <code style={{ fontFamily: 'monospace', fontSize: '0.62rem', background: BG, padding: '1px 5px', borderRadius: 4 }}>123456789</code>.
         </p>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <input
@@ -4118,7 +4171,7 @@ function Ga4ConnectCard({ hotel }: any) {
             placeholder="e.g. 123456789"
             style={{ flex: 1, minWidth: 180, fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.55rem 0.875rem', background: BG, outline: 'none', boxSizing: 'border-box' }}
           />
-          <button onClick={connect} disabled={busy} style={{ background: GOLD, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, padding: '0.55rem 1.4rem', border: 'none', borderRadius: 6, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.7 : 1, whiteSpace: 'nowrap' }}>{busy ? 'Connecting…' : connected ? 'Reconnect' : 'Connect'}</button>
+          <button onClick={connect} disabled={busy} style={{ background: GOLD, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, padding: '0.55rem 1.4rem', border: 'none', borderRadius: 6, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.7 : 1, whiteSpace: 'nowrap' }}>{busy ? 'Connectingâ¦' : connected ? 'Reconnect' : 'Connect'}</button>
         </div>
 
         {msg && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: error ? RED : connected ? GREEN : TEXT_MUTED, margin: '0.9rem 0 0', lineHeight: 1.6 }}>{msg}</p>}
@@ -4127,9 +4180,9 @@ function Ga4ConnectCard({ hotel }: any) {
   )
 }
 
-// ── SEARCH CONSOLE CONNECTION CARD ────────────────────────────────────────────
+// ââ SEARCH CONSOLE CONNECTION CARD ââââââââââââââââââââââââââââââââââââââââââââ
 // Mirrors Ga4ConnectCard. Same shared service-account email (it can read both GA4
-// and Search Console). The hotel adds it as a user in Search Console → Settings →
+// and Search Console). The hotel adds it as a user in Search Console â Settings â
 // Users and permissions, pastes their property string, and clicks Connect. The route
 // runs one real test-pull. Status stored on hotels.gsc_status.
 function GscConnectCard({ hotel }: any) {
@@ -4145,7 +4198,7 @@ function GscConnectCard({ hotel }: any) {
   const statusPill = () => {
     if (connected) return { txt: 'Connected', col: GREEN, bg: GREEN + '15', bd: GREEN + '30' }
     if (error) return { txt: 'Connection failed', col: RED, bg: RED + '12', bd: RED + '30' }
-    if (status === 'pending') return { txt: 'Checking…', col: '#d97706', bg: '#d9770612', bd: '#d9770630' }
+    if (status === 'pending') return { txt: 'Checkingâ¦', col: '#d97706', bg: '#d9770612', bd: '#d9770630' }
     return { txt: 'Not connected', col: TEXT_MUTED, bg: BG, bd: BORDER }
   }
   const pill = statusPill()
@@ -4164,7 +4217,7 @@ function GscConnectCard({ hotel }: any) {
       const j = await res.json()
       if (res.ok && j?.status === 'connected') {
         setStatus('connected')
-        setMsg(`Connected — we read ${j.sampleImpressions ?? 0} impressions of historical data.`)
+        setMsg(`Connected â we read ${j.sampleImpressions ?? 0} impressions of historical data.`)
       } else {
         setStatus('error')
         setMsg(j?.error || 'We could not read this property. Confirm the email was added in Search Console, then try again.')
@@ -4185,25 +4238,25 @@ function GscConnectCard({ hotel }: any) {
       </div>
       <div style={{ padding: '1.25rem 1.5rem' }}>
         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT_MUTED, margin: '0 0 1.1rem', lineHeight: 1.7 }}>
-          Search Console shows what guests actually search before they click — the impressions, click-through rate and exact queries your pages appear for. It lets each recommendation show the real search demand behind it. Read-only and private to your dashboard.
+          Search Console shows what guests actually search before they click â the impressions, click-through rate and exact queries your pages appear for. It lets each recommendation show the real search demand behind it. Read-only and private to your dashboard.
         </p>
 
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Step 1 · Give us read access</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Step 1 Â· Give us read access</p>
         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.6 }}>
-          In Search Console, open <strong>Settings → Users and permissions</strong>, click <strong>Add user</strong>, and add this email with <strong>Full</strong> or <strong>Restricted</strong> access:
+          In Search Console, open <strong>Settings â Users and permissions</strong>, click <strong>Add user</strong>, and add this email with <strong>Full</strong> or <strong>Restricted</strong> access:
         </p>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
           <code style={{ fontFamily: 'monospace', fontSize: '0.68rem', color: TEXT, background: BG, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.5rem 0.75rem', flex: 1, minWidth: 220, wordBreak: 'break-all' }}>{GA4_SERVICE_ACCOUNT}</code>
-          <button onClick={copyEmail} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: copied ? GREEN : TEXT_MUTED, background: WHITE, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.5rem 0.9rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>{copied ? '✓ Copied' : 'Copy email'}</button>
+          <button onClick={copyEmail} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: copied ? GREEN : TEXT_MUTED, background: WHITE, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.5rem 0.9rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>{copied ? 'â Copied' : 'Copy email'}</button>
         </div>
 
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Step 2 · Enter your property</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Step 2 Â· Enter your property</p>
         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.6 }}>
-          Copy it exactly as shown at the top of Search Console — a URL-prefix property like <code style={{ fontFamily: 'monospace', fontSize: '0.62rem', background: BG, padding: '1px 5px', borderRadius: 4 }}>https://www.yourhotel.com/</code> (keep the trailing slash) or a Domain property like <code style={{ fontFamily: 'monospace', fontSize: '0.62rem', background: BG, padding: '1px 5px', borderRadius: 4 }}>sc-domain:yourhotel.com</code>.
+          Copy it exactly as shown at the top of Search Console â a URL-prefix property like <code style={{ fontFamily: 'monospace', fontSize: '0.62rem', background: BG, padding: '1px 5px', borderRadius: 4 }}>https://www.yourhotel.com/</code> (keep the trailing slash) or a Domain property like <code style={{ fontFamily: 'monospace', fontSize: '0.62rem', background: BG, padding: '1px 5px', borderRadius: 4 }}>sc-domain:yourhotel.com</code>.
         </p>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <input value={siteUrl} onChange={e => setSiteUrl(e.target.value)} placeholder="e.g. https://www.yourhotel.com/" style={{ flex: 1, minWidth: 200, fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.55rem 0.875rem', background: BG, outline: 'none', boxSizing: 'border-box' }} />
-          <button onClick={connect} disabled={busy} style={{ background: GOLD, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, padding: '0.55rem 1.4rem', border: 'none', borderRadius: 6, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.7 : 1, whiteSpace: 'nowrap' }}>{busy ? 'Connecting…' : connected ? 'Reconnect' : 'Connect'}</button>
+          <button onClick={connect} disabled={busy} style={{ background: GOLD, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, padding: '0.55rem 1.4rem', border: 'none', borderRadius: 6, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.7 : 1, whiteSpace: 'nowrap' }}>{busy ? 'Connectingâ¦' : connected ? 'Reconnect' : 'Connect'}</button>
         </div>
 
         {msg && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: error ? RED : connected ? GREEN : TEXT_MUTED, margin: '0.9rem 0 0', lineHeight: 1.6 }}>{msg}</p>}
@@ -4212,7 +4265,7 @@ function GscConnectCard({ hotel }: any) {
   )
 }
 
-// ── MAIN DASHBOARD ────────────────────────────────────────────────────────────
+// ââ MAIN DASHBOARD ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 export default function DashboardClient({ hotel, views, clicks, leads, aiVisibility, googleAiScores, bookings, competitors, hotelCatScores, platformScores, overviewRunData, myRankChange, marketAverages, crawlerCount, accessHotels, activeHotelId, tier }: any) {
   const [tab, setTab] = useState('overview')
@@ -4250,10 +4303,10 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
   const googleScore = platformScores?.google_ai ?? null
   const visibilityScore = platformScores?.overall ?? 0
 
-  // For chart — use overviewRunData grouped by date
+  // For chart â use overviewRunData grouped by date
   const runDates = [...new Set((overviewRunData || []).map((r: any) => r.run_date || r.checked_at?.split('T')[0]).filter(Boolean))].sort() as string[]
 
-  // For "Where You Appear" and "Queries to Improve" — use hotelSpecificScores
+  // For "Where You Appear" and "Queries to Improve" â use hotelSpecificScores
   const rangeStartStr = customRange
   ? customRange.start
   : new Date(Date.now() - period * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
@@ -4402,7 +4455,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
   }, {})
 
   const generateInsight = () => {
-    if (visibilityScore === 0) return { text: 'Your AI visibility tracking has started. Results will build as your pages are indexed by Google and Bing over the next 4–6 weeks.', type: 'info' as const }
+    if (visibilityScore === 0) return { text: 'Your AI visibility tracking has started. Results will build as your pages are indexed by Google and Bing over the next 4â6 weeks.', type: 'info' as const }
     if (visibilityScore < 20) return { text: `You are appearing in ${visibilityScore}% of tracked searches. Adding more FAQs, spa and dining content will significantly improve your ranking.`, type: 'warning' as const }
     if (hotelRank === 1) return { text: `You lead the ${hotelRegion} market with a ${visibilityScore}% AI visibility score. Maintain your position by keeping content fresh and complete.`, type: 'success' as const }
     return { text: `You are ranked #${hotelRank} in ${hotelRegion} with a ${visibilityScore}% visibility score. Completing your spa, dining and rooms schema will help you rise in rankings.`, type: 'info' as const }
@@ -4453,8 +4506,8 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
 
   const competitorTableHotels = getCompetitorTableHotels()
   const competitorTableLabel = competitorView === 'region' 
-    ? `General — ${hotelRegion}` 
-    : `${competitorTabs.find(t => t.key === competitorView)?.label || ''} — ${hotelRegion}`
+    ? `General â ${hotelRegion}` 
+    : `${competitorTabs.find(t => t.key === competitorView)?.label || ''} â ${hotelRegion}`
 
   const tierRank: Record<string, number> = { monitor: 1, optimise: 2, premium: 3 }
   const myTier = tierRank[tier || 'monitor'] || 1
@@ -4466,7 +4519,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
       { id: 'competitors', label: 'Competitors' },
     ] },
     { heading: 'Improve', items: [
-      { id: 'advisor', label: '✦ AI Advisor', minTier: 2 },
+      { id: 'advisor', label: 'â¦ AI Advisor', minTier: 2 },
       { id: 'schema', label: 'SwissNet Profile', minTier: 2 },
       { id: 'website', label: 'Official Website', minTier: 2 },
       { id: 'optimise', label: 'Optimise', minTier: 2 },
@@ -4531,16 +4584,16 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
               {tab === 'ai-visibility' && 'AI Visibility'}
               {tab === 'performance' && 'Performance'}
               {tab === 'competitors' && 'Competitors'}
-              {tab === 'schema' && '✦ SwissNet Profile'}
-{tab === 'optimise' && '✦ Optimise'}
-{tab === 'website' && '✦ Official Website'}
-{tab === 'advisor' && '✦ AI Advisor'}
-{tab === 'citations' && '✦ Citation Sources'}
+              {tab === 'schema' && 'â¦ SwissNet Profile'}
+{tab === 'optimise' && 'â¦ Optimise'}
+{tab === 'website' && 'â¦ Official Website'}
+{tab === 'advisor' && 'â¦ AI Advisor'}
+{tab === 'citations' && 'â¦ Citation Sources'}
 {tab === 'reports' && 'Reports'}
 {tab === 'settings' && 'Settings'}
             </h1>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: 0 }}>
-              {tab === 'overview' && `${customRange ? `${customRange.start} → ${customRange.end}` : `Last ${period} days`} · ${hotelRegion}, Switzerland`}
+              {tab === 'overview' && `${customRange ? `${customRange.start} â ${customRange.end}` : `Last ${period} days`} Â· ${hotelRegion}, Switzerland`}
               {tab === 'ai-visibility' && 'Your presence across AI search platforms'}
               {tab === 'performance' && 'Clicks, leads and conversion tracking'}
               {tab === 'competitors' && 'AI visibility rankings across categories'}
@@ -4548,7 +4601,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
 {tab === 'optimise' && 'Manage your content and FAQs'}
 {tab === 'website' && 'Build AI visibility on your own official site'}
 {tab === 'advisor' && 'Your strategic brief, reasoned from what AI knows about you'}
-{tab === 'citations' && 'Where AI gets its answers — and where to get listed'}
+{tab === 'citations' && 'Where AI gets its answers â and where to get listed'}
 {tab === 'reports' && 'Compare your performance month over month'}
 {tab === 'settings' && 'Account and hotel settings'}
             </p>
@@ -4600,11 +4653,11 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
                 <option value="thismonth">This month</option>
                 <option value="lastmonth">Last month</option>
                 <option value="90">Last 90 days</option>
-                <option value="custom">Custom range…</option>
+                <option value="custom">Custom rangeâ¦</option>
               </select>
               {customRange && (
                 <button onClick={() => setShowRangePicker(s => !s)} style={{ padding: '0.4rem 0.75rem', borderRadius: 4, border: '1px solid ' + GOLD, background: GOLD_LIGHT, color: TEXT, fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                  {customRange.start} → {customRange.end}
+                  {customRange.start} â {customRange.end}
                 </button>
               )}
             </div>
@@ -4624,7 +4677,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
           </div>
         </div>
 
-        {/* ── OVERVIEW ── */}
+        {/* ââ OVERVIEW ââ */}
         {tab === 'overview' && (
           <div>
             <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 10, padding: '1.75rem 2.5rem', marginBottom: '2rem' }}>
@@ -4633,8 +4686,8 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
                 {[
                   { label: 'AI Visibility Score', value: visibilityScore + '%', sub: `${appearedQueries} appearances` },
                   { label: 'Market Rank', value: '#' + hotelRank, sub: `of ${allHotelsInRegion.length} in ${hotelRegion}` },
-                  { label: 'Total Conversions', value: bookings?.length ? bookings.length : '—', sub: 'all time' },
-                  { label: 'Revenue Generated', value: bookings?.filter((b: any) => b.total_chf)?.reduce((sum: number, b: any) => sum + (b.total_chf || 0), 0) > 0 ? `CHF ${bookings.reduce((sum: number, b: any) => sum + (b.total_chf || 0), 0).toLocaleString()}` : '—', sub: 'from SwissNet Hotels' },
+                  { label: 'Total Conversions', value: bookings?.length ? bookings.length : 'â', sub: 'all time' },
+                  { label: 'Revenue Generated', value: bookings?.filter((b: any) => b.total_chf)?.reduce((sum: number, b: any) => sum + (b.total_chf || 0), 0) > 0 ? `CHF ${bookings.reduce((sum: number, b: any) => sum + (b.total_chf || 0), 0).toLocaleString()}` : 'â', sub: 'from SwissNet Hotels' },
                 ].map((item, i) => (
                   <div key={i} style={{ padding: '1.25rem 0', paddingRight: '2rem', borderRight: i < 3 ? '1px solid rgba(255,255,255,0.06)' : 'none', paddingLeft: i > 0 ? '2rem' : 0 }}>
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.6)', margin: '0 0 0.5rem' }}>{item.label}</p>
@@ -4646,7 +4699,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
             </div>
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
               <KPICard label="Official Website Clicks" value={websiteClicks.length} sub={`last ${period} days`} color={GOLD} spark={websiteClicksByDay} />
-<KPICard label="SwissNet Profile Views" value={recentViews.length} sub={`last ${period} days`} color={BLUE} spark={viewsByDay} />              <KPICard label="Direct Savings" value={recentBookings.length > 0 ? `CHF ${Math.round(recentBookings.reduce((sum: number, b: any) => sum + (b.total_chf || 0), 0) * 0.15).toLocaleString()}` : '—'} sub="vs OTA commissions" color={GREEN} />
+<KPICard label="SwissNet Profile Views" value={recentViews.length} sub={`last ${period} days`} color={BLUE} spark={viewsByDay} />              <KPICard label="Direct Savings" value={recentBookings.length > 0 ? `CHF ${Math.round(recentBookings.reduce((sum: number, b: any) => sum + (b.total_chf || 0), 0) * 0.15).toLocaleString()}` : 'â'} sub="vs OTA commissions" color={GREEN} />
             </div>
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', marginBottom: '1.5rem' }}>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: '0 0 1rem' }}>Performance Over Time</p>
@@ -4664,7 +4717,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
           </div>
         )}
 
-        {/* ── AI VISIBILITY ── */}
+        {/* ââ AI VISIBILITY ââ */}
         {tab === 'ai-visibility' && (
           <div>
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
@@ -4673,7 +4726,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.75rem' }}>Period Score</p>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
       <div>
-        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 400, color: TEXT, margin: '0 0 0.2rem', lineHeight: 1 }}>{periodScore !== null ? periodScore + '%' : '—'}</p>
+        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 400, color: TEXT, margin: '0 0 0.2rem', lineHeight: 1 }}>{periodScore !== null ? periodScore + '%' : 'â'}</p>
         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: BLUE, margin: 0 }}>{new Date().toLocaleDateString('en-GB', { month: 'long' })} avg score</p>
       </div>
       {prevPeriodScore.score !== null && (
@@ -4683,7 +4736,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
             {prevPeriodScore.label}
             {periodScore !== null && (
               <span style={{ color: periodScore >= prevPeriodScore.score ? GREEN : RED, fontWeight: 700, marginLeft: 4 }}>
-                {periodScore >= prevPeriodScore.score ? '↑' : '↓'}{Math.abs(periodScore - prevPeriodScore.score)}
+                {periodScore >= prevPeriodScore.score ? 'â' : 'â'}{Math.abs(periodScore - prevPeriodScore.score)}
               </span>
             )}
           </p>
@@ -4694,7 +4747,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
   <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.25rem 1.5rem', flex: 1, minWidth: 0 }}>
     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.75rem' }}>AI Appearances</p>
     <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', fontWeight: 400, color: TEXT, margin: 0, lineHeight: 1 }}>{appearedQueries}</p>
-    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: GOLD, margin: '0.2rem 0 0' }}>{`query appearances · last ${period}d`}</p>
+    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: GOLD, margin: '0.2rem 0 0' }}>{`query appearances Â· last ${period}d`}</p>
   </div>
 </div>
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem', marginBottom: '1.5rem' }}>
@@ -4709,7 +4762,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
                     <div key={src.label} style={{ background: BG, borderRadius: 8, padding: '1.25rem' }}>
                       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 700, color: TEXT, margin: '0 0 0.2rem' }}>{src.label}</p>
                       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: '0 0 1rem' }}>{src.note}</p>
-                      <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', color: score !== null && score > 0 ? GOLD : TEXT_MUTED, margin: '0 0 0.25rem', lineHeight: 1 }}>{score !== null ? score + '%' : '—'}</p>
+                      <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2rem', color: score !== null && score > 0 ? GOLD : TEXT_MUTED, margin: '0 0 0.25rem', lineHeight: 1 }}>{score !== null ? score + '%' : 'â'}</p>
                       <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, color: statusColor, background: statusColor + '18', padding: '2px 8px', borderRadius: 20 }}>{status}</span>
                     </div>
                   )
@@ -4739,7 +4792,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
                     return (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', color: '#000', lineHeight: 1, fontWeight: 500 }}>{cur}%</span>
-                        {delta !== 0 && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, color: delta > 0 ? GREEN : RED, background: (delta > 0 ? GREEN : RED) + '12', padding: '2px 7px', borderRadius: 20 }}>{delta > 0 ? '↑' : '↓'} {Math.abs(delta)}%</span>}
+                        {delta !== 0 && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, color: delta > 0 ? GREEN : RED, background: (delta > 0 ? GREEN : RED) + '12', padding: '2px 7px', borderRadius: 20 }}>{delta > 0 ? 'â' : 'â'} {Math.abs(delta)}%</span>}
                       </div>
                     )
                   })()}
@@ -4810,7 +4863,7 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
                 if (realPoints.length === 1) return (
                   <div style={{ height: 160, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
                     <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.5rem', color: GOLD, margin: 0 }}>{realPoints[0].score}%</p>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Recorded on {new Date(realPoints[0].date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })} · More runs needed to show trend</p>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Recorded on {new Date(realPoints[0].date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })} Â· More runs needed to show trend</p>
                   </div>
                 )
 
@@ -4883,13 +4936,13 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
           </div>
         )}
 
-        {/* ── PERFORMANCE ── */}
+        {/* ââ PERFORMANCE ââ */}
         {tab === 'performance' && (
           <div>
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-              <KPICard label="Profile Views" value={recentViews.length} sub={`page visits · last ${period} days`} color={GOLD} spark={viewsByDay} />
+              <KPICard label="Profile Views" value={recentViews.length} sub={`page visits Â· last ${period} days`} color={GOLD} spark={viewsByDay} />
               <KPICard label="Conversions" value={recentBookings.length} sub={`last ${period} days`} color={GREEN} spark={bookingsByDay} />
-              <KPICard label="Conversion Rate" value={recentBookings.length > 0 ? conversionRate + '%' : '—'} sub="clicks to enquiries" color={PURPLE} />
+              <KPICard label="Conversion Rate" value={recentBookings.length > 0 ? conversionRate + '%' : 'â'} sub="clicks to enquiries" color={PURPLE} />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
               <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, padding: '1.5rem' }}>
@@ -4917,7 +4970,7 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
           </div>
         )}
 
-        {/* ── COMPETITORS ── */}
+        {/* ââ COMPETITORS ââ */}
         {tab === 'competitors' && (
           <div>
             {competitorView === 'region' ? (
@@ -4938,16 +4991,16 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
                     const catHotels = competitorTableHotels
                     const myRankInCat = catHotels.findIndex((h: any) => h.is_current) + 1
                     const topCompetitor = catHotels.filter((h: any) => !h.is_current).sort((a: any, b: any) => (b.visibilityScore ?? 0) - (a.visibilityScore ?? 0))[0]
-                    const status = catScore === null ? '—' : catScore >= 70 ? 'Strong' : catScore >= 40 ? 'Growing' : 'Needs work'
+                    const status = catScore === null ? 'â' : catScore >= 70 ? 'Strong' : catScore >= 40 ? 'Growing' : 'Needs work'
                     const statusColor = catScore === null ? TEXT_MUTED : catScore >= 70 ? GREEN : catScore >= 40 ? GOLD : RED
                     return [
-                      { label: 'Your Score', value: catScore !== null ? catScore + '%' : '—', color: GOLD },
-                      { label: 'Category Rank', value: myRankInCat > 0 ? `#${myRankInCat} in ${hotelRegion}` : '—', color: TEXT },
+                      { label: 'Your Score', value: catScore !== null ? catScore + '%' : 'â', color: GOLD },
+                      { label: 'Category Rank', value: myRankInCat > 0 ? `#${myRankInCat} in ${hotelRegion}` : 'â', color: TEXT },
                       { label: 'Performance', value: status, color: statusColor },
-                      { label: 'Top Competitor', value: topCompetitor ? topCompetitor.name.replace(' Geneva', '').replace(' Hotel', '') : '—', color: TEXT },
-                      { label: 'Competitor Score', value: topCompetitor?.visibilityScore != null ? topCompetitor.visibilityScore + '%' : '—', color: TEXT_MUTED },
+                      { label: 'Top Competitor', value: topCompetitor ? topCompetitor.name.replace(' Geneva', '').replace(' Hotel', '') : 'â', color: TEXT },
+                      { label: 'Competitor Score', value: topCompetitor?.visibilityScore != null ? topCompetitor.visibilityScore + '%' : 'â', color: TEXT_MUTED },
                       { label: 'Gap to Leader', value: (() => {
-                        if (catScore === null || !topCompetitor?.visibilityScore) return '—'
+                        if (catScore === null || !topCompetitor?.visibilityScore) return 'â'
                         const gap = catScore - topCompetitor.visibilityScore
                         if (gap > 0) return `+${gap}pts ahead`
                         if (gap < 0) return `${gap}pts behind`
@@ -5033,10 +5086,10 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
                       <td style={{ padding: '1rem 1.5rem' }}>
                         {(() => {
                           const change = competitorView === 'region' ? (h.is_current ? myRankChange : h.rankChange) : null
-                          if (change === null || change === undefined) return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT_MUTED }}>—</span>
-                          if (change > 0) return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', fontWeight: 700, color: GREEN }}>↑ {change}</span>
-                          if (change < 0) return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', fontWeight: 700, color: RED }}>↓ {Math.abs(change)}</span>
-                          return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT_MUTED }}>—</span>
+                          if (change === null || change === undefined) return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT_MUTED }}>â</span>
+                          if (change > 0) return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', fontWeight: 700, color: GREEN }}>â {change}</span>
+                          if (change < 0) return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', fontWeight: 700, color: RED }}>â {Math.abs(change)}</span>
+                          return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT_MUTED }}>â</span>
                         })()}
                       </td>
                       <td style={{ padding: '1rem 1.5rem' }}>
@@ -5061,21 +5114,21 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
                     { label: 'Market Rank', value: `#${hotelRank} in ${hotelRegion}`, color: TEXT },
                     { label: 'Strongest Category', value: (() => {
                       const cats = Object.entries(hotelCatScores || {})
-                      if (!cats.length) return '—'
+                      if (!cats.length) return 'â'
                       const best = cats.sort((a, b) => (b[1] as number) - (a[1] as number))[0]
                       const labels: Record<string, string> = { spa: 'Spa & Wellness', dining: 'Fine Dining', romantic: 'Romantic', lake: 'Lake Hotel', business: 'Business', ski: 'Ski Resort' }
                       return labels[best[0]] || best[0]
                     })(), color: GREEN },
                     { label: 'Weakest Category', value: (() => {
                       const cats = Object.entries(hotelCatScores || {})
-                      if (!cats.length) return '—'
+                      if (!cats.length) return 'â'
                       const worst = cats.sort((a, b) => (a[1] as number) - (b[1] as number))[0]
                       const labels: Record<string, string> = { spa: 'Spa & Wellness', dining: 'Fine Dining', romantic: 'Romantic', lake: 'Lake Hotel', business: 'Business', ski: 'Ski Resort' }
                       return labels[worst[0]] || worst[0]
                     })(), color: RED },
                     { label: 'Main Competitor', value: (() => {
                       const top = allHotelsInRegion.filter((h: any) => !h.is_current).sort((a: any, b: any) => (b.visibilityScore ?? 0) - (a.visibilityScore ?? 0))[0]
-                      return top ? top.name.replace(' Geneva', '').replace(' Hotel', '') : '—'
+                      return top ? top.name.replace(' Geneva', '').replace(' Hotel', '') : 'â'
                     })(), color: TEXT },
                     { label: 'Overall Status', value: visibilityScore >= 70 ? 'Strong' : visibilityScore >= 50 ? 'Improving' : visibilityScore >= 30 ? 'Growing' : 'Early Stage', color: visibilityScore >= 70 ? GREEN : visibilityScore >= 50 ? GOLD : visibilityScore >= 30 ? '#d97706' : TEXT_MUTED },
                   ].map((item, i) => (
@@ -5090,24 +5143,24 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
           </div>
         )}
 
-        {/* ── SCHEMA ── */}
+        {/* ââ SCHEMA ââ */}
 {tab === 'schema' && (
   <SchemaTab hotel={hotel} hotelId={hotel?.id} onGoToOptimise={(tab) => { setTab('optimise'); setOptimiseTab(tab || 'overview') }} />
 )}
 
-        {/* ── OPTIMISE ── */}
+        {/* ââ OPTIMISE ââ */}
         {tab === 'optimise' && (
           <OptimiseTab hotelId={hotel?.id} hotelName={hotelName} hotelSlug={hotel?.slug} hotel={hotel} initialTab={optimiseTab} />
         )}
 
-        {/* ── CITATION SOURCES ── */}
+        {/* ââ CITATION SOURCES ââ */}
         {tab === 'citations' && (
           <CitationSourcesTab hotelName={hotelName} hotelRegion={hotelRegion} hotelId={hotel?.id} />
         )}
         {tab === 'website' && <WebsiteTab hotel={hotel} />}
         {tab === 'advisor' && <AdvisorTab hotel={hotel} />}
 
-        {/* ── REPORTS ── */}
+        {/* ââ REPORTS ââ */}
         {tab === 'reports' && (
           <ComparisonReport
             hotelId={hotel?.id}
@@ -5121,28 +5174,28 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
           />
         )}
 
-        {/* ── SETTINGS ── */}
+        {/* ââ SETTINGS ââ */}
         {tab === 'settings' && (
           <div style={{ maxWidth: 680 }}>
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, overflow: 'hidden', marginBottom: '1rem' }}>
               <div style={{ padding: '1rem 1.5rem', background: BG, borderBottom: '1px solid ' + BORDER, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: 0 }}>Hotel Profile</p>
-                <a href={`/hotels/${hotel?.slug || hotel?.id}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: GOLD, textDecoration: 'none', fontWeight: 600 }}>View public page →</a>
+                <a href={`/hotels/${hotel?.slug || hotel?.id}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: GOLD, textDecoration: 'none', fontWeight: 600 }}>View public page â</a>
               </div>
               <div style={{ padding: '1.25rem 1.5rem' }}>
                 {[
-                  { label: 'Hotel Name', value: hotel?.name || '—' },
-                  { label: 'Location', value: hotel?.location ? `${hotel.location}, Switzerland` : '—' },
-                  { label: 'Region', value: hotel?.region || '—' },
-                  { label: 'Category', value: hotel?.category || '—' },
-                  { label: 'Nightly Rate', value: hotel?.nightly_rate_chf ? `CHF ${hotel.nightly_rate_chf}/night` : '—' },
-                  { label: 'Direct Booking URL', value: hotel?.direct_booking_url ? 'Connected ✓' : 'Not set' },
-                  { label: 'Contact Email', value: hotel?.contact_email || '—' },
-                  { label: 'Telephone', value: hotel?.telephone || '—' },
+                  { label: 'Hotel Name', value: hotel?.name || 'â' },
+                  { label: 'Location', value: hotel?.location ? `${hotel.location}, Switzerland` : 'â' },
+                  { label: 'Region', value: hotel?.region || 'â' },
+                  { label: 'Category', value: hotel?.category || 'â' },
+                  { label: 'Nightly Rate', value: hotel?.nightly_rate_chf ? `CHF ${hotel.nightly_rate_chf}/night` : 'â' },
+                  { label: 'Direct Booking URL', value: hotel?.direct_booking_url ? 'Connected â' : 'Not set' },
+                  { label: 'Contact Email', value: hotel?.contact_email || 'â' },
+                  { label: 'Telephone', value: hotel?.telephone || 'â' },
                 ].map(field => (
                   <div key={field.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.625rem 0', borderBottom: '1px solid ' + BORDER }}>
                     <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 600, color: TEXT_MUTED, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{field.label}</span>
-                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: field.value?.includes('✓') ? GREEN : TEXT }}>{field.value}</span>
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: field.value?.includes('â') ? GREEN : TEXT }}>{field.value}</span>
                   </div>
                 ))}
               </div>
@@ -5153,7 +5206,7 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
               </div>
               <div style={{ padding: '1.25rem 1.5rem' }}>
                 {[
-                  { label: 'Schema Status', value: hotel?.show_schema ? 'Active ✓' : 'Inactive', ok: hotel?.show_schema },
+                  { label: 'Schema Status', value: hotel?.show_schema ? 'Active â' : 'Inactive', ok: hotel?.show_schema },
                   { label: 'FAQs', value: '9 published', ok: true },
                   { label: 'Rooms & Suites', value: hotel?.show_schema ? 'Schema active' : 'Inactive', ok: hotel?.show_schema },
                   { label: 'Spa & Wellness', value: hotel?.show_schema ? 'Schema active' : 'Inactive', ok: hotel?.show_schema },
@@ -5168,10 +5221,10 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
                 ))}
               </div>
             </div>
-            {/* ── GA4 ANALYTICS CONNECTION ── */}
+            {/* ââ GA4 ANALYTICS CONNECTION ââ */}
             <Ga4ConnectCard hotel={hotel} />
 
-            {/* ── SEARCH CONSOLE CONNECTION ── */}
+            {/* ââ SEARCH CONSOLE CONNECTION ââ */}
             <GscConnectCard hotel={hotel} />
 
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, overflow: 'hidden', marginBottom: '1rem' }}>
@@ -5188,13 +5241,13 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
                 ].map(page => (
                   <div key={page.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid ' + BORDER }}>
                     <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT }}>{page.label}</span>
-                    <a href={`https://swissnethotels.com${page.path}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: GOLD, textDecoration: 'none', fontWeight: 600 }}>View →</a>
+                    <a href={`https://swissnethotels.com${page.path}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: GOLD, textDecoration: 'none', fontWeight: 600 }}>View â</a>
                   </div>
                 ))}
               </div>
             </div>
             {[
-              { title: 'Subscription', desc: 'AI Visibility Growth Programme · CHF 699/month · No commission', badge: 'Active' },
+              { title: 'Subscription', desc: 'AI Visibility Growth Programme Â· CHF 699/month Â· No commission', badge: 'Active' },
               { title: 'Monthly Reports', desc: 'Automated performance reports sent each month' },
               { title: 'Integrations', desc: 'Connect your booking system for live rate sync', badge: 'Coming Soon' },
             ].map(s => (
