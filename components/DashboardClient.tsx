@@ -4065,17 +4065,6 @@ function AdvisorTab({ hotel }: any) {
 
           <AiPerformancePanel perf={adv.ai_performance} ga4Connected={hotel?.ga4_status === 'connected'} />
 
-          {adv?.visibility_model && (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '2.5rem 0 1.5rem' }}>
-                <div style={{ flex: 1, height: 1, background: BORDER }} />
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: TEXT_MUTED, margin: 0 }}>The analysis behind this briefing</p>
-                <div style={{ flex: 1, height: 1, background: BORDER }} />
-              </div>
-              <VisibilityModelPanel model={adv.visibility_model} />
-            </>
-          )}
-
           {savedAt && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT_MUTED, margin: '1.25rem 0 0', textAlign: 'right' }}>Last generated: {new Date(savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>}
         </>
       )}
