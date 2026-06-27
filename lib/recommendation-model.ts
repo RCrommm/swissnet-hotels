@@ -51,4 +51,15 @@ export interface BehavioralSignal {
   measured_pages: string[]            // the GA4 page paths that matched affected_pages
   period_days: number | null          // window length used for the current pull
 }
-export interface SearchSignal { impressions: number | null; ctr: number | null; top_queries: string[] }
+export interface SearchSignalQuery { query: string; impressions: number; clicks: number; ctr: number; position: number }
+export interface SearchSignal {
+  impressions: number | null
+  clicks: number | null
+  ctr: number | null
+  avg_position: number | null
+  top_queries: SearchSignalQuery[]
+  measured_pages: string[]
+  previous_period: { impressions: number | null; ctr: number | null } | null
+  impressions_change_pct: number | null
+  period_days: number | null
+}

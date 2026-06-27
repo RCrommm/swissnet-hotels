@@ -16,6 +16,8 @@ import { fetchGa4Rows } from '@/lib/ga4-fetch'
 import { buildBehavioralSignal } from '@/lib/ga4-behavioral'
 import { deriveBehaviouralClaims } from '@/lib/ga4-insight'
 import { buildAiPerformance } from '@/lib/ai-performance'
+import { fetchGscRows } from '@/lib/gsc-fetch'
+import { buildGscSignal } from '@/lib/gsc-performance'
 import { analyzeAndMapReviews } from '@/lib/review-analyze'
 
 export const maxDuration = 120
@@ -492,6 +494,24 @@ ${techLines.length ? techLines.join('\n') : '(no technical gaps flagged)'}`
             // AI PERFORMANCE INTELLIGENCE (summary) — reuses the SAME GA4 pull. Aggregates
             // by AI platform across the whole property. Measurement only, no causal claims.
             advisory.ai_performance = buildAiPerformance(ga4.rows, { periodDays: ga4.periodDays, previousRows: ga4.previousRows })
+          }
+        }
+      } catch {}
+
+      // 3c-ii) SEARCH CONSOLE ENRICHMENT (DORMANT) — fill future.search per Case.
+      // GSC = pre-click search DEMAND (impressions, clicks, CTR, position, real queries),
+      // distinct from GA4's post-click behaviour. One pull, reused across every move.
+      // Only runs if the hotel's GSC is connected; otherwise future.search stays null.
+      try {
+        const { data: gscHotel } = await sb.from('hotels').select('gsc_property, gsc_status').eq('id', hotelId).single()
+        if (gscHotel?.gsc_status === 'connected' && gscHotel?.gsc_property) {
+          const gsc = await fetchGscRows(gscHotel.gsc_property, { days: 28, previous: true })
+          if (gsc) {
+            for (const m of advisory.top_moves) {
+              const affected = m.canonicalRecommendation?.targeting?.affected_pages || []
+              const signal = buildGscSignal(gsc.rows, affected, { periodDays: gsc.periodDays, previousRows: gsc.previousRows })
+              if (m.canonicalRecommendation?.future) m.canonicalRecommendation.future.search = signal
+            }
           }
         }
       } catch {}

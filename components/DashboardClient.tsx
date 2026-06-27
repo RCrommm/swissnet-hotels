@@ -3067,6 +3067,43 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
                 </div>
               </Sec>
             )}
+            {(() => {
+              const sd = rec.future?.search
+              if (!sd || !sd.measured_pages || sd.measured_pages.length === 0 || sd.impressions === null) return null
+              const fmtN = (n: number | null) => n === null || n === undefined ? '—' : n.toLocaleString()
+              const chg = sd.impressions_change_pct
+              return (
+                <Sec icon="◴" title="Search demand · Google Search Console">
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(96px, 1fr))', gap: '0.55rem', marginBottom: sd.top_queries?.length ? '0.85rem' : 0 }}>
+                    {[
+                      { label: 'Impressions', value: fmtN(sd.impressions), sub: chg !== null && chg !== undefined ? ((chg >= 0 ? '↑ ' : '↓ ') + Math.abs(chg) + '%') : 'this period', col: chg !== null && chg !== undefined ? (chg >= 0 ? ADV_GREEN_C : RED) : TEXT_MUTED },
+                      { label: 'Clicks', value: fmtN(sd.clicks), sub: '', col: TEXT_MUTED },
+                      { label: 'CTR', value: sd.ctr === null ? '—' : sd.ctr + '%', sub: '', col: TEXT_MUTED },
+                      { label: 'Avg position', value: sd.avg_position === null ? '—' : sd.avg_position, sub: '', col: TEXT_MUTED },
+                    ].map((k, j) => (
+                      <div key={j} style={{ padding: '0.65rem 0.8rem', background: BG, borderRadius: 8, border: '1px solid ' + BORDER }}>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.54rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.3rem' }}>{k.label}</p>
+                        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', color: TEXT, margin: 0, lineHeight: 1 }}>{k.value}</p>
+                        {k.sub && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: k.col, margin: '0.2rem 0 0' }}>{k.sub}</p>}
+                      </div>
+                    ))}
+                  </div>
+                  {sd.top_queries?.length > 0 && (
+                    <div>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 0.5rem' }}>Searches bringing guests to these pages</p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                        {sd.top_queries.map((q: any, j: number) => (
+                          <div key={j} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.6rem', padding: '0.55rem 0.85rem', background: BG, borderRadius: 7, border: '1px solid ' + BORDER }}>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{q.query}</span>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: TEXT_MUTED, flexShrink: 0 }}>{q.impressions.toLocaleString()} impressions · pos {q.position}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </Sec>
+              )
+            })()}
             {Array.isArray(rec.review_evidence) && rec.review_evidence.length > 0 && (
               <Sec icon="★" title="Official reviews">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
@@ -3168,11 +3205,12 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
               {(() => {
                 const ga4On = Array.isArray(m.behavioural_claims) && m.behavioural_claims.length > 0
                 const reviewsOn = Array.isArray(rec.review_evidence) && rec.review_evidence.length > 0
+                const gscOn = !!(rec.future?.search && rec.future.search.measured_pages?.length > 0 && rec.future.search.impressions !== null)
                 const sources = [
                   { name: 'Website Intelligence', on: true, state: 'Active' },
                   { name: 'Review Intelligence', on: reviewsOn, state: reviewsOn ? 'Active' : 'Awaiting reviews' },
                   { name: 'Google Analytics', on: ga4On, state: ga4On ? 'Connected' : 'Connect to see results' },
-                  { name: 'Search Console', on: false, state: 'Coming soon' },
+                  { name: 'Search Console', on: gscOn, state: gscOn ? 'Connected' : 'Connect to see results' },
                 ]
                 return (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
@@ -3387,11 +3425,12 @@ function ActivityPanel({ memory }: any) {
 function EvidenceRow({ adv, hotel }: any) {
   const hasReviews = (adv.top_moves || []).some((m: any) => Array.isArray(m.canonicalRecommendation?.review_evidence) && m.canonicalRecommendation.review_evidence.length > 0)
   const ga4 = hotel?.ga4_status === 'connected'
+  const gsc = hotel?.gsc_status === 'connected'
   const items = [
     { name: 'Website Intelligence', status: 'Active', on: true },
     { name: 'GA4 Intelligence', status: ga4 ? 'Connected' : 'Not connected', on: ga4 },
     { name: 'Review Intelligence', status: hasReviews ? 'Active' : 'Awaiting reviews', on: hasReviews },
-    { name: 'Search Console', status: 'Not connected', on: false },
+    { name: 'Search Console', status: gsc ? 'Connected' : 'Not connected', on: gsc },
     { name: 'Citation Sources', status: 'Active', on: true },
   ]
   return (
@@ -3782,6 +3821,91 @@ function Ga4ConnectCard({ hotel }: any) {
             placeholder="e.g. 123456789"
             style={{ flex: 1, minWidth: 180, fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.55rem 0.875rem', background: BG, outline: 'none', boxSizing: 'border-box' }}
           />
+          <button onClick={connect} disabled={busy} style={{ background: GOLD, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, padding: '0.55rem 1.4rem', border: 'none', borderRadius: 6, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.7 : 1, whiteSpace: 'nowrap' }}>{busy ? 'Connecting…' : connected ? 'Reconnect' : 'Connect'}</button>
+        </div>
+
+        {msg && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: error ? RED : connected ? GREEN : TEXT_MUTED, margin: '0.9rem 0 0', lineHeight: 1.6 }}>{msg}</p>}
+      </div>
+    </div>
+  )
+}
+
+// ── SEARCH CONSOLE CONNECTION CARD ────────────────────────────────────────────
+// Mirrors Ga4ConnectCard. Same shared service-account email (it can read both GA4
+// and Search Console). The hotel adds it as a user in Search Console → Settings →
+// Users and permissions, pastes their property string, and clicks Connect. The route
+// runs one real test-pull. Status stored on hotels.gsc_status.
+function GscConnectCard({ hotel }: any) {
+  const [siteUrl, setSiteUrl] = useState<string>(hotel?.gsc_property || '')
+  const [status, setStatus] = useState<string>(hotel?.gsc_status || 'not_connected')
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState('')
+  const [copied, setCopied] = useState(false)
+
+  const connected = status === 'connected'
+  const error = status === 'error'
+
+  const statusPill = () => {
+    if (connected) return { txt: 'Connected', col: GREEN, bg: GREEN + '15', bd: GREEN + '30' }
+    if (error) return { txt: 'Connection failed', col: RED, bg: RED + '12', bd: RED + '30' }
+    if (status === 'pending') return { txt: 'Checking…', col: '#d97706', bg: '#d9770612', bd: '#d9770630' }
+    return { txt: 'Not connected', col: TEXT_MUTED, bg: BG, bd: BORDER }
+  }
+  const pill = statusPill()
+
+  const copyEmail = () => { navigator.clipboard?.writeText(GA4_SERVICE_ACCOUNT); setCopied(true); setTimeout(() => setCopied(false), 2000) }
+
+  const connect = async () => {
+    const site = siteUrl.trim()
+    if (!site) { setMsg('Enter your Search Console property (e.g. https://www.yourhotel.com/ or sc-domain:yourhotel.com).'); setTimeout(() => setMsg(''), 4000); return }
+    setBusy(true); setMsg(''); setStatus('pending')
+    try {
+      const res = await fetch('/api/gsc-connect', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hotelId: hotel?.id, siteUrl: site, password: 'RCrom2004Romeo' }),
+      })
+      const j = await res.json()
+      if (res.ok && j?.status === 'connected') {
+        setStatus('connected')
+        setMsg(`Connected — we read ${j.sampleImpressions ?? 0} impressions of historical data.`)
+      } else {
+        setStatus('error')
+        setMsg(j?.error || 'We could not read this property. Confirm the email was added in Search Console, then try again.')
+      }
+    } catch (e: any) {
+      setStatus('error')
+      setMsg(e?.message || 'Request failed. Try again in a moment.')
+    } finally {
+      setBusy(false); setTimeout(() => setMsg(''), 7000)
+    }
+  }
+
+  return (
+    <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, overflow: 'hidden', marginBottom: '1rem' }}>
+      <div style={{ padding: '1rem 1.5rem', background: BG, borderBottom: '1px solid ' + BORDER, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: TEXT, margin: 0 }}>Connect Search Console</p>
+        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, color: pill.col, background: pill.bg, border: '1px solid ' + pill.bd, padding: '3px 10px', borderRadius: 20 }}>{pill.txt}</span>
+      </div>
+      <div style={{ padding: '1.25rem 1.5rem' }}>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT_MUTED, margin: '0 0 1.1rem', lineHeight: 1.7 }}>
+          Search Console shows what guests actually search before they click — the impressions, click-through rate and exact queries your pages appear for. It lets each recommendation show the real search demand behind it. Read-only and private to your dashboard.
+        </p>
+
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Step 1 · Give us read access</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.6 }}>
+          In Search Console, open <strong>Settings → Users and permissions</strong>, click <strong>Add user</strong>, and add this email with <strong>Full</strong> or <strong>Restricted</strong> access:
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+          <code style={{ fontFamily: 'monospace', fontSize: '0.68rem', color: TEXT, background: BG, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.5rem 0.75rem', flex: 1, minWidth: 220, wordBreak: 'break-all' }}>{GA4_SERVICE_ACCOUNT}</code>
+          <button onClick={copyEmail} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 600, color: copied ? GREEN : TEXT_MUTED, background: WHITE, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.5rem 0.9rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>{copied ? '✓ Copied' : 'Copy email'}</button>
+        </div>
+
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Step 2 · Enter your property</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.6 }}>
+          Copy it exactly as shown at the top of Search Console — a URL-prefix property like <code style={{ fontFamily: 'monospace', fontSize: '0.62rem', background: BG, padding: '1px 5px', borderRadius: 4 }}>https://www.yourhotel.com/</code> (keep the trailing slash) or a Domain property like <code style={{ fontFamily: 'monospace', fontSize: '0.62rem', background: BG, padding: '1px 5px', borderRadius: 4 }}>sc-domain:yourhotel.com</code>.
+        </p>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <input value={siteUrl} onChange={e => setSiteUrl(e.target.value)} placeholder="e.g. https://www.yourhotel.com/" style={{ flex: 1, minWidth: 200, fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.55rem 0.875rem', background: BG, outline: 'none', boxSizing: 'border-box' }} />
           <button onClick={connect} disabled={busy} style={{ background: GOLD, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, padding: '0.55rem 1.4rem', border: 'none', borderRadius: 6, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.7 : 1, whiteSpace: 'nowrap' }}>{busy ? 'Connecting…' : connected ? 'Reconnect' : 'Connect'}</button>
         </div>
 
@@ -4749,6 +4873,9 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
             </div>
             {/* ── GA4 ANALYTICS CONNECTION ── */}
             <Ga4ConnectCard hotel={hotel} />
+
+            {/* ── SEARCH CONSOLE CONNECTION ── */}
+            <GscConnectCard hotel={hotel} />
 
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, overflow: 'hidden', marginBottom: '1rem' }}>
               <div style={{ padding: '1rem 1.5rem', background: BG, borderBottom: '1px solid ' + BORDER }}>
