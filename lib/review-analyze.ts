@@ -23,7 +23,8 @@ export async function analyzeReviews(
   if (!Array.isArray(reviews) || reviews.length === 0) return []
 
   const reviewBlock = reviews
-    .map((r, i) => {
+  .slice(0, 80)
+  .map((r, i) => {
       const meta = [r.source, r.rating != null ? `${r.rating}/5` : null, r.date || null, r.language || null]
         .filter(Boolean).join(' · ')
       return `#${i + 1} [${meta}]\n${(r.text || '').trim()}`
@@ -39,7 +40,7 @@ export async function analyzeReviews(
       body: JSON.stringify({
         model: 'gpt-4o',
         temperature: 0.1,
-        max_tokens: 2000,
+        max_tokens: 4000,
         response_format: { type: 'json_schema', json_schema: { name: 'review_themes', strict: true, schema: reviewExtractSchema() } },
         messages: [
           { role: 'system', content: REVIEW_EXTRACT_SYSTEM },
