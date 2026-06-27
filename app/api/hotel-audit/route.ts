@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { classifyGap, honestFindingTitle, inferTopic } from '@/lib/evidence'
 import { buildInventory } from '@/lib/page-discovery'
+import { buildDemandModel } from '@/lib/demand'
+import { EXPERIENCE_BY_KEY } from '@/lib/experiences'
 
 
 // ─── MEMORY LAYER: deterministic finding keys + store + diff vs previous run ───
@@ -180,32 +182,57 @@ function detectAmenities(pages: any[]): string[] {
 // ── DYNAMIC QUESTION GENERATION: the real guest searches for THIS hotel/city ──
 const QGEN_SYSTEM = `You are a hotel demand strategist. Generate the real questions a guest would type into an AI assistant (ChatGPT, Perplexity, Google AI) when looking for a hotel like this one — the questions whose answers decide whether AI recommends or rejects THIS specific hotel.
 
-You are given the hotel's name, city, type, the pages found on its site, and amenity signals detected on those pages. Make every question SPECIFIC to this hotel and city: use the real city (and neighbourhood when implied by the name/pages), and reflect what the hotel actually offers (afternoon tea, spa, meetings, suites, etc.).
+You are given a DEMAND MODEL for this hotel: its confirmed archetype (e.g. Luxury City Hotel, Mountain Resort), its PRIMARY and SECONDARY experiences, and the universal guest filters. You are ALSO given the real city, pages, and amenity signals. The demand model is the SOURCE OF TRUTH for what guests care about for this hotel — weight your questions toward its PRIMARY experiences, cover its SECONDARY ones, and always include the universal filters.
 
 RULES:
 - Generate 26 to 30 questions.
-- Each question gets a "category" — use EXACTLY one of: location, dining, spa, family, romantic, business, luxury, accessibility, parking, pets, overall.
-- Weight toward what this hotel plausibly competes for (more dining/afternoon-tea questions when dining is strong; more spa questions when it has a spa). BUT always include at least one each of: location, luxury, accessibility, parking, pets, family, romantic, business — these are dealbreaker filters AI uses to shortlist, whether or not the hotel currently markets them.
-- Phrase questions the way a guest writes to AI, naturally including the city/area (e.g. "best luxury hotel near Covent Garden London", "afternoon tea with vegan options in London", "hotel near Holborn station with parking"). Mix broad and specific.
-- "priority": "high" for the hotel's core demand and the universal dealbreakers; "medium" otherwise.
+- Each question gets a "category" — use EXACTLY one of the allowed categories provided in the user message (these are derived from THIS hotel's confirmed experiences plus universal filters). Never use a category outside that list.
+- Weight toward the PRIMARY experiences (more questions), then SECONDARY, then the universal filters. Do NOT invent demand for experiences not in the demand model — e.g. do not ask about a spa, ski, or beach unless that experience is listed.
+- Phrase questions the way a guest writes to AI, naturally including the city/area/landmarks (e.g. "best luxury hotel near Covent Garden London", "afternoon tea with vegan options in London", "ski-in ski-out hotel in Zermatt"). Mix broad and specific. Use the provided question SEEDS as inspiration for phrasing, but write natural full questions, not the seed templates verbatim.
+- ALWAYS include at least one question each for the universal filters (location, practical/parking/accessibility/pets, overall fit) — these are dealbreaker filters AI uses to shortlist whether or not the hotel markets them.
+- "priority": "high" for the hotel's PRIMARY experiences and the universal dealbreakers; "medium" otherwise.
 - Do NOT invent named amenities the signals don't support. Ask about guest NEEDS, not claimed features.
 Return STRICTLY the JSON schema.`
 
-function qgenSchema() {
+function qgenSchema(categories: string[]) {
   return { type: 'object', additionalProperties: false, required: ['questions'], properties: { questions: { type: 'array', items: {
     type: 'object', additionalProperties: false, required: ['question', 'category', 'priority'],
-    properties: { question: { type: 'string' }, category: { type: 'string', enum: ['location', 'dining', 'spa', 'family', 'romantic', 'business', 'luxury', 'accessibility', 'parking', 'pets', 'overall'] }, priority: { type: 'string', enum: ['high', 'medium'] } },
+    properties: { question: { type: 'string' }, category: { type: 'string', enum: categories }, priority: { type: 'string', enum: ['high', 'medium'] } },
   } } } }
 }
 
-async function generateQuestions(ctx: { name: string; city: string; type: string; pages: string[]; amenities: string[] }, openaiKey: string): Promise<any[]> {
-  const user = `HOTEL: ${ctx.name || '(unknown name)'}\nCITY: ${ctx.city || '(unknown city)'}\nTYPE: ${ctx.type || 'luxury hotel'}\nPAGES FOUND: ${ctx.pages.length ? ctx.pages.join(', ') : '(none detected)'}\nAMENITY SIGNALS: ${ctx.amenities.length ? ctx.amenities.join(', ') : '(none detected)'}`
+// Map an experience key → the audit question category it should file under. Keeps the
+// downstream audit/decision categories stable (dining, business, etc.) while letting the
+// taxonomy drive WHICH categories are in play for this hotel.
+const EXP_TO_QCAT: Record<string, string> = {
+  luxury: 'luxury', dining: 'dining', business: 'business', location: 'location',
+  romantic: 'romantic', family: 'family', wellness: 'spa', trust: 'overall',
+  ski: 'ski', hiking: 'hiking', beach: 'beach', watersports: 'watersports', golf: 'golf',
+}
+const UNIVERSAL_QCATS = ['location', 'accessibility', 'parking', 'pets', 'overall']
+
+async function generateQuestions(ctx: { name: string; city: string; type: string; pages: string[]; amenities: string[]; demand?: any }, openaiKey: string): Promise<any[]> {
+  const demand = ctx.demand || null
+  // Allowed categories = this hotel's experience categories + universal filters. When there's
+  // no confirmed profile, fall back to the original full fixed set (behaviour preserved).
+  let categories: string[]
+  let demandBlock = ''
+  if (demand && demand.source === 'confirmed_profile') {
+    const expCats = [...demand.primary, ...demand.secondary].map((k: string) => EXP_TO_QCAT[k]).filter(Boolean)
+    categories = Array.from(new Set([...expCats, ...UNIVERSAL_QCATS]))
+    const seedsFor = (keys: string[]) => keys.map((k: string) => { const e = EXPERIENCE_BY_KEY[k]; return e ? `${e.label}: ${(e.questionSeeds || []).join(' | ')}` : '' }).filter(Boolean).join('\n')
+    demandBlock = `\nDEMAND MODEL (source of truth for what guests care about):\nARCHETYPE: ${demand.archetype_label}\nPRIMARY experiences (weight most):\n${seedsFor(demand.primary) || '(none)'}\nSECONDARY experiences (cover):\n${seedsFor(demand.secondary) || '(none)'}\nUNIVERSAL filters (always include): location, parking/accessibility/pets, overall fit\n`
+  } else {
+    categories = ['location', 'dining', 'spa', 'family', 'romantic', 'business', 'luxury', 'accessibility', 'parking', 'pets', 'overall']
+    demandBlock = '\n(No confirmed hotel profile — using generic demand across all standard categories.)\n'
+  }
+  const user = `HOTEL: ${ctx.name || '(unknown name)'}\nCITY: ${ctx.city || '(unknown city)'}\nTYPE: ${ctx.type || 'luxury hotel'}\nPAGES FOUND: ${ctx.pages.length ? ctx.pages.join(', ') : '(none detected)'}\nAMENITY SIGNALS: ${ctx.amenities.length ? ctx.amenities.join(', ') : '(none detected)'}\n${demandBlock}\nALLOWED CATEGORIES (use EXACTLY these): ${categories.join(', ')}`
   try {
     const res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
       body: JSON.stringify({
         model: 'gpt-4o', temperature: 0.4, max_tokens: 1800,
-        response_format: { type: 'json_schema', json_schema: { name: 'questions', strict: true, schema: qgenSchema() } },
+        response_format: { type: 'json_schema', json_schema: { name: 'questions', strict: true, schema: qgenSchema(categories) } },
         messages: [{ role: 'system', content: QGEN_SYSTEM }, { role: 'user', content: user }],
       }),
     })
@@ -796,7 +823,19 @@ export async function POST(req: Request) {
     let prompts: any[] = []
     const amenitySignals = detectAmenities(pages)
     const detectedPages = slots.filter(s => s.url).map(s => (s.label || '').split(' — ')[0]).filter(Boolean)
-    prompts = await generateQuestions({ name: effName, city: effCity, type: effType, pages: detectedPages, amenities: amenitySignals }, openaiKey)
+    // ── DEMAND MODEL: drive question generation from the hotel's CONFIRMED profile. ──
+    // Loads the confirmed archetype + taxonomy and builds the v1 demand model. If the hotel
+    // has no confirmed profile, buildDemandModel returns a generic fallback and the generator
+    // behaves exactly as before — so un-profiled hotels are unaffected.
+    let demandModel: any = null
+    if (hotelId && sbUrl && sbKey) {
+      try {
+        const sb = createClient(sbUrl, sbKey)
+        const { data: prof } = await sb.from('hotel_profile').select('*').eq('hotel_id', hotelId).maybeSingle()
+        demandModel = buildDemandModel(prof || null, { location: effCity })
+      } catch { demandModel = buildDemandModel(null, { location: effCity }) }
+    }
+    prompts = await generateQuestions({ name: effName, city: effCity, type: effType, pages: detectedPages, amenities: amenitySignals, demand: demandModel }, openaiKey)
     if (!prompts.length && sbUrl && sbKey) {
       try {
         const sb = createClient(sbUrl, sbKey)
