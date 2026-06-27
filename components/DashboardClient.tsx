@@ -3787,29 +3787,21 @@ function AdvisorV2Body({ adv, memory, hotel, savedAt }: any) {
         </div>
       )}
 
-      {adv.declined && adv.declined.labels && adv.declined.labels.length > 0 && (
-        <div style={{ padding: '1.25rem 1.6rem', border: '1px solid ' + BORDER, borderRadius: 14, background: 'rgba(42,26,14,0.02)', marginBottom: '0.85rem' }}>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.5rem' }}>Deliberately not pursuing</p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.92rem', fontWeight: 700, color: TEXT, margin: '0 0 0.5rem' }}>{adv.declined.labels.join('  ·  ')}</p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6, maxWidth: '62ch' }}>{adv.declined.rationale}</p>
-        </div>
-      )}
-
-      {adv.deferred && adv.deferred.length > 0 && (
-        <div style={{ padding: '1.25rem 1.6rem', border: '1px solid ' + BORDER, borderRadius: 14, background: WHITE }}>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.7rem' }}>Held for later</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-            {adv.deferred.map((d: any, i: number) => {
-              const tag = d.posture === 'Confirm' ? 'Confirm first' : d.posture === 'Defer' ? 'Already strong' : 'Lower priority'
-              const tagCol = d.posture === 'Confirm' ? ADV_AMBER : TEXT_MUTED
-              return (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.6rem 0.95rem', background: BG, borderRadius: 8, border: '1px solid ' + BORDER }}>
-                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', fontWeight: 600, color: TEXT }}>{d.label}</span>
-                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: tagCol, background: tagCol + '14', padding: '3px 10px', borderRadius: 100 }}>{tag}</span>
-                </div>
-              )
-            })}
-          </div>
+      {((adv.deferred && adv.deferred.length > 0) || (adv.declined && adv.declined.labels && adv.declined.labels.length > 0)) && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.75rem', padding: '1.1rem 1.4rem', border: '1px solid ' + BORDER, borderRadius: 14, background: 'rgba(42,26,14,0.015)' }}>
+          {adv.deferred && adv.deferred.length > 0 && (
+            <div style={{ flex: '1 1 260px' }}>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.54rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.4rem' }}>Held for later</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', fontWeight: 500, color: TEXT, margin: 0, lineHeight: 1.6 }}>{adv.deferred.map((d: any) => d.label).join('  \u00b7  ')}</p>
+            </div>
+          )}
+          {adv.declined && adv.declined.labels && adv.declined.labels.length > 0 && (
+            <div style={{ flex: '1 1 260px' }}>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.54rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.4rem' }}>Not pursuing</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', fontWeight: 500, color: TEXT, margin: '0 0 0.3rem', lineHeight: 1.6 }}>{adv.declined.labels.join('  \u00b7  ')}</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.5, maxWidth: '52ch' }}>{adv.declined.rationale}</p>
+            </div>
+          )}
         </div>
       )}
     </div>

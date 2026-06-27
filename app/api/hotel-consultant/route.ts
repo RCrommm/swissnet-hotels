@@ -455,6 +455,22 @@ ${techLines.length ? techLines.join('\n') : '(no technical gaps flagged)'}`
     // ─── STRATEGIC DECISION LAYER (V4): the board's decisions DRIVE the moves. ───
     // GPT no longer SELECTS recommendations — it only explains the ones the platform chose.
     try { advisory.decision_board = selectStrategicDecisions(knowledgeGraph, technical, latestAuditResult) } catch { advisory.decision_board = null }
+    // Promote at most ONE genuinely high-value deferred Case to a 4th priority.
+    // Earned-only: never pads — promotes solely when a deferred Commit/Convert clears a
+    // real value + certainty bar, so a hotel with only 3 strong moves still shows 3.
+    if (advisory.decision_board?.decisions && Array.isArray(advisory.decision_board.deferred)) {
+      const dec = advisory.decision_board.decisions
+      const def = advisory.decision_board.deferred
+      if (dec.length < 4 && def.length) {
+        const candidate = def
+          .filter((d: any) => (d.posture === 'Commit' || d.posture === 'Convert') && (d.certainty ?? 0) >= 0.8 && (d.value ?? 0) >= 1.0)
+          .sort((a: any, b: any) => (b.value ?? 0) - (a.value ?? 0))[0]
+        if (candidate) {
+          advisory.decision_board.decisions = [...dec, candidate]
+          advisory.decision_board.deferred = def.filter((d: any) => d.topic !== candidate.topic)
+        }
+      }
+    }
     if (advisory.decision_board?.decisions?.length) {
       advisory.top_moves = advisory.decision_board.decisions.map((dec: any) => decisionToMove(dec, knowledgeGraph, auditBrief, technical))
       advisory.declined = advisory.decision_board.declined || null
