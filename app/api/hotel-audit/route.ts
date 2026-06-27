@@ -721,11 +721,12 @@ export async function POST(req: Request) {
 
     let effCity = city || '', effType = hotelType || '', effName = ''
     let overrides: Record<string, string> = {}
+    let notOffered: string[] = []
     if (hotelId && sbUrl && sbKey) {
       try {
         const sb = createClient(sbUrl, sbKey)
-        const { data: h } = await sb.from('hotels').select('name, region, location, category').eq('id', hotelId).single()
-        if (h) { effName = effName || h.name || ''; effCity = effCity || h.location || h.region || ''; effType = effType || h.category || '' }
+        const { data: h } = await sb.from('hotels').select('name, region, location, category, not_offered').eq('id', hotelId).single()
+        if (h) { effName = effName || h.name || ''; effCity = effCity || h.location || h.region || ''; effType = effType || h.category || ''; if (Array.isArray(h.not_offered)) notOffered = h.not_offered }
         try {
           const { data: ov } = await sb.from('hotel_priority_pages').select('page_key, url').eq('hotel_id', hotelId)
           if (ov) for (const row of ov) if (row.page_key && row.url) overrides[row.page_key] = row.url
@@ -864,7 +865,11 @@ export async function POST(req: Request) {
     // (e.g. a "business" page need is satisfied by an existing Meetings & Events page).
     const KEY_ALIAS: Record<string, string[]> = { business: ['meetings'] }
     const pageExistsFor = (k: string) => presentKeys.has(k) || (KEY_ALIAS[k] || []).some(a => presentKeys.has(a))
-    const blueprintKeys = ['parking', 'accessibility', 'pets', 'breakfast', 'airport', 'family', 'romantic', 'business', 'spa', 'dining']
+    // Exclude blueprints for intents the hotel has confirmed it does not offer, so the audit
+    // never recommends building a page (e.g. a Spa page) for a product the hotel doesn't have.
+    const BLUEPRINT_NOTOFFERED: Record<string, string> = { wellness: 'spa', spa: 'spa', family: 'family', romantic: 'romantic', business: 'business' }
+    const excludedBlueprints = new Set((notOffered || []).map(s => BLUEPRINT_NOTOFFERED[String(s).toLowerCase()] || String(s).toLowerCase()))
+    const blueprintKeys = ['parking', 'accessibility', 'pets', 'breakfast', 'airport', 'family', 'romantic', 'business', 'spa', 'dining'].filter(k => !excludedBlueprints.has(k))
     const BP_KEYWORDS: Record<string, string[]> = {
       parking: ['parking'], accessibility: ['accessible', 'accessibility'], pets: ['pet'], breakfast: ['breakfast'],
       airport: ['airport'], romantic: ['romantic', 'honeymoon', 'couple'], business: ['business', 'meeting', 'executive', 'event'],
@@ -947,8 +952,12 @@ export async function POST(req: Request) {
     const coreMiss = coreKeys.filter(([k]) => !has(k)).map(([, l]) => l)
     const coreScore = pct(coreHave.length, coreKeys.length)
 
-    // L2 intent
-    const intentKeys = [['family', 'Family'], ['romantic', 'Romantic'], ['business', 'Business'], ['spa', 'Spa'], ['pets', 'Pet-friendly'], ['accessibility', 'Accessible'], ['parking', 'Parking'], ['airport', 'Near-airport']] as [string, string][]
+    // L2 intent — exclude intents the hotel has confirmed it does not offer (owner-set not_offered).
+    // 'wellness' in not_offered maps to the 'spa' intent. Confirmed-absence intents are never
+    // counted against the hotel and never recommended as a page to build.
+    const NOTOFFERED_INTENT: Record<string, string> = { wellness: 'spa', spa: 'spa', family: 'family', romantic: 'romantic', business: 'business' }
+    const excludedIntents = new Set((notOffered || []).map(s => NOTOFFERED_INTENT[String(s).toLowerCase()] || String(s).toLowerCase()))
+    const intentKeys = ([['family', 'Family'], ['romantic', 'Romantic'], ['business', 'Business'], ['spa', 'Spa'], ['pets', 'Pet-friendly'], ['accessibility', 'Accessible'], ['parking', 'Parking'], ['airport', 'Near-airport']] as [string, string][]).filter(([k]) => !excludedIntents.has(k))
     const intentHave = intentKeys.filter(([k]) => has(k)).map(([, l]) => l)
     const intentMiss = intentKeys.filter(([k]) => !has(k)).map(([, l]) => l)
     const intentScore = pct(intentHave.length, intentKeys.length)
