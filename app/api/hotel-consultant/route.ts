@@ -355,10 +355,20 @@ export async function POST(req: Request) {
 
     // Owner-confirmed list of dimensions this hotel genuinely does not offer (e.g. no spa).
     // Excluded from the AI Visibility score, shown as "Not offered" — never scored as weak.
+    // EXCLUSION authority = hotels.not_offered ONLY (never the profile's not_offered_experiences).
     let notOffered: string[] = []
     try {
       const { data: hotelRow } = await sb.from('hotels').select('not_offered').eq('id', hotelId).single()
       if (Array.isArray(hotelRow?.not_offered)) notOffered = hotelRow.not_offered
+    } catch {}
+
+    // Confirmed hotel profile: SELECTS which visibility dimensions are relevant for this hotel
+    // (adaptive per archetype). Only a CONFIRMED profile is used; otherwise the visibility model
+    // falls back to its full fixed dimension set (every un-profiled hotel unchanged).
+    let hotelProfile: any = null
+    try {
+      const { data: prof } = await sb.from('hotel_profile').select('*').eq('hotel_id', hotelId).maybeSingle()
+      if (prof?.taxonomy_status === 'confirmed') hotelProfile = prof
     } catch {}
     const { data: facts } = await sb.from('hotel_facts').select('category, fact_key, fact_value, evidence_quote, page_url, confidence').eq('brain_id', brain.id)
 
@@ -383,7 +393,8 @@ export async function POST(req: Request) {
     } catch {}
 
     // ── AI VISIBILITY MODEL: compute how AI currently "sees" the hotel (deterministic) ──
-    const visibilityModel = buildVisibilityModel(facts || [], latestAuditResult, notOffered)
+    // notOffered (hotels.not_offered) = EXCLUSION authority; hotelProfile = dimension SELECTION.
+    const visibilityModel = buildVisibilityModel(facts || [], latestAuditResult, notOffered, hotelProfile)
 
     // ── KNOWLEDGE GRAPH: the site's information architecture (deterministic) ──
     // The consultant CONSUMES this instead of re-inferring website structure.

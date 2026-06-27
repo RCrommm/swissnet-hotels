@@ -39,12 +39,45 @@ function pathOf(u: string): string {
   try { return new URL(u).pathname.replace(/\/$/, '').toLowerCase() || '/' } catch { return (u || '').toLowerCase() }
 }
 
-export function buildVisibilityModel(facts: any[], auditResult: any, notOffered: string[] = []): { dimensions: DimensionScore[]; overall: number } {
+// Map an experience key (from the confirmed profile) to a visibility dimension key.
+// wellness↔spa is the only rename; everything else is identity. Hygiene 'trust' is always
+// included regardless of profile (it's universal practical/parking/pets, not a positioning experience).
+const EXPERIENCE_TO_DIMENSION: Record<string, string> = {
+  luxury: 'luxury', dining: 'dining', business: 'business', location: 'location',
+  romantic: 'romantic', family: 'family', wellness: 'wellness', trust: 'trust',
+}
+
+export function buildVisibilityModel(facts: any[], auditResult: any, notOffered: string[] = [], profile: any = null): { dimensions: DimensionScore[]; overall: number } {
   const pages = (auditResult?.importantPages || [])
   const qResults = (auditResult?.recommendation?.results || [])
   const naSet = new Set((notOffered || []).map(s => String(s || '').toLowerCase().trim()).filter(Boolean))
 
-  const dims: DimensionScore[] = DIMENSIONS.map(D => {
+  // ── ADAPTIVE DIMENSION SELECTION ──
+  // When the hotel has a CONFIRMED profile, build the dimension set from its experiences
+  // (primary + secondary) — this is what makes a ski hotel score Ski and a beach resort score
+  // Beach. SAFETY CLAUSES so selection never silently drops a real dimension:
+  //   (1) always keep hygiene 'trust' (universal practical/parking/pets);
+  //   (2) always keep any dimension that already has confirmed facts (so e.g. family, even if
+  //       not a profile experience, stays a scored gap — never vanishes).
+  // EXCLUSION remains governed SOLELY by `notOffered` (= hotels.not_offered), never by the
+  // profile's not_offered_experiences. SELECTION (profile) and EXCLUSION (hotels.not_offered)
+  // are deliberately separate operations. No confirmed profile → full fixed set (unchanged).
+  let activeDims = DIMENSIONS
+  if (profile && profile.taxonomy_status === 'confirmed') {
+    const want = new Set<string>()
+    for (const k of [...(profile.primary_experiences || []), ...(profile.secondary_experiences || [])]) {
+      const d = EXPERIENCE_TO_DIMENSION[String(k).toLowerCase()]
+      if (d) want.add(d)
+    }
+    activeDims = DIMENSIONS.filter(D => {
+      if (D.hygiene) return true                                   // (1) hygiene always in
+      if (want.has(D.dimension)) return true                       // profile experience
+      const hasFacts = (facts || []).some(f => D.factCats.test((f.category || '').toLowerCase()))
+      return hasFacts                                              // (2) real-evidence safety net
+    })
+  }
+
+  const dims: DimensionScore[] = activeDims.map(D => {
     // ── NOT OFFERED (owner-confirmed): excluded, shown separately, never scored as weak. ──
     if (naSet.has(D.dimension)) {
       return {
@@ -92,7 +125,7 @@ export function buildVisibilityModel(facts: any[], auditResult: any, notOffered:
   // Overall = mean of the COMMERCIAL dimensions that are APPLICABLE.
   // Excludes hygiene (Practical & trust) AND any owner-confirmed not-offered dimension.
   const scored = dims.filter(d => {
-    const def = DIMENSIONS.find(D => D.dimension === d.dimension)
+    const def = activeDims.find(D => D.dimension === d.dimension)
     return d.applicable !== false && !def?.hygiene
   })
   const overall = Math.round(scored.reduce((s, d) => s + d.score, 0) / Math.max(1, scored.length))
