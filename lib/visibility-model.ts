@@ -35,6 +35,19 @@ const DIMENSIONS: { dimension: string; label: string; factCats: RegExp; pageKey:
   { dimension: 'trust',    label: 'Practical & trust',    factCats: /(parking|accessibility|pets|policies)/i,  pageKey: /(parking|accessib|contact|practical)/i, qCat: /(parking|accessibility|pets)/i, hygiene: true },
 ]
 
+// Bridge: experience keys that are NOT in the standard DIMENSIONS list but can become scorable
+// dimensions when a confirmed profile includes them (e.g. a mountain resort's ski/hiking). These
+// are STUBS until a real hotel of that type is validated — they carry the dimension shape so the
+// score can include them, but no L'Oscar/city hotel ever references them. factCats/pageKey/qCat
+// mirror the registry's experience definitions.
+const EXPERIENCE_REGISTRY_DIM: Record<string, { dimension: string; label: string; factCats: RegExp; pageKey: RegExp; qCat: RegExp; hygiene?: boolean }> = {
+  ski:        { dimension: 'ski',        label: 'Ski & mountain',   factCats: /(ski|slope|piste|lift|mountain)/i, pageKey: /(ski|slope|piste|mountain)/i, qCat: /(ski)/i },
+  hiking:     { dimension: 'hiking',     label: 'Hiking & outdoors',factCats: /(hiking|hike|trail|outdoor)/i,      pageKey: /(hiking|trail|outdoor)/i, qCat: /(hiking)/i },
+  beach:      { dimension: 'beach',      label: 'Beach',            factCats: /(beach|seafront|shore)/i,           pageKey: /(beach|shore)/i, qCat: /(beach)/i },
+  watersports:{ dimension: 'watersports',label: 'Watersports',      factCats: /(watersport|diving|snorkel|kayak)/i,pageKey: /(watersport|diving)/i, qCat: /(watersports)/i },
+  golf:       { dimension: 'golf',       label: 'Golf',             factCats: /(golf|fairway|green)/i,             pageKey: /(golf)/i, qCat: /(golf)/i },
+}
+
 function pathOf(u: string): string {
   try { return new URL(u).pathname.replace(/\/$/, '').toLowerCase() || '/' } catch { return (u || '').toLowerCase() }
 }
@@ -62,19 +75,23 @@ export function buildVisibilityModel(facts: any[], auditResult: any, notOffered:
   // EXCLUSION remains governed SOLELY by `notOffered` (= hotels.not_offered), never by the
   // profile's not_offered_experiences. SELECTION (profile) and EXCLUSION (hotels.not_offered)
   // are deliberately separate operations. No confirmed profile → full fixed set (unchanged).
+  // ADDITIVE selection: the profile can ADD experience dimensions (e.g. ski for a mountain
+  // hotel) but NEVER removes a standard dimension. Every standard dimension stays in the set;
+  // exclusion is governed SOLELY by `notOffered` (hotels.not_offered) below, never by the
+  // profile. This guarantees a dimension like family (no profile experience, no facts, but NOT
+  // owner-excluded) stays scored — it never silently vanishes. For L'Oscar this reproduces the
+  // full standard set (family included, wellness excluded via notOffered) → score holds at 58.
   let activeDims = DIMENSIONS
   if (profile && profile.taxonomy_status === 'confirmed') {
-    const want = new Set<string>()
+    const extra: typeof DIMENSIONS = []
     for (const k of [...(profile.primary_experiences || []), ...(profile.secondary_experiences || [])]) {
-      const d = EXPERIENCE_TO_DIMENSION[String(k).toLowerCase()]
-      if (d) want.add(d)
+      const dimKey = EXPERIENCE_TO_DIMENSION[String(k).toLowerCase()]
+      if (!dimKey) continue
+      if (DIMENSIONS.some(D => D.dimension === dimKey)) continue   // already a standard dim
+      const exp = EXPERIENCE_REGISTRY_DIM[dimKey]                  // a new experience dim (e.g. ski)
+      if (exp && !extra.some(e => e.dimension === dimKey)) extra.push(exp)
     }
-    activeDims = DIMENSIONS.filter(D => {
-      if (D.hygiene) return true                                   // (1) hygiene always in
-      if (want.has(D.dimension)) return true                       // profile experience
-      const hasFacts = (facts || []).some(f => D.factCats.test((f.category || '').toLowerCase()))
-      return hasFacts                                              // (2) real-evidence safety net
-    })
+    activeDims = [...DIMENSIONS, ...extra]
   }
 
   const dims: DimensionScore[] = activeDims.map(D => {
