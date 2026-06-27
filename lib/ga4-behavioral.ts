@@ -22,7 +22,7 @@ export interface BuildBehavioralOpts {
 }
 
 // Hosts we count as "an AI assistant sent this visitor."
-const AI_REFERRERS = [
+export const AI_REFERRERS = [
   'chatgpt.com', 'chat.openai.com', 'openai.com',
   'perplexity.ai',
   'gemini.google.com', 'bard.google.com',
@@ -30,10 +30,24 @@ const AI_REFERRERS = [
   'claude.ai', 'anthropic.com',
 ]
 
-function isAiSource(source?: string): boolean {
+export function isAiSource(source?: string): boolean {
   if (!source) return false
   const s = source.toLowerCase()
   return AI_REFERRERS.some(host => s.includes(host))
+}
+
+// Map a raw GA4 source host to a named AI platform, or null if not an identifiable AI.
+// Deterministic: only classifies what's genuinely identifiable; everything else stays null.
+export function aiPlatformOf(source?: string): string | null {
+  if (!source) return null
+  const s = source.toLowerCase()
+  if (s.includes('chatgpt.com') || s.includes('chat.openai.com') || s.includes('openai.com')) return 'ChatGPT'
+  if (s.includes('perplexity.ai')) return 'Perplexity'
+  if (s.includes('gemini.google.com') || s.includes('bard.google.com')) return 'Gemini'
+  if (s.includes('copilot.microsoft.com')) return 'Copilot'
+  if (s.includes('claude.ai') || s.includes('anthropic.com')) return 'Claude'
+  if (s.includes('bing.com')) return 'Bing / Copilot'
+  return null
 }
 
 // Normalise a path so "/spa/", "/spa", "https://h.com/spa?x=1" all compare equal.

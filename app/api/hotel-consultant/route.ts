@@ -14,6 +14,7 @@ import { computeContinuity } from '@/lib/recommendation-continuity'
 import { fetchGa4Rows } from '@/lib/ga4-fetch'
 import { buildBehavioralSignal } from '@/lib/ga4-behavioral'
 import { deriveBehaviouralClaims } from '@/lib/ga4-insight'
+import { buildAiPerformance } from '@/lib/ai-performance'
 import { analyzeAndMapReviews } from '@/lib/review-analyze'
 
 export const maxDuration = 120
@@ -487,6 +488,9 @@ ${techLines.length ? techLines.join('\n') : '(no technical gaps flagged)'}`
               const topicLabel = (m.canonicalRecommendation?.targeting?.topic || m.topic || 'these').toString().toLowerCase()
               m.behavioural_claims = deriveBehaviouralClaims(signal, { topicLabel, posture: m.posture })
             }
+            // AI PERFORMANCE INTELLIGENCE (summary) — reuses the SAME GA4 pull. Aggregates
+            // by AI platform across the whole property. Measurement only, no causal claims.
+            advisory.ai_performance = buildAiPerformance(ga4.rows, { periodDays: ga4.periodDays, previousRows: ga4.previousRows })
           }
         }
       } catch {}

@@ -3324,6 +3324,103 @@ function EvidenceRow({ adv, hotel }: any) {
   )
 }
 
+// AI Performance Intelligence — measurement bubble. Reads adv.ai_performance (real
+// GA4 data when connected). No causal language; reports what happened only. When not
+// connected, shows a connect state. Every number traces to a real GA4 aggregation.
+function AiPerformancePanel({ perf, ga4Connected }: any) {
+  const measured = perf && perf.measured
+  const Wrap = ({ children }: any) => (
+    <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 16, overflow: 'hidden', marginBottom: '1.5rem' }}>
+      <div style={{ padding: '1.4rem 1.85rem 1.1rem', borderBottom: '1px solid ' + BORDER, background: 'linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)' }}>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.8)', margin: '0 0 0.3rem' }}>AI Performance Intelligence</p>
+        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.35rem', fontWeight: 300, color: WHITE, margin: 0, lineHeight: 1.25 }}>Is AI visibility driving real traffic to your website?</p>
+      </div>
+      {children}
+    </div>
+  )
+
+  // Not connected (or no usable data yet) → honest connect state, no fabricated numbers.
+  if (!measured) {
+    return (
+      <Wrap>
+        <div style={{ padding: '2rem 1.85rem', textAlign: 'center' }}>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.86rem', color: TEXT, margin: '0 0 0.5rem', fontWeight: 600 }}>{ga4Connected ? 'Measuring your AI traffic' : 'Connect Google Analytics to see results'}</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT_MUTED, margin: '0 auto', lineHeight: 1.6, maxWidth: 460 }}>{ga4Connected
+            ? 'Your property is connected. As soon as your next analysis runs, this will show how much traffic AI assistants send to your website, which platforms, and how it trends.'
+            : 'Once you connect your Google Analytics in Settings, SwissNet will measure how much traffic ChatGPT, Perplexity, Google AI and others send directly to your website — and whether it converts.'}</p>
+        </div>
+      </Wrap>
+    )
+  }
+
+  const fmt = (n: number | null) => n === null || n === undefined ? '—' : n.toLocaleString()
+  const pct = (n: number | null) => n === null || n === undefined ? '—' : n + '%'
+  const change = perf.ai_sessions_change_pct
+  const PLAT_COL: Record<string, string> = { ChatGPT: '#10a37f', Perplexity: '#20808d', Gemini: '#4285f4', Claude: GOLD, Copilot: '#0078d4', 'Bing / Copilot': '#0078d4' }
+
+  return (
+    <Wrap>
+      <div style={{ padding: '1.5rem 1.85rem' }}>
+        {/* Headline numbers */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+          {[
+            { label: 'AI sessions', value: fmt(perf.ai_sessions), sub: change !== null ? ((change >= 0 ? '↑ ' : '↓ ') + Math.abs(change) + '% vs last period') : 'this period', subcol: change !== null ? (change >= 0 ? ADV_GREEN_C : RED) : TEXT_MUTED },
+            { label: 'Share of all traffic', value: pct(perf.ai_share_pct), sub: 'of total sessions', subcol: TEXT_MUTED },
+            { label: 'AI conversion rate', value: pct(perf.ai_conversion_rate), sub: perf.ai_conversions !== null ? fmt(perf.ai_conversions) + ' conversions' : '', subcol: TEXT_MUTED },
+            { label: 'AI revenue', value: perf.ai_revenue === null ? 'Not tracked' : ('CHF ' + fmt(perf.ai_revenue)), sub: perf.ai_revenue === null ? 'connect revenue tracking' : 'this period', subcol: TEXT_MUTED },
+          ].map((k, i) => (
+            <div key={i} style={{ background: BG, borderRadius: 10, padding: '1rem 1.15rem' }}>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.5rem' }}>{k.label}</p>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 400, color: TEXT, margin: '0 0 0.2rem', lineHeight: 1 }}>{k.value}</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: k.subcol, margin: 0 }}>{k.sub}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* By platform */}
+        {perf.by_platform && perf.by_platform.length > 0 && (
+          <div style={{ marginBottom: perf.top_ai_landing_pages?.length ? '1.5rem' : 0 }}>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT, margin: '0 0 0.8rem' }}>Traffic by AI platform</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+              {perf.by_platform.map((pl: any) => {
+                const col = PLAT_COL[pl.platform] || GOLD
+                const maxS = perf.by_platform[0].sessions || 1
+                return (
+                  <div key={pl.platform} style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', fontWeight: 500, color: TEXT, width: 110, flexShrink: 0 }}>{pl.platform}</span>
+                    <div style={{ flex: 1, height: 8, background: 'rgba(42,26,14,0.06)', borderRadius: 4, overflow: 'hidden' }}>
+                      <div style={{ width: Math.max(2, Math.round((pl.sessions / maxS) * 100)) + '%', height: '100%', background: col, borderRadius: 4 }} />
+                    </div>
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', fontWeight: 700, color: TEXT, width: 54, textAlign: 'right', flexShrink: 0 }}>{fmt(pl.sessions)}</span>
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: TEXT_MUTED, width: 70, textAlign: 'right', flexShrink: 0 }}>{pl.conversion_rate === null ? '' : pl.conversion_rate + '% conv'}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Top AI landing pages */}
+        {perf.top_ai_landing_pages && perf.top_ai_landing_pages.length > 0 && (
+          <div>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT, margin: '0 0 0.8rem' }}>Where AI visitors land</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              {perf.top_ai_landing_pages.map((pg: any, i: number) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.55rem 0.85rem', background: BG, borderRadius: 7, border: '1px solid ' + BORDER }}>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pg.path}</span>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: GOLD, flexShrink: 0, marginLeft: '1rem' }}>{fmt(pg.sessions)} sessions</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: TEXT_MUTED, margin: '1.25rem 0 0', lineHeight: 1.5, fontStyle: 'italic' }}>Measured from your Google Analytics over the last {perf.period_days || 28} days. This reports what happened — it does not claim a cause.</p>
+      </div>
+    </Wrap>
+  )
+}
+
 function AdvisorV2Body({ adv, memory, hotel, savedAt }: any) {
   const [openCase, setOpenCase] = useState<number | null>(null)
   const cases = (adv.top_moves || []).filter((m: any) => m.canonicalRecommendation?.case)
@@ -3490,6 +3587,8 @@ function AdvisorTab({ hotel }: any) {
       {!loading && adv && (
         <>
           <AdvisorV2Body adv={adv} memory={memory} hotel={hotel} savedAt={savedAt} />
+
+          <AiPerformancePanel perf={adv.ai_performance} ga4Connected={hotel?.ga4_status === 'connected'} />
 
           {adv?.visibility_model && (
             <>
