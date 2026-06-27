@@ -3614,6 +3614,100 @@ function AiPerformancePanel({ perf, ga4Connected }: any) {
   )
 }
 
+// ── AI KNOWLEDGE INTEGRITY (manual, read-only) ──
+function KnowledgeIntegrityCard({ hotelId }: any) {
+  const [rows, setRows] = useState<any[]>([])
+  const [loaded, setLoaded] = useState(false)
+  const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    if (!hotelId) { setLoaded(true); return }
+    const load = async () => {
+      try {
+        const { createClient } = await import('@supabase/supabase-js')
+        const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+        const { data } = await sb.from('knowledge_integrity').select('*').eq('hotel_id', hotelId).order('created_at', { ascending: false })
+        setRows(data || [])
+      } catch {} finally { setLoaded(true) }
+    }
+    load()
+  }, [hotelId])
+
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
+
+  const n = rows.length
+  const hasIssues = n > 0
+  const accent = hasIssues ? RED : ADV_GREEN_C
+
+  return (
+    <>
+      <button onClick={() => hasIssues && setOpen(true)} style={{ width: '100%', textAlign: 'left', cursor: hasIssues ? 'pointer' : 'default', background: WHITE, border: '1px solid ' + (hasIssues ? 'rgba(220,38,38,0.25)' : BORDER), borderRadius: 14, padding: '1.25rem 1.4rem', display: 'block' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.6rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: accent, flexShrink: 0 }} />
+            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 700, color: TEXT }}>AI Knowledge Integrity</span>
+          </div>
+          {hasIssues && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.95rem', color: TEXT_MUTED }}>\u203a</span>}
+        </div>
+        {!loaded && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: '0.7rem 0 0' }}>Checking\u2026</p>}
+        {loaded && hasIssues && (
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: TEXT, margin: '0.7rem 0 0', lineHeight: 1.5 }}>
+            <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: RED, fontWeight: 600 }}>{n}</span>
+            {' '}{n === 1 ? 'source is teaching AI' : 'sources are teaching AI'} something inaccurate about this hotel. Tap to review.
+          </p>
+        )}
+        {loaded && !hasIssues && (
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT_MUTED, margin: '0.7rem 0 0', lineHeight: 1.5 }}>No inaccuracies on record. The sources AI learns from are reporting correct information.</p>
+        )}
+      </button>
+
+      {open && hasIssues && (
+        <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(42,26,14,0.55)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '4vh 1rem', zIndex: 1000, overflowY: 'auto' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: BG, borderRadius: 18, maxWidth: 760, width: '100%', boxShadow: '0 20px 60px rgba(42,26,14,0.3)', overflow: 'hidden' }}>
+            <div style={{ background: 'linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)', padding: '1.75rem 2rem', position: 'relative' }}>
+              <button onClick={() => setOpen(false)} style={{ position: 'absolute', top: '1.1rem', right: '1.25rem', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.7)', fontSize: '1.4rem', cursor: 'pointer', lineHeight: 1 }}>\u00d7</button>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.75)', margin: '0 0 0.4rem' }}>AI Knowledge Integrity</p>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.7rem', fontWeight: 400, color: WHITE, margin: 0, lineHeight: 1.15 }}>What external sources are teaching AI</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: 'rgba(255,255,255,0.8)', margin: '0.6rem 0 0', lineHeight: 1.55, maxWidth: '60ch' }}>These pages are cited by AI assistants but contain information that conflicts with this hotel&rsquo;s confirmed facts.</p>
+            </div>
+            <div style={{ padding: '1.75rem 2rem', display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+              {rows.map((r: any, i: number) => (
+                <div key={r.id || i} style={{ border: '1px solid ' + BORDER, borderLeft: '4px solid ' + RED, borderRadius: 12, background: WHITE, padding: '1.25rem 1.4rem' }}>
+                  <div style={{ marginBottom: '0.9rem' }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: RED, margin: '0 0 0.3rem' }}>Incorrect claim</p>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.9rem', fontWeight: 600, color: TEXT, margin: 0, lineHeight: 1.45 }}>&ldquo;{r.incorrect_claim}&rdquo;</p>
+                  </div>
+                  <div style={{ marginBottom: '0.9rem' }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.3rem' }}>Source</p>
+                    <a href={r.source_url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: BLUE, margin: 0, lineHeight: 1.4, wordBreak: 'break-all', textDecoration: 'none' }}>{r.source_url}</a>
+                  </div>
+                  <div style={{ marginBottom: '0.9rem' }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: ADV_GREEN_C, margin: '0 0 0.3rem' }}>Correct information</p>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, margin: 0, lineHeight: 1.5 }}>{r.correct_information}</p>
+                  </div>
+                  <div style={{ marginBottom: '0.9rem' }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.3rem' }}>Why this matters</p>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, margin: 0, lineHeight: 1.5 }}>{r.why_it_matters}</p>
+                  </div>
+                  <div style={{ paddingTop: '0.9rem', borderTop: '1px solid ' + BORDER }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: GOLD, margin: '0 0 0.3rem' }}>Recommended action</p>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', fontWeight: 600, color: TEXT, margin: 0, lineHeight: 1.5 }}>{r.recommended_action}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
 function AdvisorV2Body({ adv, memory, hotel, savedAt }: any) {
   const [openCase, setOpenCase] = useState<number | null>(null)
   const cases = (adv.top_moves || []).filter((m: any) => m.canonicalRecommendation?.case)
@@ -3662,6 +3756,7 @@ function AdvisorV2Body({ adv, memory, hotel, savedAt }: any) {
         <div>
           <AdvSectionLabel title="Activity Since Last Audit" />
           <ActivityPanel memory={memory} />
+          <div style={{ marginTop: '1rem' }}><KnowledgeIntegrityCard hotelId={hotel?.id} /></div>
         </div>
       </div>
 
