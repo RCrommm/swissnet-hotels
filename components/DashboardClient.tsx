@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { buildRoadmap } from '@/lib/recommendation-roadmap'
 
 const GOLD = '#C9A84C'
 const GOLD_LIGHT = 'rgba(201,169,76,0.10)'
@@ -3023,6 +3024,33 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
                 <code style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.7rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: TEXT, background: BG, padding: '5px 11px', borderRadius: 5, border: '1px solid ' + BORDER, wordBreak: 'break-all' }}>{rec.targeting.canonical_page} <span style={{ color: TEXT_MUTED }}>⊘</span></code>
               )}
             </Sec>
+            {(() => {
+              const rm = buildRoadmap(rec)
+              const hasAny = rm.quickWins.length > 0 || rm.nextImprovements.length > 0 || rm.strategicProject
+              if (!hasAny) return null
+              const Tier = ({ band, label, time, steps, col }: any) => steps.length === 0 ? null : (
+                <div style={{ marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.6rem', marginBottom: '0.5rem' }}>
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.04em', color: col }}>{label}</span>
+                    {time && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED }}>{time}</span>}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    {steps.map((st: any, j: number) => (
+                      <div key={j} style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', padding: '0.6rem 0.85rem', background: BG, borderRadius: 8, border: '1px solid ' + BORDER, borderLeft: '3px solid ' + col }}>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, margin: 0, lineHeight: 1.5 }}>{st.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+              return (
+                <Sec icon="⛓" title="Implementation roadmap">
+                  <Tier label="QUICK WINS" time="~30 min each" steps={rm.quickWins} col={ADV_GREEN_C} />
+                  <Tier label="NEXT IMPROVEMENTS" time="2–3 hours" steps={rm.nextImprovements} col={GOLD} />
+                  {rm.strategicProject && <Tier label="STRATEGIC PROJECT" time="1–2 days" steps={[rm.strategicProject]} col={'#8A6D1F'} />}
+                </Sec>
+              )
+            })()}
             {c.expected_result && (
               <Sec icon="◷" title="Expected outcome">
                 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', lineHeight: 1.65, color: TEXT, margin: 0 }}>{c.expected_result}</p>
