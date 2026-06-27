@@ -3415,6 +3415,15 @@ function ScorePanel({ model }: any) {
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
         {shown.map((d: any) => {
+          if (d.applicable === false || d.band === 'na') {
+            return (
+              <div key={d.dimension} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', opacity: 0.6 }}>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 500, color: TEXT_MUTED, width: 96, flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.label}</span>
+                <div style={{ flex: 1, height: 7, background: 'rgba(42,26,14,0.04)', borderRadius: 4 }} />
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: TEXT_MUTED, textAlign: 'right', flexShrink: 0, whiteSpace: 'nowrap' }}>Not offered</span>
+              </div>
+            )
+          }
           const col = advDimColor(d.band)
           return (
             <div key={d.dimension} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>

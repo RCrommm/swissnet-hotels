@@ -6,12 +6,20 @@
 //   (b) a real, well-built page (audit importantPages)
 //   (c) answerable guest questions (audit recommendation.results YES vs NO/PARTIAL)
 // The score is their weighted blend, so it is always defensible. GPT never sets numbers.
+//
+// APPLICABILITY (owner-confirmed): a dimension the hotel genuinely does not offer
+// (e.g. no spa) is marked applicable=false, shown as "Not offered", and EXCLUDED from
+// the overall — never scored as a weakness. This is driven ONLY by the owner-confirmed
+// `notOffered` list, NEVER inferred from a low score. "Doesn't do this" and "does this
+// badly" are different conclusions; only the former excludes.
 
 export interface DimensionScore {
   dimension: string
   label: string
   score: number
-  band: 'strong' | 'moderate' | 'weak' | 'absent'
+  band: 'strong' | 'moderate' | 'weak' | 'absent' | 'na'
+  applicable: boolean
+  na_reason?: string
   inputs: { facts: number; pageScore: number | null; pageExists: boolean; qTotal: number; qAnswerable: number }
   evidence: string[]
 }
@@ -31,11 +39,22 @@ function pathOf(u: string): string {
   try { return new URL(u).pathname.replace(/\/$/, '').toLowerCase() || '/' } catch { return (u || '').toLowerCase() }
 }
 
-export function buildVisibilityModel(facts: any[], auditResult: any): { dimensions: DimensionScore[]; overall: number } {
+export function buildVisibilityModel(facts: any[], auditResult: any, notOffered: string[] = []): { dimensions: DimensionScore[]; overall: number } {
   const pages = (auditResult?.importantPages || [])
   const qResults = (auditResult?.recommendation?.results || [])
+  const naSet = new Set((notOffered || []).map(s => String(s || '').toLowerCase().trim()).filter(Boolean))
 
   const dims: DimensionScore[] = DIMENSIONS.map(D => {
+    // ── NOT OFFERED (owner-confirmed): excluded, shown separately, never scored as weak. ──
+    if (naSet.has(D.dimension)) {
+      return {
+        dimension: D.dimension, label: D.label, score: 0, band: 'na', applicable: false,
+        na_reason: `This hotel does not offer ${D.label.toLowerCase()}.`,
+        inputs: { facts: 0, pageScore: null, pageExists: false, qTotal: 0, qAnswerable: 0 },
+        evidence: ['Not offered by this hotel — excluded from the AI Visibility score.'],
+      }
+    }
+
     const dimFacts = (facts || []).filter(f => D.factCats.test((f.category || '').toLowerCase()))
     const factCount = dimFacts.length
 
@@ -67,11 +86,16 @@ export function buildVisibilityModel(facts: any[], auditResult: any): { dimensio
     else evidence.push(`No dedicated page AI can retrieve`)
     if (qTotal) evidence.push(`AI can answer ${qAnswerable}/${qTotal} guest question${qTotal > 1 ? 's' : ''} here${qPartial ? ` (${qPartial} partial)` : ''}`)
 
-    return { dimension: D.dimension, label: D.label, score, band, inputs: { facts: factCount, pageScore, pageExists, qTotal, qAnswerable }, evidence }
+    return { dimension: D.dimension, label: D.label, score, band, applicable: true, inputs: { facts: factCount, pageScore, pageExists, qTotal, qAnswerable }, evidence }
   })
 
-  const commercial = dims.filter(d => !DIMENSIONS.find(D => D.dimension === d.dimension)?.hygiene)
-  const overall = Math.round(commercial.reduce((s, d) => s + d.score, 0) / Math.max(1, commercial.length))
+  // Overall = mean of the COMMERCIAL dimensions that are APPLICABLE.
+  // Excludes hygiene (Practical & trust) AND any owner-confirmed not-offered dimension.
+  const scored = dims.filter(d => {
+    const def = DIMENSIONS.find(D => D.dimension === d.dimension)
+    return d.applicable !== false && !def?.hygiene
+  })
+  const overall = Math.round(scored.reduce((s, d) => s + d.score, 0) / Math.max(1, scored.length))
 
   return { dimensions: dims, overall }
 }

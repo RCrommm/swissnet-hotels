@@ -352,6 +352,14 @@ export async function POST(req: Request) {
 
     const { data: brain } = await sb.from('hotel_brains').select('id, hotel_name, city, knowledge').eq('hotel_id', hotelId).order('created_at', { ascending: false }).limit(1).single()
     if (!brain) return NextResponse.json({ error: 'No Hotel Brain found. Run /api/hotel-brain first.' }, { status: 404 })
+
+    // Owner-confirmed list of dimensions this hotel genuinely does not offer (e.g. no spa).
+    // Excluded from the AI Visibility score, shown as "Not offered" — never scored as weak.
+    let notOffered: string[] = []
+    try {
+      const { data: hotelRow } = await sb.from('hotels').select('not_offered').eq('id', hotelId).single()
+      if (Array.isArray(hotelRow?.not_offered)) notOffered = hotelRow.not_offered
+    } catch {}
     const { data: facts } = await sb.from('hotel_facts').select('category, fact_key, fact_value, evidence_quote, page_url, confidence').eq('brain_id', brain.id)
 
     let findings: any[] = []
@@ -375,7 +383,7 @@ export async function POST(req: Request) {
     } catch {}
 
     // ── AI VISIBILITY MODEL: compute how AI currently "sees" the hotel (deterministic) ──
-    const visibilityModel = buildVisibilityModel(facts || [], latestAuditResult)
+    const visibilityModel = buildVisibilityModel(facts || [], latestAuditResult, notOffered)
 
     // ── KNOWLEDGE GRAPH: the site's information architecture (deterministic) ──
     // The consultant CONSUMES this instead of re-inferring website structure.
