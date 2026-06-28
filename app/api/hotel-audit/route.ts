@@ -4,6 +4,7 @@ import { classifyGap, honestFindingTitle, inferTopic } from '@/lib/evidence'
 import { buildInventory } from '@/lib/page-discovery'
 import { buildDemandModel } from '@/lib/demand'
 import { EXPERIENCE_BY_KEY } from '@/lib/experiences'
+import { intentsToEvaluate, getCatalogueForArchetype } from '@/lib/intent-catalogue'
 
 
 // ─── MEMORY LAYER: deterministic finding keys + store + diff vs previous run ───
@@ -400,7 +401,16 @@ function recSchema() {
 async function runReadiness(prompts: any[], pages: any[], openaiKey: string) {
   if (!prompts.length || !pages.length) return []
   const corpus = pages.map(p => `URL: ${p.url}\nHEADINGS: ${(p.headings || []).slice(0, 12).join(' | ')}\nTEXT: ${(p.text || '').slice(0, 1400)}`).join('\n\n---\n\n')
-  const pList = prompts.map((q, i) => `[${i}] ${q.question}`).join('\n')
+  // Catalogue prompts carry the recommendability question + the concrete evidence the site
+  // must show for a confident YES. When present, grade against THAT (recommendability), not
+  // the bare question — this is what makes a PARTIAL/NO point at specific missing evidence.
+  const pList = prompts.map((q, i) => {
+    if (q.audit_question) {
+      const exp = Array.isArray(q.expected_evidence) && q.expected_evidence.length ? `\n    Evidence the site must show for YES: ${q.expected_evidence.join('; ')}` : ''
+      return `[${i}] ${q.audit_question}${exp}`
+    }
+    return `[${i}] ${q.question}`
+  }).join('\n')
   try {
     const res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
@@ -427,10 +437,10 @@ async function runReadiness(prompts: any[], pages: any[], openaiKey: string) {
       }
       let conf = Number.isFinite(a.confidence) ? Math.max(0, Math.min(100, a.confidence)) : 0
       if (readiness === 'NO') conf = Math.min(conf, 20)
-      return { question: q.question, category: q.category || 'overall', intent_id: q.intent_id || 'other', priority: q.priority || 'medium', readiness, evidence: readiness === 'NO' ? '' : ev, reasons: Array.isArray(a.reasons) ? a.reasons.slice(0, 4) : [], url: readiness === 'NO' ? '' : (a.url || ''), confidence: conf, pages: Array.isArray(a.pages) ? a.pages.slice(0, 5) : [] }
+      return { question: q.question, audit_question: q.audit_question || '', expected_evidence: q.expected_evidence || [], stage: q.stage || '', category: q.category || 'overall', intent_id: q.intent_id || 'other', priority: q.priority || 'medium', readiness, evidence: readiness === 'NO' ? '' : ev, reasons: Array.isArray(a.reasons) ? a.reasons.slice(0, 4) : [], url: readiness === 'NO' ? '' : (a.url || ''), confidence: conf, pages: Array.isArray(a.pages) ? a.pages.slice(0, 5) : [] }
     })
   } catch {
-    return prompts.map(q => ({ question: q.question, category: q.category || 'overall', intent_id: q.intent_id || 'other', priority: q.priority || 'medium', readiness: 'NO', evidence: '', reasons: ['Not evaluated'], url: '', confidence: 0, pages: [] }))
+    return prompts.map(q => ({ question: q.question, audit_question: q.audit_question || '', expected_evidence: q.expected_evidence || [], stage: q.stage || '', category: q.category || 'overall', intent_id: q.intent_id || 'other', priority: q.priority || 'medium', readiness: 'NO', evidence: '', reasons: ['Not evaluated'], url: '', confidence: 0, pages: [] }))
   }
 }
 
@@ -873,14 +883,35 @@ export async function POST(req: Request) {
     // has no confirmed profile, buildDemandModel returns a generic fallback and the generator
     // behaves exactly as before — so un-profiled hotels are unaffected.
     let demandModel: any = null
+    let confirmedArchetype: string | null = null
     if (hotelId && sbUrl && sbKey) {
       try {
         const sb = createClient(sbUrl, sbKey)
         const { data: prof } = await sb.from('hotel_profile').select('*').eq('hotel_id', hotelId).maybeSingle()
         demandModel = buildDemandModel(prof || null, { location: effCity })
+        if (prof?.taxonomy_status === 'confirmed' && prof?.archetype) confirmedArchetype = prof.archetype
       } catch { demandModel = buildDemandModel(null, { location: effCity }) }
     }
-    prompts = await generateQuestions({ name: effName, city: effCity, type: effType, pages: detectedPages, amenities: amenitySignals, demand: demandModel }, openaiKey)
+    // ── V3 CATALOGUE PATH: if this hotel's confirmed archetype owns a canonical intent
+    // catalogue, evaluate the site against THAT fixed set (recommendability) instead of
+    // letting GPT invent questions. Deterministic intents → stable keys → no churn. Any
+    // hotel without a catalogue falls straight through to the existing GPT generator,
+    // so all other hotels are completely unaffected.
+    const catalogue = getCatalogueForArchetype(confirmedArchetype)
+    if (catalogue) {
+      const intents = intentsToEvaluate(confirmedArchetype, notOffered)
+      prompts = intents.map(it => ({
+        question: it.traveller_intent || it.audit_question,
+        audit_question: it.audit_question,
+        expected_evidence: it.expected_evidence,
+        stage: it.stage,
+        category: it.category,
+        intent_id: it.intent_id,
+        priority: it.priority,
+      }))
+    } else {
+      prompts = await generateQuestions({ name: effName, city: effCity, type: effType, pages: detectedPages, amenities: amenitySignals, demand: demandModel }, openaiKey)
+    }
     if (!prompts.length && sbUrl && sbKey) {
       try {
         const sb = createClient(sbUrl, sbKey)
