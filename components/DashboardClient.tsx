@@ -2994,6 +2994,12 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
   const hasGa4 = Array.isArray(m.behavioural_claims) && m.behavioural_claims.length > 0
   const hasGsc = !!(rec.future?.search && rec.future.search.measured_pages?.length > 0 && rec.future.search.impressions !== null)
 
+  // V3 recommendability — what AI can / partly / can't answer for THIS Case's theme.
+  // When present (catalogue hotels), this clean per-theme coverage replaces both the old
+  // "AI readiness" list and the multi-source "Evidence" pile below.
+  const reco = rec.recommendability
+  const hasReco = !!(reco && reco.has_catalogue && (((reco.answerable && reco.answerable.length) || 0) + ((reco.partially_answerable && reco.partially_answerable.length) || 0) + ((reco.not_answerable && reco.not_answerable.length) || 0) > 0))
+
   const activeSignals = [hasWebsite, hasQuestions, hasReviews, hasTechnical, hasGa4, hasGsc].filter(Boolean).length
   const confidence = activeSignals >= 4 ? { label: 'Very High', col: ADV_GREEN_C }
     : activeSignals === 3 ? { label: 'High', col: ADV_GREEN_C }
@@ -3170,8 +3176,67 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT_MUTED, margin: '0.85rem 0 0', fontStyle: 'italic', lineHeight: 1.5 }}>Completed items are verified automatically by comparing each audit with the last — they move to ✓ once your next audit confirms them.</p>
             </Sec>
 
-            {/* 5 — AI READINESS */}
-            {hasQuestions && (
+            {/* 5a — WHAT AI CAN & CAN'T ANSWER FOR THIS THEME (recommendability) */}
+            {hasReco && (
+              <Sec title={`What AI can answer about your ${topicTitle.toLowerCase()}`}>
+                {reco.answerable.length > 0 && (
+                  <div style={{ marginBottom: (reco.partially_answerable.length || reco.not_answerable.length) ? '1.15rem' : 0 }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: ADV_GREEN_C, margin: '0 0 0.5rem' }}>Covered</p>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      {reco.answerable.map((intent: string, j: number) => (
+                        <li key={j} style={{ display: 'flex', gap: '0.55rem', alignItems: 'flex-start' }}>
+                          <span style={{ color: ADV_GREEN_C, fontSize: '0.82rem', flexShrink: 0, marginTop: '0.05rem' }}>✓</span>
+                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, lineHeight: 1.45 }}>{intent}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {reco.partially_answerable.length > 0 && (
+                  <div style={{ marginBottom: reco.not_answerable.length ? '1.15rem' : 0 }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: ADV_AMBER, margin: '0 0 0.5rem' }}>Partly covered</p>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                      {reco.partially_answerable.map((x: any, j: number) => (
+                        <li key={j} style={{ display: 'flex', gap: '0.55rem', alignItems: 'flex-start' }}>
+                          <span style={{ color: ADV_AMBER, fontSize: '0.82rem', flexShrink: 0, marginTop: '0.05rem' }}>◐</span>
+                          <div>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, lineHeight: 1.45 }}>{x.intent}</span>
+                            {Array.isArray(x.evidence_needed) && x.evidence_needed.length > 0 && (
+                              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', color: TEXT_MUTED, margin: '0.25rem 0 0', lineHeight: 1.5 }}>To cover this fully, your site needs to show: {x.evidence_needed.join('; ')}.</p>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {reco.not_answerable.length > 0 && (
+                  <div>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.5rem' }}>Not yet covered</p>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                      {reco.not_answerable.map((x: any, j: number) => (
+                        <li key={j} style={{ display: 'flex', gap: '0.55rem', alignItems: 'flex-start' }}>
+                          <span style={{ color: 'rgba(42,26,14,0.4)', fontSize: '0.82rem', flexShrink: 0, marginTop: '0.05rem' }}>✗</span>
+                          <div>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, lineHeight: 1.45 }}>{x.intent}</span>
+                            {Array.isArray(x.evidence_needed) && x.evidence_needed.length > 0 && (
+                              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', color: TEXT_MUTED, margin: '0.25rem 0 0', lineHeight: 1.5 }}>Your site needs to show: {x.evidence_needed.join('; ')}.</p>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: '1rem 0 0', fontStyle: 'italic', lineHeight: 1.5 }}>These are the guest questions AI tries to answer about your {topicTitle.toLowerCase()} from your website. The ones not yet covered are why it hesitates to recommend you for them.</p>
+              </Sec>
+            )}
+
+            {/* 5 — AI READINESS (hidden when the coverage view above replaces it) */}
+            {!hasReco && hasQuestions && (
               <Sec title="AI readiness">
                 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: ADV_AMBER, margin: '0 0 0.5rem' }}>Still missing</p>
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
@@ -3191,8 +3256,8 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
               </Sec>
             )}
 
-            {/* 6 — EVIDENCE (collapsed, grouped) */}
-            {(hasWebsite || hasReviews || hasQuestions || hasTechnical || hasGa4 || hasGsc) && (
+            {/* 6 — EVIDENCE (collapsed, grouped) — replaced by the coverage view for catalogue hotels */}
+            {!hasReco && (hasWebsite || hasReviews || hasQuestions || hasTechnical || hasGa4 || hasGsc) && (
               <div style={{ paddingTop: '1.5rem', borderTop: '1px solid ' + BORDER, marginTop: '1.5rem' }}>
                 <button onClick={() => setShowEvidence(s => !s)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}>
                   <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED }}>Evidence</span>

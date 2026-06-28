@@ -104,7 +104,7 @@ export function toCanonicalRecommendation(move: any, ctx: Ctx): Recommendation {
                                 // belongs on a separate booking surface, not in rooms/dining.
       )
     : []
-  const recoIntent = (r: any) => r.traveller_intent || r.audit_question || r.question
+  const recoIntent = (r: any) => r.traveller_intent || r.question || r.audit_question
   const recommendability = {
     // YES = AI can fully do this. PARTIAL surfaced separately as "partly" so the strength
     // list is never misleadingly empty when grading is strict (most rec-stage = PARTIAL).
