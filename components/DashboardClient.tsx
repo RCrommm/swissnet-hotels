@@ -3164,10 +3164,10 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
             {c.diagnosis}{c.business_consequence ? <span style={{ color: TEXT_MUTED }}> {c.business_consequence}</span> : ''}
           </p>
 
-          {/* RECOMMENDATION — the one thing to leave with */}
+          {/* OBJECTIVE — the outcome to reach (never a single prescription) */}
           <div style={{ marginTop: '1.5rem', background: GOLD_LIGHT, border: '1px solid rgba(201,169,76,0.35)', borderLeft: '3px solid ' + GOLD, borderRadius: 12, padding: '1.25rem 1.4rem' }}>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A6D1F', margin: '0 0 0.55rem' }}>{verify ? 'What we need' : 'Recommended action'}</p>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.95rem', fontWeight: 600, lineHeight: 1.5, color: TEXT, margin: 0 }}>{c.recommendation}</p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A6D1F', margin: '0 0 0.55rem' }}>{verify ? 'What we need' : 'The objective'}</p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.95rem', fontWeight: 600, lineHeight: 1.5, color: TEXT, margin: 0 }}>{c.objective || c.recommendation}</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.9rem' }}>
               {rec.targeting?.canonical_page && (
                 <code style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: TEXT, background: WHITE, padding: '5px 11px', borderRadius: 5, border: '1px solid ' + BORDER, wordBreak: 'break-all' }}>{rec.targeting.canonical_page}</code>
@@ -3178,6 +3178,21 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
               </span>
             </div>
           </div>
+
+          {/* WAYS TO GET THERE — evidence-backed options; the hotel chooses */}
+          {Array.isArray(c.implementation_options) && c.implementation_options.length > 0 && (
+            <Block label="Ways to get there">
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', color: TEXT_MUTED, fontStyle: 'italic', margin: '0 0 0.75rem', lineHeight: 1.5 }}>Any of these can close the gap — choose what fits your site. Your current page structure is fine unless connecting things would genuinely help.</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                {c.implementation_options.map((o: any, j: number) => (
+                  <div key={j} style={{ padding: '0.85rem 1rem', background: BG, border: '1px solid ' + BORDER, borderRadius: 10 }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', fontWeight: 600, color: TEXT, margin: '0 0 0.2rem' }}>{o.label}</p>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.5 }}>{o.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </Block>
+          )}
 
           {/* AI READINESS — centerpiece */}
           {hasReco ? (
