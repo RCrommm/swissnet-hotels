@@ -2976,6 +2976,28 @@ function PriorityCard({ m, i, onOpen }: any) {
   )
 }
 
+// Deterministic plain-language translator for technical implementation steps.
+// Keeps the literal instruction (the web developer needs it verbatim) and adds a
+// GM-facing "what this does for guests" line. No GPT — a fixed map from real schema/
+// structured-data terms to their real guest-facing purpose. Returns '' for steps that
+// are already plain (content actions), so only the jargon-heavy lines get annotated.
+function plainMeaning(step: string): string {
+  const s = (step || '').toLowerCase()
+  const parts: string[] = []
+  const has = (re: RegExp) => re.test(s)
+  // Only annotate if the step actually references a technical/structured-data mechanism.
+  const isTechnical = has(/schema|structured data|json-?ld|quick facts|ai summary|machine-?readable|markup|crawl/)
+  if (!isTechnical) return ''
+  if (has(/review|aggregaterating|rating/)) parts.push('lets AI read your guest ratings and cite them when recommending you')
+  if (has(/faqpage|\bfaq\b/)) parts.push('lets AI read your answers as ready-to-quote questions and answers')
+  if (has(/restaurant/)) parts.push('helps AI understand each venue as its own dining destination')
+  if (has(/event/)) parts.push('lets AI surface your events and meeting spaces correctly')
+  if (has(/quick facts|ai summary/)) parts.push('a short labelled fact list AI can lift directly')
+  if (!parts.length) parts.push('behind-the-scenes labelling AI reads to understand your hotel as facts, not guesswork')
+  const why = parts.length === 1 ? parts[0] : parts.slice(0, -1).join('; ') + '; and ' + parts[parts.length - 1]
+  return 'Your web developer adds this to the page — invisible to guests. It ' + why + '.'
+}
+
 // Executive brief — single-column, verdict-first. Reads only real data on the
 // canonicalRecommendation; no invented scores, percentages, or impact estimates.
 function CaseModal({ m, i, onClose, model, savedAt }: any) {
@@ -3276,8 +3298,16 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
                   {phases.map((p, j) => (
                     <div key={j} style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start', marginBottom: '0.7rem' }}>
                       <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: GOLD, background: GOLD_LIGHT, border: '1px solid rgba(201,169,76,0.3)', borderRadius: 5, padding: '0.3rem 0', width: 52, textAlign: 'center', flexShrink: 0, marginTop: '0.05rem' }}>{p.tag}</span>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                        {p.items.map((s, k) => <span key={k} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, lineHeight: 1.5 }}>{s}</span>)}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                        {p.items.map((s, k) => {
+                          const plain = plainMeaning(s)
+                          return (
+                            <div key={k}>
+                              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, lineHeight: 1.5 }}>{s}</span>
+                              {plain && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: '0.2rem 0 0', lineHeight: 1.5 }}>{plain}</p>}
+                            </div>
+                          )
+                        })}
                       </div>
                     </div>
                   ))}
