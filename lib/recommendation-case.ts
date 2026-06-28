@@ -58,14 +58,10 @@ export function deriveImplementationOptions(rec: Recommendation): { label: strin
     })
   }
 
-  // D — machine-readability: ONLY when a technical cause was actually found.
-  const tech = (rec.technical?.causes || []).map(c => c.fix).filter(Boolean)
-  if (tech.length) {
-    opts.push({
-      label: 'Strengthen the behind-the-scenes data',
-      detail: `Make the information machine-readable so AI can use it reliably — ${tech.slice(0, 2).join('; ')}.`,
-    })
-  }
+  // NOTE: technical / schema / machine-readability is deliberately NOT offered here.
+  // It is a site-wide structural concern that belongs to the single Fix-foundation case
+  // (__site__), not repeated onto every category card. Keeping it out of the per-category
+  // menu is what removes the echo and keeps category cards purely about CONTENT evidence.
 
   return opts.slice(0, 4)
 }
