@@ -35,9 +35,9 @@ async function fetchViaScrapingBee(url: string): Promise<{ status: number; text:
   const key = process.env.SCRAPINGBEE_API_KEY
   if (!key) return { status: 0, text: '' }
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), 20000)
+  const timer = setTimeout(() => controller.abort(), 25000)
   try {
-    const api = `https://app.scrapingbee.com/api/v1/?api_key=${key}&url=${encodeURIComponent(url)}&render_js=false`
+    const api = `https://app.scrapingbee.com/api/v1/?api_key=${key}&url=${encodeURIComponent(url)}&render_js=true&premium_proxy=true&country_code=ch`
     const res = await fetch(api, { signal: controller.signal })
     const text = res.ok ? (await res.text()).slice(0, 200000) : ''
     return { status: res.ok ? 200 : res.status, text }
@@ -49,8 +49,6 @@ async function fetchViaScrapingBee(url: string): Promise<{ status: number; text:
 }
 
 async function fetchPage(url: string): Promise<{ status: number; text: string }> {
-  // Try a direct fetch first (free). If the site blocks us (403/429/0/etc.),
-  // fall back to ScrapingBee, which renders as a real browser and gets through.
   const direct = await fetchDirect(url)
   if (direct.status === 200) return direct
   return await fetchViaScrapingBee(url)
@@ -63,7 +61,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const BATCH = 80
+  const BATCH = 30
+  const RETRY_AFTER_DAYS = 30
 
   const { data: partners } = await supabase
     .from('hotels')
@@ -79,8 +78,6 @@ export async function GET(request: Request) {
     .eq('region', 'Geneva')
     .gte('run_date', since30)
     .limit(10000)
-  // Rank URLs by how often they're cited, keep only the top 100 —
-  // the dashboard never displays beyond #100, so we never need to scan further.
   const counts: Record<string, number> = {}
   for (const c of (cites || [])) {
     if (c.source_url) counts[c.source_url] = (counts[c.source_url] || 0) + 1
@@ -92,12 +89,15 @@ export async function GET(request: Request) {
 
   const { data: done } = await supabase
     .from('page_mentions')
-    .select('source_url, hotel_id, http_status')
-  // Only "done" if we actually reached the page (200). Blocked/throttled/timed-out
-  // rows (403, 429, 0, etc.) stay eligible so the cron retries them next run.
+    .select('source_url, hotel_id, http_status, checked_at')
+  const cutoff = Date.now() - RETRY_AFTER_DAYS * 24 * 60 * 60 * 1000
   const doneSet = new Set(
     (done || [])
-      .filter((d: any) => d.http_status === 200)
+      .filter((d: any) => {
+        if (d.http_status === 200) return true
+        const age = d.checked_at ? new Date(d.checked_at).getTime() : 0
+        return age > cutoff
+      })
       .map((d: any) => `${d.source_url}|${d.hotel_id}`)
   )
 
