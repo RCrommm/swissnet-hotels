@@ -3324,6 +3324,31 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
             </div>
           )}
 
+          {/* WHAT DONE LOOKS LIKE — success criteria, bound strictly to the proven missing
+              evidence. This is the exact same data the next audit checks, so the verification
+              promise is honest. No GPT, no criteria beyond what's measured. */}
+          {(() => {
+            const criteria = [...new Set([
+              ...parItems.flatMap((x: any) => x.needs || []),
+              ...notItems.flatMap((x: any) => x.needs || []),
+            ].map((s: string) => String(s).trim()).filter(Boolean))]
+            if (!criteria.length) return null
+            return (
+              <Block label="What done looks like">
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', color: TEXT_MUTED, margin: '0 0 0.85rem', lineHeight: 1.5 }}>This is complete when your site shows:</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                  {criteria.map((cr: string, j: number) => (
+                    <div key={j} style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start' }}>
+                      <span style={{ width: 16, height: 16, borderRadius: 4, border: '1.5px solid ' + BORDER, flexShrink: 0, marginTop: '0.1rem' }} />
+                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, lineHeight: 1.45 }}>{cr}</span>
+                    </div>
+                  ))}
+                </div>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT_MUTED, margin: '0.9rem 0 0', fontStyle: 'italic', lineHeight: 1.5 }}>SwissNet checks for each of these on your next audit and marks them off automatically — this is exactly what the analysis measures, so nothing here is a guess.</p>
+              </Block>
+            )
+          })()}
+
           {/* EVIDENCE — Backed by chips */}
           {evGroups.length > 0 && (
             <div style={{ marginTop: '1.6rem', borderTop: '1px solid ' + BORDER, paddingTop: '1.6rem' }}>
