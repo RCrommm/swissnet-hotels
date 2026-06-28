@@ -2596,7 +2596,7 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId, rangeStart, range
             background: m === null ? BG : current.col,
             border: '1px solid ' + (m === null ? BORDER : current.col),
             padding: '3px 10px', borderRadius: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem', whiteSpace: 'nowrap' }}>
-          {current.label} <span style={{ fontSize: '0.5rem' }}>▾</span>
+          {current.label}
         </button>
         {open && (
           <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 4, background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, boxShadow: '0 4px 16px rgba(42,26,14,0.12)', zIndex: 20, overflow: 'hidden', minWidth: 120 }}>
