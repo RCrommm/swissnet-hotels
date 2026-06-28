@@ -3096,41 +3096,37 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
               {c.diagnosis}{c.business_consequence ? ' ' : ''}<span style={{ color: TEXT_MUTED, fontWeight: 400 }}>{c.business_consequence || ''}</span>
             </p>
 
-            {/* 2 — AI REASONING JOURNEY */}
-            {hasQuestions && (
-              <Sec title="How AI reached this">
-                {(() => {
-                  const q = proof.failed_questions[0]
-                  const page = rec.targeting?.canonical_page || 'your site'
-                  const Node = ({ children, tone }: any) => (
-                    <div style={{ background: tone === 'fail' ? 'rgba(180,69,47,0.06)' : tone === 'fix' ? 'rgba(63,125,91,0.07)' : BG, border: '1px solid ' + (tone === 'fail' ? 'rgba(180,69,47,0.25)' : tone === 'fix' ? 'rgba(63,125,91,0.3)' : BORDER), borderRadius: 9, padding: '0.7rem 0.95rem' }}>{children}</div>
-                  )
-                  const Arrow = () => <div style={{ display: 'flex', justifyContent: 'center', padding: '0.22rem 0' }}><span style={{ color: 'rgba(42,26,14,0.3)', fontSize: '0.85rem' }}>↓</span></div>
-                  return (
-                    <div>
-                      <Node>
-                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.2rem' }}>A guest asks AI</p>
-                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.84rem', fontWeight: 600, color: TEXT, margin: 0, lineHeight: 1.4 }}>&ldquo;{q}&rdquo;</p>
-                      </Node>
-                      <Arrow />
-                      <Node><p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, margin: 0, lineHeight: 1.4 }}>AI searches your website for the answer</p></Node>
-                      <Arrow />
-                      <Node tone="fail">
-                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#B4452F', margin: '0 0 0.2rem' }}>No clear answer found</p>
-                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, margin: 0, lineHeight: 1.4 }}>on <code style={{ fontFamily: 'monospace', fontSize: '0.74rem', background: WHITE, padding: '1px 6px', borderRadius: 4, border: '1px solid ' + BORDER }}>{page}</code></p>
-                      </Node>
-                      <Arrow />
-                      <Node><p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, margin: 0, lineHeight: 1.4 }}>AI hesitates to recommend you</p></Node>
-                      <Arrow />
-                      <Node tone="fix">
-                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: ADV_GREEN_C, margin: '0 0 0.2rem' }}>The fix</p>
-                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', fontWeight: 600, color: TEXT, margin: 0, lineHeight: 1.45 }}>{c.recommendation}</p>
-                      </Node>
-                    </div>
-                  )
-                })()}
-              </Sec>
-            )}
+            {/* 2 — AI REASONING JOURNEY (compact 3-step timeline) */}
+            {(() => {
+              const flowQ = (Array.isArray(proof.failed_questions) && proof.failed_questions[0]) || (reco && Array.isArray(reco.not_answerable) && reco.not_answerable[0] && reco.not_answerable[0].intent) || ''
+              if (!flowQ) return null
+              const page = rec.targeting?.canonical_page || 'your site'
+              const Step = ({ label, color, last, children }: any) => (
+                <div style={{ display: 'flex', gap: '0.7rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: color, marginTop: '0.3rem' }} />
+                    {!last && <span style={{ flex: 1, width: 1.5, background: BORDER, marginTop: 3 }} />}
+                  </div>
+                  <div style={{ paddingBottom: last ? 0 : '0.85rem', minWidth: 0 }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color, margin: '0 0 0.2rem' }}>{label}</p>
+                    {children}
+                  </div>
+                </div>
+              )
+              return (
+                <Sec title="How AI reached this">
+                  <Step label="A guest asks AI" color={TEXT_MUTED}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.84rem', fontWeight: 600, color: TEXT, margin: 0, lineHeight: 1.4 }}>&ldquo;{flowQ}&rdquo;</p>
+                  </Step>
+                  <Step label="Your site doesn't answer it" color="#B4452F">
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.4 }}>No clear answer on <code style={{ fontFamily: 'monospace', fontSize: '0.74rem', background: BG, padding: '1px 6px', borderRadius: 4, border: '1px solid ' + BORDER, color: TEXT }}>{page}</code></p>
+                  </Step>
+                  <Step label="The fix" color={ADV_GREEN_C} last>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', fontWeight: 600, color: TEXT, margin: 0, lineHeight: 1.45 }}>{c.recommendation}</p>
+                  </Step>
+                </Sec>
+              )
+            })()}
 
             {/* 3 — RECOMMENDATION */}
             <Sec title={verify ? 'What we need' : 'Recommendation'}>
