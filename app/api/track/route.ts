@@ -41,20 +41,19 @@ export async function GET(request: NextRequest) {
   // New: the click-ID store. SwissNet now owns this journey. ai_source left null for now
   // (resolved later by joining to the originating session). Best-effort — a failure here
   // must never block the redirect.
-  try {
-    await supabase.from('swissnet_clicks').insert([{
-      click_id,
-      hotel_id: hotel_id || null,
-      hotel_name: hotel_name || null,
-      ai_source: null,
-      source_page,
-      utm_campaign: campaign,
-      destination_url: destination,
-      visitor_ip,
-      user_agent,
-    }])
-  } catch (_) {
-    // swallow — tracking must not break the user's click-through
+  const { error: cidError } = await supabase.from('swissnet_clicks').insert([{
+    click_id,
+    hotel_id: hotel_id || null,
+    hotel_name: hotel_name || null,
+    ai_source: null,
+    source_page,
+    utm_campaign: campaign,
+    destination_url: destination,
+    visitor_ip,
+    user_agent,
+  }])
+  if (cidError) {
+    return NextResponse.json({ debug_swissnet_clicks_error: cidError }, { status: 200 })
   }
 
   // Build the destination URL with UTMs + the SwissNet click id.
