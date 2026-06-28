@@ -33,7 +33,8 @@ async function fetchPage(url: string): Promise<{ status: number; text: string }>
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const isVercelCron = request.headers.get('x-vercel-cron') === '1'
+  if (!isVercelCron && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
