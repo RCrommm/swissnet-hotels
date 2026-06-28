@@ -2925,6 +2925,7 @@ function HistoryPanel({ hotel }: any) {
 // ── ADVISOR EXECUTIVE DASHBOARD ──
 const ADV_GREEN_C = '#3F7D5B'
 const ADV_AMBER = '#9A7B2E'
+const POSTURE_FOUNDATION_LEAD = 'Remove operational AI friction'
 
 function AdvSectionLabel({ title }: any) {
   return <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: TEXT, margin: '0 0 0.85rem' }}>{title}</p>
@@ -3898,7 +3899,24 @@ function KnowledgeIntegrityCard({ hotelId }: any) {
 
 function AdvisorV2Body({ adv, memory, hotel, savedAt }: any) {
   const [openCase, setOpenCase] = useState<number | null>(null)
+  const [openOpp, setOpenOpp] = useState<number | null>(null)
+  const [openFoundation, setOpenFoundation] = useState(false)
+  const [showOpps, setShowOpps] = useState(false)
+
   const cases = (adv.top_moves || []).filter((m: any) => m.canonicalRecommendation?.case)
+  const opportunities = (adv.next_opportunities || []).filter((m: any) => m.canonicalRecommendation?.case)
+  const foundation = adv.foundation && adv.foundation.canonicalRecommendation?.case ? adv.foundation : null
+
+  // Metadata counts from the recommendability arrays (real data, never invented).
+  const counts = (m: any) => {
+    const r = m.canonicalRecommendation?.recommendability
+    if (!r) return null
+    const cov = (r.answerable || []).length
+    const par = (r.partially_answerable || []).length
+    const not = (r.not_answerable || []).length
+    const total = cov + par + not
+    return total ? { cov, par, not, total } : null
+  }
 
   if (!cases.length) {
     return (
@@ -3914,20 +3932,82 @@ function AdvisorV2Body({ adv, memory, hotel, savedAt }: any) {
       {openCase !== null && cases[openCase] && (
         <CaseModal m={cases[openCase]} i={openCase} onClose={() => setOpenCase(null)} model={adv.visibility_model} savedAt={savedAt} />
       )}
+      {openOpp !== null && opportunities[openOpp] && (
+        <CaseModal m={opportunities[openOpp]} i={cases.length + openOpp} onClose={() => setOpenOpp(null)} model={adv.visibility_model} savedAt={savedAt} />
+      )}
+      {openFoundation && foundation && (
+        <CaseModal m={foundation} i={cases.length + opportunities.length} onClose={() => setOpenFoundation(false)} model={adv.visibility_model} savedAt={savedAt} />
+      )}
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))', gap: '1.25rem', alignItems: 'start', marginBottom: '2rem' }}>
         <div>
           <AdvSectionLabel title="Strategic Priorities" />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
             {cases.map((m: any, i: number) => (
-              <PriorityCard key={i} m={m} i={i} onOpen={() => setOpenCase(i)} />
+              <div key={i}>
+                <PriorityCard m={m} i={i} onOpen={() => setOpenCase(i)} />
+                {(() => { const c = counts(m); return c ? (
+                  <div style={{ display: 'flex', gap: '0.85rem', padding: '0.45rem 0.3rem 0', flexWrap: 'wrap' }}>
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}><span style={{ fontWeight: 700, color: ADV_GREEN_C }}>{c.cov}</span> covered</span>
+                    {c.par > 0 && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}><span style={{ fontWeight: 700, color: ADV_AMBER }}>{c.par}</span> partial</span>}
+                    {c.not > 0 && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}><span style={{ fontWeight: 700, color: 'rgba(42,26,14,0.5)' }}>{c.not}</span> missing</span>}
+                  </div>
+                ) : null })()}
+              </div>
             ))}
           </div>
-          
+
+          {/* ADDITIONAL OPPORTUNITIES — quieter, collapsed by default */}
+          {opportunities.length > 0 && (
+            <div style={{ marginTop: '1.5rem' }}>
+              <button onClick={() => setShowOpps(s => !s)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'transparent', border: 'none', padding: '0 0 0.6rem', cursor: 'pointer' }}>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: TEXT_MUTED }}>Also worth improving · {opportunities.length}</span>
+                <span style={{ color: TEXT_MUTED, fontSize: '0.95rem', transform: showOpps ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
+              </button>
+              {showOpps && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                  {opportunities.map((m: any, i: number) => {
+                    const rec = m.canonicalRecommendation
+                    const c = rec.case
+                    const topic = rec.targeting?.affected_entity || m.topic || ''
+                    const topicLabel = (topic || '').toString().toUpperCase() === '__SITE__' ? 'FOUNDATION' : (topic || '').toString().toUpperCase()
+                    const POSTURE_LEAD: Record<string, string> = { Commit: 'Protect your strongest advantage', 'Fix-foundation': 'Remove operational AI friction', Confirm: 'Confirm this offering', Defer: 'Hold for later' }
+                    const lead = m.posture === 'Convert' ? ('Unlock your ' + topic.toLowerCase() + ' opportunity') : m.posture === 'Strengthen' ? ('Deepen your ' + topic.toLowerCase()) : (POSTURE_LEAD[m.posture] || topic)
+                    const ct = counts(m)
+                    return (
+                      <button key={i} onClick={() => setOpenOpp(i)} style={{ width: '100%', textAlign: 'left', cursor: 'pointer', border: '1px solid rgba(42,26,14,0.08)', background: WHITE, borderRadius: 12, padding: '0.85rem 1rem', display: 'block' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', fontWeight: 600, color: TEXT, flex: 1, lineHeight: 1.3 }}>{lead}</span>
+                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.9rem', color: TEXT_MUTED }}>›</span>
+                        </div>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: '0 0 0.5rem', lineHeight: 1.45 }}>{c.diagnosis}</p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', flexWrap: 'wrap' }}>
+                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, letterSpacing: '0.06em', color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, padding: '2px 7px', borderRadius: 4 }}>{topicLabel}</span>
+                          {ct && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED }}><span style={{ fontWeight: 700, color: ADV_GREEN_C }}>{ct.cov}</span>/{ct.total} covered</span>}
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div>
           <AdvSectionLabel title="AI Visibility Score" />
           <ScorePanel model={adv.visibility_model} />
+          {/* AI FOUNDATIONS — the dedicated structural case (all technical lives here) */}
+          {foundation && (
+            <button onClick={() => setOpenFoundation(true)} style={{ width: '100%', textAlign: 'left', cursor: 'pointer', marginTop: '1.25rem', background: WHITE, border: '1px solid rgba(201,169,76,0.3)', borderLeft: '3px solid ' + GOLD, borderRadius: 14, padding: '1.1rem 1.25rem', display: 'block' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A6D1F', flex: 1 }}>AI Foundations</span>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.9rem', color: TEXT_MUTED }}>›</span>
+              </div>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', fontWeight: 600, color: TEXT, margin: '0 0 0.3rem', lineHeight: 1.3 }}>{POSTURE_FOUNDATION_LEAD}</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.45 }}>{foundation.canonicalRecommendation.case.diagnosis}</p>
+            </button>
+          )}
           <FoundationsPanel foundations={adv.foundations} />
         </div>
 
@@ -3956,8 +4036,6 @@ function AdvisorV2Body({ adv, memory, hotel, savedAt }: any) {
           </div>
         </div>
       )}
-
-      
     </div>
   )
 }
