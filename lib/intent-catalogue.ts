@@ -9,17 +9,19 @@
 // STABILITY CONTRACT: an intent_id, once shipped, NEVER changes wording or id. Changing
 // an id breaks historical comparison. Add new intents; never mutate existing ones.
 
-export type IntentStage = 'evaluation' | 'booking'
-// 'discovery' and 'comparison' are intentionally NOT in the audit catalogue: Discovery is
-// measured from real AI-appearance data (Layer 1), Comparison stays unscored until real
-// AI-comparison testing exists. The audit evaluates evaluation + booking only.
+export type IntentStage = 'discovery' | 'recommendation' | 'evaluation' | 'booking'
+// discovery = reference only, measured by AI Visibility, NEVER website-scored.
+// recommendation / evaluation / booking = website-scored: does the site give AI enough
+// evidence to confidently justify recommending, then accurately explain, the hotel.
 
 export interface CanonicalIntent {
-  intent_id: string          // stable forever; key is `query:${category}:${intent_id}`
-  category: string           // MUST be one of the audit's existing categories (CAT_MAP keys)
+  intent_id: string            // stable forever; key is `query:${category}:${intent_id}`
+  category: string             // one of the audit's existing categories (CAT_MAP keys)
   stage: IntentStage
-  canonical_question: string
-  alt_phrasings: string[]
+  traveller_intent: string     // the real traveller goal, in plain words
+  audit_question: string       // what GPT is actually asked to grade the site against
+  variations: string[]         // conversational ways travellers phrase this to AI
+  expected_evidence: string[]  // the concrete things the site must show for a confident YES
   priority: 'high' | 'medium'
 }
 
@@ -28,47 +30,47 @@ export interface ArchetypeCatalogue {
   intents: CanonicalIntent[]
 }
 
-// ─── LUXURY CITY HOTEL — seeded from L'Oscar's 30 real audited questions ───
+// ─── LUXURY CITY HOTEL — V3 recommendability model ───
+// Intents grade RECOMMENDABILITY, not facts: does the site give AI enough evidence to
+// justify recommending (Stage 2), then accurately explain (Stage 3), then confirm the
+// practical pre-booking facts (Stage 4). Stage 1 (discovery) is reference-only — measured
+// by AI Visibility, never website-scored (audit_question is empty by design).
 const LUXURY_CITY: CanonicalIntent[] = [
-  // EVALUATION: Luxury
-  { intent_id: 'luxury-positioning', category: 'luxury', stage: 'evaluation', canonical_question: 'What makes this a luxury boutique hotel?', alt_phrasings: ['Why is this hotel luxurious?', 'What makes it boutique?', 'Is this a good luxury boutique hotel in the city?'], priority: 'high' },
-  { intent_id: 'luxury-amenities', category: 'luxury', stage: 'evaluation', canonical_question: 'What luxury amenities does the hotel offer?', alt_phrasings: ['What high-end facilities are available?', 'What premium services does it provide?'], priority: 'medium' },
-  { intent_id: 'what-makes-special', category: 'luxury', stage: 'evaluation', canonical_question: 'What makes this hotel distinctive?', alt_phrasings: ['Why choose this hotel over others?', 'What sets it apart?'], priority: 'medium' },
+  // ══ STAGE 1 — DISCOVERY (reference only; measured by AI Visibility, NEVER website-scored) ══
+  { intent_id: 'disc-luxury-boutique', category: 'luxury', stage: 'discovery', traveller_intent: 'Find the best luxury boutique hotel in the city', audit_question: '', variations: ['best luxury boutique hotel London', 'top boutique hotel in London', 'best 5-star boutique hotel London'], expected_evidence: [], priority: 'high' },
+  { intent_id: 'disc-romantic', category: 'romantic', stage: 'discovery', traveller_intent: 'Find the best romantic luxury hotel in the city', audit_question: '', variations: ['best romantic hotel London', 'luxury hotel for a romantic weekend London', 'best honeymoon hotel London'], expected_evidence: [], priority: 'high' },
+  { intent_id: 'disc-food-lovers', category: 'dining', stage: 'discovery', traveller_intent: 'Find the best luxury hotel for food and dining', audit_question: '', variations: ['best hotel for food lovers London', 'luxury hotel with best restaurant London', 'best afternoon tea hotel London'], expected_evidence: [], priority: 'high' },
+  { intent_id: 'disc-business', category: 'business', stage: 'discovery', traveller_intent: 'Find the best boutique hotel for business travellers', audit_question: '', variations: ['best boutique hotel for business London', 'luxury hotel for executive meetings London'], expected_evidence: [], priority: 'medium' },
+  { intent_id: 'disc-near-landmark', category: 'location', stage: 'discovery', traveller_intent: 'Find a luxury hotel near a specific area or landmark', audit_question: '', variations: ['best luxury hotel near Covent Garden', 'boutique hotel near the British Museum', 'best hotel near Holborn'], expected_evidence: [], priority: 'high' },
+  { intent_id: 'disc-character', category: 'luxury', stage: 'discovery', traveller_intent: 'Find a hotel with real character and atmosphere', audit_question: '', variations: ['boutique hotel with character London', 'historic luxury hotel London', 'most unique hotel in London'], expected_evidence: [], priority: 'medium' },
+  { intent_id: 'disc-quiet-luxury', category: 'luxury', stage: 'discovery', traveller_intent: 'Find a quiet, refined luxury hotel in central London', audit_question: '', variations: ['quiet luxury hotel central London', 'peaceful luxury hotel London'], expected_evidence: [], priority: 'medium' },
 
-  // EVALUATION: Dining
-  { intent_id: 'restaurants-overview', category: 'dining', stage: 'evaluation', canonical_question: 'What dining options are available at the hotel?', alt_phrasings: ['What restaurants are at the hotel?', 'Where can I eat at the hotel?'], priority: 'high' },
-  { intent_id: 'afternoon-tea', category: 'dining', stage: 'evaluation', canonical_question: 'Does the hotel offer afternoon tea?', alt_phrasings: ['Is afternoon tea served here?', 'Can I have afternoon tea at the hotel?'], priority: 'medium' },
-  { intent_id: 'bar-lounge', category: 'dining', stage: 'evaluation', canonical_question: 'Is there a bar or lounge at the hotel?', alt_phrasings: ['Is there a place to enjoy a drink?', 'Does the hotel have a cocktail bar?'], priority: 'medium' },
-  { intent_id: 'fine-dining', category: 'dining', stage: 'evaluation', canonical_question: 'What is the fine dining experience like at the hotel?', alt_phrasings: ['Does the hotel have a notable restaurant?', 'Is there gourmet dining?'], priority: 'high' },
+  // ══ STAGE 2 — RECOMMENDATION EVIDENCE (website-scored: can the site JUSTIFY the recommendation?) ══
+  { intent_id: 'rec-luxury-boutique', category: 'luxury', stage: 'recommendation', traveller_intent: 'Be recommended as a genuine luxury boutique hotel', audit_question: 'Does the website provide enough evidence for AI to confidently justify recommending this hotel as a luxury boutique hotel?', variations: ['Why is this a luxury boutique hotel?', 'Is this a real luxury boutique experience?'], expected_evidence: ['Specific design, heritage or architectural story (not just "luxury")', 'Concrete signature features that make it boutique', 'Named awards, recognition or distinctive credentials'], priority: 'high' },
+  { intent_id: 'rec-differentiation', category: 'luxury', stage: 'recommendation', traveller_intent: 'Be chosen over other luxury hotels', audit_question: 'Does the website clearly explain why a traveller should choose this hotel over other luxury boutique hotels, with concrete reasons AI could cite?', variations: ['Why choose this over another luxury hotel?', 'What makes it different from competitors?'], expected_evidence: ['Explicit points of difference vs typical luxury hotels', 'Unique signature experiences only this hotel offers', 'Reasons stated as facts, not adjectives'], priority: 'high' },
+  { intent_id: 'rec-atmosphere', category: 'luxury', stage: 'recommendation', traveller_intent: 'Be recommended for atmosphere and personality', audit_question: 'Does the website clearly demonstrate the hotel’s atmosphere, style and personality strongly enough for AI to describe the feel of a stay?', variations: ['What is the vibe of this hotel?', 'What is the atmosphere like?'], expected_evidence: ['Vivid, specific description of the design and mood', 'The kind of experience or feeling a stay delivers', 'Sensory or character detail beyond generic "elegant"'], priority: 'medium' },
+  { intent_id: 'rec-romantic', category: 'romantic', stage: 'recommendation', traveller_intent: 'Be recommended for a romantic stay', audit_question: 'Does the website provide enough evidence for AI to confidently recommend this hotel for couples and romantic stays?', variations: ['Is this hotel good for couples?', 'Would AI suggest this for a romantic weekend?'], expected_evidence: ['Specific romantic experiences, packages or touches', 'Suites or rooms positioned for couples', 'Romantic dining or private experiences'], priority: 'medium' },
+  { intent_id: 'rec-food-lovers', category: 'dining', stage: 'recommendation', traveller_intent: 'Be recommended for dining and food', audit_question: 'Does the website provide enough evidence for AI to recommend this hotel to someone choosing a hotel for its food and dining?', variations: ['Is this a good hotel for food lovers?', 'Would AI recommend it for the restaurant?'], expected_evidence: ['Each restaurant described with cuisine and character', 'What makes the dining distinctive or worth a visit', 'Signature experiences like afternoon tea or the bar'], priority: 'high' },
+  { intent_id: 'rec-business', category: 'business', stage: 'recommendation', traveller_intent: 'Be recommended for business and meetings', audit_question: 'Does the website provide enough evidence for AI to confidently recommend this hotel for executive meetings and business stays?', variations: ['Is this a strong business hotel?', 'Would AI recommend it for a corporate meeting?'], expected_evidence: ['Meeting and event spaces with capacities', 'Why it suits business travellers specifically', 'Practical business signals (location, connectivity, services)'], priority: 'medium' },
+  { intent_id: 'rec-location', category: 'location', stage: 'recommendation', traveller_intent: 'Be recommended for its location', audit_question: 'Does the website provide enough evidence for AI to recommend this hotel as exceptionally well-located, naming what makes the area and position desirable?', variations: ['Is the location good?', 'Why stay in this part of London?'], expected_evidence: ['Why the neighbourhood is desirable, named specifically', 'Named landmarks, attractions and distances', 'Transport connections stated concretely'], priority: 'high' },
 
-  // EVALUATION: Business & events
-  { intent_id: 'meeting-rooms', category: 'business', stage: 'evaluation', canonical_question: 'Does the hotel have meeting and event spaces?', alt_phrasings: ['Can I host a business meeting here?', 'Are there conference facilities?'], priority: 'high' },
-  { intent_id: 'event-spaces', category: 'business', stage: 'evaluation', canonical_question: 'Can the hotel host weddings or private events?', alt_phrasings: ['Can I book a wedding here?', 'Are there private event spaces?', 'Is this a good wedding venue?'], priority: 'medium' },
+  // ══ STAGE 3 — EVALUATION (website-scored: can AI accurately EXPLAIN the hotel?) ══
+  { intent_id: 'eval-room-types', category: 'overall', stage: 'evaluation', traveller_intent: 'Understand the room options', audit_question: 'Does the website give AI enough to clearly explain the different room and suite types and who each suits?', variations: ['What room types are there?', 'Which room should I book?'], expected_evidence: ['Distinct room categories described', 'Size, view or occupancy detail', 'Who each room is best for'], priority: 'medium' },
+  { intent_id: 'eval-premium-rooms', category: 'overall', stage: 'evaluation', traveller_intent: 'Understand the top suites', audit_question: 'Does the website let AI explain the hotel’s most premium accommodation and what makes it special?', variations: ['What is the best suite?', 'What is the top room?'], expected_evidence: ['Flagship suite(s) named and described', 'What distinguishes the premium rooms'], priority: 'medium' },
+  { intent_id: 'eval-restaurants', category: 'dining', stage: 'evaluation', traveller_intent: 'Understand the dining venues', audit_question: 'Does the website let AI accurately explain the hotel’s restaurants and bar — cuisine, character and experience?', variations: ['What restaurants are there?', 'Where can I eat here?'], expected_evidence: ['Each venue named with cuisine type', 'The character or occasion each suits', 'Bar / lounge experience described'], priority: 'high' },
+  { intent_id: 'eval-afternoon-tea', category: 'dining', stage: 'evaluation', traveller_intent: 'Understand the afternoon tea offering', audit_question: 'Does the website let AI explain the afternoon tea experience specifically?', variations: ['Is there afternoon tea?', 'What is the afternoon tea like?'], expected_evidence: ['Afternoon tea confirmed and described', 'What makes it distinctive'], priority: 'medium' },
+  { intent_id: 'eval-meetings', category: 'business', stage: 'evaluation', traveller_intent: 'Understand meeting and event facilities', audit_question: 'Does the website let AI accurately explain the meeting and event facilities and capacities?', variations: ['What meeting spaces are there?', 'Can it host events?'], expected_evidence: ['Event spaces named', 'Capacities or configurations', 'Types of events supported'], priority: 'medium' },
+  { intent_id: 'eval-weddings', category: 'business', stage: 'evaluation', traveller_intent: 'Understand wedding and private-event offerings', audit_question: 'Does the website let AI explain the hotel’s wedding and private-event capabilities?', variations: ['Can I get married here?', 'Does it host private events?'], expected_evidence: ['Wedding / private events confirmed', 'What the offering includes'], priority: 'medium' },
+  { intent_id: 'eval-experiences', category: 'overall', stage: 'evaluation', traveller_intent: 'Understand unique experiences and packages', audit_question: 'Does the website let AI explain the unique experiences, packages or seasonal offerings that make a stay memorable?', variations: ['What experiences are offered?', 'Are there special packages?'], expected_evidence: ['Named signature experiences or packages', 'What makes them distinctive to this hotel'], priority: 'medium' },
+  { intent_id: 'eval-location-detail', category: 'location', stage: 'evaluation', traveller_intent: 'Understand what is around the hotel', audit_question: 'Does the website let AI explain nearby attractions, what guests can do around the hotel, and transport connections?', variations: ['What is near the hotel?', 'What can I do nearby?', 'How do I get around?'], expected_evidence: ['Named nearby attractions', 'Transport options and distances', 'What guests can do in the area'], priority: 'high' },
 
-  // EVALUATION: Romantic
-  { intent_id: 'couples-suitability', category: 'romantic', stage: 'evaluation', canonical_question: 'Is the hotel suitable for a romantic getaway?', alt_phrasings: ['Is this hotel good for couples?', 'Is it good for an anniversary?'], priority: 'medium' },
-  { intent_id: 'romantic-packages', category: 'romantic', stage: 'evaluation', canonical_question: 'Does the hotel offer romantic packages for couples?', alt_phrasings: ['Are there honeymoon packages?', 'Are there couples experiences?'], priority: 'medium' },
-
-  // EVALUATION: Family
-  { intent_id: 'family-suitability', category: 'family', stage: 'evaluation', canonical_question: 'Is the hotel family-friendly?', alt_phrasings: ['Is this hotel good for families with children?', 'Does it welcome families?'], priority: 'medium' },
-  { intent_id: 'family-rooms', category: 'family', stage: 'evaluation', canonical_question: 'Does the hotel have rooms suitable for families?', alt_phrasings: ['Are there family or connecting rooms?', 'Can families stay together?'], priority: 'medium' },
-  { intent_id: 'family-packages', category: 'family', stage: 'evaluation', canonical_question: 'Does the hotel offer family packages or deals?', alt_phrasings: ['Are there family deals?', 'Are there packages for families?'], priority: 'medium' },
-
-  // EVALUATION: Location
-  { intent_id: 'nearby-attractions', category: 'location', stage: 'evaluation', canonical_question: 'What attractions are near the hotel?', alt_phrasings: ['How close is the hotel to major attractions?', 'What is nearby?'], priority: 'high' },
-  { intent_id: 'public-transport', category: 'location', stage: 'evaluation', canonical_question: 'How well connected is the hotel to public transport?', alt_phrasings: ['How far is the hotel from public transport?', 'How do I get around from the hotel?'], priority: 'medium' },
-
-  // EVALUATION: Rooms & overall
-  { intent_id: 'rooms-overview', category: 'overall', stage: 'evaluation', canonical_question: 'What types of rooms are available at the hotel?', alt_phrasings: ['What room categories does the hotel have?', 'What accommodation is offered?'], priority: 'medium' },
-  { intent_id: 'unique-experiences', category: 'overall', stage: 'evaluation', canonical_question: 'Does the hotel offer any unique experiences or packages?', alt_phrasings: ['Are there special experiences?', 'What makes a stay here memorable?'], priority: 'medium' },
-  { intent_id: 'offers-packages', category: 'overall', stage: 'evaluation', canonical_question: 'What offers or packages are available at the hotel?', alt_phrasings: ['Are there current deals?', 'What special offers does the hotel have?'], priority: 'medium' },
-
-  // BOOKING CONFIDENCE: practical facts
-  { intent_id: 'accessibility', category: 'accessibility', stage: 'booking', canonical_question: 'Is the hotel accessible for guests with disabilities?', alt_phrasings: ['Are there accessible rooms?', 'Is there step-free access?', 'What accessibility features are there?'], priority: 'high' },
-  { intent_id: 'parking-availability', category: 'parking', stage: 'booking', canonical_question: 'Does the hotel provide parking?', alt_phrasings: ['Is there parking available?', 'Does the hotel have parking facilities?'], priority: 'high' },
-  { intent_id: 'pet-policy', category: 'pets', stage: 'booking', canonical_question: 'Are pets allowed at the hotel?', alt_phrasings: ['Is the hotel pet-friendly?', 'What is the pet policy?'], priority: 'high' },
-  { intent_id: 'check-in-out', category: 'overall', stage: 'booking', canonical_question: 'What are the check-in and check-out times?', alt_phrasings: ['When can I check in?', 'What time is check-out?'], priority: 'medium' },
-  { intent_id: 'cancellation', category: 'overall', stage: 'booking', canonical_question: 'What is the cancellation policy?', alt_phrasings: ['Can I cancel my booking?', 'Is the rate refundable?'], priority: 'medium' },
+  // ══ STAGE 4 — BOOKING CONFIDENCE (website-scored: practical pre-booking questions) ══
+  { intent_id: 'book-accessibility', category: 'accessibility', stage: 'booking', traveller_intent: 'Confirm accessibility before booking', audit_question: 'Does the website let AI answer accessibility questions (accessible rooms, step-free access, lift)?', variations: ['Is it accessible?', 'Are there accessible rooms?'], expected_evidence: ['Accessibility provisions stated'], priority: 'high' },
+  { intent_id: 'book-parking', category: 'parking', stage: 'booking', traveller_intent: 'Confirm parking before booking', audit_question: 'Does the website let AI answer parking questions (availability, valet, cost, EV charging)?', variations: ['Is there parking?', 'Can I park here?'], expected_evidence: ['Parking availability and type stated'], priority: 'high' },
+  { intent_id: 'book-pets', category: 'pets', stage: 'booking', traveller_intent: 'Confirm pet policy before booking', audit_question: 'Does the website let AI answer whether pets are allowed and on what terms?', variations: ['Are pets allowed?', 'Is it pet-friendly?'], expected_evidence: ['Pet policy stated'], priority: 'high' },
+  { intent_id: 'book-checkin', category: 'overall', stage: 'booking', traveller_intent: 'Confirm check-in/out and early/late options', audit_question: 'Does the website let AI answer check-in / check-out times and early/late options?', variations: ['What time is check-in?', 'Can I check in early?'], expected_evidence: ['Check-in and check-out times stated'], priority: 'medium' },
+  { intent_id: 'book-cancellation', category: 'overall', stage: 'booking', traveller_intent: 'Understand cancellation and booking policy', audit_question: 'Does the website let AI answer cancellation and booking-policy questions?', variations: ['What is the cancellation policy?', 'Can I cancel?'], expected_evidence: ['Cancellation / booking policy stated'], priority: 'medium' },
+  { intent_id: 'book-practical', category: 'overall', stage: 'booking', traveller_intent: 'Confirm everyday practical amenities', audit_question: 'Does the website let AI answer everyday practical questions — breakfast, Wi-Fi, concierge, luggage storage, airport transfers, room service?', variations: ['Is breakfast included?', 'Is there Wi-Fi?', 'Is there a concierge?', 'Is there an airport transfer?'], expected_evidence: ['Breakfast detail', 'Wi-Fi', 'Concierge / services', 'Airport transfer / luggage storage'], priority: 'medium' },
 ]
 
 // ─── REGISTRY ───
@@ -87,5 +89,6 @@ export function intentsToEvaluate(archetype: string | null | undefined, excludeC
   const cat = getCatalogueForArchetype(archetype)
   if (!cat) return []
   const ex = new Set(excludeCategories.map(s => s.toLowerCase()))
-  return cat.intents.filter(i => !ex.has(i.category.toLowerCase()))
+  // Discovery intents are reference-only (measured by AI Visibility); never website-scored.
+  return cat.intents.filter(i => i.stage !== 'discovery' && !ex.has(i.category.toLowerCase()))
 }
