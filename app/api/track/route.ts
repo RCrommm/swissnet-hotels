@@ -1,6 +1,13 @@
 import { supabase } from '@/lib/supabase'
 import { NextRequest, NextResponse } from 'next/server'
 
+// Short, URL-safe click id. No dependency — crypto is built into the runtime.
+function makeClickId(): string {
+  const bytes = new Uint8Array(12)
+  crypto.getRandomValues(bytes)
+  return Array.from(bytes, b => b.toString(36).padStart(2, '0')).join('').slice(0, 16)
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const hotel_id = searchParams.get('hotel_id')
@@ -8,31 +15,55 @@ export async function GET(request: NextRequest) {
   const destination = searchParams.get('destination')
   const medium = searchParams.get('medium') || 'website'
   const campaign = searchParams.get('campaign') || 'direct_booking'
-  const source = searchParams.get('source') || ''
-
   if (!destination) {
     return NextResponse.json({ error: 'destination required' }, { status: 400 })
   }
 
-  // Record the click
+  const source_page = request.headers.get('referer') || ''
+  const visitor_ip = request.headers.get('x-forwarded-for') || ''
+  const user_agent = request.headers.get('user-agent') || ''
+
+  // Generate the SwissNet click id — this is what we later reconcile bookings against.
+  const click_id = makeClickId()
+
+  // Existing analytics row (unchanged behaviour).
   await supabase.from('referral_clicks').insert([{
     hotel_id: hotel_id || null,
     hotel_name: hotel_name || null,
-    source_page: source || request.headers.get('referer') || '',
+    source_page,
     utm_source: 'swissnet',
     utm_medium: medium,
     utm_campaign: campaign,
-    visitor_ip: (request.headers.get('x-forwarded-for') || '').split(',')[0].trim().replace(/\.\d+$/, '.x').replace(/:[^:]+$/, ':x') || '',
-    user_agent: request.headers.get('user-agent') || '',
+    visitor_ip,
+    user_agent,
   }])
 
-  // Build the destination URL with UTM parameters
+  // New: the click-ID store. SwissNet now owns this journey. ai_source left null for now
+  // (resolved later by joining to the originating session). Best-effort — a failure here
+  // must never block the redirect.
+  try {
+    await supabase.from('swissnet_clicks').insert([{
+      click_id,
+      hotel_id: hotel_id || null,
+      hotel_name: hotel_name || null,
+      ai_source: null,
+      source_page,
+      utm_campaign: campaign,
+      destination_url: destination,
+      visitor_ip,
+      user_agent,
+    }])
+  } catch (_) {
+    // swallow — tracking must not break the user's click-through
+  }
+
+  // Build the destination URL with UTMs + the SwissNet click id.
   const url = new URL(destination)
   url.searchParams.set('utm_source', 'swissnet')
   url.searchParams.set('utm_medium', medium)
   url.searchParams.set('utm_campaign', campaign)
   url.searchParams.set('utm_content', hotel_name || '')
+  url.searchParams.set('swissnet_cid', click_id)
 
-  // Redirect to hotel website with tracking
   return NextResponse.redirect(url.toString())
 }
