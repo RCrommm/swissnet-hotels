@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
   const visitor_ip = request.headers.get('x-forwarded-for') || ''
   const user_agent = request.headers.get('user-agent') || ''
 
-  // Generate the SwissNet click id — this is what we later reconcile bookings against.
+  // Generate the SwissNet click id — what we later reconcile bookings against.
   const click_id = makeClickId()
 
   // Existing analytics row (unchanged behaviour).
