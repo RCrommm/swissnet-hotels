@@ -3041,9 +3041,9 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
 
   const relatedActions = (() => {
     const out: string[] = []
-    if (proof.failed_questions?.length) out.push('Add FAQ section to ' + (rec.targeting?.canonical_page || 'the page'))
-    if (!verify && rec.technical?.causes?.length) for (const t of rec.technical.causes) out.push(t.fix)
-    return out.slice(0, 4)
+    if (proof.failed_questions?.length) out.push('Add an FAQ section to ' + (rec.targeting?.canonical_page || 'the page'))
+    if (rec.targeting?.canonical_page) out.push('Add a Quick Facts block to ' + rec.targeting.canonical_page)
+    return out.slice(0, 3)
   })()
 
   const priorityReasons: string[] = []
@@ -3086,13 +3086,7 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
                     ? 'The content is present, but technical gaps stop AI from parsing and trusting it confidently.'
                     : 'AI cannot yet form a confident, complete picture of this from your site as it stands.'}
                 </p>
-                {hasTechnical && (
-                  <ul style={{ listStyle: 'none', padding: 0, margin: '0.7rem 0 0', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                    {rec.technical.causes.slice(0, 3).map((t: any, j: number) => (
-                      <li key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', lineHeight: 1.5, color: TEXT_MUTED, paddingLeft: '0.95rem', position: 'relative' }}><span style={{ position: 'absolute', left: 0, color: ADV_AMBER }}>◔</span>{t.fix}</li>
-                    ))}
-                  </ul>
-                )}
+                
               </Sec>
             )}
 
