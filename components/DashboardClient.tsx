@@ -3121,8 +3121,8 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
                   <Step label="Your site doesn't answer it" color="#B4452F">
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.4 }}>No clear answer on <code style={{ fontFamily: 'monospace', fontSize: '0.74rem', background: BG, padding: '1px 6px', borderRadius: 4, border: '1px solid ' + BORDER, color: TEXT }}>{page}</code></p>
                   </Step>
-                  <Step label="The fix" color={ADV_GREEN_C} last>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', fontWeight: 600, color: TEXT, margin: 0, lineHeight: 1.45 }}>{c.recommendation}</p>
+                  <Step label="So AI can't confidently recommend you for it" color="#B4452F" last>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.45 }}>The recommendation below closes this gap.</p>
                   </Step>
                 </Sec>
               )
