@@ -96,7 +96,13 @@ export function toCanonicalRecommendation(move: any, ctx: Ctx): Recommendation {
   }
   const recoCats = new Set(RECO_TOPIC_TO_CATS[topic] || [])
   const recoResults = recoCats.size
-    ? auditResults.filter((r: any) => recoCats.has((r.category || '').toLowerCase()) && r.intent_id && r.stage)
+    ? auditResults.filter((r: any) =>
+        recoCats.has((r.category || '').toLowerCase()) &&
+        r.intent_id && r.stage &&
+        r.stage !== 'booking'   // booking-confidence (check-in, cancellation, parking, etc.)
+                                // is practical hygiene, not a flagship topic-Case gap — it
+                                // belongs on a separate booking surface, not in rooms/dining.
+      )
     : []
   const recoIntent = (r: any) => r.traveller_intent || r.audit_question || r.question
   const recommendability = {
