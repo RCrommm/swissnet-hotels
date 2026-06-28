@@ -13,13 +13,13 @@ function pageHasHotel(hotelName: string, pageText: string): boolean {
   return r.includes(lastTwo) || r.includes(firstTwo) || (words.length >= 2 && r.includes(keyWords))
 }
 
-async function fetchPage(url: string): Promise<{ status: number; text: string }> {
+async function fetchDirect(url: string): Promise<{ status: number; text: string }> {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), 8000)
   try {
     const res = await fetch(url, {
       signal: controller.signal,
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SwissNetBot/1.0)' },
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36' },
       redirect: 'follow',
     })
     const text = res.ok ? (await res.text()).slice(0, 200000) : ''
@@ -29,6 +29,31 @@ async function fetchPage(url: string): Promise<{ status: number; text: string }>
   } finally {
     clearTimeout(timer)
   }
+}
+
+async function fetchViaScrapingBee(url: string): Promise<{ status: number; text: string }> {
+  const key = process.env.SCRAPINGBEE_API_KEY
+  if (!key) return { status: 0, text: '' }
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 20000)
+  try {
+    const api = `https://app.scrapingbee.com/api/v1/?api_key=${key}&url=${encodeURIComponent(url)}&render_js=false`
+    const res = await fetch(api, { signal: controller.signal })
+    const text = res.ok ? (await res.text()).slice(0, 200000) : ''
+    return { status: res.ok ? 200 : res.status, text }
+  } catch {
+    return { status: 0, text: '' }
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+async function fetchPage(url: string): Promise<{ status: number; text: string }> {
+  // Try a direct fetch first (free). If the site blocks us (403/429/0/etc.),
+  // fall back to ScrapingBee, which renders as a real browser and gets through.
+  const direct = await fetchDirect(url)
+  if (direct.status === 200) return direct
+  return await fetchViaScrapingBee(url)
 }
 
 export async function GET(request: Request) {
