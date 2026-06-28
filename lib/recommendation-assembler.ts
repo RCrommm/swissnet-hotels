@@ -4,6 +4,7 @@
 // move.recommendation working. Deterministic fields from existing data only.
 
 import type { Recommendation, Posture, ConfidenceTier } from './recommendation-model'
+import { guestQuestionForIntent } from './intent-catalogue'
 
 interface Ctx { knowledgeGraph: any; audit: any; technical: any; facts: any[] }
 
@@ -105,16 +106,21 @@ export function toCanonicalRecommendation(move: any, ctx: Ctx): Recommendation {
       )
     : []
   const recoIntent = (r: any) => r.traveller_intent || r.question || r.audit_question
+  // The real guest-phrased question for this intent (catalogue variation), falling back to
+  // the intent label so it never renders blank on older audit rows. No invention.
+  const recoQuestion = (r: any) => guestQuestionForIntent(r.intent_id) || recoIntent(r)
   const recommendability = {
     // YES = AI can fully do this. PARTIAL surfaced separately as "partly" so the strength
     // list is never misleadingly empty when grading is strict (most rec-stage = PARTIAL).
     answerable: recoResults.filter((r: any) => r.readiness === 'YES').map(recoIntent),
     partially_answerable: recoResults.filter((r: any) => r.readiness === 'PARTIAL').map((r: any) => ({
       intent: recoIntent(r),
+      question: recoQuestion(r),
       evidence_needed: Array.isArray(r.expected_evidence) ? r.expected_evidence.slice(0, 3) : [],
     })),
     not_answerable: recoResults.filter((r: any) => r.readiness === 'NO').map((r: any) => ({
       intent: recoIntent(r),
+      question: recoQuestion(r),
       evidence_needed: Array.isArray(r.expected_evidence) ? r.expected_evidence.slice(0, 3) : [],
     })),
     has_catalogue: recoResults.some((r: any) => r.intent_id && r.stage),

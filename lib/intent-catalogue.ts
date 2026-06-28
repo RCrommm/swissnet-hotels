@@ -92,3 +92,22 @@ export function intentsToEvaluate(archetype: string | null | undefined, excludeC
   // Discovery intents are reference-only (measured by AI Visibility); never website-scored.
   return cat.intents.filter(i => i.stage !== 'discovery' && !ex.has(i.category.toLowerCase()))
 }
+// ─── GUEST-QUESTION LOOKUP ───
+// Returns the first conversational variation (the real guest-phrased question) for an
+// intent_id, across all catalogues. Used to surface "Why choose this over another luxury
+// hotel?" instead of the internal intent label. Deterministic; never invents a question —
+// returns null if the intent_id isn't found or has no variations.
+const _QUESTION_BY_ID: Record<string, string> = (() => {
+  const m: Record<string, string> = {}
+  for (const cat of Object.values(CATALOGUES)) {
+    for (const i of cat.intents) {
+      if (i.intent_id && Array.isArray(i.variations) && i.variations.length) m[i.intent_id] = i.variations[0]
+    }
+  }
+  return m
+})()
+
+export function guestQuestionForIntent(intentId: string | null | undefined): string | null {
+  if (!intentId) return null
+  return _QUESTION_BY_ID[intentId] || null
+}
