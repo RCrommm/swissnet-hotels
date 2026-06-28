@@ -104,7 +104,15 @@ DEPTH REQUIREMENTS:
 - success_criteria describes the observable result with NO invented numbers — what an AI assistant would be able to answer that it can't today.
 - next_opportunities must be genuinely DIFFERENT findings from the top 3 — the next layer down, not restatements.
 - work_plan.quick_wins are low-effort high-value fixes (an FAQ, a Quick-Facts block); strategic_projects are bigger builds (a new page).
-- Depth does NOT mean inventing — it means fuller reasoning over the SAME facts and findings. Stay grounded.`
+- Depth does NOT mean inventing — it means fuller reasoning over the SAME facts and findings. Stay grounded.
+
+RECOMMENDABILITY FRAMING (when a "RECOMMENDABILITY ANALYSIS" block is present in the input):
+That block is the strategic spine — it grades, per real traveller intent, whether the WEBSITE gives AI enough evidence to RECOMMEND (justify choosing the hotel), EXPLAIN (describe it accurately), or CONFIRM (answer practical booking questions). Use it as follows:
+- "executive_diagnosis" and "ai_understands" must ACKNOWLEDGE STRENGTHS FIRST using the COVERED intents — name what AI can already confidently do for this hotel (e.g. "AI can already recommend L'Oscar for its dining and explain its rooms") before naming gaps. A diagnosis that only lists problems is wrong; the hotel has real strengths and the GM must see them.
+- "ai_cannot_connect" and the gap reasoning must draw from the NOT COVERED and PARTIAL intents, phrased as RECOMMENDABILITY, not facts: prefer "AI lacks the evidence to confidently recommend the hotel for [traveller intent]" over "the site is missing a [topic] page". The gap is about AI's ability to JUSTIFY a recommendation, not about a missing HTML element.
+- For PARTIAL intents, the framing is "AI understands X but cannot yet explain WHY [intent]" — the evidence exists but is under-leveraged. Use the named "evidence needed" to say what would strengthen it.
+- NEVER claim the website causes AI to not recommend the hotel. Say the site provides limited EVIDENCE for AI to JUSTIFY a recommendation — correlation and capability, never causation. Never promise more visibility or bookings.
+- Discovery-stage intents are intentionally absent (measured separately by AI Visibility). Do not invent discovery judgements.`
 
 function consultantSchema() {
   return {
