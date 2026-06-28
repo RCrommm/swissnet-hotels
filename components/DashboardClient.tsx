@@ -2320,6 +2320,10 @@ function WebsiteTab({ hotel }: any) {
             </div>
           )}
 
+          {/* DETAIL SECTIONS — hidden on this tab (simple audit for lower plans).
+              Premium hotels get the full breakdown via the AI Advisor. Flip to `true`
+              to restore, or gate on tier later. */}
+          {false && (<>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.9rem' }}>The detail · tap any section</p>
 
           {/* CONTENT QUALITY */}
@@ -2440,6 +2444,7 @@ function WebsiteTab({ hotel }: any) {
               </div>
             </Section>
           )}
+          </>)}
 
           <div style={{ background: GOLD_LIGHT, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${GOLD}`, borderRadius: 10, padding: '1.5rem 1.75rem', marginTop: '0.5rem' }}>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.9rem', color: TEXT, margin: 0, lineHeight: 1.7 }}><strong>Want us to implement these?</strong> Your SwissNet specialist can work through this plan with you. Reach us at <a href="mailto:contact@swissnethotels.com" style={{ color: GOLD, textDecoration: 'none', fontWeight: 600 }}>contact@swissnethotels.com</a>.</p>
