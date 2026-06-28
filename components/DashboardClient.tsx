@@ -4022,8 +4022,11 @@ function AdvisorV2Body({ adv, memory, hotel, savedAt }: any) {
           {/* ADDITIONAL OPPORTUNITIES — quieter, collapsed by default */}
           {opportunities.length > 0 && (
             <div style={{ marginTop: '1.5rem' }}>
-              <button onClick={() => setShowOpps(s => !s)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'transparent', border: 'none', padding: '0 0 0.6rem', cursor: 'pointer' }}>
-                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: TEXT_MUTED }}>Also worth improving · {opportunities.length}</span>
+              <button onClick={() => setShowOpps(s => !s)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: WHITE, border: '1px solid rgba(42,26,14,0.10)', borderRadius: 12, padding: '0.85rem 1rem', marginBottom: showOpps ? '0.6rem' : 0, cursor: 'pointer', boxShadow: '0 1px 3px rgba(42,26,14,0.04)' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: TEXT }}>Also worth improving</span>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, color: GOLD, background: GOLD_LIGHT, border: '1px solid rgba(201,169,76,0.3)', borderRadius: 20, padding: '1px 8px' }}>{opportunities.length}</span>
+                </span>
                 <span style={{ color: TEXT_MUTED, fontSize: '0.95rem', transform: showOpps ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
               </button>
               {showOpps && (
