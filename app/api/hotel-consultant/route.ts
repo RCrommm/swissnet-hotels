@@ -655,7 +655,17 @@ ${techLines.length ? techLines.join('\n') : '(no technical gaps flagged)'}`
             return (k || '').replace(/[:-]/g, ' ')
           }
           const fixedByTopic: Record<string, string[]> = {}
-          for (const k of (mem.fixed || [])) { const t = keyTopic(k); (fixedByTopic[t] ||= []).push(humanize(k)) }
+          for (const k of (mem.fixed || [])) {
+            // ONLY page-element findings are deterministic across runs. query: keys are
+            // GPT-worded and churn every audit (a reworded question looks "fixed" when
+            // nothing changed), so they must never produce a ✓ detection. Validation on
+            // L'Oscar proved 12/12 query: "fixes" were wording drift, not real changes.
+            if (!k.startsWith('page:')) continue
+            const t = keyTopic(k)
+            const items = (fixedByTopic[t] ||= [])
+            const label = humanize(k)
+            if (!items.includes(label)) items.push(label)  // dedup: kills the Meetings ×3
+          }
           const openByTopic: Record<string, string[]> = {}
           for (const f of (mem.stillOpen || [])) { const key = f.key || f.title || ''; const t = keyTopic(key); (openByTopic[t] ||= []).push(f.title || humanize(key)) }
           for (const m of advisory.top_moves) {
