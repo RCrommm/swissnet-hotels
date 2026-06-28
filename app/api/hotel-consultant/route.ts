@@ -204,6 +204,73 @@ function buildAuditBrief(result: any): { weakPages: string[]; unanswered: string
   return { weakPages: weakPages.slice(0, 12), unanswered: unanswered.slice(0, 18), contentWeak: contentWeak.slice(0, 8), auditScore }
 }
 
+// ─── RECOMMENDABILITY BRIEF (V3) ───
+// Surfaces the new catalogue-based audit output: per traveller-intent recommendability,
+// grouped by coverage (covered / partial / not covered) AND by journey stage
+// (recommendation / evaluation / booking). Discovery stays reference-only — never
+// website-scored, so it is excluded here. Deterministic, no GPT. Additive context only:
+// this does NOT drive decision selection (step 1 is data wiring); the consultant simply
+// now SEES what the site can and cannot justify, so future prose can say
+// "AI can already explain X but lacks evidence for Y."
+function buildRecommendabilityBrief(result: any): {
+  hasCatalogue: boolean
+  byStage: Record<string, { covered: string[]; partial: string[]; notCovered: string[] }>
+} {
+  const empty = { hasCatalogue: false, byStage: {} as Record<string, { covered: string[]; partial: string[]; notCovered: string[] }> }
+  if (!result || typeof result !== 'object') return empty
+  const results = result.recommendation?.results || []
+  // Detect the V3 catalogue path: catalogue intents carry intent_id + stage + audit_question.
+  const catalogueRows = results.filter((r: any) => r && r.intent_id && r.stage && r.stage !== 'discovery')
+  if (!catalogueRows.length) return empty
+
+  const STAGE_LABEL: Record<string, string> = {
+    recommendation: 'Recommendation Evidence (can AI justify recommending the hotel?)',
+    evaluation: 'Evaluation (can AI accurately explain the hotel?)',
+    booking: 'Booking Confidence (can AI answer practical pre-booking questions?)',
+  }
+  const byStage: Record<string, { covered: string[]; partial: string[]; notCovered: string[] }> = {}
+
+  const line = (r: any): string => {
+    const intent = r.traveller_intent || r.audit_question || r.question || r.intent_id
+    const reasons = Array.isArray(r.reasons) && r.reasons.length ? ` — gaps: ${r.reasons.slice(0, 3).join('; ')}` : ''
+    const exp = Array.isArray(r.expected_evidence) && r.expected_evidence.length ? ` | evidence needed: ${r.expected_evidence.slice(0, 3).join('; ')}` : ''
+    const quote = r.evidence ? ` | site states: "${String(r.evidence).slice(0, 90)}"` : ''
+    return `[${r.category}/${r.intent_id}] ${intent}${quote}${reasons}${exp}`
+  }
+
+  for (const r of catalogueRows) {
+    const stageKey = STAGE_LABEL[r.stage] ? r.stage : 'evaluation'
+    const bucket = (byStage[stageKey] ||= { covered: [], partial: [], notCovered: [] })
+    if (r.readiness === 'YES') bucket.covered.push(line(r))
+    else if (r.readiness === 'PARTIAL') bucket.partial.push(line(r))
+    else bucket.notCovered.push(line(r))
+  }
+  return { hasCatalogue: true, byStage }
+}
+
+// Render the recommendability brief into the consultant's reading block. Returns '' when
+// the hotel is not on the V3 catalogue path (so non-luxury_city hotels see no change).
+function renderRecommendabilityBrief(brief: ReturnType<typeof buildRecommendabilityBrief>): string {
+  if (!brief.hasCatalogue) return ''
+  const STAGE_LABEL: Record<string, string> = {
+    recommendation: 'RECOMMENDATION EVIDENCE — can AI justify RECOMMENDING the hotel for this traveller intent?',
+    evaluation: 'EVALUATION — can AI accurately EXPLAIN the hotel for this intent?',
+    booking: 'BOOKING CONFIDENCE — can AI answer this practical pre-booking question?',
+  }
+  const order = ['recommendation', 'evaluation', 'booking']
+  const parts: string[] = []
+  for (const stage of order) {
+    const b = brief.byStage[stage]
+    if (!b) continue
+    const seg: string[] = [`\n■ ${STAGE_LABEL[stage] || stage.toUpperCase()}`]
+    seg.push(`  ✓ COVERED (AI can already do this — do NOT recommend work here): ${b.covered.length ? '\n    ' + b.covered.join('\n    ') : '(none)'}`)
+    seg.push(`  ◐ PARTIAL (evidence exists but is thin — strengthen, don't recreate): ${b.partial.length ? '\n    ' + b.partial.join('\n    ') : '(none)'}`)
+    seg.push(`  ✗ NOT COVERED (AI lacks evidence to do this — the real opportunities): ${b.notCovered.length ? '\n    ' + b.notCovered.join('\n    ') : '(none)'}`)
+    parts.push(seg.join('\n'))
+  }
+  return parts.join('\n')
+}
+
 // ─── EVIDENCE-STATE RECONCILIATION ───
 // The Knowledge Graph is the source of truth for evidence_state, NOT GPT.
 // absent → unverified. contaminated + thin (<=2 facts) → unverified.
@@ -378,10 +445,11 @@ export async function POST(req: Request) {
 
     // Load the latest audit's STRUCTURAL diagnosis (page structure + answerability) and integrate it.
     let auditBrief = { weakPages: [] as string[], unanswered: [] as string[], contentWeak: [] as string[], auditScore: null as number | null }
+    let recommendabilityBrief = { hasCatalogue: false, byStage: {} as Record<string, { covered: string[]; partial: string[]; notCovered: string[] }> }
     let latestAuditResult: any = null
     try {
       const { data: auditRow } = await sb.from('hotel_audits').select('result').eq('hotel_id', hotelId).order('created_at', { ascending: false }).limit(1).single()
-      if (auditRow?.result) { latestAuditResult = auditRow.result; auditBrief = buildAuditBrief(auditRow.result) }
+      if (auditRow?.result) { latestAuditResult = auditRow.result; auditBrief = buildAuditBrief(auditRow.result); recommendabilityBrief = buildRecommendabilityBrief(auditRow.result) }
     } catch {}
 
     // CONTINUITY: load the most recent PRIOR advisory so this run can compare against it.
@@ -449,7 +517,12 @@ ${graphLines.length ? graphLines.join('\n') : '(all commercial clusters are well
 
 TECHNICAL AI-READINESS GAPS${technical.techScore != null ? ` (technical AI-readiness ${technical.techScore}/100)` : ''}:
 These are MACHINE-READABILITY gaps — how well AI systems can parse, trust, and retrieve the site, separate from content. They include missing schema (FAQPage, Review, Restaurant, Event), missing structured retrieval blocks (Quick Facts, AI summary), and missing trust signals. Where relevant, fold these into your moves: a content move to strengthen a page should ALSO note the schema/structured-block it needs (e.g. "add FAQPage schema"). High-severity technical gaps that stand alone (like missing Review schema) can be their own quick-win move with build_type "FAQ only" or a schema note. Do not invent technical detail beyond what's listed.
-${techLines.length ? techLines.join('\n') : '(no technical gaps flagged)'}`
+${techLines.length ? techLines.join('\n') : '(no technical gaps flagged)'}${recommendabilityBrief.hasCatalogue ? `
+
+────────
+RECOMMENDABILITY ANALYSIS (how AI reasons about this hotel for real traveller intents):
+This is the most important strategic input. For each traveller intent, the audit graded whether the WEBSITE gives AI enough evidence to recommend, explain, or confirm — grouped by what AI can already do (COVERED), what is thin (PARTIAL), and what AI cannot do (NOT COVERED). Use this to understand BOTH the hotel's real strengths AND its gaps: never recommend work on a COVERED intent; strengthen PARTIAL intents using the named "evidence needed"; the NOT COVERED intents are the genuine opportunities. (Discovery-stage intents are measured separately by AI Visibility and are intentionally absent here.)
+${renderRecommendabilityBrief(recommendabilityBrief)}` : ''}`
 
     const res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
