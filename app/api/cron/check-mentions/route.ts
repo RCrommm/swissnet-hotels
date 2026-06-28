@@ -52,7 +52,16 @@ export async function GET(request: Request) {
     .select('source_url')
     .eq('region', 'Geneva')
     .limit(10000)
-  const allUrls = [...new Set((cites || []).map((c: any) => c.source_url))]
+  // Rank URLs by how often they're cited, keep only the top 100 —
+  // the dashboard never displays beyond #100, so we never need to scan further.
+  const counts: Record<string, number> = {}
+  for (const c of (cites || [])) {
+    if (c.source_url) counts[c.source_url] = (counts[c.source_url] || 0) + 1
+  }
+  const allUrls = Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 100)
+    .map(([url]) => url)
 
   const { data: done } = await supabase
     .from('page_mentions')
