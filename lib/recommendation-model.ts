@@ -24,7 +24,7 @@ export interface Recommendation {
   audit: { failed_queries: string[]; partial_queries: string[]; missing_information: string[]; coverage_pct: number | null }
   recommendability?: {
     answerable: string[]
-    partial: { intent: string; evidence_needed: string[] }[]
+    partially_answerable: { intent: string; evidence_needed: string[] }[]
     not_answerable: { intent: string; evidence_needed: string[] }[]
     has_catalogue: boolean
   }

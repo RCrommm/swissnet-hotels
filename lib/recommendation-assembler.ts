@@ -80,21 +80,38 @@ export function toCanonicalRecommendation(move: any, ctx: Ctx): Recommendation {
   const partial = topicResults.filter((r: any) => r.readiness === 'PARTIAL').map((r: any) => r.question)
 
   // ── RECOMMENDABILITY BREAKDOWN (V3) — what AI can already do for this Case's topic vs
-  // what it can't, from the catalogue grades. Uses traveller_intent (plain language) when
-  // present (catalogue path); falls back to the question text otherwise. Discovery intents
-  // are never here (the audit never scores them). Deterministic — no invention.
+  // what it can't, from the catalogue grades. Uses a ONE-TO-ONE category→topic map so each
+  // catalogue intent surfaces under exactly ONE Case (no echo across Cases). This is
+  // SEPARATE from TOPIC_TO_AUDIT_CATS (which stays broad for the old failed_queries proof).
+  // Discovery intents are never here (the audit never scores them). Deterministic.
+  const RECO_TOPIC_TO_CATS: Record<string, string[]> = {
+    rooms:    ['luxury', 'overall'],   // luxury positioning, differentiation, atmosphere, room types
+    dining:   ['dining'],
+    meetings: ['business'],            // business + meetings + weddings intents are category 'business'
+    weddings: ['romantic'],            // the couples/romantic story lives in the weddings Case
+    family:   ['family'],
+    location: ['location'],
+    spa:      ['spa', 'wellness'],
+    offers:   ['offers'],
+  }
+  const recoCats = new Set(RECO_TOPIC_TO_CATS[topic] || [])
+  const recoResults = recoCats.size
+    ? auditResults.filter((r: any) => recoCats.has((r.category || '').toLowerCase()) && r.intent_id && r.stage)
+    : []
   const recoIntent = (r: any) => r.traveller_intent || r.audit_question || r.question
   const recommendability = {
-    answerable: topicResults.filter((r: any) => r.readiness === 'YES').map(recoIntent),
-    partial: topicResults.filter((r: any) => r.readiness === 'PARTIAL').map((r: any) => ({
+    // YES = AI can fully do this. PARTIAL surfaced separately as "partly" so the strength
+    // list is never misleadingly empty when grading is strict (most rec-stage = PARTIAL).
+    answerable: recoResults.filter((r: any) => r.readiness === 'YES').map(recoIntent),
+    partially_answerable: recoResults.filter((r: any) => r.readiness === 'PARTIAL').map((r: any) => ({
       intent: recoIntent(r),
       evidence_needed: Array.isArray(r.expected_evidence) ? r.expected_evidence.slice(0, 3) : [],
     })),
-    not_answerable: topicResults.filter((r: any) => r.readiness === 'NO').map((r: any) => ({
+    not_answerable: recoResults.filter((r: any) => r.readiness === 'NO').map((r: any) => ({
       intent: recoIntent(r),
       evidence_needed: Array.isArray(r.expected_evidence) ? r.expected_evidence.slice(0, 3) : [],
     })),
-    has_catalogue: topicResults.some((r: any) => r.intent_id && r.stage),
+    has_catalogue: recoResults.some((r: any) => r.intent_id && r.stage),
   }
   const totalQ = auditResults.length || 1
   const topicDemand = topicResults.length
