@@ -2577,24 +2577,38 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId, rangeStart, range
   )
 
   const StatusPill = ({ url, m }: { url: string; m: boolean | null }) => {
-    const opt = (label: string, val: boolean | null, col: string) => {
-      const active = m === val
-      return (
-        <button onClick={(e) => { e.stopPropagation(); setMention(url, val) }}
-          style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600,
-            color: active ? (val === null ? TEXT_MUTED : '#fff') : col,
-            background: active ? (val === null ? BG : col) : 'transparent',
-            border: '1px solid ' + (active ? (val === null ? BORDER : col) : 'transparent'),
-            padding: '3px 9px', borderRadius: 20, cursor: 'pointer', opacity: active ? 1 : 0.5 }}>
-          {label}
-        </button>
-      )
-    }
+    const [open, setOpen] = useState(false)
+    const current = m === true
+      ? { label: 'Mentions you', col: GREEN }
+      : m === false
+      ? { label: 'Missing you', col: RED }
+      : { label: 'Not checked', col: TEXT_MUTED }
+    const options: { label: string; val: boolean | null; col: string }[] = [
+      { label: 'Mentions you', val: true, col: GREEN },
+      { label: 'Missing you', val: false, col: RED },
+      { label: 'Not checked', val: null, col: TEXT_MUTED },
+    ]
     return (
-      <div style={{ display: 'flex', gap: '0.25rem' }}>
-        {opt('Mentions you', true, GREEN)}
-        {opt('Missing you', false, RED)}
-        {opt('Not checked', null, TEXT_MUTED)}
+      <div style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+        <button onClick={() => setOpen(o => !o)}
+          style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600,
+            color: m === null ? TEXT_MUTED : '#fff',
+            background: m === null ? BG : current.col,
+            border: '1px solid ' + (m === null ? BORDER : current.col),
+            padding: '3px 10px', borderRadius: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem', whiteSpace: 'nowrap' }}>
+          {current.label} <span style={{ fontSize: '0.5rem' }}>▾</span>
+        </button>
+        {open && (
+          <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 4, background: WHITE, border: '1px solid ' + BORDER, borderRadius: 8, boxShadow: '0 4px 16px rgba(42,26,14,0.12)', zIndex: 20, overflow: 'hidden', minWidth: 120 }}>
+            {options.map(o => (
+              <button key={o.label} onClick={() => { setMention(url, o.val); setOpen(false) }}
+                style={{ display: 'block', width: '100%', textAlign: 'left', fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600,
+                  color: o.col, background: m === o.val ? BG : 'transparent', border: 'none', padding: '0.5rem 0.75rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                {o.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     )
   }
