@@ -28,6 +28,11 @@ export function buildCaseInput(rec: Recommendation) {
       example_failed: rec.audit.failed_queries.slice(0, 3),
       coverage_pct: rec.audit.coverage_pct,
     },
+    recommendability: rec.recommendability ? {
+      ai_can_already: rec.recommendability.answerable.slice(0, 4),
+      ai_cannot_yet: rec.recommendability.not_answerable.slice(0, 4).map(x => x.intent),
+      ai_partial: rec.recommendability.partial.slice(0, 3).map(x => x.intent),
+    } : null,
     action_facts: {
       action: rec.identity.action,
       posture: rec.identity.posture,
@@ -64,7 +69,7 @@ BANNED WORDS — never appear in any section: knowledge graph, canonical page, r
 
 SECTIONS:
 
-- "diagnosis": ONE memorable sentence — the line the GM repeats after the meeting. An OBSERVATION about the hotel, never an action, never technical. Respect "posture_meaning": a Commit topic is a STRENGTH ("AI already understands your rooms better than almost anything else about the hotel — but can't yet answer the booking questions guests ask most"); a Convert topic is a strong asset AI can't yet see as one thing ("Your dining is one of your strongest assets, but AI doesn't yet understand it as one destination"); a Fix-foundation gap is practical questions going unanswered ("Guests ask everyday questions your website can't yet answer with confidence"). Never call a Commit topic scattered or broken.
+- "diagnosis": ONE memorable sentence — the line the GM repeats after the meeting. An OBSERVATION about the hotel, never an action, never technical. Respect "posture_meaning": a Commit topic is a STRENGTH ("AI already understands your rooms better than almost anything else about the hotel — but can't yet answer the booking questions guests ask most"); a Convert topic is a strong asset AI can't yet see as one thing ("Your dining is one of your strongest assets, but AI doesn't yet understand it as one destination"); a Fix-foundation gap is practical questions going unanswered ("Guests ask everyday questions your website can't yet answer with confidence"). Never call a Commit topic scattered or broken. When "recommendability" fields are present, anchor the diagnosis in what AI CAN already do for this topic (ai_can_already) before naming what it CANNOT yet do (ai_cannot_yet) — the strength-then-gap shape, in plain traveller language (e.g. "AI can already recommend your dining and explain your rooms, but it can't yet justify the hotel for a romantic escape"). Use these as real traveller intents, never as website mechanics.
 
 - "business_consequence": ONE or TWO sentences on why it matters commercially. Name the kind of guest searches the hotel loses today, drawn from the supplied failed questions. Plain language, no metrics.
 

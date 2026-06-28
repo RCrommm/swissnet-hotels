@@ -78,6 +78,24 @@ export function toCanonicalRecommendation(move: any, ctx: Ctx): Recommendation {
   const topicResults = auditResults.filter((r: any) => wantCats.has((r.category || '').toLowerCase()))
   const failed = topicResults.filter((r: any) => r.readiness === 'NO').map((r: any) => r.question)
   const partial = topicResults.filter((r: any) => r.readiness === 'PARTIAL').map((r: any) => r.question)
+
+  // ── RECOMMENDABILITY BREAKDOWN (V3) — what AI can already do for this Case's topic vs
+  // what it can't, from the catalogue grades. Uses traveller_intent (plain language) when
+  // present (catalogue path); falls back to the question text otherwise. Discovery intents
+  // are never here (the audit never scores them). Deterministic — no invention.
+  const recoIntent = (r: any) => r.traveller_intent || r.audit_question || r.question
+  const recommendability = {
+    answerable: topicResults.filter((r: any) => r.readiness === 'YES').map(recoIntent),
+    partial: topicResults.filter((r: any) => r.readiness === 'PARTIAL').map((r: any) => ({
+      intent: recoIntent(r),
+      evidence_needed: Array.isArray(r.expected_evidence) ? r.expected_evidence.slice(0, 3) : [],
+    })),
+    not_answerable: topicResults.filter((r: any) => r.readiness === 'NO').map((r: any) => ({
+      intent: recoIntent(r),
+      evidence_needed: Array.isArray(r.expected_evidence) ? r.expected_evidence.slice(0, 3) : [],
+    })),
+    has_catalogue: topicResults.some((r: any) => r.intent_id && r.stage),
+  }
   const totalQ = auditResults.length || 1
   const topicDemand = topicResults.length
   const coverage = Math.min(1, topicDemand / Math.max(4, totalQ * 0.35))
@@ -112,6 +130,7 @@ export function toCanonicalRecommendation(move: any, ctx: Ctx): Recommendation {
     confidence: { tier: conf.tier, score: conf.score, evidence_state: (evidence_state === 'confirmed' ? 'confirmed' : 'unverified'), inputs: conf.inputs, reason: conf.reason },
     evidence: { facts: supporting.map((f: any) => ({ value: f.fact_value, quote: (f.evidence_quote || '').slice(0,120), page: toPath(f.page_url || ''), confidence: f.confidence || 0 })) },
     audit: { failed_queries: failed, partial_queries: partial, missing_information: missingInfo, coverage_pct: importantPage?.score ?? null },
+    recommendability,
     knowledge_graph: { cluster_state: kg.cluster_state || 'absent', cluster_health: kg.cluster_health ?? null, fact_pages: factPaths, explanation: kg.explanation || '' },
     technical: { causes: techFindings.slice(0,4).map((f: any) => ({ layer: f.layer, severity: f.severity, fix: f.fix })) },
     prose: {

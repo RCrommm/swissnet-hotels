@@ -22,6 +22,12 @@ export interface Recommendation {
   confidence: { tier: ConfidenceTier; score: number; evidence_state: EvidenceState; inputs: any; reason: string }
   evidence: { facts: { value: string; quote: string; page: string; confidence: number }[] }
   audit: { failed_queries: string[]; partial_queries: string[]; missing_information: string[]; coverage_pct: number | null }
+  recommendability?: {
+    answerable: string[]
+    partial: { intent: string; evidence_needed: string[] }[]
+    not_answerable: { intent: string; evidence_needed: string[] }[]
+    has_catalogue: boolean
+  }
   knowledge_graph: { cluster_state: string; cluster_health: number | null; fact_pages: string[]; explanation: string }
   technical: { causes: { layer: string; severity: string; fix: string }[] }
   prose: { ai_reasoning: string; business_reasoning: string; expected_outcome: string; why_now: string; success_measure: string }
