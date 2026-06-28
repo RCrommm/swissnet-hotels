@@ -2459,6 +2459,20 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId, rangeStart, range
   const [search, setSearch] = useState('')
   const ownDomain = 'swissnethotels.com'
 
+  const setMention = async (url: string, value: boolean | null) => {
+    setMentions(prev => ({ ...prev, [url]: value }))   // instant UI
+    try {
+      const { createClient } = await import('@supabase/supabase-js')
+      const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+      await sb.from('page_mentions').upsert(
+        { source_url: url, hotel_id: hotelId, mentioned: value, http_status: 200, checked_at: new Date().toISOString() },
+        { onConflict: 'source_url,hotel_id' }
+      )
+    } catch (e) {
+      console.error('setMention failed', e)
+    }
+  }
+
   useEffect(() => {
     const load = async () => {
       const { createClient } = await import('@supabase/supabase-js')
@@ -2562,10 +2576,27 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId, rangeStart, range
     </div>
   )
 
-  const StatusPill = ({ m }: { m: boolean | null }) => {
-    if (m === true) return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, color: GREEN, background: GREEN + '14', padding: '3px 10px', borderRadius: 20 }}>Mentions you</span>
-    if (m === false) return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, color: RED, background: RED + '12', padding: '3px 10px', borderRadius: 20 }}>Missing you</span>
-    return <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, padding: '3px 10px', borderRadius: 20 }}>Not checked</span>
+  const StatusPill = ({ url, m }: { url: string; m: boolean | null }) => {
+    const opt = (label: string, val: boolean | null, col: string) => {
+      const active = m === val
+      return (
+        <button onClick={(e) => { e.stopPropagation(); setMention(url, val) }}
+          style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600,
+            color: active ? (val === null ? TEXT_MUTED : '#fff') : col,
+            background: active ? (val === null ? BG : col) : 'transparent',
+            border: '1px solid ' + (active ? (val === null ? BORDER : col) : 'transparent'),
+            padding: '3px 9px', borderRadius: 20, cursor: 'pointer', opacity: active ? 1 : 0.5 }}>
+          {label}
+        </button>
+      )
+    }
+    return (
+      <div style={{ display: 'flex', gap: '0.25rem' }}>
+        {opt('Mentions you', true, GREEN)}
+        {opt('Missing you', false, RED)}
+        {opt('Not checked', null, TEXT_MUTED)}
+      </div>
+    )
   }
 
   return (
@@ -2635,7 +2666,7 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId, rangeStart, range
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
                   <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>cited {r.count}×</span>
                   <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', fontWeight: 600, color: GOLD, minWidth: 52, textAlign: 'right' }}>{Math.round((r.count / urlsCiteTotal) * 100)}%</span>
-                  <StatusPill m={r.mentioned} />
+                  <StatusPill url={r.url} m={r.mentioned} />
                 </div>
               </div>
             )
