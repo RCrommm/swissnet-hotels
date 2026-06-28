@@ -3120,7 +3120,9 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
                 <Sec icon="⛓" title="Implementation roadmap">
                   <Tier label="QUICK WINS" time="~30 min each" steps={rm.quickWins} col={ADV_GREEN_C} />
                   <Tier label="NEXT IMPROVEMENTS" time="2–3 hours" steps={rm.nextImprovements} col={GOLD} />
-                  {rm.strategicProject && <Tier label="STRATEGIC PROJECT" time="1–2 days" steps={[rm.strategicProject]} col={'#8A6D1F'} />}
+                  {rm.strategicProject && rm.strategicProject.text && c.recommendation &&
+                    rm.strategicProject.text.trim().slice(0, 40) !== c.recommendation.trim().slice(0, 40) &&
+                    <Tier label="STRATEGIC PROJECT" time="1–2 days" steps={[rm.strategicProject]} col={'#8A6D1F'} />}
                 </Sec>
               )
             })()}
