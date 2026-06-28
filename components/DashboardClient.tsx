@@ -4139,6 +4139,30 @@ function AdvisorTab({ hotel }: any) {
           <div style={{ flex: 1, minWidth: 280 }}>
             <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.1rem', fontWeight: 400, color: WHITE, margin: '0 0 0.4rem', lineHeight: 1.1 }}>{hotel?.name || 'Your hotel'}</p>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.75)', margin: '0 0 1.1rem' }}>Your strategic briefing</p>
+            {(() => {
+              // Deterministic "what changed since last month" line, assembled from real
+              // continuity counts. No GPT, no invented progress. Silent on the first run
+              // (nothing to compare) and when genuinely nothing moved.
+              const cont = adv?.continuity
+              if (!cont || cont.isFirstRun) return null
+              const active = Array.isArray(cont.active) ? cont.active : []
+              const resolved = Array.isArray(cont.resolved) ? cont.resolved : []
+              const advanced = active.filter((c: any) => c.status === 'improving' || c.status === 'evolved').length
+              const regressed = active.filter((c: any) => c.status === 'regressed').length
+              const fresh = active.filter((c: any) => c.status === 'new').length
+              const done = resolved.length
+              const parts: string[] = []
+              if (done) parts.push(`${done} ${done === 1 ? 'priority is' : 'priorities are'} now complete`)
+              if (advanced) parts.push(`${advanced} advanced`)
+              if (fresh) parts.push(`${fresh} new this month`)
+              if (regressed) parts.push(`${regressed} ${regressed === 1 ? 'needs' : 'need'} attention`)
+              const line = parts.length
+                ? 'Since last month: ' + (parts.length === 1 ? parts[0] : parts.slice(0, -1).join(', ') + ' and ' + parts[parts.length - 1]) + '.'
+                : 'Your priorities are steady since last month.'
+              return (
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: 'rgba(201,169,76,0.9)', margin: '0 0 0.9rem', lineHeight: 1.5 }}>{line}</p>
+              )
+            })()}
             {adv?.briefing_opening && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.9rem', fontWeight: 400, color: 'rgba(255,255,255,0.88)', margin: 0, lineHeight: 1.65, maxWidth: '60ch' }}>{adv.briefing_opening}</p>}
           </div>
           {adv && (
