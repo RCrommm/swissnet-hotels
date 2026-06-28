@@ -2982,9 +2982,23 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
   const verify = rec.confidence?.evidence_state !== 'confirmed'
   const topic = rec.targeting?.affected_entity || m.topic || ''
   const topicLabel = (topic || '').toString().toUpperCase() === '__SITE__' ? 'FOUNDATION' : (topic || '').toString().toUpperCase()
+  const topicTitle = topicLabel.charAt(0) + topicLabel.slice(1).toLowerCase()
   const POSTURE_LEAD: Record<string, string> = { Commit: 'Protect your strongest advantage', 'Fix-foundation': 'Remove operational AI friction', Confirm: 'Confirm this offering', Defer: 'Hold for later' }
   const lead = m.posture === 'Convert' ? ('Unlock your ' + topic.toLowerCase() + ' opportunity') : m.posture === 'Strengthen' ? ('Deepen your ' + topic.toLowerCase()) : (POSTURE_LEAD[m.posture] || topic)
   const proof = c.proof || {}
+
+  const hasWebsite = Array.isArray(proof.quotes) && proof.quotes.length > 0
+  const hasQuestions = Array.isArray(proof.failed_questions) && proof.failed_questions.length > 0
+  const hasReviews = Array.isArray(rec.review_evidence) && rec.review_evidence.length > 0
+  const hasTechnical = !verify && Array.isArray(rec.technical?.causes) && rec.technical.causes.length > 0
+  const hasGa4 = Array.isArray(m.behavioural_claims) && m.behavioural_claims.length > 0
+  const hasGsc = !!(rec.future?.search && rec.future.search.measured_pages?.length > 0 && rec.future.search.impressions !== null)
+
+  const activeSignals = [hasWebsite, hasQuestions, hasReviews, hasTechnical, hasGa4, hasGsc].filter(Boolean).length
+  const confidence = activeSignals >= 4 ? { label: 'Very High', col: ADV_GREEN_C }
+    : activeSignals === 3 ? { label: 'High', col: ADV_GREEN_C }
+    : activeSignals === 2 ? { label: 'Moderate', col: GOLD }
+    : { label: 'Limited', col: ADV_AMBER }
 
   const statusTag = (() => {
     const h = rec.history
@@ -3006,7 +3020,6 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
     return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = '' }
   }, [onClose])
 
-  // LEFT — narrative section
   const Sec = ({ icon, title, children }: any) => (
     <div style={{ paddingTop: '1.5rem', borderTop: '1px solid ' + BORDER, marginTop: '1.5rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.7rem' }}>
@@ -3016,7 +3029,6 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
       {children}
     </div>
   )
-  // RIGHT — rail card
   const Rail = ({ icon, title, children }: any) => (
     <div style={{ paddingBottom: '1.4rem', borderBottom: '1px solid ' + BORDER, marginBottom: '1.4rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.9rem' }}>
@@ -3027,7 +3039,6 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
     </div>
   )
 
-  const dims = model?.dimensions ? [...model.dimensions].sort((a: any, b: any) => b.score - a.score) : []
   const relatedActions = (() => {
     const out: string[] = []
     if (proof.failed_questions?.length) out.push('Add FAQ section to ' + (rec.targeting?.canonical_page || 'the page'))
@@ -3035,10 +3046,16 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
     return out.slice(0, 4)
   })()
 
+  const priorityReasons: string[] = []
+  if (hasWebsite) priorityReasons.push('Confirmed evidence on your own website')
+  if (hasQuestions) priorityReasons.push('Specific guest questions AI cannot answer today')
+  if (hasReviews) priorityReasons.push('Supporting evidence in your guest reviews')
+  if (hasTechnical) priorityReasons.push('Identified technical causes holding AI back')
+  if (relatedActions.length) priorityReasons.push('Concrete implementation actions are available')
+
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(26,14,6,0.55)', backdropFilter: 'blur(3px)', zIndex: 1000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '3vh 1.5rem', overflowY: 'auto' }}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: WHITE, borderRadius: 20, maxWidth: 1080, width: '100%', boxShadow: '0 24px 80px rgba(26,14,6,0.4)', position: 'relative', marginBottom: '3vh' }}>
-        {/* HEADER */}
         <div style={{ padding: '2rem 2.5rem 1.5rem', position: 'relative' }}>
           <button onClick={onClose} aria-label="Close" style={{ position: 'absolute', top: '1.6rem', right: '1.8rem', width: 34, height: 34, borderRadius: '50%', border: '1px solid ' + BORDER, background: WHITE, color: TEXT_MUTED, fontSize: '1.2rem', lineHeight: 1, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', marginBottom: '1rem' }}>
@@ -3047,33 +3064,50 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
             <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.08em', color: TEXT_MUTED, background: BG, border: '1px solid ' + BORDER, padding: '3px 10px', borderRadius: 4 }}>{topicLabel}</span>
           </div>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.1rem', fontWeight: 600, lineHeight: 1.15, color: TEXT, margin: '0 0 0.7rem', maxWidth: '90%' }}>{lead}</p>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.9rem', lineHeight: 1.55, color: TEXT_MUTED, margin: '0 0 1rem', maxWidth: '85%' }}>{c.diagnosis}</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             {statusTag && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: statusTag.col, background: statusTag.col + '14', padding: '4px 11px', borderRadius: 4 }}>{statusTag.txt}</span>}
             {savedAt && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED }}>Last updated: {new Date(savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>}
           </div>
         </div>
 
-        {/* TWO COLUMNS */}
         <div style={{ display: 'grid', gridTemplateColumns: '1.55fr 1fr', gap: 0, borderTop: '1px solid ' + BORDER }}>
-          {/* LEFT — narrative */}
           <div style={{ padding: '0.5rem 2rem 2.25rem', borderRight: '1px solid ' + BORDER }}>
-            {c.business_consequence && (
-              <Sec icon="◎" title="Why it matters">
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', lineHeight: 1.65, color: TEXT, margin: 0 }}>{c.business_consequence}</p>
+            <Sec icon="❖" title="Executive summary">
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.9rem', fontWeight: 500, lineHeight: 1.65, color: TEXT, margin: 0 }}>{c.diagnosis}</p>
+              {c.business_consequence && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', lineHeight: 1.65, color: TEXT_MUTED, margin: '0.7rem 0 0' }}>{c.business_consequence}</p>}
+            </Sec>
+
+            {(hasQuestions || hasTechnical || c.diagnosis) && (
+              <Sec icon="⌖" title="Root cause">
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', lineHeight: 1.65, color: TEXT, margin: 0 }}>
+                  {hasQuestions
+                    ? `AI struggles here because your site does not currently answer ${proof.failed_questions.length === 1 ? 'a key guest question' : (proof.failed_questions.length + ' guest questions')} buyers ask before booking.`
+                    : hasTechnical
+                    ? 'The content is present, but technical gaps stop AI from parsing and trusting it confidently.'
+                    : 'AI cannot yet form a confident, complete picture of this from your site as it stands.'}
+                </p>
+                {hasTechnical && (
+                  <ul style={{ listStyle: 'none', padding: 0, margin: '0.7rem 0 0', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                    {rec.technical.causes.slice(0, 3).map((t: any, j: number) => (
+                      <li key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', lineHeight: 1.5, color: TEXT_MUTED, paddingLeft: '0.95rem', position: 'relative' }}><span style={{ position: 'absolute', left: 0, color: ADV_AMBER }}>◔</span>{t.fix}</li>
+                    ))}
+                  </ul>
+                )}
               </Sec>
             )}
+
             <Sec icon="✸" title={verify ? 'What we need' : 'Recommendation'}>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.9rem', fontWeight: 600, lineHeight: 1.6, color: TEXT, margin: 0 }}>{c.recommendation}</p>
               {rec.targeting?.canonical_page && (
                 <code style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.7rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: TEXT, background: BG, padding: '5px 11px', borderRadius: 5, border: '1px solid ' + BORDER, wordBreak: 'break-all' }}>{rec.targeting.canonical_page} <span style={{ color: TEXT_MUTED }}>⊘</span></code>
               )}
             </Sec>
+
             {(() => {
               const rm = buildRoadmap(rec)
               const hasAny = rm.quickWins.length > 0 || rm.nextImprovements.length > 0 || rm.strategicProject
               if (!hasAny) return null
-              const Tier = ({ band, label, time, steps, col }: any) => steps.length === 0 ? null : (
+              const Tier = ({ label, time, steps, col }: any) => steps.length === 0 ? null : (
                 <div style={{ marginBottom: '1rem' }}>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.6rem', marginBottom: '0.5rem' }}>
                     <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.04em', color: col }}>{label}</span>
@@ -3096,91 +3130,45 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
                 </Sec>
               )
             })()}
+
             {c.expected_result && (
               <Sec icon="◘" title="Expected outcome">
                 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', lineHeight: 1.65, color: TEXT, margin: 0 }}>{c.expected_result}</p>
               </Sec>
             )}
-            {Array.isArray(m.behavioural_claims) && m.behavioural_claims.length > 0 && (
-              <Sec icon="▤" title="Guest behaviour · Google Analytics">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
-                  {m.behavioural_claims.map((b: any, j: number) => (
-                    <div key={j} style={{ padding: '0.75rem 0.95rem', background: BG, borderRadius: 8, border: '1px solid ' + BORDER }}>
-                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.84rem', lineHeight: 1.6, color: TEXT, margin: 0 }}>{b.claim}</p>
-                    </div>
-                  ))}
-                </div>
-              </Sec>
-            )}
-            {(() => {
-              const sd = rec.future?.search
-              if (!sd || !sd.measured_pages || sd.measured_pages.length === 0 || sd.impressions === null) return null
-              const fmtN = (n: number | null) => n === null || n === undefined ? '—' : n.toLocaleString()
-              const chg = sd.impressions_change_pct
-              return (
-                <Sec icon="◴" title="Search demand · Google Search Console">
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(96px, 1fr))', gap: '0.55rem', marginBottom: sd.top_queries?.length ? '0.85rem' : 0 }}>
-                    {[
-                      { label: 'Impressions', value: fmtN(sd.impressions), sub: chg !== null && chg !== undefined ? ((chg >= 0 ? '↑ ' : '↓ ') + Math.abs(chg) + '%') : 'this period', col: chg !== null && chg !== undefined ? (chg >= 0 ? ADV_GREEN_C : RED) : TEXT_MUTED },
-                      { label: 'Clicks', value: fmtN(sd.clicks), sub: '', col: TEXT_MUTED },
-                      { label: 'CTR', value: sd.ctr === null ? '—' : sd.ctr + '%', sub: '', col: TEXT_MUTED },
-                      { label: 'Avg position', value: sd.avg_position === null ? '—' : sd.avg_position, sub: '', col: TEXT_MUTED },
-                    ].map((k, j) => (
-                      <div key={j} style={{ padding: '0.65rem 0.8rem', background: BG, borderRadius: 8, border: '1px solid ' + BORDER }}>
-                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.54rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.3rem' }}>{k.label}</p>
-                        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', color: TEXT, margin: 0, lineHeight: 1 }}>{k.value}</p>
-                        {k.sub && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: k.col, margin: '0.2rem 0 0' }}>{k.sub}</p>}
-                      </div>
-                    ))}
-                  </div>
-                  {sd.top_queries?.length > 0 && (
-                    <div>
-                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 0.5rem' }}>Searches bringing guests to these pages</p>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                        {sd.top_queries.map((q: any, j: number) => (
-                          <div key={j} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.6rem', padding: '0.55rem 0.85rem', background: BG, borderRadius: 7, border: '1px solid ' + BORDER }}>
-                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{q.query}</span>
-                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: TEXT_MUTED, flexShrink: 0 }}>{q.impressions.toLocaleString()} impressions · pos {q.position}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </Sec>
-              )
-            })()}
-            {Array.isArray(rec.review_evidence) && rec.review_evidence.length > 0 && (
-              <Sec icon="★" title="Official reviews">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
-                  {rec.review_evidence.map((f: any, j: number) => (
-                    <div key={j} style={{ padding: '0.8rem 1rem', background: BG, borderRadius: 8, border: '1px solid ' + BORDER }}>
-                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.84rem', fontWeight: 500, lineHeight: 1.55, color: TEXT, margin: 0 }}>{f.claim}</p>
-                      {Array.isArray(f.representative_quotes) && f.representative_quotes.length > 0 && (
-                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: TEXT_MUTED, margin: '0.5rem 0 0', fontStyle: 'italic' }}>&ldquo;{f.representative_quotes[0].text}&rdquo;</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </Sec>
-            )}
-            {((proof.quotes?.length || proof.failed_questions?.length || rec.technical?.causes?.length) > 0) && (
-              <Sec icon="▦" title="Supporting evidence">
-                {proof.quotes?.length > 0 && (
-                  <div style={{ marginBottom: (proof.failed_questions?.length || rec.technical?.causes?.length) ? '1.2rem' : 0 }}>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 0.5rem' }}>From your website</p>
+
+            {(hasWebsite || hasReviews || hasQuestions || hasTechnical || hasGa4 || hasGsc) && (
+              <Sec icon="▦" title="Evidence behind this recommendation">
+                {hasWebsite && (
+                  <div style={{ marginBottom: '1.3rem' }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 0.5rem' }}>Website Intelligence</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                       {proof.quotes.map((q: any, j: number) => (
-                        <div key={j} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 0.9rem', background: BG, borderRadius: 8, border: '1px solid ' + BORDER }}>
+                        <div key={j} style={{ padding: '0.65rem 0.9rem', background: BG, borderRadius: 8, border: '1px solid ' + BORDER }}>
                           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, margin: 0 }}>&ldquo;{q.quote}&rdquo;{q.page && <span style={{ color: TEXT_MUTED }}> — {q.page}</span>}</p>
-                          <span style={{ color: TEXT_MUTED, flexShrink: 0 }}>›</span>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
-                {proof.failed_questions?.length > 0 && (
-                  <div style={{ marginBottom: rec.technical?.causes?.length ? '1.2rem' : 0 }}>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 0.5rem' }}>Guest questions AI can&rsquo;t answer today</p>
+                {hasReviews && (
+                  <div style={{ marginBottom: '1.3rem' }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 0.5rem' }}>Guest Review Intelligence</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {rec.review_evidence.map((f: any, j: number) => (
+                        <div key={j} style={{ padding: '0.7rem 0.95rem', background: BG, borderRadius: 8, border: '1px solid ' + BORDER }}>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', fontWeight: 500, lineHeight: 1.55, color: TEXT, margin: 0 }}>{f.claim}</p>
+                          {Array.isArray(f.representative_quotes) && f.representative_quotes.length > 0 && (
+                            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT_MUTED, margin: '0.4rem 0 0', fontStyle: 'italic' }}>&ldquo;{f.representative_quotes[0].text}&rdquo;</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {hasQuestions && (
+                  <div style={{ marginBottom: '1.3rem' }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 0.5rem' }}>Questions AI Cannot Answer</p>
                     <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                       {proof.failed_questions.map((q: string, j: number) => (
                         <li key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, paddingLeft: '0.95rem', position: 'relative', lineHeight: 1.5 }}><span style={{ position: 'absolute', left: 0, color: TEXT_MUTED }}>•</span>{q}</li>
@@ -3188,48 +3176,91 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
                     </ul>
                   </div>
                 )}
-                {!verify && rec.technical?.causes?.length > 0 && (
-                  <div>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 0.5rem' }}>What&rsquo;s making AI hesitate</p>
+                {hasTechnical && (
+                  <div style={{ marginBottom: (hasGa4 || hasGsc) ? '1.3rem' : 0 }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 0.5rem' }}>Technical Foundations</p>
                     {rec.technical.causes.map((t: any, j: number) => (
                       <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', lineHeight: 1.55, color: TEXT, margin: j ? '0.45rem 0 0' : 0, paddingLeft: '0.95rem', position: 'relative' }}><span style={{ position: 'absolute', left: 0, color: ADV_AMBER }}>◔</span>{t.fix}</p>
                     ))}
                   </div>
                 )}
+                {hasGa4 && (
+                  <div style={{ marginBottom: hasGsc ? '1.3rem' : 0 }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 0.5rem' }}>GA4 Behaviour</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      {m.behavioural_claims.map((b: any, j: number) => (
+                        <div key={j} style={{ padding: '0.65rem 0.9rem', background: BG, borderRadius: 8, border: '1px solid ' + BORDER }}>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', lineHeight: 1.55, color: TEXT, margin: 0 }}>{b.claim}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {hasGsc && (() => {
+                  const sd = rec.future.search
+                  const fmtN = (n: number | null) => n === null || n === undefined ? '—' : n.toLocaleString()
+                  return (
+                    <div>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: TEXT_MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 0.5rem' }}>Search Console</p>
+                      {sd.top_queries?.length > 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                          {sd.top_queries.map((q: any, j: number) => (
+                            <div key={j} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.6rem', padding: '0.55rem 0.85rem', background: BG, borderRadius: 7, border: '1px solid ' + BORDER }}>
+                              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{q.query}</span>
+                              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: TEXT_MUTED, flexShrink: 0 }}>{fmtN(q.impressions)} impressions</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })()}
               </Sec>
             )}
           </div>
 
-          {/* RIGHT — rail */}
           <div style={{ padding: '1.5rem 2rem 2.25rem', background: 'rgba(248,245,239,0.4)' }}>
-            <Rail icon="⤢" title="AI Visibility Contribution">
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: '0 0 0.6rem' }}>This case strengthens how AI understands your:</p>
-              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: TEXT, background: WHITE, border: '1px solid ' + BORDER, padding: '4px 11px', borderRadius: 6, display: 'inline-block' }}>{topicLabel.charAt(0) + topicLabel.slice(1).toLowerCase()}</span>
-            </Rail>
-
-            {dims.length > 0 && (
-              <Rail icon="▤" title="Evidence at a glance">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
-                  {dims.map((d: any) => {
-                    const col = advDimColor(d.band)
-                    return (
-                      <div key={d.dimension}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.25rem' }}>
-                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', color: TEXT }}>{d.label}</span>
-                          <span style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', fontWeight: 700, color: TEXT }}>{d.score}</span>
-                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, textTransform: 'capitalize', color: col, width: 56, textAlign: 'right' }}>{d.band}</span>
-                          </span>
-                        </div>
-                        <div style={{ height: 5, background: 'rgba(42,26,14,0.06)', borderRadius: 3, overflow: 'hidden' }}>
-                          <div style={{ width: Math.max(2, d.score) + '%', height: '100%', background: col, borderRadius: 3 }} />
-                        </div>
-                      </div>
-                    )
-                  })}
+            {priorityReasons.length > 0 && (
+              <Rail icon="✦" title="Why this is a priority">
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', color: TEXT_MUTED, margin: '0 0 0.7rem', lineHeight: 1.5 }}>This Case was selected because SwissNet found:</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                  {priorityReasons.map((r: string, j: number) => (
+                    <div key={j} style={{ display: 'flex', gap: '0.55rem', alignItems: 'flex-start' }}>
+                      <span style={{ color: ADV_GREEN_C, fontSize: '0.78rem', flexShrink: 0, marginTop: '0.05rem' }}>✓</span>
+                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: TEXT, lineHeight: 1.45 }}>{r}</span>
+                    </div>
+                  ))}
                 </div>
               </Rail>
             )}
+
+            <Rail icon="◉" title="Confidence">
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.6rem', marginBottom: '0.85rem' }}>
+                <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.7rem', fontWeight: 400, color: confidence.col, lineHeight: 1 }}>{confidence.label}</span>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: TEXT_MUTED }}>{activeSignals} signal{activeSignals === 1 ? '' : 's'}</span>
+              </div>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.5rem' }}>Based on</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                {[
+                  { name: 'Website Intelligence', on: hasWebsite },
+                  { name: 'Guest questions', on: hasQuestions },
+                  { name: 'Review Intelligence', on: hasReviews },
+                  { name: 'Technical causes', on: hasTechnical },
+                  { name: 'Google Analytics', on: hasGa4 },
+                  { name: 'Search Console', on: hasGsc },
+                ].map((s, j) => (
+                  <div key={j} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ color: s.on ? ADV_GREEN_C : 'rgba(42,26,14,0.25)', fontSize: '0.72rem', width: 12, flexShrink: 0 }}>{s.on ? '✓' : '○'}</span>
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', color: s.on ? TEXT : TEXT_MUTED }}>{s.name}{!s.on && (s.name === 'Google Analytics' || s.name === 'Search Console') ? ' (not connected)' : ''}</span>
+                  </div>
+                ))}
+              </div>
+            </Rail>
+
+            <Rail icon="⤢" title="AI Visibility Impact">
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.45rem' }}>Primary impact</p>
+              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', fontWeight: 600, color: TEXT, background: WHITE, border: '1px solid ' + BORDER, padding: '5px 13px', borderRadius: 6, display: 'inline-block' }}>{topicTitle}</span>
+            </Rail>
 
             {relatedActions.length > 0 && (
               <Rail icon="◈" title="Related actions">
@@ -3243,33 +3274,6 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
                 </div>
               </Rail>
             )}
-
-            {/* Evidence sources — always present, show state */}
-            <div>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT, margin: '0 0 0.7rem' }}>Evidence sources</p>
-              {(() => {
-                const ga4On = Array.isArray(m.behavioural_claims) && m.behavioural_claims.length > 0
-                const reviewsOn = Array.isArray(rec.review_evidence) && rec.review_evidence.length > 0
-                const gscOn = !!(rec.future?.search && rec.future.search.measured_pages?.length > 0 && rec.future.search.impressions !== null)
-                const sources = [
-                  { name: 'Website Intelligence', on: true, state: 'Active' },
-                  { name: 'Review Intelligence', on: reviewsOn, state: reviewsOn ? 'Active' : 'Awaiting reviews' },
-                  { name: 'Google Analytics', on: ga4On, state: ga4On ? 'Connected' : 'Connect to see results' },
-                  { name: 'Search Console', on: gscOn, state: gscOn ? 'Connected' : 'Connect to see results' },
-                ]
-                return (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                    {sources.map((src, j) => (
-                      <div key={j} style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', padding: '0.5rem 0.7rem', background: WHITE, borderRadius: 7, border: '1px solid ' + BORDER }}>
-                        <span style={{ width: 7, height: 7, borderRadius: '50%', background: src.on ? ADV_GREEN_C : 'rgba(42,26,14,0.22)', flexShrink: 0 }} />
-                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 500, color: TEXT, flex: 1 }}>{src.name}</span>
-                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: src.on ? ADV_GREEN_C : TEXT_MUTED }}>{src.state}</span>
-                      </div>
-                    ))}
-                  </div>
-                )
-              })()}
-            </div>
           </div>
         </div>
       </div>
