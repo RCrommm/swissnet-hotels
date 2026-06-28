@@ -630,6 +630,46 @@ ${techLines.length ? techLines.join('\n') : '(no technical gaps flagged)'}`
         }
       } catch {}
 
+      // 4c) IMPLEMENTATION TRACKING — map the audit memory's item-level diff onto each Case.
+      // memory.fixed / memory.stillOpen carry page:/query: keys; we attach the ones whose
+      // topic matches the Case. Resolved items = real ✓ (audit confirmed them gone);
+      // still-open = ○. No fabrication: a key that matches no Case topic is simply not shown.
+      try {
+        const mem = latestAuditResult?.memory
+        if (mem && !mem.isFirstRun) {
+          const keyTopic = (k: string): string => {
+            const s = (k || '').toLowerCase()
+            if (/(dining|restaurant|bar|brasserie|tea|cuisine|food)/.test(s)) return 'dining'
+            if (/(spa|wellness|thermal)/.test(s)) return 'spa'
+            if (/(meeting|business|conference|event|corporate)/.test(s)) return 'meetings'
+            if (/(wedding|romantic|honeymoon|couple|ceremon)/.test(s)) return 'weddings'
+            if (/(family|kids|children)/.test(s)) return 'family'
+            if (/(rooms?|suite|accommodation)/.test(s)) return 'rooms'
+            if (/(location|neighbourhood|attraction|transport)/.test(s)) return 'location'
+            return 'foundation'
+          }
+          const humanize = (k: string): string => {
+            const parts = (k || '').split(':')
+            if (parts[0] === 'page') return parts[1].replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) + ' page'
+            if (parts[0] === 'query') return parts.slice(2).join(' ').replace(/-/g, ' ').replace(/^./, (c: string) => c.toUpperCase())
+            return (k || '').replace(/[:-]/g, ' ')
+          }
+          const fixedByTopic: Record<string, string[]> = {}
+          for (const k of (mem.fixed || [])) { const t = keyTopic(k); (fixedByTopic[t] ||= []).push(humanize(k)) }
+          const openByTopic: Record<string, string[]> = {}
+          for (const f of (mem.stillOpen || [])) { const key = f.key || f.title || ''; const t = keyTopic(key); (openByTopic[t] ||= []).push(f.title || humanize(key)) }
+          for (const m of advisory.top_moves) {
+            const topic = (m.canonicalRecommendation?.targeting?.topic || m.topic || '').toString().toLowerCase()
+            if (!topic || !m.canonicalRecommendation) continue
+            const detected = fixedByTopic[topic] || []
+            const stillOpen = openByTopic[topic] || []
+            if (detected.length || stillOpen.length) {
+              m.canonicalRecommendation.implementation = { detected, stillOpen }
+            }
+          }
+        }
+      } catch {}
+
       // 5) STAGE 3 — sequence labels/transitions (deterministic) + one grounded opening paragraph
       attachSequence(advisory.top_moves)
       try {

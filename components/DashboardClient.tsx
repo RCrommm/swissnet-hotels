@@ -3143,7 +3143,13 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
 
             {/* 4 — IMPLEMENTATION PROGRESS */}
             <Sec title="Implementation progress">
-              {historyResolved && historyLine && (
+              {Array.isArray(rec.implementation?.detected) && rec.implementation.detected.map((d: string, j: number) => (
+                <div key={'det' + j} style={{ display: 'flex', gap: '0.55rem', alignItems: 'flex-start', marginBottom: '0.55rem' }}>
+                  <span style={{ color: ADV_GREEN_C, fontSize: '0.82rem', flexShrink: 0, marginTop: '0.1rem' }}>✓</span>
+                  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, lineHeight: 1.5 }}>{d} <span style={{ color: TEXT_MUTED, fontSize: '0.72rem' }}>detected this audit</span></span>
+                </div>
+              ))}
+              {historyResolved && historyLine && (!rec.implementation?.detected || rec.implementation.detected.length === 0) && (
                 <div style={{ display: 'flex', gap: '0.55rem', alignItems: 'flex-start', marginBottom: '0.8rem' }}>
                   <span style={{ color: ADV_GREEN_C, fontSize: '0.82rem', flexShrink: 0, marginTop: '0.05rem' }}>✓</span>
                   <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, lineHeight: 1.5 }}>{historyLine}</span>
