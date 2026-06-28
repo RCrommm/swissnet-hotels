@@ -568,6 +568,30 @@ ${renderRecommendabilityBrief(recommendabilityBrief)}` : ''}`
       advisory.declined = advisory.decision_board.declined || null
       advisory.deferred = advisory.decision_board.deferred || []
     }
+
+    // ─── ADDITIONAL OPPORTUNITIES + AI FOUNDATIONS ───
+    // The deferred ACTIVE decisions are already ranked by value and already above the floor;
+    // they were hidden only because the top slice filled up, not because they lack value.
+    // Surface them as real Cases by appending to top_moves so they pass through the SAME
+    // enrichment pipeline (evidence, recommendability, Case), then split them back out below.
+    // Decline + Defer + no-substance stay hidden — that guard is deliberate. The __site__
+    // Fix-foundation decision becomes its own dedicated Foundation Case (all technical lives here).
+    const ADDITIONAL_FLOOR = 0.25 // = VALUE_FLOOR; the same bar that defines "a real opportunity"
+    let priorityCount = Array.isArray(advisory.top_moves) ? advisory.top_moves.length : 0
+    let opportunityCount = 0
+    let hasFoundation = false
+    if (advisory.decision_board?.decisions?.length && Array.isArray(advisory.deferred)) {
+      const OPP_ACTIVE = new Set(['Commit', 'Convert', 'Confirm'])
+      const opportunityDecisions = advisory.deferred
+        .filter((d: any) => d.topic !== '__site__' && OPP_ACTIVE.has(d.posture) && (d.value ?? 0) >= ADDITIONAL_FLOOR)
+        .sort((a: any, b: any) => (b.value ?? 0) - (a.value ?? 0))
+      const foundationDecision = advisory.deferred.find((d: any) => d.topic === '__site__' && d.posture === 'Fix-foundation')
+      const oppMoves = opportunityDecisions.map((dec: any) => decisionToMove(dec, knowledgeGraph, auditBrief, technical))
+      opportunityCount = oppMoves.length
+      const foundationMoves = foundationDecision ? [decisionToMove(foundationDecision, knowledgeGraph, auditBrief, technical)] : []
+      hasFoundation = foundationMoves.length > 0
+      advisory.top_moves = [...advisory.top_moves, ...oppMoves, ...foundationMoves]
+    }
     // ─── DECISION LAYER: deterministically attach a concrete action to each move ───
     // Execute consumes move.decision.action / .target / .generate mechanically.
     const pagesScraped = Array.from(new Set((facts || []).map((f: any) => f.page_url || '').filter(Boolean)))
@@ -693,6 +717,20 @@ ${renderRecommendabilityBrief(recommendabilityBrief)}` : ''}`
         // DORMANT: build the 5-section consulting Case on the canonical object (runs concurrently with prose)
         try { if (m.canonicalRecommendation) m.canonicalRecommendation.case = await buildCase(m.canonicalRecommendation, openaiKey) } catch {}
       }))
+
+      // ─── SPLIT: partition the enriched list into display layers ───
+      // Everything above enriched the combined list identically (Case, recommendability,
+      // evidence). From here down — continuity, implementation tracking, sequence, opening —
+      // only the PRIORITY moves drive the briefing. Opportunities + Foundation render quietly.
+      if (opportunityCount > 0 || hasFoundation) {
+        const all = advisory.top_moves
+        advisory.top_moves = all.slice(0, priorityCount)
+        advisory.next_opportunities = all.slice(priorityCount, priorityCount + opportunityCount)
+        advisory.foundation = hasFoundation ? (all[priorityCount + opportunityCount] || null) : null
+      } else {
+        advisory.next_opportunities = []
+        advisory.foundation = null
+      }
 
       // 4b) CONTINUITY — compute BEFORE the opening so the briefing can acknowledge progress.
       // Topic = durable Case identity; posture = chapter. Compares this advisory vs the previous.
