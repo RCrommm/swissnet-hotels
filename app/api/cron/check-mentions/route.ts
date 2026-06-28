@@ -47,10 +47,12 @@ export async function GET(request: Request) {
     .eq('is_active', true)
   if (!partners?.length) return NextResponse.json({ message: 'No partner hotels' })
 
+  const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   const { data: cites } = await supabase
     .from('ai_citations')
     .select('source_url')
     .eq('region', 'Geneva')
+    .gte('run_date', since30)
     .limit(10000)
   // Rank URLs by how often they're cited, keep only the top 100 —
   // the dashboard never displays beyond #100, so we never need to scan further.
