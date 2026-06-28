@@ -3020,8 +3020,8 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
 
   const reco = rec.recommendability
   const covItems = (reco?.answerable || []).map((t: string) => ({ text: t, needs: [] as string[] }))
-  const parItems = (reco?.partially_answerable || []).map((x: any) => ({ text: x.intent, needs: x.evidence_needed || [] }))
-  const notItems = (reco?.not_answerable || []).map((x: any) => ({ text: x.intent, needs: x.evidence_needed || [] }))
+  const parItems = (reco?.partially_answerable || []).map((x: any) => ({ text: x.intent, question: x.question || null, needs: x.evidence_needed || [] }))
+  const notItems = (reco?.not_answerable || []).map((x: any) => ({ text: x.intent, question: x.question || null, needs: x.evidence_needed || [] }))
   const cCov = covItems.length, cPar = parItems.length, cNot = notItems.length
   const hasReco = !!(reco && reco.has_catalogue && (cCov + cPar + cNot > 0))
 
@@ -3149,9 +3149,16 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
                   <span style={{ color, fontSize: '0.8rem', flexShrink: 0, marginTop: '0.05rem' }}>{id === 'covered' ? '✓' : id === 'partial' ? '◐' : '✗'}</span>
                   <div>
-                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, lineHeight: 1.45 }}>{it.text}</span>
+                    {it.question ? (
+                      <>
+                        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', fontWeight: 600, color: TEXT, lineHeight: 1.45 }}>&ldquo;{it.question}&rdquo;</span>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT_MUTED, margin: '0.15rem 0 0', lineHeight: 1.4 }}>{it.text}</p>
+                      </>
+                    ) : (
+                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT, lineHeight: 1.45 }}>{it.text}</span>
+                    )}
                     {it.needs.length > 0 && (
-                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: '0.25rem 0 0', lineHeight: 1.5 }}><span style={{ fontWeight: 600 }}>What to put on the page:</span> {it.needs.join('; ')}.</p>
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: '0.4rem 0 0', lineHeight: 1.5 }}><span style={{ fontWeight: 600 }}>What to put on the page:</span> {it.needs.join('; ')}.</p>
                     )}
                   </div>
                 </div>
