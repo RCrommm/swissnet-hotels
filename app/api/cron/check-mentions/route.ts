@@ -67,8 +67,14 @@ export async function GET(request: Request) {
 
   const { data: done } = await supabase
     .from('page_mentions')
-    .select('source_url, hotel_id')
-  const doneSet = new Set((done || []).map((d: any) => `${d.source_url}|${d.hotel_id}`))
+    .select('source_url, hotel_id, http_status')
+  // Only "done" if we actually reached the page (200). Blocked/throttled/timed-out
+  // rows (403, 429, 0, etc.) stay eligible so the cron retries them next run.
+  const doneSet = new Set(
+    (done || [])
+      .filter((d: any) => d.http_status === 200)
+      .map((d: any) => `${d.source_url}|${d.hotel_id}`)
+  )
 
   const todo = allUrls.filter(url => partners.some(p => !doneSet.has(`${url}|${p.id}`))).slice(0, BATCH)
 
