@@ -36,7 +36,11 @@ function buildFindings(result: any): any[] {
   }
   for (const r of (result.recommendation?.results || [])) {
     if (r.readiness !== 'NO') continue
-    push({ finding_key: `query:${mlSlug(r.category)}:${mlSlug(r.question)}`, type: 'unanswered_query', title: r.question, evidence: '', recommendation: (r.reasons && r.reasons[0]) ? `Address: ${r.reasons[0]}` : 'Add content answering this question.', impact: r.priority === 'high' ? 'High' : 'Medium', category: r.category || 'overall', status: 'open', affected_queries: [r.question] })
+    // STABLE KEY: category:intent_id, NOT the question wording. A reworded question keeps
+    // the same intent_id, so the key no longer churns across runs. Falls back to a question
+    // slug only when intent_id is missing/"other" (rare — uncatalogued intents).
+    const intentPart = (r.intent_id && r.intent_id !== 'other') ? mlSlug(r.intent_id) : mlSlug(r.question)
+    push({ finding_key: `query:${mlSlug(r.category)}:${intentPart}`, type: 'unanswered_query', title: r.question, evidence: '', recommendation: (r.reasons && r.reasons[0]) ? `Address: ${r.reasons[0]}` : 'Add content answering this question.', impact: r.priority === 'high' ? 'High' : 'Medium', category: r.category || 'overall', status: 'open', affected_queries: [r.question] })
   }
   return out
 }
@@ -194,10 +198,44 @@ RULES:
 - Do NOT invent named amenities the signals don't support. Ask about guest NEEDS, not claimed features.
 Return STRICTLY the JSON schema.`
 
-function qgenSchema(categories: string[]) {
+// Deterministic intent catalogue per category. GPT SELECTS an intent_id from the allowed
+// list (it cannot invent one) — same enum-locking we use for category. The finding key is
+// then category:intent_id, which stays stable no matter how GPT rewords the visible question.
+// "other" is the escape hatch for a question that fits no catalogued intent; those still get
+// a stable key via a slug of the question (rare, and acceptable — they're the exception).
+const INTENT_CATALOGUE: Record<string, string[]> = {
+  luxury: ['luxury-positioning', 'luxury-amenities', 'boutique-character', 'what-makes-special', 'awards-recognition'],
+  dining: ['restaurants-overview', 'afternoon-tea', 'bar-lounge', 'cuisine-type', 'fine-dining', 'private-dining', 'breakfast', 'dietary-options', 'reservations'],
+  business: ['meeting-rooms', 'event-spaces', 'capacities', 'corporate-services', 'business-suitability'],
+  romantic: ['couples-suitability', 'romantic-packages', 'honeymoon', 'anniversary', 'best-room-couples'],
+  family: ['family-suitability', 'family-rooms', 'family-packages', 'childrens-facilities', 'connecting-rooms', 'babysitting'],
+  spa: ['spa-overview', 'treatments', 'facilities', 'opening-hours', 'non-resident-access', 'pool'],
+  location: ['nearby-attractions', 'airport-transfer', 'public-transport', 'neighbourhood', 'distance-to-centre', 'best-area'],
+  accessibility: ['accessible-rooms', 'step-free-access', 'lift-access', 'accessibility-overview'],
+  parking: ['parking-availability', 'parking-cost', 'valet', 'ev-charging'],
+  pets: ['pet-policy', 'pet-fees', 'pet-amenities'],
+  overall: ['rooms-overview', 'offers-packages', 'unique-experiences', 'check-in-out', 'cancellation', 'guest-reviews', 'overall-fit', 'why-stay-here'],
+  ski: ['ski-access', 'ski-storage', 'slope-proximity', 'ski-concierge'],
+  hiking: ['hiking-access', 'trails-nearby', 'hiking-guides'],
+  beach: ['beach-access', 'beach-proximity', 'watersports'],
+  watersports: ['watersports-overview', 'equipment', 'lessons'],
+  golf: ['golf-access', 'course-proximity', 'golf-packages'],
+}
+function intentsFor(categories: string[]): string[] {
+  const out = new Set<string>(['other'])
+  for (const c of categories) for (const id of (INTENT_CATALOGUE[c] || [])) out.add(id)
+  return [...out]
+}
+
+function qgenSchema(categories: string[], intents: string[]) {
   return { type: 'object', additionalProperties: false, required: ['questions'], properties: { questions: { type: 'array', items: {
-    type: 'object', additionalProperties: false, required: ['question', 'category', 'priority'],
-    properties: { question: { type: 'string' }, category: { type: 'string', enum: categories }, priority: { type: 'string', enum: ['high', 'medium'] } },
+    type: 'object', additionalProperties: false, required: ['question', 'category', 'intent_id', 'priority'],
+    properties: {
+      question: { type: 'string' },
+      category: { type: 'string', enum: categories },
+      intent_id: { type: 'string', enum: intents },
+      priority: { type: 'string', enum: ['high', 'medium'] },
+    },
   } } } }
 }
 
@@ -226,13 +264,14 @@ async function generateQuestions(ctx: { name: string; city: string; type: string
     categories = ['location', 'dining', 'spa', 'family', 'romantic', 'business', 'luxury', 'accessibility', 'parking', 'pets', 'overall']
     demandBlock = '\n(No confirmed hotel profile — using generic demand across all standard categories.)\n'
   }
-  const user = `HOTEL: ${ctx.name || '(unknown name)'}\nCITY: ${ctx.city || '(unknown city)'}\nTYPE: ${ctx.type || 'luxury hotel'}\nPAGES FOUND: ${ctx.pages.length ? ctx.pages.join(', ') : '(none detected)'}\nAMENITY SIGNALS: ${ctx.amenities.length ? ctx.amenities.join(', ') : '(none detected)'}\n${demandBlock}\nALLOWED CATEGORIES (use EXACTLY these): ${categories.join(', ')}`
+  const intents = intentsFor(categories)
+  const user = `HOTEL: ${ctx.name || '(unknown name)'}\nCITY: ${ctx.city || '(unknown city)'}\nTYPE: ${ctx.type || 'luxury hotel'}\nPAGES FOUND: ${ctx.pages.length ? ctx.pages.join(', ') : '(none detected)'}\nAMENITY SIGNALS: ${ctx.amenities.length ? ctx.amenities.join(', ') : '(none detected)'}\n${demandBlock}\nALLOWED CATEGORIES (use EXACTLY these): ${categories.join(', ')}\n\nFor EACH question you MUST also assign an "intent_id" from the allowed list — pick the ONE that best matches what the question is really asking. The intent_id is the stable identity of the question's purpose; the same underlying need must always get the same intent_id even if you word the question differently. Only use "other" if no listed intent fits. Aim to cover a SPREAD of distinct intents rather than several questions sharing one intent_id.\nALLOWED INTENT IDS: ${intents.join(', ')}`
   try {
     const res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
       body: JSON.stringify({
-        model: 'gpt-4o', temperature: 0.4, max_tokens: 1800,
-        response_format: { type: 'json_schema', json_schema: { name: 'questions', strict: true, schema: qgenSchema(categories) } },
+        model: 'gpt-4o', temperature: 0.2, max_tokens: 1800,
+        response_format: { type: 'json_schema', json_schema: { name: 'questions', strict: true, schema: qgenSchema(categories, intents) } },
         messages: [{ role: 'system', content: QGEN_SYSTEM }, { role: 'user', content: user }],
       }),
     })
@@ -240,9 +279,15 @@ async function generateQuestions(ctx: { name: string; city: string; type: string
     const c = data?.choices?.[0]?.message?.content
     if (!c) return []
     const parsed = JSON.parse(c)
-    const qs = (parsed.questions || []).filter((q: any) => q && q.question).map((q: any) => ({ question: String(q.question).trim(), category: q.category || 'overall', priority: q.priority === 'high' ? 'high' : 'medium' }))
+    const qs = (parsed.questions || []).filter((q: any) => q && q.question).map((q: any) => ({ question: String(q.question).trim(), category: q.category || 'overall', intent_id: q.intent_id || 'other', priority: q.priority === 'high' ? 'high' : 'medium' }))
+    // De-dup on category:intent_id so two questions never collide on the same stable key.
+    // First occurrence wins; later collisions are dropped (keeps the key set stable + unique).
     const seen = new Set<string>()
-    return qs.filter((q: any) => { const k = q.question.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true })
+    return qs.filter((q: any) => {
+      const k = `${q.category}:${q.intent_id === 'other' ? q.question.toLowerCase() : q.intent_id}`
+      if (seen.has(k)) return false
+      seen.add(k); return true
+    })
   } catch { return [] }
 }
 
@@ -382,10 +427,10 @@ async function runReadiness(prompts: any[], pages: any[], openaiKey: string) {
       }
       let conf = Number.isFinite(a.confidence) ? Math.max(0, Math.min(100, a.confidence)) : 0
       if (readiness === 'NO') conf = Math.min(conf, 20)
-      return { question: q.question, category: q.category || 'overall', priority: q.priority || 'medium', readiness, evidence: readiness === 'NO' ? '' : ev, reasons: Array.isArray(a.reasons) ? a.reasons.slice(0, 4) : [], url: readiness === 'NO' ? '' : (a.url || ''), confidence: conf, pages: Array.isArray(a.pages) ? a.pages.slice(0, 5) : [] }
+      return { question: q.question, category: q.category || 'overall', intent_id: q.intent_id || 'other', priority: q.priority || 'medium', readiness, evidence: readiness === 'NO' ? '' : ev, reasons: Array.isArray(a.reasons) ? a.reasons.slice(0, 4) : [], url: readiness === 'NO' ? '' : (a.url || ''), confidence: conf, pages: Array.isArray(a.pages) ? a.pages.slice(0, 5) : [] }
     })
   } catch {
-    return prompts.map(q => ({ question: q.question, category: q.category || 'overall', priority: q.priority || 'medium', readiness: 'NO', evidence: '', reasons: ['Not evaluated'], url: '', confidence: 0, pages: [] }))
+    return prompts.map(q => ({ question: q.question, category: q.category || 'overall', intent_id: q.intent_id || 'other', priority: q.priority || 'medium', readiness: 'NO', evidence: '', reasons: ['Not evaluated'], url: '', confidence: 0, pages: [] }))
   }
 }
 
