@@ -3619,13 +3619,45 @@ function EvidenceRow({ adv, hotel }: any) {
 // AI Performance Intelligence — measurement bubble. Reads adv.ai_performance (real
 // GA4 data when connected). No causal language; reports what happened only. When not
 // connected, shows a connect state. Every number traces to a real GA4 aggregation.
-function AiPerformancePanel({ perf, swissnet, ga4Connected }: any) {
+function AiPerformancePanel({ perf: perfProp, swissnet: swissProp, ga4Connected, hotelId }: any) {
+  // Live refresh: seed from the stored advisory (free first render), then let the hotel
+  // change the window — only a date-change calls the cheap /api/ga4-panel endpoint.
+  const [days, setDays] = useState(28)
+  const [livePerf, setLivePerf] = useState<any>(perfProp)
+  const [liveSwiss, setLiveSwiss] = useState<any>(swissProp)
+  const [loadingRange, setLoadingRange] = useState(false)
+
+  const loadRange = async (d: number) => {
+    setDays(d)
+    if (!hotelId) return
+    setLoadingRange(true)
+    try {
+      const res = await fetch('/api/ga4-panel', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hotelId, days: d, compare: true }),
+      })
+      const j = await res.json()
+      if (res.ok) { setLivePerf(j.ai_performance); setLiveSwiss(j.swissnet_influence) }
+    } catch {} finally { setLoadingRange(false) }
+  }
+
+  const perf = livePerf
+  const swissnet = liveSwiss
   const measured = perf && perf.measured
   const Wrap = ({ children }: any) => (
     <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 16, overflow: 'hidden', marginBottom: '1.5rem' }}>
-      <div style={{ padding: '1.4rem 1.85rem 1.1rem', borderBottom: '1px solid ' + BORDER, background: 'linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)' }}>
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.8)', margin: '0 0 0.3rem' }}>AI Performance Intelligence</p>
-        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.35rem', fontWeight: 300, color: WHITE, margin: 0, lineHeight: 1.25 }}>Is AI visibility driving real traffic to your website?</p>
+      <div style={{ padding: '1.4rem 1.85rem 1.1rem', borderBottom: '1px solid ' + BORDER, background: 'linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
+        <div>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.8)', margin: '0 0 0.3rem' }}>AI Performance Intelligence</p>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.35rem', fontWeight: 300, color: WHITE, margin: 0, lineHeight: 1.25 }}>Is AI visibility driving real traffic to your website?</p>
+        </div>
+        {ga4Connected && (
+          <div style={{ display: 'flex', gap: '0.2rem', background: 'rgba(255,255,255,0.08)', borderRadius: 7, padding: '0.2rem', flexShrink: 0 }}>
+            {[{ l: '7D', v: 7 }, { l: '28D', v: 28 }, { l: '90D', v: 90 }].map(o => (
+              <button key={o.v} onClick={() => loadRange(o.v)} disabled={loadingRange} style={{ padding: '0.3rem 0.7rem', borderRadius: 5, border: 'none', background: days === o.v ? GOLD : 'transparent', color: days === o.v ? '#1a0e06' : 'rgba(255,255,255,0.7)', fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, cursor: loadingRange ? 'default' : 'pointer', opacity: loadingRange && days !== o.v ? 0.5 : 1 }}>{o.l}</button>
+            ))}
+          </div>
+        )}
       </div>
       {children}
     </div>
@@ -3749,7 +3781,7 @@ function AiPerformancePanel({ perf, swissnet, ga4Connected }: any) {
           )
         })()}
 
-        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: TEXT_MUTED, margin: '1.25rem 0 0', lineHeight: 1.5, fontStyle: 'italic' }}>Measured from your Google Analytics over the last {perf.period_days || 28} days. This reports what happened — it does not claim a cause.</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: TEXT_MUTED, margin: '1.25rem 0 0', lineHeight: 1.5, fontStyle: 'italic' }}>Measured from your Google Analytics over the last {perf.period_days || days} days{loadingRange ? ' · updating…' : ''}. This reports what happened — it does not claim a cause.</p>
       </div>
     </Wrap>
   )
@@ -4248,7 +4280,7 @@ function AdvisorTab({ hotel }: any) {
         <>
           <AdvisorV2Body adv={adv} memory={memory} hotel={hotel} savedAt={savedAt} />
 
-          <AiPerformancePanel perf={adv.ai_performance} swissnet={adv.swissnet_influence} ga4Connected={hotel?.ga4_status === 'connected'} />
+          <AiPerformancePanel perf={adv.ai_performance} swissnet={adv.swissnet_influence} ga4Connected={hotel?.ga4_status === 'connected'} hotelId={hotel?.id} />
 
           {savedAt && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT_MUTED, margin: '1.25rem 0 0', textAlign: 'right' }}>Last generated: {new Date(savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>}
         </>
