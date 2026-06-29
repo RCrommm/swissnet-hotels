@@ -1,13 +1,14 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 interface Props {
   password: string
+  regions: string[]
 }
 
 const TIERS = ['monitor', 'optimise', 'premium']
 
-export default function OnboardingTab({ password }: Props) {
+export default function OnboardingTab({ password, regions }: Props) {
   const gold = '#C9A84C'
   const border = 'rgba(201,169,110,0.2)'
   const text = '#2A1A0E'
@@ -16,7 +17,6 @@ export default function OnboardingTab({ password }: Props) {
   const green = '#16a34a'
   const red = '#dc2626'
 
-  const [regions, setRegions] = useState<string[]>([])
   const [mode, setMode] = useState<'existing' | 'new'>('existing')
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<any>(null)
@@ -34,15 +34,7 @@ export default function OnboardingTab({ password }: Props) {
     competitors: '',
   })
 
-  useEffect(() => {
-    const load = async () => {
-      const { createClient } = await import('@supabase/supabase-js')
-      const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-      const { data } = await sb.from('regions').select('region').eq('is_active', true).order('region')
-      setRegions((data || []).map((r: any) => r.region))
-    }
-    load()
-  }, [])
+  
 
   const inputStyle: React.CSSProperties = {
     width: '100%', background: '#fff', border: '1px solid ' + border,

@@ -96,6 +96,12 @@ const { data: cronCosts } = await supabase
   .order('run_at', { ascending: false })
   .limit(30)
 
+  const { data: regionsData } = await supabase
+    .from('regions')
+    .select('region')
+    .eq('is_active', true)
+    .order('region')
+
   const tab = params.tab || 'hotels'
   const pw = params.password || ''
 
@@ -191,7 +197,7 @@ const { data: cronCosts } = await supabase
 
         {tab === 'hotels' && <HotelsTab hotels={hotelsList} password={pw} />}
 
-        {tab === 'onboard' && <OnboardingTab password={pw} />}
+        {tab === 'onboard' && <OnboardingTab password={pw} regions={(regionsData || []).map(r => r.region)} />}
 
         {tab === 'schema' && <SchemaTab hotels={hotelsList} />}
 
