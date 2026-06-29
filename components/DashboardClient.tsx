@@ -2414,6 +2414,7 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId, rangeStart, range
   const [mentions, setMentions] = useState<Record<string, boolean | null>>({})
   const [loaded, setLoaded] = useState(false)
   const [search, setSearch] = useState('')
+  const [pageMode, setPageMode] = useState<'general' | 'category'>('general')
   const ownDomain = 'swissnethotels.com'
 
   const setMention = async (url: string, value: boolean | null) => {
@@ -2535,8 +2536,11 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId, rangeStart, range
   const general = aggregate(generalRows)
   const category = aggregate(categoryRows)
 
-  // Back-compat aliases — the existing General render block reads these names unchanged.
-  const { ranked, top10CiteTotal, rankedUrls, urlsCiteTotal, totalSources, mentionYes, mentionNo } = general
+  // Top metric cards + domain block stay on general (the daily, fuller picture).
+  const { ranked, top10CiteTotal, totalSources, mentionYes, mentionNo } = general
+  // The "Every cited page" list follows the toggle.
+  const active = pageMode === 'category' ? category : general
+  const { rankedUrls, urlsCiteTotal } = active
 
   if (!loaded) return <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>Loading citation sources…</p>
 
@@ -2639,7 +2643,16 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId, rangeStart, range
             <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT, margin: '0 0 0.15rem' }}>Every cited page</p>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>The exact pages ChatGPT and Perplexity cited across your queries — click to open</p>
           </div>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search pages…" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.45rem 0.75rem', background: WHITE, outline: 'none', minWidth: 180 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '0.2rem', background: BG, borderRadius: 7, padding: '0.2rem', border: '1px solid ' + BORDER }}>
+              {[{ k: 'general', l: 'General', n: general.rankedUrls.length }, { k: 'category', l: 'Category', n: category.rankedUrls.length }].map(o => (
+                <button key={o.k} onClick={() => setPageMode(o.k as any)} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.3rem 0.7rem', borderRadius: 5, border: 'none', background: pageMode === o.k ? WHITE : 'transparent', color: pageMode === o.k ? TEXT : TEXT_MUTED, fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, cursor: 'pointer', boxShadow: pageMode === o.k ? '0 1px 4px rgba(42,26,14,0.08)' : 'none' }}>
+                  {o.l}<span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, color: pageMode === o.k ? GOLD : TEXT_MUTED }}>{o.n}</span>
+                </button>
+              ))}
+            </div>
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search pages…" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.45rem 0.75rem', background: WHITE, outline: 'none', minWidth: 180 }} />
+          </div>
         </div>
         <div>
           {rankedUrls.filter(r => !search || r.url.toLowerCase().includes(search.toLowerCase())).map((r, i) => {
@@ -2661,36 +2674,7 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId, rangeStart, range
         </div>
       </div>
 
-      {/* CATEGORY SOURCES — separate list so weekly category runs aren't buried under daily general volume */}
-      {category.rankedUrls.length > 0 && (
-        <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginBottom: '1.5rem' }}>
-          <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid ' + BORDER, background: BG }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.15rem' }}>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT, margin: 0 }}>Category sources</p>
-              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.48rem', fontWeight: 700, letterSpacing: '0.05em', color: '#8B5CF6', background: '#8B5CF614', padding: '2px 8px', borderRadius: 10, textTransform: 'uppercase' }}>Weekly</span>
-            </div>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>Pages cited for category searches — spa, dining, romantic and the like. Tracked weekly, shown separately so they aren't drowned out by daily general results.</p>
-          </div>
-          <div>
-            {category.rankedUrls.filter(r => !search || r.url.toLowerCase().includes(search.toLowerCase())).map((r, i) => {
-              const short = (() => { try { const u = new URL(r.url); const base = u.hostname.replace(/^www\./, ''); return u.pathname && u.pathname !== '/' ? base + u.pathname : base } catch { return r.url } })()
-              return (
-                <div key={r.url} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '0.8rem 1.5rem', borderBottom: i < category.rankedUrls.length - 1 ? '1px solid ' + BORDER : 'none' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
-                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, color: TEXT_MUTED, width: 18, flexShrink: 0 }}>{i + 1}</span>
-                    <a href={r.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', color: TEXT, textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{short}</a>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
-                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>cited {r.count}×</span>
-                    <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', fontWeight: 600, color: GOLD, minWidth: 52, textAlign: 'right' }}>{Math.round((r.count / category.urlsCiteTotal) * 100)}%</span>
-                    <StatusPill url={r.url} m={r.mentioned} />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
+      
 
       <div style={{ background: GOLD_LIGHT, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${GOLD}`, borderRadius: 10, padding: '1.25rem 1.5rem' }}>
         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', color: TEXT, margin: 0, lineHeight: 1.7 }}>
