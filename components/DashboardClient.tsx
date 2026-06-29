@@ -3614,10 +3614,12 @@ function EvidenceRow({ adv, hotel }: any) {
   )
 }
 
+
+
 // AI Performance Intelligence — measurement bubble. Reads adv.ai_performance (real
 // GA4 data when connected). No causal language; reports what happened only. When not
 // connected, shows a connect state. Every number traces to a real GA4 aggregation.
-function AiPerformancePanel({ perf, ga4Connected }: any) {
+function AiPerformancePanel({ perf, swissnet, ga4Connected }: any) {
   const measured = perf && perf.measured
   const Wrap = ({ children }: any) => (
     <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 16, overflow: 'hidden', marginBottom: '1.5rem' }}>
@@ -3704,6 +3706,48 @@ function AiPerformancePanel({ perf, ga4Connected }: any) {
             </div>
           </div>
         )}
+
+        {/* SWISSNET INFLUENCE — the SwissNet-specific slice, inside the same card.
+            Clicks always (owned data); revenue only when GA4 confirms Path A (capability 'full');
+            honest fallback when the booking engine doesn't report revenue back. */}
+        {swissnet && swissnet.measured && (() => {
+          const full = swissnet.capability === 'full' && swissnet.swissnet_revenue != null
+          const clicks = swissnet.clicks ?? 0
+          const fmtChf = (n: number) => 'CHF ' + Math.round(n).toLocaleString('en-CH')
+          return (
+            <div style={{ marginTop: '1.75rem', paddingTop: '1.5rem', borderTop: '1px solid ' + BORDER }}>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: ADV_AMBER, margin: '0 0 0.3rem' }}>SwissNet Influence</p>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', fontWeight: 300, color: TEXT, margin: '0 0 1rem', lineHeight: 1.3 }}>
+                {full ? 'Bookings influenced by SwissNet journeys' : 'Visitors SwissNet sent to your site'}
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: full ? '1fr 1fr 1fr' : '1fr 1fr', gap: 12, marginBottom: '1rem' }}>
+                <div style={{ background: GOLD_LIGHT, borderRadius: 10, padding: '1rem 1.15rem' }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: ADV_AMBER, margin: '0 0 0.5rem' }}>Clicks sent</p>
+                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 400, color: TEXT, margin: 0, lineHeight: 1 }}>{clicks.toLocaleString('en-CH')}</p>
+                </div>
+                <div style={{ background: GOLD_LIGHT, borderRadius: 10, padding: '1rem 1.15rem' }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: ADV_AMBER, margin: '0 0 0.5rem' }}>Revenue influenced</p>
+                  {full
+                    ? <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 400, color: TEXT, margin: 0, lineHeight: 1 }}>{fmtChf(swissnet.swissnet_revenue)}</p>
+                    : <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.35, paddingTop: 4 }}>Not available for your booking engine</p>
+                  }
+                </div>
+                {full && (
+                  <div style={{ background: GOLD_LIGHT, borderRadius: 10, padding: '1rem 1.15rem' }}>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: ADV_AMBER, margin: '0 0 0.5rem' }}>Avg booking</p>
+                    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 400, color: TEXT, margin: 0, lineHeight: 1 }}>{swissnet.swissnet_avg_booking_value != null ? fmtChf(swissnet.swissnet_avg_booking_value) : '—'}</p>
+                  </div>
+                )}
+              </div>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.5, fontStyle: 'italic' }}>
+                {full
+                  ? `SwissNet sent ${clicks.toLocaleString('en-CH')} ${clicks === 1 ? 'visitor' : 'visitors'} to your site this period. Google Analytics attributes ${fmtChf(swissnet.swissnet_revenue)} in bookings to those journeys. Attribution, not causation.`
+                  : `SwissNet sent ${clicks.toLocaleString('en-CH')} ${clicks === 1 ? 'visitor' : 'visitors'} to your site this period. Your booking engine doesn't pass revenue back to Google Analytics, so we can't attribute bookings — only the traffic.`
+                }
+              </p>
+            </div>
+          )
+        })()}
 
         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: TEXT_MUTED, margin: '1.25rem 0 0', lineHeight: 1.5, fontStyle: 'italic' }}>Measured from your Google Analytics over the last {perf.period_days || 28} days. This reports what happened — it does not claim a cause.</p>
       </div>
@@ -4204,7 +4248,7 @@ function AdvisorTab({ hotel }: any) {
         <>
           <AdvisorV2Body adv={adv} memory={memory} hotel={hotel} savedAt={savedAt} />
 
-          <AiPerformancePanel perf={adv.ai_performance} ga4Connected={hotel?.ga4_status === 'connected'} />
+          <AiPerformancePanel perf={adv.ai_performance} swissnet={adv.swissnet_influence} ga4Connected={hotel?.ga4_status === 'connected'} />
 
           {savedAt && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT_MUTED, margin: '1.25rem 0 0', textAlign: 'right' }}>Last generated: {new Date(savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>}
         </>
