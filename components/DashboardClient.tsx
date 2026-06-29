@@ -4463,6 +4463,7 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
 
   // For chart — use overviewRunData grouped by date
   const runDates = [...new Set((overviewRunData || []).map((r: any) => r.run_date || r.checked_at?.split('T')[0]).filter(Boolean))].sort() as string[]
+  console.log('PROP RAW', (overviewRunData||[]).length, (overviewRunData||[]).map((r:any)=>r.run_date).sort()[0])
   // For "Where You Appear" and "Queries to Improve" — use hotelSpecificScores
   const rangeStartStr = customRange
   ? customRange.start
