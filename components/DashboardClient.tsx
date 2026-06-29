@@ -2438,10 +2438,8 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId, rangeStart, range
         .from('ai_citations')
         .select('query, source_url, source_domain, run_date, source_type')
         .eq('region', hotelRegion)
-        .gte('run_date', rangeStart)
-        .lte('run_date', rangeEnd)
         .order('run_date', { ascending: false })
-        .limit(5000)
+        .limit(50000)
       setRows(cites || [])
 
       const urls = [...new Set((cites || []).map((c: any) => c.source_url))]
@@ -2576,7 +2574,7 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId, rangeStart, range
       <div style={{ background: `linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)`, borderRadius: 16, padding: '2.5rem', marginBottom: '1.5rem', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: -40, right: -40, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,169,76,0.08) 0%, transparent 70%)' }} />
         <div style={{ position: 'relative' }}>
-          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0 0 0.6rem' }}>{`Citation Sources · ${rangeStart} → ${rangeEnd}`}</p>
+          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0 0 0.6rem' }}>Citation Sources · all time</p>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 300, color: WHITE, margin: '0 0 0.6rem', lineHeight: 1.3, maxWidth: 560 }}>Where AI gets its answers for {hotelRegion}</p>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.7, maxWidth: 560 }}>The publisher pages cited in ChatGPT and Perplexity answers for {hotelRegion} hotel searches. The ones that don't mention {hotelName} are your outreach targets — get placed there to improve your odds of being cited.</p>
         </div>
