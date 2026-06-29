@@ -14,6 +14,7 @@ export interface Ga4PageRow {
   conversions: number     // booking / key events on sessions landing here
   exits?: number          // exits from this page (optional; powers exit_rate)
   source?: string         // traffic source host, e.g. "chatgpt.com" (optional)
+  revenue?: number        // totalRevenue attributed to sessions landing here (optional)
 }
 
 export interface BuildBehavioralOpts {

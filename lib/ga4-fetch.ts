@@ -22,7 +22,7 @@ async function pullRows(
     property: `properties/${propertyId}`,
     dateRanges: [{ startDate, endDate }],
     dimensions: [{ name: 'landingPagePlusQueryString' }, { name: 'sessionSource' }],
-    metrics: [{ name: 'sessions' }, { name: 'keyEvents' }, { name: 'bounceRate' }],
+    metrics: [{ name: 'sessions' }, { name: 'keyEvents' }, { name: 'bounceRate' }, { name: 'totalRevenue' }],
     limit: 10000,
   })
   const rows: Ga4PageRow[] = []
@@ -34,8 +34,9 @@ async function pullRows(
     const sessions = parseInt(mets[0]?.value || '0', 10) || 0
     const conversions = parseInt(mets[1]?.value || '0', 10) || 0
     const bounceRate = parseFloat(mets[2]?.value || '0') || 0
+    const revenue = parseFloat(mets[3]?.value || '0') || 0
     if (!rawPath) continue
-    rows.push({ path: rawPath, sessions, conversions, exits: Math.round(sessions * bounceRate), source })
+    rows.push({ path: rawPath, sessions, conversions, exits: Math.round(sessions * bounceRate), source, revenue })
   }
   return rows
 }

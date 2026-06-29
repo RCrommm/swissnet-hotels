@@ -18,7 +18,7 @@ export interface AiPlatformBreakdown {
   sessions: number
   conversions: number
   conversion_rate: number | null  // %, one decimal; null if no sessions
-  revenue: number | null          // null until GA4 revenue metric is wired
+  revenue: number | null          // null if property has no revenue tracked
 }
 
 export interface AiPerformanceSignal {
@@ -26,8 +26,11 @@ export interface AiPerformanceSignal {
   ai_sessions: number | null            // null if rows carry no source at all
   ai_conversions: number | null
   ai_conversion_rate: number | null     // %, one decimal
-  ai_revenue: number | null             // null until revenue wired
+  ai_revenue: number | null             // null if property has no revenue tracked
+  ai_avg_booking_value: number | null   // ai_revenue / ai_conversions; null if untracked
+  ai_revenue_share_pct: number | null   // AI revenue / total revenue, %; null if untracked
   total_sessions: number                // all sessions in the pull (any source)
+  total_revenue: number | null          // all revenue in the pull; null if untracked
   ai_share_pct: number | null           // AI sessions / total sessions, %
   by_platform: AiPlatformBreakdown[]    // one row per identifiable platform, desc by sessions
   // before/after — only if previous period supplied
@@ -73,27 +76,35 @@ export function buildAiPerformance(
   if (!haveSources) {
     return {
       ai_sessions: null, ai_conversions: null, ai_conversion_rate: null, ai_revenue: null,
-      total_sessions, ai_share_pct: null, by_platform: [],
+      ai_avg_booking_value: null, ai_revenue_share_pct: null,
+      total_sessions, total_revenue: null, ai_share_pct: null, by_platform: [],
       previous_period: null, ai_sessions_change_pct: null,
       top_ai_landing_pages: [], period_days: opts.periodDays ?? null, measured: false,
     }
   }
 
+  // Revenue is only "tracked" if at least one row carries positive revenue. Otherwise
+  // every revenue field stays null and the UI shows "Not tracked" — never a fabricated 0.
+  const haveRevenue = safeRows.some(r => typeof r.revenue === 'number' && r.revenue > 0)
+  const total_revenue = haveRevenue ? Math.round(sum(safeRows, r => r.revenue ?? 0)) : null
+
   const { aiRows, sessions: ai_sessions, conversions: ai_conversions } = aiTotals(safeRows)
 
   // Per-platform aggregation via the shared classifier.
-  const byPlat: Record<string, { sessions: number; conversions: number }> = {}
+  const byPlat: Record<string, { sessions: number; conversions: number; revenue: number }> = {}
   for (const r of aiRows) {
     const plat = aiPlatformOf(r.source)
     if (!plat) continue  // identifiable-AI only; unknowns are not invented into a bucket
-    if (!byPlat[plat]) byPlat[plat] = { sessions: 0, conversions: 0 }
+    if (!byPlat[plat]) byPlat[plat] = { sessions: 0, conversions: 0, revenue: 0 }
     byPlat[plat].sessions += r.sessions || 0
     byPlat[plat].conversions += r.conversions || 0
+    byPlat[plat].revenue += r.revenue ?? 0
   }
   const by_platform: AiPlatformBreakdown[] = Object.entries(byPlat)
     .map(([platform, v]) => ({
       platform, sessions: v.sessions, conversions: v.conversions,
-      conversion_rate: rate(v.conversions, v.sessions), revenue: null,
+      conversion_rate: rate(v.conversions, v.sessions),
+      revenue: haveRevenue ? Math.round(v.revenue) : null,
     }))
     .sort((a, b) => b.sessions - a.sessions)
 
@@ -125,12 +136,17 @@ export function buildAiPerformance(
     }
   }
 
+  const ai_revenue = haveRevenue ? Math.round(sum(aiRows, r => r.revenue ?? 0)) : null
+
   return {
     ai_sessions,
     ai_conversions,
     ai_conversion_rate: rate(ai_conversions, ai_sessions),
-    ai_revenue: null,  // wired when GA4 revenue metric is added to the fetch
+    ai_revenue,
+    ai_avg_booking_value: (ai_revenue !== null && ai_conversions > 0) ? Math.round(ai_revenue / ai_conversions) : null,
+    ai_revenue_share_pct: (ai_revenue !== null && total_revenue && total_revenue > 0) ? Math.round((ai_revenue / total_revenue) * 1000) / 10 : null,
     total_sessions,
+    total_revenue,
     ai_share_pct: total_sessions > 0 ? Math.round((ai_sessions / total_sessions) * 1000) / 10 : null,
     by_platform,
     previous_period,
