@@ -9,6 +9,7 @@ import AIVisibilityToggle from '@/components/AIVisibilityToggle'
 import AIVisibilityQueries from '@/components/AIVisibilityQueries'
 import GoogleAITab from '@/components/GoogleAITab'
 import UsersTab from '@/components/UsersTab'
+import OnboardingTab from '@/components/OnboardingTab'
 
 async function isAuthenticated(password?: string) {
   const cookieStore = await cookies()
@@ -180,7 +181,7 @@ const { data: cronCosts } = await supabase
         </div>
 
         <div className="flex gap-1 mb-6 border-b border-stone-200 flex-wrap">
-{['hotels', 'schema', 'ai visibility', 'analytics', 'keywords', 'clicks', 'users'].map(t => ( <a key={t} href={'/admin?password=' + pw + '&tab=' + t}
+{['hotels', 'onboard', 'schema', 'ai visibility', 'analytics', 'keywords', 'clicks', 'users'].map(t => ( <a key={t} href={'/admin?password=' + pw + '&tab=' + t}
               className={'px-5 py-3 text-sm uppercase tracking-wide capitalize transition-colors ' +
                 (tab === t ? 'border-b-2 border-amber-700 text-amber-700 font-semibold' : 'text-stone-500 hover:text-stone-700')}>
               {t}
@@ -189,6 +190,8 @@ const { data: cronCosts } = await supabase
         </div>
 
         {tab === 'hotels' && <HotelsTab hotels={hotelsList} password={pw} />}
+
+        {tab === 'onboard' && <OnboardingTab password={pw} />}
 
         {tab === 'schema' && <SchemaTab hotels={hotelsList} />}
 
