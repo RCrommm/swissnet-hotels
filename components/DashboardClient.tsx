@@ -4681,9 +4681,9 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
       { id: 'competitors', label: 'Competitors' },
     ] },
     { heading: 'Improve', items: [
-      { id: 'advisor', label: '✦ AI Advisor', minTier: 2 },
+      { id: 'advisor', label: '✦ AI Advisor', minTier: 3 },
       { id: 'schema', label: 'SwissNet Profile', minTier: 2 },
-      { id: 'website', label: 'Official Website', minTier: 2 },
+      { id: 'website', label: 'Official Website', minTier: 2, maxTier: 2 },
       { id: 'optimise', label: 'Optimise', minTier: 2 },
       { id: 'citations', label: 'Citation Sources', minTier: 2 },
     ] },
@@ -4691,7 +4691,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
       { id: 'reports', label: 'Monthly Reports', minTier: 3 },
       { id: 'settings', label: 'Settings' },
     ] },
-  ].map(g => ({ ...g, items: g.items.filter((it: any) => !it.minTier || myTier >= it.minTier) }))
+  ].map(g => ({ ...g, items: g.items.filter((it: any) => (!it.minTier || myTier >= it.minTier) && (!it.maxTier || myTier <= it.maxTier)) }))
     .filter(g => g.items.length > 0)
 
   return (
