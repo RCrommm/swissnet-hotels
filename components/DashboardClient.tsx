@@ -14,96 +14,9 @@ const RED = '#dc2626'
 const BLUE = '#3b82f6'
 const PURPLE = '#8B5CF6'
 
-// ── CATEGORY COMPETITOR DATA ──────────────────────────────────────────────────
-
-const CATEGORY_COMPETITORS: Record<string, { label: string; hotels: string[] }> = {
-  spa: {
-    label: 'Spa & Wellness',
-    hotels: [
-      'Bürgenstock Resort',
-      'The Dolder Grand',
-      'Six Senses Crans-Montana',
-      'Grand Resort Bad Ragaz',
-      'The Chedi Andermatt',
-      'Clinique La Prairie',
-      'La Réserve Genève',
-      'Le Grand Bellevue Gstaad',
-      'Suvretta House',
-    ],
-  },
-  ski: {
-    label: 'Ski Resort',
-    hotels: [
-      "Badrutt's Palace Hotel",
-      'The Chedi Andermatt',
-      'The Alpina Gstaad',
-      'Kulm Hotel St. Moritz',
-      'Mont Cervin Palace',
-      'Suvretta House',
-      'Grand Hotel Kronenhof Pontresina',
-      'Palace Hotel Gstaad',
-      'Kempinski Grand Hotel des Bains St. Moritz',
-    ],
-  },
-  dining: {
-    label: 'Fine Dining',
-    hotels: [
-      'Grand Resort Bad Ragaz',
-      'Les Trois Rois Basel',
-      'The Chedi Andermatt',
-      'Giardino Mountain St. Moritz',
-      'Carlton Hotel St. Moritz',
-      'Baur au Lac',
-      'La Réserve Genève',
-      'Victoria-Jungfrau Grand Hotel Interlaken',
-      'Beau-Rivage Palace Lausanne',
-    ],
-  },
-  business: {
-    label: 'Business & City',
-    hotels: [
-      'Baur au Lac',
-      'Four Seasons Hotel des Bergues Geneva',
-      'The Dolder Grand',
-      'Mandarin Oriental Geneva',
-      'Widder Hotel Zurich',
-      'La Réserve Genève',
-      'Park Hyatt Zurich',
-      'Bellevue Palace',
-      'La Réserve Eden au Lac Zurich',
-    ],
-  },
-  romantic: {
-    label: 'Romantic',
-    hotels: [
-      'The Alpina Gstaad',
-      "Badrutt's Palace Hotel",
-      'La Réserve Genève',
-      'Mont Cervin Palace',
-      'Eden Roc Ascona',
-      'Castello del Sole Ascona',
-      'Beau-Rivage Palace Lausanne',
-      'Victoria-Jungfrau Grand Hotel Interlaken',
-      'The Chedi Andermatt',
-    ],
-  },
-  lake: {
-    label: 'Lake Hotel',
-    hotels: [
-      'Bürgenstock Resort',
-      'La Réserve Genève',
-      'Beau-Rivage Palace Lausanne',
-      'La Réserve Eden au Lac Zurich',
-      'Fairmont Le Montreux Palace',
-      'Eden Roc Ascona',
-      'Castello del Sole Ascona',
-      'Grand Hotel Villa Castagnola Lugano',
-      'Grand Hotel Vitznauerhof Lucerne',
-    ],
-  },
-}
-
-// Max 2 categories per hotel + region always shown
+// ── HOTEL CATEGORIES (fallback only — live value comes from hotels.categories) ──
+// Legacy name-keyed map. Read order is: hotel.categories (DB) first, this map second.
+// Kept as a safety net for hotels onboarded before the categories column existed.
 const HOTEL_CATEGORIES: Record<string, string[]> = {
   'La Réserve Genève': ['spa', 'dining', 'romantic', 'lake', 'business', 'family'],
   'La Réserve Eden au Lac Zurich': ['business', 'romantic', 'lake', 'dining'],
@@ -4708,7 +4621,11 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
   const insight = generateInsight()
 
   // Competitor view helpers
-  const hotelCategories = HOTEL_CATEGORIES[hotelName] || []
+  // Live value comes from hotels.categories (DB). Falls back to the legacy name-keyed
+  // map for hotels onboarded before the column existed, so nothing loses its tabs.
+  const hotelCategories = (Array.isArray(hotel?.categories) && hotel.categories.length > 0)
+    ? hotel.categories
+    : (HOTEL_CATEGORIES[hotelName] || [])
   const categoryLabels: Record<string, string> = {
     spa: 'Spa & Wellness',
     ski: 'Ski Resort',
@@ -4721,7 +4638,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
 
   const competitorTabs = [
     { key: 'region', label: 'General' },
-    ...hotelCategories.map(c => ({ key: c, label: categoryLabels[c] || c })),
+    ...hotelCategories.map((c: string) => ({ key: c, label: categoryLabels[c] || c })),
   ]
   
 
