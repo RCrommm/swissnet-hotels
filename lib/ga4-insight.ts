@@ -109,3 +109,45 @@ export function deriveBehaviouralClaims(
   // Keep it tight: at most the two strongest claims, in priority order.
   return claims.slice(0, 2)
 }
+// ── MONTH-BOUNDED FETCH (for monthly snapshots) ──
+// Pulls one CALENDAR month (real start/end dates, not relative days) grouped by
+// sessionSource — enough to compute AI totals AND isolate the swissnet source for
+// that month. Returns null if GA4 isn't configured.
+
+export async function fetchGa4MonthBySource(
+  propertyId: string,
+  startDate: string,   // 'YYYY-MM-DD' inclusive
+  endDate: string,     // 'YYYY-MM-DD' inclusive
+): Promise<{ rows: Ga4SourceRow[] } | null> {
+  const rawKey = process.env.GA4_SERVICE_ACCOUNT_KEY
+  if (!rawKey) return null
+  let credentials: any
+  try { credentials = JSON.parse(rawKey) } catch { return null }
+
+  const cleanId = String(propertyId || '').replace(/[^0-9]/g, '')
+  if (!cleanId) return null
+
+  const client = new BetaAnalyticsDataClient({ credentials })
+  const [report] = await client.runReport({
+    property: `properties/${cleanId}`,
+    dateRanges: [{ startDate, endDate }],
+    dimensions: [{ name: 'sessionSource' }],
+    metrics: [{ name: 'sessions' }, { name: 'keyEvents' }, { name: 'totalRevenue' }],
+    limit: 1000,
+  })
+
+  const rows: Ga4SourceRow[] = []
+  for (const r of report?.rows || []) {
+    const dims = r.dimensionValues || []
+    const mets = r.metricValues || []
+    const source = (dims[0]?.value || '').toLowerCase()
+    if (!source) continue
+    rows.push({
+      source,
+      sessions: parseInt(mets[0]?.value || '0', 10) || 0,
+      conversions: parseInt(mets[1]?.value || '0', 10) || 0,
+      revenue: parseFloat(mets[2]?.value || '0') || 0,
+    })
+  }
+  return { rows }
+}
