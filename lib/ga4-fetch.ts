@@ -67,3 +67,52 @@ export async function fetchGa4Rows(
   }
   return { rows, previousRows, periodDays: windowDays }
 }
+// ── SOURCE-LEVEL FETCH (Path A: SwissNet-influenced revenue) ──
+// Groups sessions/conversions/revenue by sessionSource — so we can isolate the
+// "swissnet" source and read what GA4 attributes to it. Separate from the page-level
+// fetch above (different dimension). Returns null if GA4 isn't configured.
+
+export interface Ga4SourceRow {
+  source: string
+  sessions: number
+  conversions: number
+  revenue: number
+}
+
+export async function fetchGa4BySource(
+  propertyId: string,
+  opts: { days?: number } = {},
+): Promise<{ rows: Ga4SourceRow[]; periodDays: number } | null> {
+  const rawKey = process.env.GA4_SERVICE_ACCOUNT_KEY
+  if (!rawKey) return null
+  let credentials: any
+  try { credentials = JSON.parse(rawKey) } catch { return null }
+
+  const cleanId = String(propertyId || '').replace(/[^0-9]/g, '')
+  if (!cleanId) return null
+  const windowDays = Math.max(1, Math.min(365, opts.days ?? 28))
+
+  const client = new BetaAnalyticsDataClient({ credentials })
+  const [report] = await client.runReport({
+    property: `properties/${cleanId}`,
+    dateRanges: [{ startDate: `${windowDays}daysAgo`, endDate: 'today' }],
+    dimensions: [{ name: 'sessionSource' }],
+    metrics: [{ name: 'sessions' }, { name: 'keyEvents' }, { name: 'totalRevenue' }],
+    limit: 1000,
+  })
+
+  const rows: Ga4SourceRow[] = []
+  for (const r of report?.rows || []) {
+    const dims = r.dimensionValues || []
+    const mets = r.metricValues || []
+    const source = (dims[0]?.value || '').toLowerCase()
+    if (!source) continue
+    rows.push({
+      source,
+      sessions: parseInt(mets[0]?.value || '0', 10) || 0,
+      conversions: parseInt(mets[1]?.value || '0', 10) || 0,
+      revenue: parseFloat(mets[2]?.value || '0') || 0,
+    })
+  }
+  return { rows, periodDays: windowDays }
+}
