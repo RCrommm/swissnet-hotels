@@ -55,6 +55,8 @@ export default function HotelsTab({ hotels: initialHotels, password }: Props) {
       is_featured: hotel.is_featured || false,
       is_partner: hotel.is_partner || false,
       show_schema: hotel.show_schema || false,
+      tier: hotel.tier || 'monitor',
+      categories: hotel.categories?.join(', ') || '',
       images: hotel.images?.length ? hotel.images : ['', '', ''],
       amenities: hotel.amenities?.join(', ') || '',
       best_for: hotel.best_for?.join(', ') || '',
@@ -76,6 +78,7 @@ wikipedia_url: hotel.wikipedia_url || '',
       nightly_rate_chf: parseInt(editForm.nightly_rate_chf),
       amenities: editForm.amenities.split(',').map((a: string) => a.trim()).filter(Boolean),
       best_for: editForm.best_for.split(',').map((b: string) => b.trim()).filter(Boolean),
+      categories: editForm.categories.split(',').map((c: string) => c.trim()).filter(Boolean),
       images: editForm.images.filter(Boolean),
       tripadvisor_url: editForm.tripadvisor_url || null,
 booking_url: editForm.booking_url || null,
@@ -296,6 +299,15 @@ wikipedia_url: editForm.wikipedia_url || null,
                     </select>
                   </div>
                   <div><label style={labelStyle}>Rating (1-5)</label><input type="number" min="1" max="5" step="0.1" value={editForm.rating} onChange={e => setEditForm({ ...editForm, rating: e.target.value })} style={inputStyle} /></div>
+                  <div>
+                    <label style={labelStyle}>Plan Tier</label>
+                    <select value={editForm.tier} onChange={e => setEditForm({ ...editForm, tier: e.target.value })} style={{ ...inputStyle, background: bg }}>
+                      <option value="monitor">Monitor</option>
+                      <option value="optimise">Optimise</option>
+                      <option value="premium">Premium</option>
+                    </select>
+                  </div>
+                  <div><label style={labelStyle}>Categories (comma separated)</label><input type="text" value={editForm.categories} onChange={e => setEditForm({ ...editForm, categories: e.target.value })} style={inputStyle} placeholder="spa, dining, romantic" /></div>
 <div>
   <label style={labelStyle}>Star Classification</label>
   <select value={editForm.star_classification || 4} onChange={e => setEditForm({ ...editForm, star_classification: parseInt(e.target.value) })} style={{ ...inputStyle, background: bg }}>
