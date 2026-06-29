@@ -64,7 +64,7 @@ const { data: allCompVisibility } = await supabase
   .eq('region', region)
   .gte('run_date', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
   .order('run_date', { ascending: false })
-  .limit(5000)
+  .limit(20000)
 
       const { data: googleAiScores } = await supabase
         .from('ai_visibility_scores')
