@@ -99,7 +99,7 @@ export default function OnboardingTab({ password, regions, existingCategories }:
     }
   }
 
-  const canSubmit = form.name.trim() &&
+  const canSubmit = form.name.trim() && form.location.trim() &&
     (mode === 'existing' ? form.region : form.region.trim())
 
   return (
@@ -113,7 +113,7 @@ export default function OnboardingTab({ password, regions, existingCategories }:
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <div><label style={labelStyle}>Hotel Name *</label><input value={form.name} onChange={e => set('name', e.target.value)} style={inputStyle} placeholder="La Réserve Genève" /></div>
           <div><label style={labelStyle}>Slug</label><input value={form.slug} onChange={e => set('slug', e.target.value)} style={inputStyle} placeholder="la-reserve-geneve" /></div>
-          <div><label style={labelStyle}>Location</label><input value={form.location} onChange={e => set('location', e.target.value)} style={inputStyle} placeholder="Geneva, Switzerland" /></div>
+          <div><label style={labelStyle}>Location *</label><input value={form.location} onChange={e => set('location', e.target.value)} style={inputStyle} placeholder="Geneva, Switzerland" /></div>
           <div><label style={labelStyle}>Category</label><input value={form.category} onChange={e => set('category', e.target.value)} style={inputStyle} placeholder="City Luxury" /></div>
           <div><label style={labelStyle}>Rating (1-5)</label><input type="number" min="1" max="5" step="0.1" value={form.rating} onChange={e => set('rating', e.target.value)} style={inputStyle} placeholder="4.8" /></div>
           <div><label style={labelStyle}>Nightly Rate (CHF)</label><input type="number" value={form.nightly_rate_chf} onChange={e => set('nightly_rate_chf', e.target.value)} style={inputStyle} placeholder="900" /></div>
