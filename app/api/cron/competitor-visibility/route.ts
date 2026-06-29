@@ -96,7 +96,7 @@ function domainOf(url: string): string {
   try { return new URL(url).hostname.replace(/^www\./, '') } catch { return '' }
 }
 
-async function saveCitations(rows: { query: string; platform: string; source_url: string; region: string | null }[], runDate: string) {
+async function saveCitations(rows: { query: string; platform: string; source_url: string; region: string | null }[], runDate: string, sourceType: 'general' | 'category') {
   try {
     const JUNK_HOSTS = ['google.com/maps', 'google.com/search', 'bing.com/search', 'duckduckgo.com']
     const seen = new Set<string>()
@@ -113,6 +113,7 @@ async function saveCitations(rows: { query: string; platform: string; source_url
         source_url: r.source_url,
         source_domain: domainOf(r.source_url),
         region: r.region,
+        source_type: sourceType,
         run_date: runDate,
       })
     }
@@ -220,7 +221,7 @@ export async function GET(request: Request) {
             responseCache[q] = ''
           }
         }
-        await saveCitations(citationRows, new Date().toISOString().split('T')[0])
+        await saveCitations(citationRows, new Date().toISOString().split('T')[0], 'category')
 
         const rows: any[] = []
         for (const hotel of regionHotels) {
@@ -353,7 +354,7 @@ const { data: regionQueriesData } = await supabase
           responseCache[platform.id][q] = ''
         }
       }
-      await saveCitations(citationRows, new Date().toISOString().split('T')[0])
+      await saveCitations(citationRows, new Date().toISOString().split('T')[0], 'general')
 
       const appearanceRows: any[] = []
       for (const hotel of allHotels) {
