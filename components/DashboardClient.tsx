@@ -4639,7 +4639,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
   const tierRank: Record<string, number> = { monitor: 1, optimise: 2, premium: 3 }
   const myTier = tierRank[tier || 'monitor'] || 1
   // Monitor (tier 1) sees General only. Optimise+ get category tabs (capped below).
-  const categoryTabsForTier = myTier >= 2 ? hotelCategories : []
+  const categoryTabsForTier = myTier >= 3 ? hotelCategories : myTier === 2 ? hotelCategories.slice(0, 3) : []
   const competitorTabs = [
     { key: 'region', label: 'General' },
     ...categoryTabsForTier.map((c: string) => ({ key: c, label: categoryLabels[c] || c })),
