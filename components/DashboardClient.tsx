@@ -4636,9 +4636,13 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
     family: 'Family',
   }
 
+  const tierRank: Record<string, number> = { monitor: 1, optimise: 2, premium: 3 }
+  const myTier = tierRank[tier || 'monitor'] || 1
+  // Monitor (tier 1) sees General only. Optimise+ get category tabs (capped below).
+  const categoryTabsForTier = myTier >= 2 ? hotelCategories : []
   const competitorTabs = [
     { key: 'region', label: 'General' },
-    ...hotelCategories.map((c: string) => ({ key: c, label: categoryLabels[c] || c })),
+    ...categoryTabsForTier.map((c: string) => ({ key: c, label: categoryLabels[c] || c })),
   ]
   
 
@@ -4671,8 +4675,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
     ? `General — ${hotelRegion}` 
     : `${competitorTabs.find(t => t.key === competitorView)?.label || ''} — ${hotelRegion}`
 
-  const tierRank: Record<string, number> = { monitor: 1, optimise: 2, premium: 3 }
-  const myTier = tierRank[tier || 'monitor'] || 1
+  
   const navGroups = [
     { heading: 'Monitor', items: [
       { id: 'overview', label: 'Overview' },
