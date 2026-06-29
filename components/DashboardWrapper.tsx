@@ -64,7 +64,16 @@ const { data: allCompVisibility } = await supabase
   .eq('region', region)
   .gte('run_date', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
   .order('run_date', { ascending: false })
-  .limit(5000)
+  .limit(20000)
+
+const { data: myChartRows } = await supabase
+  .from('competitor_visibility')
+  .select('competitor_name, category, platform, visibility_score, checked_at, run_date, appearances, total_queries')
+  .eq('region', region)
+  .is('category', null)
+  .eq('competitor_name', hotel?.name)
+  .order('run_date', { ascending: false })
+  .limit(20000)
 
       const { data: googleAiScores } = await supabase
         .from('ai_visibility_scores')
@@ -273,7 +282,7 @@ const myRankChange = myHasLatest && myHasPrev && myLatestRank > 0 && myPrevRank 
           google_ai: googleScore,
           overall: overallScore,
         },
-        overviewRunData: myOverviewScores,
+        overviewRunData: (myChartRows || []).filter((s: any) => s.run_date != null),
         myRankChange,
         myLatestRank,
         marketAverages,
