@@ -2434,12 +2434,21 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId, rangeStart, range
     const load = async () => {
       const { createClient } = await import('@supabase/supabase-js')
       const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-      const { data: cites } = await sb
-        .from('ai_citations')
-        .select('query, source_url, source_domain, run_date, source_type')
-        .eq('region', hotelRegion)
-        .order('run_date', { ascending: false })
-        .limit(50000)
+      let cites: any[] = []
+      let from = 0
+      const PAGE = 1000
+      while (true) {
+        const { data: chunk, error } = await sb
+          .from('ai_citations')
+          .select('query, source_url, source_domain, run_date, source_type')
+          .eq('region', hotelRegion)
+          .order('run_date', { ascending: false })
+          .range(from, from + PAGE - 1)
+        if (error || !chunk || chunk.length === 0) break
+        cites = cites.concat(chunk)
+        if (chunk.length < PAGE) break
+        from += PAGE
+      }
       setRows(cites || [])
 
       const urls = [...new Set((cites || []).map((c: any) => c.source_url))]
