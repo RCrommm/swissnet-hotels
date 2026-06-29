@@ -5383,11 +5383,13 @@ if (!calendarDays.includes(today)) calendarDays.push(today)
                 ))}
               </div>
             </div>
-            {/* ── GA4 ANALYTICS CONNECTION ── */}
-            <Ga4ConnectCard hotel={hotel} />
-
-            {/* ── SEARCH CONSOLE CONNECTION ── */}
-            <GscConnectCard hotel={hotel} />
+            {/* ── GA4 + SEARCH CONSOLE CONNECTION (premium only) ── */}
+            {myTier >= 3 && (
+              <>
+                <Ga4ConnectCard hotel={hotel} />
+                <GscConnectCard hotel={hotel} />
+              </>
+            )}
 
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 10, overflow: 'hidden', marginBottom: '1rem' }}>
               <div style={{ padding: '1rem 1.5rem', background: BG, borderBottom: '1px solid ' + BORDER }}>
