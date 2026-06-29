@@ -12,7 +12,9 @@ import { PROSE_SYSTEM, proseSchema, buildProseInput, OPENING_SYSTEM, openingSche
 import { toCanonicalRecommendation } from '@/lib/recommendation-assembler'
 import { buildCase } from '@/lib/recommendation-case'
 import { computeContinuity } from '@/lib/recommendation-continuity'
-import { fetchGa4Rows } from '@/lib/ga4-fetch'
+import { fetchGa4Rows, fetchGa4BySource } from '@/lib/ga4-fetch'
+import { buildSwissnetInfluence } from '@/lib/swissnet-influence'
+import type { Ga4SourceRow } from '@/lib/ga4-fetch'
 import { buildBehavioralSignal } from '@/lib/ga4-behavioral'
 import { deriveBehaviouralClaims } from '@/lib/ga4-insight'
 import { buildAiPerformance } from '@/lib/ai-performance'
@@ -618,9 +620,13 @@ ${renderRecommendabilityBrief(recommendabilityBrief)}` : ''}`
       // 3c) GA4 BEHAVIOURAL ENRICHMENT (DORMANT) — fill future.behavioral per Case.
       // ONE pull for the hotel, reused across every move. Only runs if the hotel's
       // GA4 is connected; otherwise every behavioral slot stays null (today's behaviour).
+      let ga4SourceRows: Ga4SourceRow[] | null = null  // SwissNet influence (Path A) reads this; stays null when GA4 absent
+      let ga4Connected = false
+      let ga4PeriodDays: number | null = null
       try {
         const { data: ga4Hotel } = await sb.from('hotels').select('ga4_property_id, ga4_status').eq('id', hotelId).single()
         if (ga4Hotel?.ga4_status === 'connected' && ga4Hotel?.ga4_property_id) {
+          ga4Connected = true
           const ga4 = await fetchGa4Rows(ga4Hotel.ga4_property_id, { days: 28, previous: true })
           if (ga4) {
             for (const m of advisory.top_moves) {
@@ -634,8 +640,31 @@ ${renderRecommendabilityBrief(recommendabilityBrief)}` : ''}`
             // AI PERFORMANCE INTELLIGENCE (summary) — reuses the SAME GA4 pull. Aggregates
             // by AI platform across the whole property. Measurement only, no causal claims.
             advisory.ai_performance = buildAiPerformance(ga4.rows, { periodDays: ga4.periodDays, previousRows: ga4.previousRows })
+            ga4PeriodDays = ga4.periodDays
           }
+          // SOURCE-LEVEL pull (Path A): isolates revenue GA4 attributes to source=swissnet.
+          try {
+            const src = await fetchGa4BySource(ga4Hotel.ga4_property_id, { days: 28 })
+            if (src) { ga4SourceRows = src.rows; if (ga4PeriodDays == null) ga4PeriodDays = src.periodDays }
+          } catch {}
         }
+      } catch {}
+
+      // 3c-swissnet) SWISSNET INFLUENCE — clicks are owned data (always real), revenue is
+      // Path A (only when GA4 attributes it to source=swissnet). Runs REGARDLESS of GA4 so a
+      // hotel with clicks but no GA4 still sees clicks-only; honest-null revenue otherwise.
+      try {
+        const since = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString()
+        const { count: clickCount } = await sb
+          .from('swissnet_clicks')
+          .select('click_id', { count: 'exact', head: true })
+          .eq('hotel_id', hotelId)
+          .gte('created_at', since)
+        advisory.swissnet_influence = buildSwissnetInfluence(
+          ga4SourceRows,
+          clickCount || 0,
+          { periodDays: ga4PeriodDays ?? 28, ga4Connected },
+        )
       } catch {}
 
       // 3c-ii) SEARCH CONSOLE ENRICHMENT (DORMANT) — fill future.search per Case.
