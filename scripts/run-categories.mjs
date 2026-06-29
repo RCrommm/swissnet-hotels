@@ -162,7 +162,16 @@ async function runCategory(region, category, regionHotels) {
 
 async function main() {
   const startedAt = Date.now()
-  const regions = Object.entries(CONFIG).map(([r, c]) => ({ region: r, categories: c.categories || [] }))
+  let regions = []
+  try {
+    const { data: regionRows } = await supabase
+      .from('regions').select('region, categories').eq('is_active', true)
+    regions = (regionRows || []).map((r) => ({ region: r.region, categories: r.categories || [] }))
+  } catch (e) { console.error('[regions table read failed, falling back to JSON]', e?.message) }
+  if (!regions.length) {
+    regions = Object.entries(CONFIG).map(([r, c]) => ({ region: r, categories: c.categories || [] }))
+    console.warn('[regions] table empty/unavailable — using JSON fallback')
+  }
 
   for (const { region, categories } of regions) {
     if (!categories.length) { console.log(`[${region}] no categories configured — skipping`); continue }

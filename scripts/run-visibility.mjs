@@ -298,8 +298,17 @@ async function lockPreviousMonth() {
 
 async function main() {
   const startedAt = Date.now()
-  const regions = Object.entries(CONFIG).filter(([, c]) => c.general).map(([r]) => r)
-  if (!regions.length) { console.error('No regions with "general": true in config'); process.exit(1) }
+  let regions = []
+  try {
+    const { data: regionRows } = await supabase
+      .from('regions').select('region').eq('general', true).eq('is_active', true)
+    regions = (regionRows || []).map((r) => r.region)
+  } catch (e) { console.error('[regions table read failed, falling back to JSON]', e?.message) }
+  if (!regions.length) {
+    regions = Object.entries(CONFIG).filter(([, c]) => c.general).map(([r]) => r)
+    console.warn('[regions] table empty/unavailable — using JSON fallback')
+  }
+  if (!regions.length) { console.error('No regions with "general": true'); process.exit(1) }
   console.log(`General run for regions: ${regions.join(', ')}`)
 
   for (const region of regions) {
