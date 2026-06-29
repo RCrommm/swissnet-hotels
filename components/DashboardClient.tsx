@@ -4463,7 +4463,7 @@ export default function DashboardClient({ hotel, views, clicks, leads, aiVisibil
 
   // For chart — use overviewRunData grouped by date
   const runDates = [...new Set((overviewRunData || []).map((r: any) => r.run_date || r.checked_at?.split('T')[0]).filter(Boolean))].sort() as string[]
-  console.log('PROP RAW', (overviewRunData||[]).length, (overviewRunData||[]).map((r:any)=>r.run_date).sort()[0])
+  
   // For "Where You Appear" and "Queries to Improve" — use hotelSpecificScores
   const rangeStartStr = customRange
   ? customRange.start
@@ -5015,7 +5015,7 @@ return { date: d, score: avg }
                   return { date: d, score }
                 }).filter((d): d is { date: string; score: number } => d.score !== null && d.date >= cutoff)
 
-                console.log('REALPOINTS', chartPlatform, realPoints.map((p:any)=>p.date))
+                
                 if (realPoints.length === 0) return <div style={{ height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED }}>No data yet for this platform</p></div>
 
                 const today = new Date().toISOString().split('T')[0]
