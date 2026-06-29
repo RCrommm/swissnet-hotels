@@ -102,6 +102,10 @@ const { data: cronCosts } = await supabase
     .eq('is_active', true)
     .order('region')
 
+  const { data: catQData } = await supabase
+    .from('category_queries')
+    .select('category')
+
   const tab = params.tab || 'hotels'
   const pw = params.password || ''
 
@@ -197,7 +201,7 @@ const { data: cronCosts } = await supabase
 
         {tab === 'hotels' && <HotelsTab hotels={hotelsList} password={pw} />}
 
-        {tab === 'onboard' && <OnboardingTab password={pw} regions={(regionsData || []).map(r => r.region)} />}
+        {tab === 'onboard' && <OnboardingTab password={pw} regions={(regionsData || []).map(r => r.region)} existingCategories={Array.from(new Set((catQData || []).map((r: any) => r.category)))} />}
 
         {tab === 'schema' && <SchemaTab hotels={hotelsList} />}
 

@@ -4,11 +4,12 @@ import { useState } from 'react'
 interface Props {
   password: string
   regions: string[]
+  existingCategories: string[]
 }
 
 const TIERS = ['monitor', 'optimise', 'premium']
 
-export default function OnboardingTab({ password, regions }: Props) {
+export default function OnboardingTab({ password, regions, existingCategories }: Props) {
   const gold = '#C9A84C'
   const border = 'rgba(201,169,110,0.2)'
   const text = '#2A1A0E'
@@ -33,6 +34,8 @@ export default function OnboardingTab({ password, regions }: Props) {
     regionQueries: '',
     competitors: '',
   })
+  // category key -> textarea of templates (one per line), for NEW categories only
+  const [catTemplates, setCatTemplates] = useState<Record<string, string>>({})
 
   
 
@@ -75,6 +78,12 @@ export default function OnboardingTab({ password, regions }: Props) {
       payload.regionCategories = form.regionCategories.split(',').map(c => c.trim()).filter(Boolean)
       payload.regionQueries = form.regionQueries.split('\n').map(q => q.trim()).filter(Boolean)
       payload.competitors = form.competitors.split('\n').map(c => c.trim()).filter(Boolean)
+      const catQueries: Record<string, string[]> = {}
+      for (const [cat, text] of Object.entries(catTemplates)) {
+        const lines = text.split('\n').map(q => q.trim()).filter(Boolean)
+        if (lines.length) catQueries[cat] = lines
+      }
+      payload.categoryQueries = catQueries
     }
     try {
       const res = await fetch('/api/hotels/onboard', {
@@ -172,6 +181,28 @@ export default function OnboardingTab({ password, regions }: Props) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div><label style={labelStyle}>New region name (exact case, e.g. Zermatt)</label><input value={form.region} onChange={e => set('region', e.target.value)} style={inputStyle} placeholder="Zermatt" /></div>
             <div><label style={labelStyle}>Region categories (comma keys, for category crons)</label><input value={form.regionCategories} onChange={e => set('regionCategories', e.target.value)} style={inputStyle} placeholder="spa, ski, dining" /></div>
+
+            {form.regionCategories.split(',').map(c => c.trim()).filter(Boolean).map(cat => {
+              const inherited = existingCategories.includes(cat)
+              return (
+                <div key={cat} style={{ paddingLeft: '0.75rem', borderLeft: '2px solid ' + border }}>
+                  <label style={labelStyle}>
+                    {cat} {inherited
+                      ? <span style={{ color: green, textTransform: 'none', letterSpacing: 0 }}>— inherited ✓ (templates already exist)</span>
+                      : <span style={{ color: gold, textTransform: 'none', letterSpacing: 0 }}>— new category, add query templates (one per line)</span>}
+                  </label>
+                  {!inherited && (
+                    <textarea
+                      value={catTemplates[cat] || ''}
+                      onChange={e => setCatTemplates(prev => ({ ...prev, [cat]: e.target.value }))}
+                      rows={4}
+                      style={{ ...inputStyle, resize: 'vertical', fontFamily: 'monospace' }}
+                      placeholder={'best ' + cat + ' hotel\nbest hotel for ' + cat}
+                    />
+                  )}
+                </div>
+              )
+            })}
             <div>
               <label style={labelStyle}>General queries (one per line)</label>
               <textarea value={form.regionQueries} onChange={e => set('regionQueries', e.target.value)} rows={5} style={{ ...inputStyle, resize: 'vertical', fontFamily: 'monospace' }} placeholder={'best luxury hotels in Zermatt\nbest 5 star hotels Zermatt'} />

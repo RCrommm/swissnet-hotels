@@ -22,6 +22,7 @@ interface OnboardBody {
   regionCategories?: string[]
   regionQueries?: string[]
   competitors?: string[]
+  categoryQueries?: Record<string, string[]>   // category key -> its query templates (new categories only)
 }
 
 type Step = { step: string; ok: boolean; detail: string }
@@ -67,8 +68,26 @@ export async function POST(request: NextRequest) {
     } else {
       steps.push({ step: 'competitor_hotels', ok: true, detail: 'No competitors provided' })
     }
+
+    // 2b) CATEGORY QUERIES — seed templates for any NEW category (one not already
+    // in category_queries). Existing categories are inherited automatically.
+    const catQ = body.categoryQueries || {}
+    const catRows: { category: string; query: string; is_active: boolean }[] = []
+    for (const [cat, queries] of Object.entries(catQ)) {
+      for (const q of (queries || [])) {
+        const trimmed = q.trim()
+        if (trimmed) catRows.push({ category: cat, query: trimmed, is_active: true })
+      }
+    }
+    if (catRows.length) {
+      const { error: cqErr } = await supabase.from('category_queries').insert(catRows)
+      if (cqErr) return fail('category_queries', cqErr.message)
+      steps.push({ step: 'category_queries', ok: true, detail: `${catRows.length} category query templates added` })
+    } else {
+      steps.push({ step: 'category_queries', ok: true, detail: 'No new category templates (all inherited)' })
+    }
   } else {
-    steps.push({ step: 'region', ok: true, detail: 'Using existing region "' + region + '" (queries + competitors inherited)' })
+    steps.push({ step: 'region', ok: true, detail: `Using existing region "${region}" (queries + competitors inherited)` })
   }
 
   const hotelRow: any = {
