@@ -1959,6 +1959,7 @@ function ComparisonReport({ hotelId, hotelName, hotelRegion, overviewRunData, go
   const [catHistory, setCatHistory] = useState<any[]>([])
   const [frozenVis, setFrozenVis] = useState<Record<string, any>>({})
   const [frozenCat, setFrozenCat] = useState<Record<string, number>>({})
+  const [perfRows, setPerfRows] = useState<Record<string, any>>({})
   const [loaded, setLoaded] = useState(false)
   const [monthA, setMonthA] = useState('')
   const [monthB, setMonthB] = useState('')
@@ -1985,6 +1986,13 @@ function ComparisonReport({ hotelId, hotelName, hotelRegion, overviewRunData, go
       const fcMap: Record<string, number> = {}
       for (const row of (fc || [])) fcMap[`${row.month}:${row.category}`] = row.blended_score
       setFrozenCat(fcMap)
+      // Monthly AI + SwissNet performance (frozen snapshots, keyed 'YYYY-MM').
+      const { data: mp } = await sb.from('monthly_performance')
+        .select('month, ai_sessions, ai_revenue, swissnet_clicks, swissnet_revenue')
+        .eq('hotel_id', hotelId)
+      const mpMap: Record<string, any> = {}
+      for (const row of (mp || [])) mpMap[row.month] = row
+      setPerfRows(mpMap)
       setLoaded(true)
     }
     load()
@@ -2056,6 +2064,21 @@ function ComparisonReport({ hotelId, hotelName, hotelRegion, overviewRunData, go
     if (!rows.length) return null
     const adj = rows.map((r: any) => r.visibility_score)
     return Math.round(adj.reduce((a: number, b: number) => a + b, 0) / adj.length)
+  }
+
+  // Monthly AI + SwissNet performance for a month key. Reads the frozen snapshot only —
+  // no live fetch (Reports compares stored months). Null where a field wasn't tracked that
+  // month (no GA4, no ecommerce, no SwissNet attribution) → renders as '—', never a fake 0.
+  const perfMetric = (key: string) => {
+    const { start } = winOf(key)
+    const row = perfRows[start.slice(0, 7)]
+    if (!row) return { aiSessions: null, aiRevenue: null, swissClicks: null, swissRevenue: null }
+    return {
+      aiSessions: row.ai_sessions ?? null,
+      aiRevenue: row.ai_revenue ?? null,
+      swissClicks: row.swissnet_clicks ?? null,
+      swissRevenue: row.swissnet_revenue ?? null,
+    }
   }
 
   // Months that have ANY data
@@ -2154,6 +2177,22 @@ function ComparisonReport({ hotelId, hotelName, hotelRegion, overviewRunData, go
         <Row label="Sent to Official Site" a={ea?.webClicks ?? null} b={eb?.webClicks ?? null} />
         <Row label="Profile Views" a={ea?.views ?? null} b={eb?.views ?? null} />
       </Section>
+
+      {(() => {
+        const pa = monthA ? perfMetric(monthA) : null
+        const pb = monthB ? perfMetric(monthB) : null
+        // Only render the section if at least one chosen month has a stored snapshot.
+        const hasAny = (pa && (pa.aiSessions !== null || pa.swissClicks !== null)) || (pb && (pb.aiSessions !== null || pb.swissClicks !== null))
+        if (!hasAny) return null
+        return (
+          <Section title="AI Performance">
+            <Row label="AI sessions" a={pa?.aiSessions ?? null} b={pb?.aiSessions ?? null} />
+            <Row label="AI revenue (CHF)" a={pa?.aiRevenue ?? null} b={pb?.aiRevenue ?? null} />
+            <Row label="SwissNet clicks" a={pa?.swissClicks ?? null} b={pb?.swissClicks ?? null} />
+            <Row label="SwissNet revenue (CHF)" a={pa?.swissRevenue ?? null} b={pb?.swissRevenue ?? null} />
+          </Section>
+        )
+      })()}
 
       {cats.length > 0 && (
         <Section title="Category Visibility">
