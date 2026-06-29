@@ -2414,7 +2414,6 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId, rangeStart, range
   const [mentions, setMentions] = useState<Record<string, boolean | null>>({})
   const [loaded, setLoaded] = useState(false)
   const [search, setSearch] = useState('')
-  const [pageMode, setPageMode] = useState<'general' | 'category'>('general')
   const ownDomain = 'swissnethotels.com'
 
   const setMention = async (url: string, value: boolean | null) => {
@@ -2483,64 +2482,45 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId, rangeStart, range
   const allQueries = new Set(rows.map((r: any) => r.query).filter(Boolean))
   const totalQueries = allQueries.size || 1
 
-  // Split rows by mode. Null source_type (older rows whose query text was since edited)
-  // folds into general — daily general dominates, and this only ever risks under-counting
-  // category, never burying it, which is the whole point of the split.
-  const generalRows = rows.filter((r: any) => r.source_type !== 'category')
-  const categoryRows = rows.filter((r: any) => r.source_type === 'category')
-
-  // Build the two aggregations from one shared routine so general and category are identical in logic.
-  const aggregate = (subset: any[]) => {
-    const denomQueries = new Set(subset.map((r: any) => r.query).filter(Boolean)).size || 1
-
-    const byDomain: Record<string, { count: number; queries: Set<string>; urls: Set<string>; mentioned: boolean | null }> = {}
-    for (const r of subset) {
-      const d = r.source_domain || ''
-      if (!d) continue
-      if (!byDomain[d]) byDomain[d] = { count: 0, queries: new Set(), urls: new Set(), mentioned: null }
-      byDomain[d].count++
-      if (r.query) byDomain[d].queries.add(r.query)
-      byDomain[d].urls.add(r.source_url)
-      const m = mentions[r.source_url]
-      if (m === true) byDomain[d].mentioned = true
-      else if (m === false && byDomain[d].mentioned !== true) byDomain[d].mentioned = false
-    }
-    const ranked = Object.entries(byDomain)
-      .map(([domain, v]) => ({ domain, count: v.count, coverage: Math.round((v.queries.size / denomQueries) * 100), mentioned: v.mentioned }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 10)
-    const top10CiteTotal = ranked.reduce((s, r) => s + r.count, 0) || 1
-
-    const byUrl: Record<string, { count: number; queries: Set<string>; domain: string; mentioned: boolean | null }> = {}
-    for (const r of subset) {
-      const u = r.source_url || ''
-      if (!u) continue
-      if (!byUrl[u]) byUrl[u] = { count: 0, queries: new Set(), domain: r.source_domain || '', mentioned: mentions[u] ?? null }
-      byUrl[u].count++
-      if (r.query) byUrl[u].queries.add(r.query)
-    }
-    const rankedUrls = Object.entries(byUrl)
-      .map(([url, v]) => ({ url, domain: v.domain, count: v.count, coverage: Math.round((v.queries.size / denomQueries) * 100), mentioned: v.mentioned }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 100)
-    const urlsCiteTotal = rankedUrls.reduce((s, r) => s + r.count, 0) || 1
-
-    const totalSources = Object.keys(byUrl).length
-    const totalUrls = rankedUrls.length || 1
-    const mentionYes = Math.round((rankedUrls.filter(r => r.mentioned === true).length / totalUrls) * 100) + '%'
-    const mentionNo = Math.round((rankedUrls.filter(r => r.mentioned === false).length / totalUrls) * 100) + '%'
-
-    return { ranked, top10CiteTotal, rankedUrls, urlsCiteTotal, totalSources, mentionYes, mentionNo }
+  // Aggregate by domain → citation count + distinct queries + mention status
+  const byDomain: Record<string, { count: number; queries: Set<string>; urls: Set<string>; mentioned: boolean | null }> = {}
+  for (const r of rows) {
+    const d = r.source_domain || ''
+    if (!d) continue
+    if (!byDomain[d]) byDomain[d] = { count: 0, queries: new Set(), urls: new Set(), mentioned: null }
+    byDomain[d].count++
+    if (r.query) byDomain[d].queries.add(r.query)
+    byDomain[d].urls.add(r.source_url)
+    const m = mentions[r.source_url]
+    if (m === true) byDomain[d].mentioned = true
+    else if (m === false && byDomain[d].mentioned !== true) byDomain[d].mentioned = false
   }
 
-  const general = aggregate(generalRows)
-  const category = aggregate(categoryRows)
+  const ranked = Object.entries(byDomain)
+    .map(([domain, v]) => ({ domain, count: v.count, coverage: Math.round((v.queries.size / totalQueries) * 100), mentioned: v.mentioned }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10)
+  const top10CiteTotal = ranked.reduce((s, r) => s + r.count, 0) || 1
 
-  // Top metric cards + domain block stay on general (the daily, fuller picture).
-  const { ranked, top10CiteTotal, totalSources, mentionYes, mentionNo } = general
-  // The "Every cited page" list follows the toggle.
-  const active = pageMode === 'category' ? category : general
-  const { rankedUrls, urlsCiteTotal } = active
+  // Page-level aggregation → every distinct cited URL, ranked by all-time usage
+  const byUrl: Record<string, { count: number; queries: Set<string>; domain: string; mentioned: boolean | null }> = {}
+  for (const r of rows) {
+    const u = r.source_url || ''
+    if (!u) continue
+    if (!byUrl[u]) byUrl[u] = { count: 0, queries: new Set(), domain: r.source_domain || '', mentioned: mentions[u] ?? null }
+    byUrl[u].count++
+    if (r.query) byUrl[u].queries.add(r.query)
+  }
+  const rankedUrls = Object.entries(byUrl)
+    .map(([url, v]) => ({ url, domain: v.domain, count: v.count, coverage: Math.round((v.queries.size / totalQueries) * 100), mentioned: v.mentioned }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 100)
+  const urlsCiteTotal = rankedUrls.reduce((s, r) => s + r.count, 0) || 1
+
+  const totalSources = Object.keys(byUrl).length
+  const totalUrls = rankedUrls.length || 1
+  const mentionYes = Math.round((rankedUrls.filter(r => r.mentioned === true).length / totalUrls) * 100) + '%'
+  const mentionNo = Math.round((rankedUrls.filter(r => r.mentioned === false).length / totalUrls) * 100) + '%'
 
   if (!loaded) return <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>Loading citation sources…</p>
 
@@ -2643,16 +2623,7 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId, rangeStart, range
             <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', color: TEXT, margin: '0 0 0.15rem' }}>Every cited page</p>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: 0 }}>The exact pages ChatGPT and Perplexity cited across your queries — click to open</p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', gap: '0.2rem', background: BG, borderRadius: 7, padding: '0.2rem', border: '1px solid ' + BORDER }}>
-              {[{ k: 'general', l: 'General', n: general.rankedUrls.length }, { k: 'category', l: 'Category', n: category.rankedUrls.length }].map(o => (
-                <button key={o.k} onClick={() => setPageMode(o.k as any)} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.3rem 0.7rem', borderRadius: 5, border: 'none', background: pageMode === o.k ? WHITE : 'transparent', color: pageMode === o.k ? TEXT : TEXT_MUTED, fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, cursor: 'pointer', boxShadow: pageMode === o.k ? '0 1px 4px rgba(42,26,14,0.08)' : 'none' }}>
-                  {o.l}<span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 700, color: pageMode === o.k ? GOLD : TEXT_MUTED }}>{o.n}</span>
-                </button>
-              ))}
-            </div>
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search pages…" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.45rem 0.75rem', background: WHITE, outline: 'none', minWidth: 180 }} />
-          </div>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search pages…" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.45rem 0.75rem', background: WHITE, outline: 'none', minWidth: 180 }} />
         </div>
         <div>
           {rankedUrls.filter(r => !search || r.url.toLowerCase().includes(search.toLowerCase())).map((r, i) => {
