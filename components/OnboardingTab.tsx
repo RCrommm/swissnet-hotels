@@ -8,6 +8,7 @@ interface Props {
 }
 
 const TIERS = ['monitor', 'optimise', 'premium']
+const HOTEL_CATEGORIES = ['Ski Resort', 'Wellness Retreat', 'City Luxury', 'Mountain Lodge', 'Lake Resort']
 
 export default function OnboardingTab({ password, regions, existingCategories }: Props) {
   const gold = '#C9A84C'
@@ -114,7 +115,13 @@ export default function OnboardingTab({ password, regions, existingCategories }:
           <div><label style={labelStyle}>Hotel Name *</label><input value={form.name} onChange={e => set('name', e.target.value)} style={inputStyle} placeholder="La Réserve Genève" /></div>
           <div><label style={labelStyle}>Slug</label><input value={form.slug} onChange={e => set('slug', e.target.value)} style={inputStyle} placeholder="la-reserve-geneve" /></div>
           <div><label style={labelStyle}>Location *</label><input value={form.location} onChange={e => set('location', e.target.value)} style={inputStyle} placeholder="Geneva, Switzerland" /></div>
-          <div><label style={labelStyle}>Category</label><input value={form.category} onChange={e => set('category', e.target.value)} style={inputStyle} placeholder="City Luxury" /></div>
+          <div>
+            <label style={labelStyle}>Category *</label>
+            <select value={form.category} onChange={e => set('category', e.target.value)} style={{ ...inputStyle, background: bg }}>
+              <option value="">Select category</option>
+              {HOTEL_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
           <div><label style={labelStyle}>Rating (1-5)</label><input type="number" min="1" max="5" step="0.1" value={form.rating} onChange={e => set('rating', e.target.value)} style={inputStyle} placeholder="4.8" /></div>
           <div><label style={labelStyle}>Nightly Rate (CHF)</label><input type="number" value={form.nightly_rate_chf} onChange={e => set('nightly_rate_chf', e.target.value)} style={inputStyle} placeholder="900" /></div>
           <div><label style={labelStyle}>Direct Booking URL</label><input value={form.direct_booking_url} onChange={e => set('direct_booking_url', e.target.value)} style={inputStyle} placeholder="https://..." /></div>
@@ -136,8 +143,24 @@ export default function OnboardingTab({ password, regions, existingCategories }:
             </select>
           </div>
           <div>
-            <label style={labelStyle}>Categories (comma keys)</label>
-            <input value={form.categories} onChange={e => set('categories', e.target.value)} style={inputStyle} placeholder="spa, dining, romantic" />
+            <label style={labelStyle}>Categories</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+              {existingCategories.map(cat => {
+                const selected = form.categories.split(',').map(c => c.trim()).filter(Boolean).includes(cat)
+                return (
+                  <button key={cat} type="button" onClick={() => {
+                    const cur = form.categories.split(',').map(c => c.trim()).filter(Boolean)
+                    const next = selected ? cur.filter(c => c !== cat) : [...cur, cat]
+                    set('categories', next.join(', '))
+                  }} style={{
+                    fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600,
+                    letterSpacing: '0.08em', textTransform: 'uppercase', padding: '0.35rem 0.7rem',
+                    border: '1px solid ' + (selected ? gold : border), borderRadius: 4, cursor: 'pointer',
+                    background: selected ? gold : '#fff', color: selected ? '#fff' : textMuted,
+                  }}>{cat}</button>
+                )
+              })}
+            </div>
           </div>
         </div>
         <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
