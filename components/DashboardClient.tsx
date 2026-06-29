@@ -5016,13 +5016,17 @@ return { date: d, score: avg }
 
                 if (realPoints.length === 0) return <div style={{ height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED }}>No data yet for this platform</p></div>
 
-                const startDate = chartPeriod === 365 ? new Date(realPoints[0].date) : new Date(Math.min(...realPoints.map(p => new Date(p.date).getTime()), new Date(cutoff).getTime()))
-                const endDate = new Date()
                 const today = new Date().toISOString().split('T')[0]
-const totalDays = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
-const calendarDays: string[] = []
-for (let i = 0; i <= totalDays; i++) { const d = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000); calendarDays.push(d.toISOString().split('T')[0]) }
-if (!calendarDays.includes(today)) calendarDays.push(today)
+                const startStr = chartPeriod === 365 ? realPoints[0].date : (realPoints[0].date < cutoff ? realPoints[0].date : cutoff)
+                const calendarDays: string[] = []
+                {
+                  const start = new Date(startStr + 'T00:00:00Z')
+                  const end = new Date(today + 'T00:00:00Z')
+                  for (let t = start.getTime(); t <= end.getTime(); t += 86400000) {
+                    calendarDays.push(new Date(t).toISOString().split('T')[0])
+                  }
+                  if (!calendarDays.includes(today)) calendarDays.push(today)
+                }
 
                 if (realPoints.length === 1) return (
                   <div style={{ height: 160, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
