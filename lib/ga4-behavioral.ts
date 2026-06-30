@@ -29,6 +29,11 @@ export const AI_REFERRERS = [
   'gemini.google.com', 'bard.google.com',
   'copilot.microsoft.com', 'bing.com',
   'claude.ai', 'anthropic.com',
+  'grok.com', 'x.ai',
+  'meta.ai',
+  'deepseek.com',
+  'you.com',
+  'phind.com',
 ]
 
 export function isAiSource(source?: string): boolean {
@@ -48,6 +53,11 @@ export function aiPlatformOf(source?: string): string | null {
   if (s.includes('copilot.microsoft.com')) return 'Copilot'
   if (s.includes('claude.ai') || s.includes('anthropic.com')) return 'Claude'
   if (s.includes('bing.com')) return 'Bing / Copilot'
+  if (s.includes('grok.com') || s.includes('x.ai')) return 'Grok'
+  if (s.includes('meta.ai')) return 'Meta AI'
+  if (s.includes('deepseek.com')) return 'DeepSeek'
+  if (s.includes('you.com')) return 'You.com'
+  if (s.includes('phind.com')) return 'Phind'
   return null
 }
 
