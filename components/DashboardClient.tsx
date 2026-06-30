@@ -2587,9 +2587,9 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId, rangeStart, range
       <div style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
         <button onClick={() => setOpen(o => !o)}
           style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 600,
-            color: m === null ? TEXT_MUTED : '#fff',
-            background: m === null ? BG : current.col,
-            border: '1px solid ' + (m === null ? BORDER : current.col),
+            color: m === null ? TEXT_MUTED : current.col,
+            background: m === null ? BG : current.col + '18',
+            border: '1px solid ' + (m === null ? BORDER : current.col + '40'),
             padding: '3px 10px', borderRadius: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem', whiteSpace: 'nowrap' }}>
           {current.label}
         </button>
