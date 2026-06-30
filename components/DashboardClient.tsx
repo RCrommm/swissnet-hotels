@@ -2635,11 +2635,24 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId, rangeStart, range
         <div>
           {rankedUrls.filter(r => !search || r.url.toLowerCase().includes(search.toLowerCase())).map((r, i) => {
             const short = (() => { try { const u = new URL(r.url); const base = u.hostname.replace(/^www\./, ''); return u.pathname && u.pathname !== '/' ? base + u.pathname : base } catch { return r.url } })()
+            const title = (() => {
+              try {
+                const u = new URL(r.url)
+                const seg = u.pathname.split('/').filter(Boolean).pop() || u.hostname.replace(/^www\./, '')
+                const words = decodeURIComponent(seg).replace(/[-_]+/g, ' ').replace(/\.(html?|php|aspx?)$/i, '').trim()
+                const titled = words.replace(/\b\w/g, c => c.toUpperCase())
+                const host = u.hostname.replace(/^www\./, '').split('.')[0].replace(/\b\w/g, c => c.toUpperCase())
+                return titled.length > 2 ? titled : host
+              } catch { return r.url }
+            })()
             return (
               <div key={r.url} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '0.8rem 1.5rem', borderBottom: i < rankedUrls.length - 1 ? '1px solid ' + BORDER : 'none' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
                   <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, color: TEXT_MUTED, width: 18, flexShrink: 0 }}>{i + 1}</span>
-                  <a href={r.url} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', color: TEXT, textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{short}</a>
+                  <a href={r.url} target="_blank" rel="noopener noreferrer" style={{ display: 'block', minWidth: 0, textDecoration: 'none' }}>
+                    <span style={{ display: 'block', fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', fontWeight: 600, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</span>
+                    <span style={{ display: 'block', fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '0.1rem' }}>{short}</span>
+                  </a>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
                   <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED }}>cited {r.count}×</span>
