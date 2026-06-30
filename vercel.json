@@ -18,6 +18,14 @@
   },
   "crons": [
     {
+      "path": "/api/cron/trigger-visibility",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/trigger-categories",
+      "schedule": "0 7 * * 0"
+    },
+    {
       "path": "/api/indexnow",
       "schedule": "0 9 * * *"
     }
