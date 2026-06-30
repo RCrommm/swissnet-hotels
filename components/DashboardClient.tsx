@@ -2477,18 +2477,23 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId, rangeStart, range
       }
       setRows(cites || [])
 
-      const urls = [...new Set((cites || []).map((c: any) => c.source_url))]
       try {
-        if (urls.length) {
-          const { data: pm } = await sb
+        let pm: any[] = []
+        let from = 0
+        while (true) {
+          const { data: chunk, error } = await sb
             .from('page_mentions')
             .select('source_url, mentioned')
             .eq('hotel_id', hotelId)
-            .in('source_url', urls.slice(0, 100))
-          const map: Record<string, boolean | null> = {}
-          for (const m of pm || []) map[m.source_url] = m.mentioned
-          setMentions(map)
+            .range(from, from + 999)
+          if (error || !chunk || chunk.length === 0) break
+          pm = pm.concat(chunk)
+          if (chunk.length < 1000) break
+          from += 1000
         }
+        const map: Record<string, boolean | null> = {}
+        for (const m of pm) map[m.source_url] = m.mentioned
+        setMentions(map)
       } catch (e) {
         console.error('page_mentions lookup failed (non-fatal):', e)
       }
