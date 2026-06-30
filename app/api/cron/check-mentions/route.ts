@@ -64,18 +64,22 @@ export async function GET(request: Request) {
   const BATCH = 30
   const RETRY_AFTER_DAYS = 30
 
+  const { searchParams } = new URL(request.url)
+  const region = searchParams.get('region') || 'Geneva'
+
   const { data: partners } = await supabase
     .from('hotels')
     .select('id, name')
     .eq('is_partner', true)
     .eq('is_active', true)
+    .eq('region', region)
   if (!partners?.length) return NextResponse.json({ message: 'No partner hotels' })
 
   const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   const { data: cites } = await supabase
     .from('ai_citations')
     .select('source_url')
-    .eq('region', 'Geneva')
+    .eq('region', region)
     .gte('run_date', since30)
     .limit(10000)
   const counts: Record<string, number> = {}
