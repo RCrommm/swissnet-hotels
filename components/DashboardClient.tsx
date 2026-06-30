@@ -4306,6 +4306,7 @@ const GA4_SERVICE_ACCOUNT = 'swissnet-ga4-reader@swissnet-ga4.iam.gserviceaccoun
 
 function Ga4ConnectCard({ hotel }: any) {
   const [propertyId, setPropertyId] = useState<string>(hotel?.ga4_property_id || '')
+  const [pathPrefix, setPathPrefix] = useState<string>(hotel?.ga4_path_prefix || '')
   const [status, setStatus] = useState<string>(hotel?.ga4_status || 'not_connected')
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
@@ -4334,7 +4335,7 @@ function Ga4ConnectCard({ hotel }: any) {
     try {
       const res = await fetch('/api/ga4-connect', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hotelId: hotel?.id, propertyId: id, password: 'RCrom2004Romeo' }),
+        body: JSON.stringify({ hotelId: hotel?.id, propertyId: id, pathPrefix: pathPrefix.trim() || null, password: 'RCrom2004Romeo' }),
       })
       const j = await res.json()
       if (res.ok && j?.status === 'connected') {
@@ -4388,6 +4389,18 @@ function Ga4ConnectCard({ hotel }: any) {
           />
           <button onClick={connect} disabled={busy} style={{ background: GOLD, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, padding: '0.55rem 1.4rem', border: 'none', borderRadius: 6, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.7 : 1, whiteSpace: 'nowrap' }}>{busy ? 'Connecting…' : connected ? 'Reconnect' : 'Connect'}</button>
         </div>
+
+        {/* Optional · only for hotels sharing a group GA4 property */}
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '1.1rem 0 0.4rem' }}>Optional · Page path prefix</p>
+        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT, margin: '0 0 0.5rem', lineHeight: 1.6 }}>
+          Only if your hotel shares one Google Analytics property with other hotels in a group. Enter the path your pages live under so we isolate just your data — e.g. <code style={{ fontFamily: 'monospace', fontSize: '0.62rem', background: BG, padding: '1px 5px', borderRadius: 4 }}>/france/your-hotel</code>. Leave blank if your hotel has its own property.
+        </p>
+        <input
+          value={pathPrefix}
+          onChange={e => setPathPrefix(e.target.value)}
+          placeholder="/france/your-hotel (leave blank if not a group property)"
+          style={{ width: '100%', fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT, border: '1px solid ' + BORDER, borderRadius: 6, padding: '0.55rem 0.875rem', background: BG, outline: 'none', boxSizing: 'border-box' }}
+        />
 
         {msg && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: error ? RED : connected ? GREEN : TEXT_MUTED, margin: '0.9rem 0 0', lineHeight: 1.6 }}>{msg}</p>}
       </div>

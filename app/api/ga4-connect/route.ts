@@ -13,7 +13,7 @@ export const maxDuration = 30
 
 export async function POST(req: Request) {
   try {
-    const { hotelId, propertyId, password } = await req.json()
+    const { hotelId, propertyId, pathPrefix, password } = await req.json()
     if (password !== (process.env.ADMIN_REPORT_PASSWORD || 'RCrom2004Romeo')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -60,6 +60,7 @@ export async function POST(req: Request) {
     // Success → persist the connection.
     await sb.from('hotels').update({
       ga4_property_id: cleanId,
+      ga4_path_prefix: (typeof pathPrefix === 'string' && pathPrefix.trim()) ? pathPrefix.trim() : null,
       ga4_status: 'connected',
       ga4_connected_at: new Date().toISOString(),
     }).eq('id', hotelId)
