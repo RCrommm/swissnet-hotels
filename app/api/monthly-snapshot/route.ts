@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     if (!sbUrl || !sbKey) return NextResponse.json({ error: 'Server not configured' }, { status: 500 })
     const sb = createClient(sbUrl, sbKey)
 
-    const { data: hotelRow } = await sb.from('hotels').select('ga4_property_id, ga4_status').eq('id', hotelId).single()
+    const { data: hotelRow } = await sb.from('hotels').select('ga4_property_id, ga4_status, ga4_path_prefix').eq('id', hotelId).single()
     const ga4Connected = hotelRow?.ga4_status === 'connected' && !!hotelRow?.ga4_property_id
 
     // ── AI + SwissNet from GA4 (only when connected) ──
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
     let swissnet_attribution_available = false
 
     if (ga4Connected) {
-      const src = await fetchGa4MonthBySource(hotelRow!.ga4_property_id, bounds.start, bounds.end)
+      const src = await fetchGa4MonthBySource(hotelRow!.ga4_property_id, bounds.start, bounds.end, hotelRow!.ga4_path_prefix)
       if (src) {
         const rows = src.rows
         const haveRevenue = rows.some(r => r.revenue > 0)

@@ -17,12 +17,24 @@ async function pullRows(
   propertyId: string,
   startDate: string,
   endDate: string,
+  pathPrefix?: string | null,
 ): Promise<Ga4PageRow[]> {
   const [report] = await client.runReport({
     property: `properties/${propertyId}`,
     dateRanges: [{ startDate, endDate }],
-    dimensions: [{ name: 'landingPagePlusQueryString' }, { name: 'sessionSource' }],
+    dimensions: [
+      { name: pathPrefix ? 'pagePath' : 'landingPagePlusQueryString' },
+      { name: 'sessionSource' },
+    ],
     metrics: [{ name: 'sessions' }, { name: 'keyEvents' }, { name: 'bounceRate' }, { name: 'totalRevenue' }],
+    ...(pathPrefix ? {
+      dimensionFilter: {
+        filter: {
+          fieldName: 'pagePath',
+          stringFilter: { matchType: 'BEGINS_WITH', value: pathPrefix, caseSensitive: false },
+        },
+      },
+    } : {}),
     limit: 10000,
   })
   const rows: Ga4PageRow[] = []
@@ -47,7 +59,7 @@ async function pullRows(
  */
 export async function fetchGa4Rows(
   propertyId: string,
-  opts: { days?: number; previous?: boolean } = {},
+  opts: { days?: number; previous?: boolean; pathPrefix?: string | null } = {},
 ): Promise<Ga4FetchResult | null> {
   const rawKey = process.env.GA4_SERVICE_ACCOUNT_KEY
   if (!rawKey) return null
@@ -59,11 +71,11 @@ export async function fetchGa4Rows(
   const windowDays = Math.max(1, Math.min(365, opts.days ?? 28))
 
   const client = new BetaAnalyticsDataClient({ credentials })
-  const rows = await pullRows(client, cleanId, `${windowDays}daysAgo`, 'today')
+  const rows = await pullRows(client, cleanId, `${windowDays}daysAgo`, 'today', opts.pathPrefix)
 
   let previousRows: Ga4PageRow[] | null = null
   if (opts.previous) {
-    previousRows = await pullRows(client, cleanId, `${windowDays * 2}daysAgo`, `${windowDays + 1}daysAgo`)
+    previousRows = await pullRows(client, cleanId, `${windowDays * 2}daysAgo`, `${windowDays + 1}daysAgo`, opts.pathPrefix)
   }
   return { rows, previousRows, periodDays: windowDays }
 }
@@ -81,7 +93,7 @@ export interface Ga4SourceRow {
 
 export async function fetchGa4BySource(
   propertyId: string,
-  opts: { days?: number } = {},
+  opts: { days?: number; pathPrefix?: string | null } = {},
 ): Promise<{ rows: Ga4SourceRow[]; periodDays: number } | null> {
   const rawKey = process.env.GA4_SERVICE_ACCOUNT_KEY
   if (!rawKey) return null
@@ -98,6 +110,14 @@ export async function fetchGa4BySource(
     dateRanges: [{ startDate: `${windowDays}daysAgo`, endDate: 'today' }],
     dimensions: [{ name: 'sessionSource' }],
     metrics: [{ name: 'sessions' }, { name: 'keyEvents' }, { name: 'totalRevenue' }],
+    ...(opts.pathPrefix ? {
+      dimensionFilter: {
+        filter: {
+          fieldName: 'pagePath',
+          stringFilter: { matchType: 'BEGINS_WITH', value: opts.pathPrefix, caseSensitive: false },
+        },
+      },
+    } : {}),
     limit: 1000,
   })
 
@@ -125,6 +145,7 @@ export async function fetchGa4MonthBySource(
   propertyId: string,
   startDate: string,   // 'YYYY-MM-DD' inclusive
   endDate: string,     // 'YYYY-MM-DD' inclusive
+  pathPrefix?: string | null,
 ): Promise<{ rows: Ga4SourceRow[] } | null> {
   const rawKey = process.env.GA4_SERVICE_ACCOUNT_KEY
   if (!rawKey) return null
@@ -140,6 +161,14 @@ export async function fetchGa4MonthBySource(
     dateRanges: [{ startDate, endDate }],
     dimensions: [{ name: 'sessionSource' }],
     metrics: [{ name: 'sessions' }, { name: 'keyEvents' }, { name: 'totalRevenue' }],
+    ...(pathPrefix ? {
+      dimensionFilter: {
+        filter: {
+          fieldName: 'pagePath',
+          stringFilter: { matchType: 'BEGINS_WITH', value: pathPrefix, caseSensitive: false },
+        },
+      },
+    } : {}),
     limit: 1000,
   })
 

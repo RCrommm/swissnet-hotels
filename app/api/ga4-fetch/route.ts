@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     const sb = createClient(sbUrl, sbKey)
     const { data: hotel, error: hErr } = await sb
       .from('hotels')
-      .select('id, ga4_property_id, ga4_status')
+      .select('id, ga4_property_id, ga4_status, ga4_path_prefix')
       .eq('id', hotelId)
       .single()
     if (hErr || !hotel) return NextResponse.json({ error: 'Hotel not found.' }, { status: 404 })
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'This hotel has no connected GA4 property.' }, { status: 400 })
     }
 
-    const result = await fetchGa4Rows(hotel.ga4_property_id, { days, previous })
+    const result = await fetchGa4Rows(hotel.ga4_property_id, { days, previous, pathPrefix: hotel.ga4_path_prefix })
     if (!result) return NextResponse.json({ error: 'GA4 is not configured on the server yet.' }, { status: 500 })
 
     return NextResponse.json({

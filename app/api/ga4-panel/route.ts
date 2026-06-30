@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     // Hotel's GA4 connection state.
     const { data: hotelRow } = await sb
       .from('hotels')
-      .select('ga4_property_id, ga4_status')
+      .select('ga4_property_id, ga4_status, ga4_path_prefix')
       .eq('id', hotelId)
       .single()
 
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     let ai_performance: any = null
     let ga4SourceRows: any[] | null = null
     if (ga4Connected) {
-      const ga4 = await fetchGa4Rows(propertyId, { days: windowDays, previous: wantCompare })
+      const ga4 = await fetchGa4Rows(propertyId, { days: windowDays, previous: wantCompare, pathPrefix: hotelRow?.ga4_path_prefix })
       if (ga4) {
         ai_performance = buildAiPerformance(ga4.rows, { periodDays: ga4.periodDays, previousRows: ga4.previousRows })
       }

@@ -624,10 +624,10 @@ ${renderRecommendabilityBrief(recommendabilityBrief)}` : ''}`
       let ga4Connected = false
       let ga4PeriodDays: number | null = null
       try {
-        const { data: ga4Hotel } = await sb.from('hotels').select('ga4_property_id, ga4_status').eq('id', hotelId).single()
+        const { data: ga4Hotel } = await sb.from('hotels').select('ga4_property_id, ga4_status, ga4_path_prefix').eq('id', hotelId).single()
         if (ga4Hotel?.ga4_status === 'connected' && ga4Hotel?.ga4_property_id) {
           ga4Connected = true
-          const ga4 = await fetchGa4Rows(ga4Hotel.ga4_property_id, { days: 28, previous: true })
+          const ga4 = await fetchGa4Rows(ga4Hotel.ga4_property_id, { days: 28, previous: true, pathPrefix: ga4Hotel.ga4_path_prefix })
           if (ga4) {
             for (const m of advisory.top_moves) {
               const affected = m.canonicalRecommendation?.targeting?.affected_pages || []
@@ -644,7 +644,7 @@ ${renderRecommendabilityBrief(recommendabilityBrief)}` : ''}`
           }
           // SOURCE-LEVEL pull (Path A): isolates revenue GA4 attributes to source=swissnet.
           try {
-            const src = await fetchGa4BySource(ga4Hotel.ga4_property_id, { days: 28 })
+            const src = await fetchGa4BySource(ga4Hotel.ga4_property_id, { days: 28, pathPrefix: ga4Hotel.ga4_path_prefix })
             if (src) { ga4SourceRows = src.rows; if (ga4PeriodDays == null) ga4PeriodDays = src.periodDays }
           } catch {}
         }
