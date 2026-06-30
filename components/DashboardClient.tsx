@@ -2416,6 +2416,32 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId, rangeStart, range
   const [search, setSearch] = useState('')
   const ownDomain = 'swissnethotels.com'
 
+  const downloadCsv = () => {
+    const esc = (v: any) => { const s = String(v ?? ''); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s }
+    const lines: string[] = []
+    lines.push(`Citation Sources — ${hotelName} (${hotelRegion}) — ${new Date().toLocaleDateString('en-GB')}`)
+    lines.push('')
+    lines.push('TOP 10 DOMAINS')
+    lines.push(['Rank', 'Domain', 'Citations', 'Share %', 'Type'].join(','))
+    ranked.forEach((r, i) => {
+      const t = sourceType(r.domain)
+      lines.push([i + 1, esc(r.domain), r.count, Math.round((r.count / top10CiteTotal) * 100), esc(t.label)].join(','))
+    })
+    lines.push('')
+    lines.push('TOP 100 CITED PAGES')
+    lines.push(['Rank', 'URL', 'Citations', 'Share %', 'Mentions You'].join(','))
+    rankedUrls.forEach((r, i) => {
+      const m = r.mentioned === true ? 'Yes' : r.mentioned === false ? 'No' : 'Not checked'
+      lines.push([i + 1, esc(r.url), r.count, Math.round((r.count / urlsCiteTotal) * 100), m].join(','))
+    })
+    const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `citation-sources-${hotelName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${new Date().toISOString().split('T')[0]}.csv`
+    document.body.appendChild(a); a.click(); document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
   const setMention = async (url: string, value: boolean | null) => {
     setMentions(prev => ({ ...prev, [url]: value }))   // instant UI
     try {
@@ -2590,10 +2616,14 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId, rangeStart, range
       </div>
 
       {/* Metric cards */}
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
         <KPICard label="Sources Cited" value={totalSources} sub="distinct pages · all time" color={GOLD} />
         <KPICard label="Already Mention You" value={mentionYes} sub="sources mentioning you" color={GREEN} />
         <KPICard label="Cited but Missing You" value={mentionNo} sub="outreach targets" color={RED} />
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
+        <button onClick={downloadCsv} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: '#1a0e06', background: GOLD, border: 'none', borderRadius: 6, padding: '0.55rem 1.25rem', cursor: 'pointer' }}>↓ Download CSV (top 10 + top 100)</button>
       </div>
 
       {/* Source list */}
