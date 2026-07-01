@@ -266,10 +266,7 @@ export default async function HomePage() {
       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: textMuted, fontWeight: 300, maxWidth: '520px', margin: '0 auto' }}>
         Three plans, one path: see where you stand in AI search, get the tools to improve it, and have us optimise and promote you.
       </p>
-      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6rem', marginTop: '1.5rem', padding: '0.6rem 1.5rem', border: '1px solid ' + border, borderRadius: '40px' }}>
-        <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: textMuted }}>One-time profile set-up</span>
-        <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: gold, fontWeight: 400, lineHeight: 1 }}>CHF 400</span>
-      </div>
+      
     </div>
 
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.25rem', alignItems: 'start' }} className="pricing-grid">
@@ -278,7 +275,7 @@ export default async function HomePage() {
         gold={gold} border={border}
         name="Monitor"
         tagline="See where you stand in AI search."
-        price="199"
+        price="79"
         primary={[
           'Premium hotel profile on SwissNet',
           'Tracked across ChatGPT, Perplexity & Google AI',
@@ -300,7 +297,7 @@ export default async function HomePage() {
         name="Optimise"
         tagline="The tools to act on your visibility."
         noCommission
-        price="379"
+        price="149"
         plus="Everything in Monitor, plus:"
         primary={[
           'Category opportunity tracking (spa, family, lake…)',
@@ -321,7 +318,7 @@ export default async function HomePage() {
         name="Premium Partner"
         tagline="We optimise & promote with you."
         noCommission
-        price="699"
+        price="349"
         plus="Everything in Optimise, plus:"
         primary={[
           'Advanced promotion on comparison pages',
