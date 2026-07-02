@@ -4934,14 +4934,14 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
     { heading: 'Overview', items: [
       { id: 'overview', label: 'Overview' },
     ] },
+    { heading: 'AI visibility', items: [
+      { id: 'ai-visibility', label: 'AI Visibility' },
+      { id: 'competitors', label: 'Competitors' },
+    ] },
     { heading: 'Your official website', items: [
       { id: 'website', label: 'Official Website', minTier: 2, maxTier: 2 },
       { id: 'blueprint', label: 'Build Your AI Page', minTier: 3 },
       { id: 'advisor', label: 'Official Site Audit', minTier: 3 },
-    ] },
-    { heading: 'AI visibility', items: [
-      { id: 'ai-visibility', label: 'AI Visibility' },
-      { id: 'competitors', label: 'Competitors' },
     ] },
     { heading: 'Your SwissNet profile', items: [
       { id: 'performance', label: 'Performance' },
