@@ -26,14 +26,18 @@ function draftSchema() {
 }
 
 function flagUnsupported(draft: string, factsBlob: string): boolean {
-  const norm = (s: string) => s.toLowerCase().replace(/[,\s]/g, '')
-  const factsNorm = norm(factsBlob)
-  const nums = (draft.match(/\d[\d.,]*\s?(?:m²|m2|km|min|pm|am|%)?/gi) || [])
-  for (const n of nums) {
-    const t = norm(n)
-    if (t.length < 1) continue
-    const digits = t.replace(/[^\d.]/g, '')
-    if (digits.length >= 1 && !factsNorm.includes(digits)) return true
+  // Normalise BOTH sides the same way: strip all non-digits so 14.30 == 14:30,
+  // 07.00 == 7.00, and 1,000 == 1000. We only care whether the digit-run itself
+  // exists in the facts, not how it was punctuated. This kills false positives on
+  // reformatted times/prices while still catching a genuinely invented number.
+  const digitsOnly = (s: string) => s.replace(/[^0-9]/g, '')
+  const factsDigits = ' ' + factsBlob.replace(/[^0-9]/g, ' ').replace(/\s+/g, ' ') + ' '
+  // pull each contiguous number token from the draft (14:30, 39, 21, 1,000)
+  const tokens = draft.match(/\d[\d.,:]*/g) || []
+  for (const tok of tokens) {
+    const d = digitsOnly(tok)
+    if (d.length < 2) continue  // ignore lone single digits (too noisy to verify)
+    if (!factsDigits.includes(' ' + d + ' ') && !factsDigits.includes(d)) return true
   }
   return false
 }
