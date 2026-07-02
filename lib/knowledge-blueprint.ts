@@ -141,9 +141,30 @@ export function buildBlueprint(
   } catch {}
   const schemaRecommended = SCHEMA_RECOMMENDED.filter(s => !schemaPresent.includes(s))
 
-  const failedQ = readiness.filter(r => r.readiness !== 'YES').map(r => r.question)
-  const okQ = readiness.filter(r => r.readiness === 'YES').map(r => r.question)
-  const faqSeeds = [...failedQ, ...okQ]
+  const C = city || 'the city'
+  const H = hotelName || 'this hotel'
+  const faqSeeds = [
+    `What are the best boutique luxury hotels in ${C}?`,
+    `What are the best luxury hotels in central ${C}?`,
+    `Where should I stay in ${C} for a luxury city break?`,
+    `Which luxury hotel in ${C} is best for couples?`,
+    `Which hotels in ${C} have the most unique interiors?`,
+    `Which luxury hotels in ${C} have the most character?`,
+    `What are ${C}'s hidden luxury hotels?`,
+    `Where should first-time visitors stay in ${C}?`,
+    `Which ${C} neighbourhood is best for culture?`,
+    `Which area is best for luxury shopping and restaurants?`,
+    `Where should I stay for a romantic weekend in ${C}?`,
+    `What are the best luxury hotels for anniversaries in ${C}?`,
+    `Which hotels in ${C} are best for honeymooners?`,
+    `Which ${C} hotels have the best restaurants?`,
+    `Which hotels in ${C} are best for food lovers?`,
+    `Which hotels are close to ${C}'s best museums?`,
+    `Which hotels are best for walking around ${C}?`,
+    `Is ${H} worth it?`,
+    `Who is ${H} best suited for?`,
+    `Why choose ${H} over other luxury hotels in ${C}?`,
+  ]
 
   const counts = {
     sectionsBuilt: sections.filter(s => s.status === 'built').length,
