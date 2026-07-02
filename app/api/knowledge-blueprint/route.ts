@@ -22,10 +22,10 @@ export async function POST(req: Request) {
     const sb = createClient(sbUrl, sbKey)
 
     // hotel name + not_offered
-    let hotelName = '', city = '', notOffered: string[] = []
+    let hotelName = '', city = '', notOffered: string[] = [], blueprintFaqs: string[] = []
     try {
-      const { data: h } = await sb.from('hotels').select('name, location, region, not_offered').eq('id', hotelId).single()
-      if (h) { hotelName = h.name || ''; city = h.location || h.region || ''; if (Array.isArray(h.not_offered)) notOffered = h.not_offered }
+      const { data: h } = await sb.from('hotels').select('name, location, region, not_offered, blueprint_faqs').eq('id', hotelId).single()
+      if (h) { hotelName = h.name || ''; city = h.location || h.region || ''; if (Array.isArray(h.not_offered)) notOffered = h.not_offered; if (Array.isArray(h.blueprint_faqs)) blueprintFaqs = h.blueprint_faqs.filter((x: any) => typeof x === 'string') }
     } catch {}
 
     // latest Brain + its facts
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
       if (auditRow?.result) auditResult = auditRow.result
     } catch {}
 
-    const blueprint = buildBlueprint((facts || []) as any, auditResult, { hotelName, city, notOffered })
+    const blueprint = buildBlueprint((facts || []) as any, auditResult, { hotelName, city, notOffered, blueprintFaqs })
 
     // draft prose (optional — only when asked, since it costs GPT calls)
     let drafts: any = null
