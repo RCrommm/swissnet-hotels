@@ -4400,16 +4400,6 @@ function KnowledgeBlueprintTab({ hotel }: any) {
                         ))}
                       </div>
 
-                      {sec.facts.length > 0 && (
-                        <div style={{ marginBottom: sec.sectionFaqs && sec.sectionFaqs.length ? '1.4rem' : 0 }}>
-                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: ADV_GREEN_C, margin: '0 0 0.6rem' }}>Facts AI can already read on your site</p>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                            {sec.facts.map((f: any, j: number) => (
-                              <span key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT, background: BG, border: '1px solid ' + BORDER, borderRadius: 20, padding: '0.35rem 0.8rem' }}>{f.value}</span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
                       {sec.sectionFaqs && sec.sectionFaqs.length > 0 && (
                         <div style={{ borderTop: '1px solid ' + BORDER, paddingTop: '1.1rem' }}>
                           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.6rem' }}>Questions this section should answer</p>
