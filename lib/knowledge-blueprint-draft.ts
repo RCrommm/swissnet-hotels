@@ -55,7 +55,7 @@ export async function buildBlueprintDraft(
   const factsBlob = section.facts.map(f => `${f.value} ${f.quote}`).join(' ')
   const user = `HOTEL: ${ctx.hotelName || '(unknown)'}${ctx.city ? `, ${ctx.city}` : ''}
 SECTION: ${section.title} — ${section.purpose}
-TARGET LENGTH: about ${section.targetWords} words (write LESS if the facts don't support it).
+Keep it short and factual (write LESS if the facts don't support more).
 
 FACTS YOU MAY USE (and NOTHING else):
 ${factLines}
