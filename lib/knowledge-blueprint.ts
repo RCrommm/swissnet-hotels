@@ -123,7 +123,7 @@ export function buildBlueprint(
 
   const faqSeeds = (Array.isArray(opts.blueprintFaqs) && opts.blueprintFaqs.length > 0)
     ? opts.blueprintFaqs
-    : const faqSeeds = [
+    : [
     `What are the best boutique luxury hotels in ${C}?`,
     `What are the best luxury hotels in central ${C}?`,
     `Where should I stay in ${C} for a luxury city break?`,
