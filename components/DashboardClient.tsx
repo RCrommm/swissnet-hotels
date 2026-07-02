@@ -4451,8 +4451,25 @@ function KnowledgeBlueprintTab({ hotel }: any) {
           {/* FAQ SEEDS */}
           {bp.faqSeeds.length > 0 && (
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.5rem 1.75rem' }}>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>FAQ topics AI is asking about</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: '0 0 1.1rem', lineHeight: 1.5 }}>Answer these on your page as clear questions and answers — the ones at the top are gaps AI can't yet answer about you.</p>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Questions your AI page should answer</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: '0 0 1.1rem', lineHeight: 1.5 }}>The highest-value questions guests ask AI assistants. Answer each one on your page, clearly and factually.</p>
+              <div style={{ background: BG, border: '1px solid ' + BORDER, borderLeft: '3px solid ' + GOLD, borderRadius: 10, padding: '1.1rem 1.3rem', marginBottom: '1.25rem' }}>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A6D1F', margin: '0 0 0.7rem' }}>How to write answers AI will use</p>
+                {[
+                  ['Answer in the first sentence.', 'State the answer directly, then explain. AI lifts the opening line.'],
+                  ['Keep each answer 40 to 90 words.', 'FAQ answers are quoted as short units. Save long form for a full guide page.'],
+                  ['One question, one answer.', 'Never bundle two topics into a single answer.'],
+                  ['Use real, specific facts.', 'Numbers, names, distances. Specifics get cited; vague claims are ignored.'],
+                  ['Explain why, not just what.', 'AI recommends when it understands the reason behind the answer.'],
+                  ['Name nearby places.', 'Real landmarks, stations and neighbourhoods anchor you to location searches.'],
+                  ['No marketing fluff.', 'Skip superlatives unless a verifiable fact backs them.'],
+                ].map((r, i) => (
+                  <div key={i} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', marginBottom: i < 6 ? '0.45rem' : 0 }}>
+                    <span style={{ color: GOLD, fontSize: '0.75rem', flexShrink: 0, marginTop: '0.1rem' }}>✓</span>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', color: TEXT, margin: 0, lineHeight: 1.5 }}><strong>{r[0]}</strong> <span style={{ color: TEXT_MUTED }}>{r[1]}</span></p>
+                  </div>
+                ))}
+              </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                 {bp.faqSeeds.slice(0, 14).map((q: string, j: number) => (
                   <div key={j} style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', padding: '0.5rem 0', borderBottom: j < Math.min(bp.faqSeeds.length, 14) - 1 ? '1px solid ' + BORDER : 'none' }}>
