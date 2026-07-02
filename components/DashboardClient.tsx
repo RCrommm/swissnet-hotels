@@ -4937,17 +4937,17 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
     { heading: 'Your official website', items: [
       { id: 'website', label: 'Official Website', minTier: 2, maxTier: 2 },
       { id: 'blueprint', label: 'Build Your AI Page', minTier: 3 },
+      { id: 'advisor', label: 'Official Site Audit', minTier: 3 },
+    ] },
+    { heading: 'AI visibility', items: [
+      { id: 'ai-visibility', label: 'AI Visibility' },
+      { id: 'competitors', label: 'Competitors' },
     ] },
     { heading: 'Your SwissNet profile', items: [
-      { id: 'ai-visibility', label: 'AI Visibility' },
       { id: 'performance', label: 'Performance' },
-      { id: 'competitors', label: 'Competitors' },
       { id: 'schema', label: 'SwissNet Profile', minTier: 2 },
       { id: 'optimise', label: 'Optimise', minTier: 2 },
       { id: 'citations', label: 'Citation Sources', minTier: 2 },
-    ] },
-    { heading: 'AI advisor', items: [
-      { id: 'advisor', label: '✦ AI Advisor', minTier: 3 },
     ] },
     { heading: 'Account', items: [
       { id: 'reports', label: 'Monthly Reports', minTier: 3 },
@@ -5011,7 +5011,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
               {tab === 'schema' && '✦ SwissNet Profile'}
 {tab === 'optimise' && '✦ Optimise'}
 {tab === 'website' && '✦ Official Website'}
-{tab === 'advisor' && '✦ AI Advisor'}
+{tab === 'advisor' && '✦ Official Site Audit'}
 {tab === 'blueprint' && '✦ Build Your AI Page'}
 {tab === 'citations' && '✦ Citation Sources'}
 {tab === 'reports' && 'Reports'}
@@ -5025,7 +5025,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
               {tab === 'schema' && 'AI readiness score and content recommendations'}
 {tab === 'optimise' && 'Manage your content and FAQs'}
 {tab === 'website' && 'Build AI visibility on your own official site'}
-{tab === 'advisor' && 'Your strategic brief, reasoned from what AI knows about you'}
+{tab === 'advisor' && 'A full audit of how your official site performs in AI'}
 {tab === 'blueprint' && 'A step-by-step guide to the AI-ready page on your own site'}
 {tab === 'citations' && 'Where AI gets its answers — and where to get listed'}
 {tab === 'reports' && 'Compare your performance month over month'}
