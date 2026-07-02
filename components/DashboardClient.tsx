@@ -4390,14 +4390,26 @@ function KnowledgeBlueprintTab({ hotel }: any) {
 
                   {isOpen && (
                     <div style={{ borderTop: '1px solid ' + BORDER, padding: '1.4rem 1.5rem' }}>
-                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A6D1F', margin: '0 0 0.7rem' }}>What to include on this section</p>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem', marginBottom: sec.facts.length ? '1.4rem' : 0 }}>
-                        {sec.includes.map((item: string, j: number) => (
-                          <div key={j} style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start' }}>
-                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: GOLD, flexShrink: 0, marginTop: '0.4rem' }} />
-                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, lineHeight: 1.5 }}>{item}</span>
+                      {sec.tier && (
+                        <div style={{ display: 'inline-block', marginBottom: '1rem' }}>
+                          <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: sec.tier === 'core' ? '#8A6D1F' : TEXT_MUTED, background: sec.tier === 'core' ? GOLD_LIGHT : BG, border: '1px solid ' + BORDER, padding: '3px 10px', borderRadius: 20 }}>{sec.tier === 'core' ? 'Core section' : sec.tier === 'recommended' ? 'Recommended' : 'Optional'}</span>
+                        </div>
+                      )}
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A6D1F', margin: '0 0 1rem' }}>Write it in {(sec.steps || []).length} steps</p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: (sec.sectionFaqs && sec.sectionFaqs.length) ? '1.4rem' : 0 }}>
+                        {(sec.steps && sec.steps.length ? sec.steps : sec.includes.map((it: string) => ({ instruction: it, hint: '', example: '' }))).map((step: any, j: number) => (
+                          <div key={j} style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start' }}>
+                            <div style={{ flexShrink: 0, width: 24, height: 24, borderRadius: '50%', background: BG, border: '1px solid ' + GOLD, color: '#8A6D1F', fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{j + 1}</div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', fontWeight: 600, color: TEXT, margin: 0, lineHeight: 1.4 }}>{step.instruction}</p>
+                              {step.hint && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: '0.2rem 0 0', lineHeight: 1.5 }}>{step.hint}</p>}
+                              {step.example && <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '0.92rem', fontStyle: 'italic', color: '#4A3B2A', margin: '0.5rem 0 0', paddingLeft: '0.75rem', borderLeft: '2px solid ' + GOLD, lineHeight: 1.5 }}>{step.example}</p>}
+                            </div>
                           </div>
                         ))}
+                      </div>
+                      <div style={{ background: BG, borderRadius: 8, padding: '0.85rem 1.1rem', marginBottom: (sec.sectionFaqs && sec.sectionFaqs.length) ? '1.4rem' : 0 }}>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6 }}><span style={{ color: '#8A6D1F' }}>Rule of thumb —</span> one fact per sentence, and cut any line that could describe any hotel.</p>
                       </div>
 
                       {sec.sectionFaqs && sec.sectionFaqs.length > 0 && (
