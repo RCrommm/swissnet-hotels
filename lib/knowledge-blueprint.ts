@@ -22,11 +22,9 @@ export type BlueprintSection = {
   key: string
   title: string
   purpose: string
-  targetWords: string
+  includes: string[]
+  sectionFaqs: string[]
   facts: { value: string; quote: string; page: string }[]
-  answered: string[]
-  toAnswer: string[]
-  addThis: string[]
   status: 'built' | 'partial' | 'gap'
   factCount: number
 }
@@ -42,22 +40,24 @@ export type Blueprint = {
 }
 
 type SectionDef = {
-  key: string; title: string; purpose: string; targetWords: string
-  factCats: string[]; readinessCats: string[]; kw?: RegExp; notOfferedKey?: string
+  key: string; title: string; purpose: string
+  includes: string[]
+  faqs: (h: string, c: string) => string[]
+  factCats: string[]; notOfferedKey?: string
 }
 
 const SECTION_DEFS: SectionDef[] = [
-  { key: 'overview', title: 'Hotel overview', purpose: 'What the hotel is, in one clear factual paragraph.', targetWords: '150', factCats: ['identity', 'awards', 'trust'], readinessCats: ['overall', 'luxury'], kw: /(overall|why-stay|what-makes|positioning|luxury-positioning|boutique)/i },
-  { key: 'best_for', title: 'Best for', purpose: 'Which guest types the hotel suits — the intent matcher.', targetWords: '200', factCats: [], readinessCats: [], kw: /(best-for|suitability|overall-fit)/i },
-  { key: 'location', title: 'Location & getting here', purpose: 'Distances, transfers and what is nearby — a top AI filter.', targetWords: '200', factCats: ['location', 'transport', 'entities'], readinessCats: ['location'], kw: /(location|airport|transfer|transport|nearby|attraction|neighbourhood|distance)/i },
-  { key: 'rooms', title: 'Rooms & suites', purpose: 'Types, size, occupancy and who each room suits.', targetWords: '300', factCats: ['rooms'], readinessCats: [], kw: /(room|suite|accommodation|villa|occupancy|bed)/i },
-  { key: 'dining', title: 'Dining', purpose: 'Named venues, cuisine and who each is for — with pricing.', targetWords: '300', factCats: ['dining'], readinessCats: ['dining'], kw: /(dining|restaurant|bar|brasserie|tea|cuisine|breakfast|menu)/i },
-  { key: 'wellness', title: 'Wellness & spa', purpose: 'Spa facilities, treatments, hours and access.', targetWords: '250', factCats: ['spa', 'wellness'], readinessCats: ['spa'], kw: /(spa|wellness|treatment|thermal|massage|pool)/i, notOfferedKey: 'wellness' },
-  { key: 'experiences', title: 'Experiences', purpose: 'Signature experiences and activities.', targetWords: '250', factCats: ['amenities', 'offers'], readinessCats: [], kw: /(experience|activit|offer|package|unique)/i },
-  { key: 'family', title: 'Family travel', purpose: 'Family rooms, facilities and activities for children.', targetWords: '200', factCats: ['family'], readinessCats: ['family'], kw: /(family|kids|children|connecting)/i, notOfferedKey: 'family' },
-  { key: 'romance', title: 'Romance & honeymoon', purpose: 'Couples positioning, suites, packages.', targetWords: '200', factCats: ['romantic', 'weddings'], readinessCats: ['romantic'], kw: /(romant|honeymoon|couple|wedding|anniversary)/i, notOfferedKey: 'romantic' },
-  { key: 'business', title: 'Business, meetings & events', purpose: 'Meeting facilities, capacities, corporate services.', targetWords: '200', factCats: ['business', 'meetings'], readinessCats: ['business'], kw: /(business|meeting|conference|event|corporate|capacit)/i, notOfferedKey: 'business' },
-  { key: 'policies', title: 'Policies & practical details', purpose: 'Cancellation, check-in, parking, pets, accessibility.', targetWords: '150', factCats: ['policies', 'parking', 'pets', 'accessibility'], readinessCats: ['parking', 'pets', 'accessibility'], kw: /(parking|pet|accessib|check-in|check-out|cancellation|policy)/i },
+  { key: 'overview', title: 'Hotel overview', purpose: 'What the hotel is, in one clear paragraph.', includes: ['What kind of hotel it is: style, size and category', 'Where it is, in one line', 'Its distinctive design or heritage story', 'The signature features that define it', 'Who it is best for, in one line'], faqs: (h, c) => [`What kind of hotel is ${h}?`, `Is ${h} a boutique hotel?`, `What makes ${h} unique?`, `Is ${h} worth it?`], factCats: ['identity', 'awards', 'trust'] },
+  { key: 'best_for', title: 'Best for', purpose: 'The guest types the hotel genuinely suits.', includes: ['Couples and romantic stays', 'Food and dining lovers', 'Culture, museum and theatre guests', 'Business and meeting travellers', 'Design and architecture enthusiasts', 'For each type, give one real reason: a specific feature, not an adjective'], faqs: (h, c) => [`Who is ${h} best suited for?`, `Is ${h} good for couples?`, `Is ${h} good for business travellers?`, `Why choose ${h} over other luxury hotels in ${c}?`], factCats: [] },
+  { key: 'location', title: 'Location & getting here', purpose: 'Where it is and what is nearby.', includes: ['Exact address and neighbourhood', 'Nearest stations and walking times', 'Distance to the main airports', 'Named landmarks and attractions nearby', 'What the area is known for'], faqs: (h, c) => [`Where is ${h} located?`, `What is near ${h}?`, `How do I get to ${h} from the airport?`, `Is the area around ${h} a good place to stay in ${c}?`], factCats: ['location', 'transport', 'entities'] },
+  { key: 'rooms', title: 'Rooms & suites', purpose: 'Room types, sizes and who each suits.', includes: ['How many rooms and suites in total', 'Each room category with its size', 'What each type is best suited to', 'Standout in-room features', 'The signature or top suite'], faqs: (h, c) => [`What are the room types at ${h}?`, `How big are the rooms at ${h}?`, `What is the best suite at ${h}?`, `Which room at ${h} is best for couples?`], factCats: ['rooms'] },
+  { key: 'dining', title: 'Dining', purpose: 'The venues, cuisine and pricing.', includes: ['Each venue by name', 'The cuisine and style', 'Meal times served', 'Price range or signature dishes', 'Whether it is open to non-guests'], faqs: (h, c) => [`Does ${h} have a restaurant?`, `What kind of food does ${h} serve?`, `Is the restaurant at ${h} open to non-guests?`, `Does ${h} serve afternoon tea?`], factCats: ['dining'] },
+  { key: 'wellness', title: 'Wellness & spa', purpose: 'Spa facilities, treatments and access.', includes: ['The spa and wellness facilities', 'Treatments and services offered', 'Opening hours', 'Whether day passes are available', 'Pool, sauna or thermal features'], faqs: (h, c) => [`Does ${h} have a spa?`, `What treatments does the spa at ${h} offer?`, `Can I use the spa at ${h} without staying?`], factCats: ['spa', 'wellness'], notOfferedKey: 'wellness' },
+  { key: 'experiences', title: 'Experiences', purpose: 'Signature experiences and activities.', includes: ['Named signature experiences', 'What each one includes', 'Who they are best for', 'How to book or arrange them'], faqs: (h, c) => [`What experiences does ${h} offer?`, `What is there to do at ${h}?`, `Does ${h} offer packages?`], factCats: ['amenities', 'offers'] },
+  { key: 'family', title: 'Family travel', purpose: 'Family rooms and facilities for children.', includes: ['Family rooms and connecting options', 'Facilities for children', 'Activities and services for families', 'Age suitability'], faqs: (h, c) => [`Is ${h} family friendly?`, `Does ${h} have family rooms?`, `Is ${h} suitable for children?`], factCats: ['family'], notOfferedKey: 'family' },
+  { key: 'romance', title: 'Romance & honeymoon', purpose: 'Couples positioning and packages.', includes: ['Suites and rooms suited to couples', 'Romantic packages or inclusions', 'Private dining options', 'Why the setting suits a romantic stay'], faqs: (h, c) => [`Is ${h} good for a romantic getaway?`, `Is ${h} good for honeymoons?`, `Does ${h} have romantic packages?`], factCats: ['romantic', 'weddings'], notOfferedKey: 'romantic' },
+  { key: 'business', title: 'Business, meetings & events', purpose: 'Meeting facilities and capacities.', includes: ['Meeting and event spaces with capacities', 'Equipment and services provided', 'Corporate rates or benefits', 'Distance to airports and transport'], faqs: (h, c) => [`Does ${h} have meeting rooms?`, `Can ${h} host events?`, `Is ${h} good for business travel?`], factCats: ['business', 'meetings'], notOfferedKey: 'business' },
+  { key: 'policies', title: 'Policies & practical details', purpose: 'The practical answers guests need.', includes: ['Check-in and check-out times', 'Cancellation policy', 'Parking options', 'Pet policy', 'Accessibility features'], faqs: (h, c) => [`What time is check-in at ${h}?`, `What is the cancellation policy at ${h}?`, `Does ${h} have parking?`, `Is ${h} wheelchair accessible?`], factCats: ['policies', 'parking', 'pets', 'accessibility'] },
 ]
 
 const SCHEMA_RECOMMENDED = ['Hotel', 'FAQPage', 'Place', 'Restaurant', 'Review', 'AggregateRating', 'BreadcrumbList']
@@ -71,16 +71,6 @@ function factMatches(f: Fact, def: SectionDef): boolean {
   return def.factCats.includes(cat)
 }
 
-function readinessMatches(r: ReadinessRow, def: SectionDef): boolean {
-  const cat = (r.category || '').toLowerCase()
-  if (def.readinessCats.includes(cat)) return true
-  if (def.kw) {
-    const blob = `${r.intent_id || ''} ${r.question || ''}`.toLowerCase()
-    if (def.kw.test(blob)) return true
-  }
-  return false
-}
-
 export function buildBlueprint(
   facts: Fact[],
   auditResult: any,
@@ -88,8 +78,9 @@ export function buildBlueprint(
 ): Blueprint {
   const hotelName = opts.hotelName || ''
   const city = opts.city || ''
+  const H = hotelName || 'this hotel'
+  const C = city || 'the city'
   const notOffered = (opts.notOffered || []).map(s => String(s).toLowerCase())
-  const readiness: ReadinessRow[] = (auditResult?.recommendation?.results || []) as ReadinessRow[]
 
   const sections: BlueprintSection[] = []
   let factsUsed = 0
@@ -104,32 +95,21 @@ export function buildBlueprint(
       .map(f => ({ value: f.fact_value, quote: (f.evidence_quote || '').slice(0, 120), page: f.page_url || '' }))
     factsUsed += secFacts.length
 
-    const secReadiness = readiness.filter(r => readinessMatches(r, def))
-    const answered = secReadiness.filter(r => r.readiness === 'YES').map(r => r.question)
-    const gaps = secReadiness.filter(r => r.readiness === 'NO' || r.readiness === 'PARTIAL')
-    const toAnswer = gaps.map(r => r.question)
-
-    const addSet = new Set<string>()
-    for (const r of gaps) {
-      for (const e of (r.expected_evidence || [])) addSet.add(e)
-      for (const rz of (r.reasons || [])) addSet.add(rz)
-    }
-    const addThis = [...addSet].slice(0, 8)
-
     let status: BlueprintSection['status']
     if (def.key === 'best_for') {
-      status = answered.length >= 2 ? 'built' : answered.length ? 'partial' : 'gap'
+      status = 'partial'
     } else if (secFacts.length === 0) {
       status = 'gap'
-    } else if (gaps.length) {
+    } else if (secFacts.length < 4) {
       status = 'partial'
     } else {
       status = 'built'
     }
 
     sections.push({
-      key: def.key, title: def.title, purpose: def.purpose, targetWords: def.targetWords,
-      facts: secFacts, answered, toAnswer, addThis, status, factCount: secFacts.length,
+      key: def.key, title: def.title, purpose: def.purpose, includes: def.includes,
+      sectionFaqs: def.faqs(H, C),
+      facts: secFacts, status, factCount: secFacts.length,
     })
   }
 
@@ -141,8 +121,6 @@ export function buildBlueprint(
   } catch {}
   const schemaRecommended = SCHEMA_RECOMMENDED.filter(s => !schemaPresent.includes(s))
 
-  const C = city || 'the city'
-  const H = hotelName || 'this hotel'
   const faqSeeds = [
     `What are the best boutique luxury hotels in ${C}?`,
     `What are the best luxury hotels in central ${C}?`,

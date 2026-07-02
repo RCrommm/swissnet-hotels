@@ -4314,7 +4314,7 @@ function KnowledgeBlueprintTab({ hotel }: any) {
       try {
         const res = await fetch('/api/knowledge-blueprint', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ hotelId: hotel.id, password: 'RCrom2004Romeo', withDrafts: true }),
+          body: JSON.stringify({ hotelId: hotel.id, password: 'RCrom2004Romeo', withDrafts: false }),
         })
         const j = await res.json()
         if (res.ok) setData(j)
@@ -4325,52 +4325,57 @@ function KnowledgeBlueprintTab({ hotel }: any) {
   }, [hotel?.id])
 
   const bp = data?.blueprint
-  const drafts = data?.drafts || {}
 
   const STATUS: Record<string, { label: string; col: string; bg: string }> = {
-    built: { label: 'Ready', col: ADV_GREEN_C, bg: ADV_GREEN_C + '14' },
-    partial: { label: 'Needs detail', col: ADV_AMBER, bg: ADV_AMBER + '14' },
-    gap: { label: 'Missing', col: 'rgba(42,26,14,0.5)', bg: 'rgba(42,26,14,0.06)' },
+    built: { label: 'Good coverage', col: ADV_GREEN_C, bg: ADV_GREEN_C + '14' },
+    partial: { label: 'Add more', col: ADV_AMBER, bg: ADV_AMBER + '14' },
+    gap: { label: 'Not covered', col: 'rgba(42,26,14,0.5)', bg: 'rgba(42,26,14,0.06)' },
   }
+
+  const RULES: [string, string][] = [
+    ['Answer in the first sentence.', 'State the answer directly, then explain. AI lifts the opening line.'],
+    ['Keep each answer 40 to 90 words.', 'FAQ answers are quoted as short units. Save long form for a full guide page.'],
+    ['One question, one answer.', 'Never bundle two topics into one answer.'],
+    ['Use real, specific facts.', 'Numbers, names, distances. Specifics get cited; vague claims are ignored.'],
+    ['Explain why, not just what.', 'AI recommends when it understands the reason.'],
+    ['Name nearby places.', 'Real landmarks, stations and neighbourhoods anchor you to location searches.'],
+    ['No marketing fluff.', 'Skip superlatives unless a verifiable fact backs them.'],
+  ]
 
   return (
     <div>
-      {/* HERO */}
       <div style={{ background: 'linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)', borderRadius: 18, padding: '2.5rem 3rem', marginBottom: '1.75rem', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: -40, right: -40, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,169,76,0.08) 0%, transparent 70%)' }} />
         <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '2.5rem', flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: 280 }}>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.75)', margin: '0 0 0.9rem' }}>AI Knowledge Blueprint</p>
             <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.1rem', fontWeight: 400, color: WHITE, margin: '0 0 0.6rem', lineHeight: 1.15 }}>The page AI wants to read about {hotel?.name || 'your hotel'}</p>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.88rem', color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.65, maxWidth: 560 }}>Built entirely from facts on your own site. Each section shows what AI can already read, a ready draft written only from those facts, and exactly what to add next.</p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.88rem', color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.65, maxWidth: 560 }}>Build one dedicated page that answers what AI assistants ask. Each section below tells you exactly what to put on it.</p>
           </div>
           {bp && (
             <div style={{ display: 'flex', gap: '2.5rem', alignItems: 'stretch', flexShrink: 0 }}>
               <div style={{ width: 1, background: 'rgba(255,255,255,0.12)' }} />
-              <div><p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.6rem', fontWeight: 400, color: WHITE, margin: 0, lineHeight: 1 }}>{bp.counts.factsUsed}</p><p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0.35rem 0 0' }}>Facts used</p></div>
-              <div><p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.6rem', fontWeight: 400, color: GOLD, margin: 0, lineHeight: 1 }}>{bp.counts.sectionsPartial + bp.counts.sectionsGap}</p><p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0.35rem 0 0' }}>To improve</p></div>
+              <div><p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.6rem', fontWeight: 400, color: WHITE, margin: 0, lineHeight: 1 }}>{bp.sections.length}</p><p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0.35rem 0 0' }}>Sections to build</p></div>
+              <div><p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.6rem', fontWeight: 400, color: GOLD, margin: 0, lineHeight: 1 }}>{bp.counts.factsUsed}</p><p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0.35rem 0 0' }}>Facts AI can read</p></div>
             </div>
           )}
         </div>
       </div>
 
-      {loading && <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}><p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', color: TEXT_MUTED, margin: 0 }}>Building your blueprint from your site's facts…</p></div>}
+      {loading && <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}><p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.85rem', color: TEXT_MUTED, margin: 0 }}>Building your blueprint...</p></div>}
 
       {!loading && err && <div style={{ background: WHITE, border: '1px dashed ' + BORDER, borderRadius: 14, padding: '3rem', textAlign: 'center' }}><p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: TEXT, margin: '0 0 0.5rem' }}>Your blueprint is being prepared</p><p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6 }}>{err}</p></div>}
 
       {!loading && bp && (
         <>
-          {/* recommended URL */}
           <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1.1rem 1.4rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
             <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED }}>Recommended page</span>
             <code style={{ fontFamily: 'monospace', fontSize: '0.72rem', fontWeight: 600, color: TEXT, background: BG, padding: '5px 11px', borderRadius: 6, border: '1px solid ' + BORDER }}>{bp.recommendedUrl}</code>
           </div>
 
-          {/* sections */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '1.75rem' }}>
             {bp.sections.map((sec: any) => {
               const st = STATUS[sec.status] || STATUS.gap
-              const d = drafts[sec.key]
               const isOpen = openKey === sec.key
               return (
                 <div key={sec.key} style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden' }}>
@@ -4379,32 +4384,25 @@ function KnowledgeBlueprintTab({ hotel }: any) {
                       <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.35rem', color: TEXT, margin: 0 }}>{sec.title}</p>
                       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: '0.2rem 0 0', lineHeight: 1.4 }}>{sec.purpose}</p>
                     </div>
-                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED, flexShrink: 0 }}>{sec.factCount} facts</span>
                     <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, color: st.col, background: st.bg, padding: '4px 11px', borderRadius: 20, flexShrink: 0, whiteSpace: 'nowrap' }}>{st.label}</span>
-                    <span style={{ color: TEXT_MUTED, fontSize: '1.1rem', flexShrink: 0, transform: isOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
+                    <span style={{ color: TEXT_MUTED, fontSize: '1.1rem', flexShrink: 0, transform: isOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>|</span>
                   </button>
 
                   {isOpen && (
                     <div style={{ borderTop: '1px solid ' + BORDER, padding: '1.4rem 1.5rem' }}>
-                      {/* DRAFT */}
-                      {d && d.draft ? (
-                        <div style={{ marginBottom: '1.4rem' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.6rem' }}>
-                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED }}>Draft — verify before publishing</span>
-                            {d.flagged && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, color: ADV_AMBER, background: ADV_AMBER + '14', padding: '3px 9px', borderRadius: 4 }}>Check the numbers</span>}
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A6D1F', margin: '0 0 0.7rem' }}>What to include on this section</p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem', marginBottom: sec.facts.length ? '1.4rem' : 0 }}>
+                        {sec.includes.map((item: string, j: number) => (
+                          <div key={j} style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start' }}>
+                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: GOLD, flexShrink: 0, marginTop: '0.4rem' }} />
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, lineHeight: 1.5 }}>{item}</span>
                           </div>
-                          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: TEXT, margin: 0, lineHeight: 1.65, background: BG, padding: '1.1rem 1.3rem', borderRadius: 10, border: '1px solid ' + BORDER }}>{d.draft}</p>
-                        </div>
-                      ) : (
-                        <div style={{ marginBottom: '1.4rem', background: BG, border: '1px dashed ' + BORDER, borderRadius: 10, padding: '1.1rem 1.3rem' }}>
-                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.55 }}>Not enough facts on your site yet to draft this section. Add the details below and it will write itself on the next run.</p>
-                        </div>
-                      )}
+                        ))}
+                      </div>
 
-                      {/* FACTS AI CAN READ */}
                       {sec.facts.length > 0 && (
-                        <div style={{ marginBottom: sec.addThis.length ? '1.4rem' : 0 }}>
-                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: ADV_GREEN_C, margin: '0 0 0.6rem' }}>Facts AI can already read</p>
+                        <div style={{ marginBottom: sec.sectionFaqs && sec.sectionFaqs.length ? '1.4rem' : 0 }}>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: ADV_GREEN_C, margin: '0 0 0.6rem' }}>Facts AI can already read on your site</p>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
                             {sec.facts.map((f: any, j: number) => (
                               <span key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT, background: BG, border: '1px solid ' + BORDER, borderRadius: 20, padding: '0.35rem 0.8rem' }}>{f.value}</span>
@@ -4412,16 +4410,14 @@ function KnowledgeBlueprintTab({ hotel }: any) {
                           </div>
                         </div>
                       )}
-
-                      {/* ADD THIS */}
-                      {sec.addThis.length > 0 && (
-                        <div>
-                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A6D1F', margin: '0 0 0.6rem' }}>Add this to strengthen the section</p>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            {sec.addThis.map((a: string, j: number) => (
-                              <div key={j} style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start' }}>
-                                <span style={{ color: GOLD, fontSize: '0.8rem', flexShrink: 0, marginTop: '0.1rem' }}>+</span>
-                                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, lineHeight: 1.5 }}>{a}</span>
+                      {sec.sectionFaqs && sec.sectionFaqs.length > 0 && (
+                        <div style={{ borderTop: '1px solid ' + BORDER, paddingTop: '1.1rem' }}>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.6rem' }}>Questions this section should answer</p>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                            {sec.sectionFaqs.map((q: string, j: number) => (
+                              <div key={j} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+                                <span style={{ color: GOLD, fontSize: '0.75rem', flexShrink: 0, marginTop: '0.05rem' }}>Q</span>
+                                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: TEXT, lineHeight: 1.5 }}>{q}</span>
                               </div>
                             ))}
                           </div>
@@ -4434,46 +4430,36 @@ function KnowledgeBlueprintTab({ hotel }: any) {
             })}
           </div>
 
-          {/* SCHEMA CHECKLIST */}
           <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.5rem 1.75rem', marginBottom: '1.5rem' }}>
             <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Structured data (schema)</p>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: '0 0 1.1rem', lineHeight: 1.5 }}>The machine-readable labelling AI reads first. Your developer adds these — invisible to guests.</p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: '0 0 1.1rem', lineHeight: 1.5 }}>The machine-readable labelling AI reads first. Your developer adds these, invisible to guests.</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-              {bp.schema.present.map((s: string) => (
-                <span key={s} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: ADV_GREEN_C, background: ADV_GREEN_C + '12', border: '1px solid ' + ADV_GREEN_C + '30', borderRadius: 20, padding: '0.4rem 0.9rem' }}>✓ {s}</span>
+              {bp.schema.present.map((x: string) => (
+                <span key={x} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: ADV_GREEN_C, background: ADV_GREEN_C + '12', border: '1px solid ' + ADV_GREEN_C + '30', borderRadius: 20, padding: '0.4rem 0.9rem' }}>{x} present</span>
               ))}
-              {bp.schema.recommended.map((s: string) => (
-                <span key={s} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: '#8A6D1F', background: GOLD_LIGHT, border: '1px solid rgba(201,169,76,0.3)', borderRadius: 20, padding: '0.4rem 0.9rem' }}>+ {s}</span>
+              {bp.schema.recommended.map((x: string) => (
+                <span key={x} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: '#8A6D1F', background: GOLD_LIGHT, border: '1px solid rgba(201,169,76,0.3)', borderRadius: 20, padding: '0.4rem 0.9rem' }}>add {x}</span>
               ))}
             </div>
           </div>
 
-          {/* FAQ SEEDS */}
           {bp.faqSeeds.length > 0 && (
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.5rem 1.75rem' }}>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Questions your AI page should answer</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: '0 0 1.1rem', lineHeight: 1.5 }}>The highest-value questions guests ask AI assistants. Answer each one on your page, clearly and factually.</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: '0 0 1.1rem', lineHeight: 1.5 }}>The highest-value questions guests ask AI assistants. Answer each one on your page.</p>
               <div style={{ background: BG, border: '1px solid ' + BORDER, borderLeft: '3px solid ' + GOLD, borderRadius: 10, padding: '1.1rem 1.3rem', marginBottom: '1.25rem' }}>
                 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A6D1F', margin: '0 0 0.7rem' }}>How to write answers AI will use</p>
-                {[
-                  ['Answer in the first sentence.', 'State the answer directly, then explain. AI lifts the opening line.'],
-                  ['Keep each answer 40 to 90 words.', 'FAQ answers are quoted as short units. Save long form for a full guide page.'],
-                  ['One question, one answer.', 'Never bundle two topics into a single answer.'],
-                  ['Use real, specific facts.', 'Numbers, names, distances. Specifics get cited; vague claims are ignored.'],
-                  ['Explain why, not just what.', 'AI recommends when it understands the reason behind the answer.'],
-                  ['Name nearby places.', 'Real landmarks, stations and neighbourhoods anchor you to location searches.'],
-                  ['No marketing fluff.', 'Skip superlatives unless a verifiable fact backs them.'],
-                ].map((r, i) => (
-                  <div key={i} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', marginBottom: i < 6 ? '0.45rem' : 0 }}>
-                    <span style={{ color: GOLD, fontSize: '0.75rem', flexShrink: 0, marginTop: '0.1rem' }}>✓</span>
+                {RULES.map((r, i) => (
+                  <div key={i} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', marginBottom: i < RULES.length - 1 ? '0.45rem' : 0 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: GOLD, flexShrink: 0, marginTop: '0.4rem' }} />
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', color: TEXT, margin: 0, lineHeight: 1.5 }}><strong>{r[0]}</strong> <span style={{ color: TEXT_MUTED }}>{r[1]}</span></p>
                   </div>
                 ))}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                {bp.faqSeeds.slice(0, 14).map((q: string, j: number) => (
-                  <div key={j} style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', padding: '0.5rem 0', borderBottom: j < Math.min(bp.faqSeeds.length, 14) - 1 ? '1px solid ' + BORDER : 'none' }}>
-                    <span style={{ color: GOLD, fontSize: '0.8rem', flexShrink: 0, marginTop: '0.1rem' }}>·</span>
+                {bp.faqSeeds.map((q: string, j: number) => (
+                  <div key={j} style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', padding: '0.5rem 0', borderBottom: j < bp.faqSeeds.length - 1 ? '1px solid ' + BORDER : 'none' }}>
+                    <span style={{ color: GOLD, fontSize: '0.8rem', flexShrink: 0 }}>{j + 1}.</span>
                     <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, lineHeight: 1.5 }}>{q}</span>
                   </div>
                 ))}
