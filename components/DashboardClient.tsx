@@ -4446,13 +4446,21 @@ function KnowledgeBlueprintTab({ hotel }: any) {
                   </div>
                 ))}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                {bp.faqSeeds.map((q: string, j: number) => (
-                  <div key={j} style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', padding: '0.5rem 0', borderBottom: j < bp.faqSeeds.length - 1 ? '1px solid ' + BORDER : 'none' }}>
-                    <span style={{ color: GOLD, fontSize: '0.8rem', flexShrink: 0 }}>{j + 1}.</span>
-                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, lineHeight: 1.5 }}>{q}</span>
-                  </div>
-                ))}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                {(() => { let n = 0; return bp.faqSeeds.map((q: string, j: number) => {
+                  if (q.startsWith('##')) {
+                    return (
+                      <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A6D1F', margin: j === 0 ? '0 0 0.5rem' : '1.3rem 0 0.5rem' }}>{q.replace(/^##\s*/, '')}</p>
+                    )
+                  }
+                  n += 1
+                  return (
+                    <div key={j} style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', padding: '0.45rem 0' }}>
+                      <span style={{ color: GOLD, fontSize: '0.8rem', flexShrink: 0 }}>{n}.</span>
+                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, lineHeight: 1.5 }}>{q}</span>
+                    </div>
+                  )
+                }) })()}
               </div>
             </div>
           )}

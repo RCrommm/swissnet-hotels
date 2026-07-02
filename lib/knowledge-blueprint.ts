@@ -121,40 +121,7 @@ export function buildBlueprint(
   } catch {}
   const schemaRecommended = SCHEMA_RECOMMENDED.filter(s => !schemaPresent.includes(s))
 
-  const faqSeeds = (Array.isArray(opts.blueprintFaqs) && opts.blueprintFaqs.length > 0)
-    ? opts.blueprintFaqs
-    : [
-    `What are the best boutique luxury hotels in ${C}?`,
-    `What are the best luxury hotels in central ${C}?`,
-    `Where should I stay in ${C} for a luxury city break?`,
-    `Which luxury hotel in ${C} is best for couples?`,
-    `Which hotels in ${C} have the most unique interiors?`,
-    `Which luxury hotels in ${C} have the most character?`,
-    `What are ${C}'s hidden luxury hotels?`,
-    `Which luxury hotels are walking distance to Covent Garden?`,
-    `What are the best hotels near the West End?`,
-    `Which hotels are best for theatre lovers?`,
-    `Is Holborn a good place to stay in ${C}?`,
-    `Should I stay in Holborn, Covent Garden or Mayfair?`,
-    `Where should first-time visitors stay in ${C}?`,
-    `Which ${C} neighbourhood is best for culture?`,
-    `Which area is best for luxury shopping and restaurants?`,
-    `Where should I stay for a romantic weekend in ${C}?`,
-    `What are the best luxury hotels for anniversaries?`,
-    `Which hotels are best for honeymooners?`,
-    `Which hotels have the best restaurants?`,
-    `Which hotels are best for food lovers?`,
-    `Which hotels are close to ${C}'s best museums?`,
-    `Which hotels are best for walking around ${C}?`,
-    `${H} vs Rosewood London`,
-    `${H} vs The Bloomsbury`,
-    `${H} vs NoMad London`,
-    `${H} vs The Ned`,
-    `${H} vs The Savoy`,
-    `Is ${H} worth it?`,
-    `Who is ${H} best suited for?`,
-    `Why choose ${H} over other luxury hotels?`,
-  ]
+  const faqSeeds = Array.isArray(opts.blueprintFaqs) ? opts.blueprintFaqs : []
 
   const counts = {
     sectionsBuilt: sections.filter(s => s.status === 'built').length,
