@@ -63,9 +63,37 @@ async function queryChatGPT(query: string): Promise<{ text: string; citations: s
   return { text, citations: [...new Set(citations)] }
 }
 
+async function queryGemini(query: string): Promise<{ text: string; citations: string[] }> {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: `${query}. Please list all relevant hotels by name.` }] }],
+        tools: [{ google_search: {} }],
+      }),
+    }
+  )
+  const data = await res.json()
+
+  const cand = data.candidates?.[0]
+  const text = cand?.content?.parts?.map((p: any) => p.text).filter(Boolean).join(' ') || ''
+
+  const citations: string[] = []
+  const chunks = cand?.groundingMetadata?.groundingChunks || []
+  for (const c of chunks) {
+    const url = c?.web?.uri
+    if (url) citations.push(url)
+  }
+
+  return { text, citations: [...new Set(citations)] }
+}
+
 const PLATFORMS = [
   { id: 'chatgpt', queryFn: queryChatGPT },
   { id: 'perplexity', queryFn: queryPerplexity },
+  { id: 'gemini', queryFn: queryGemini },
 ]
 
 function checkAppeared(hotelName: string, responseText: string): boolean {
