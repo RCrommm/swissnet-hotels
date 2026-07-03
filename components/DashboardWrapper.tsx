@@ -76,10 +76,10 @@ const { data: myChartRows } = await supabase
   .limit(20000)
 
       const { data: googleAiScores } = await supabase
-        .from('ai_visibility_scores')
+        .from('query_appearances')
         .select('query, appeared, checked_at')
         .eq('hotel_id', hotelId)
-        .eq('platform', 'google_ai')
+        .eq('platform', 'gemini')
         .order('checked_at', { ascending: false })
 
       const { data: crawlerViews } = await supabase
