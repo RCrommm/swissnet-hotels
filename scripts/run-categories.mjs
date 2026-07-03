@@ -7,6 +7,7 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY
 
 const QUERY_CONCURRENCY = Number(process.env.QUERY_CONCURRENCY || 4)
 const QUERY_TIMEOUT_MS = Number(process.env.QUERY_TIMEOUT_MS || 40000)
@@ -81,9 +82,33 @@ async function queryChatGPT(query) {
   }, 'CHATGPT')
 }
 
+async function queryGemini(query) {
+  return withRetry(async () => {
+    const res = await fetchWithTimeout(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: `${query}. Please list all relevant hotels by name.` }] }],
+          tools: [{ google_search: {} }],
+        }),
+      }
+    )
+    if (!res.ok) { const b = await res.text(); console.error(`[GEMINI ERROR] ${res.status} ${b.slice(0,200)}`); const e = new Error(`Gemini HTTP ${res.status}`); e.status = res.status; throw e }
+    const data = await res.json()
+    const cand = data.candidates?.[0]
+    const text = cand?.content?.parts?.map((p) => p.text).filter(Boolean).join(' ') || ''
+    const citations = []
+    for (const c of (cand?.groundingMetadata?.groundingChunks || [])) { const url = c?.web?.uri; if (url) citations.push(url) }
+    return { text, citations: [...new Set(citations)] }
+  }, 'GEMINI')
+}
+
 const PLATFORMS = [
   { id: 'chatgpt', queryFn: queryChatGPT, cost: 0.037 },
   { id: 'perplexity', queryFn: queryPerplexity, cost: 0.008 },
+  { id: 'gemini', queryFn: queryGemini, cost: 0 },
 ]
 
 function checkAppeared(hotelName, responseText) {

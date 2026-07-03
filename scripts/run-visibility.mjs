@@ -7,6 +7,7 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY
 
 const QUERY_CONCURRENCY = Number(process.env.QUERY_CONCURRENCY || 4)
 const QUERY_TIMEOUT_MS = Number(process.env.QUERY_TIMEOUT_MS || 40000)
@@ -81,9 +82,33 @@ async function queryChatGPT(query) {
   }, 'CHATGPT')
 }
 
+async function queryGemini(query) {
+  return withRetry(async () => {
+    const res = await fetchWithTimeout(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: `${query}. Please list all relevant hotels by name.` }] }],
+          tools: [{ google_search: {} }],
+        }),
+      }
+    )
+    if (!res.ok) { const b = await res.text(); console.error(`[GEMINI ERROR] ${res.status} ${b.slice(0,200)}`); const e = new Error(`Gemini HTTP ${res.status}`); e.status = res.status; throw e }
+    const data = await res.json()
+    const cand = data.candidates?.[0]
+    const text = cand?.content?.parts?.map((p) => p.text).filter(Boolean).join(' ') || ''
+    const citations = []
+    for (const c of (cand?.groundingMetadata?.groundingChunks || [])) { const url = c?.web?.uri; if (url) citations.push(url) }
+    return { text, citations: [...new Set(citations)] }
+  }, 'GEMINI')
+}
+
 const PLATFORMS = [
   { id: 'chatgpt', queryFn: queryChatGPT, cost: 0.037 },
   { id: 'perplexity', queryFn: queryPerplexity, cost: 0.008 },
+  { id: 'gemini', queryFn: queryGemini, cost: 0 },
 ]
 
 function checkAppeared(hotelName, responseText) {
@@ -208,29 +233,30 @@ async function lockPreviousMonth() {
     .select('competitor_name, category, platform, visibility_score, run_date, checked_at, total_queries')
     .gte('run_date', start).lt('run_date', end)
 
-  // Pull Google AI rows (general only — per-query appeared) for the finished month
+  // Google slot now fed by Gemini (platform='gemini' in competitor_visibility), by hotel NAME
   const { data: gaRows } = await supabase
-    .from('ai_visibility_scores')
-    .select('hotel_id, appeared, checked_at')
-    .eq('platform', 'google_ai')
-    .gte('checked_at', start).lt('checked_at', end)
+    .from('competitor_visibility')
+    .select('competitor_name, visibility_score, run_date, total_queries')
+    .eq('platform', 'gemini')
+    .is('category', null)
+    .gte('run_date', start).lt('run_date', end)
 
-  // Google AI monthly average per hotel_id: daily appeared/total, then average the daily scores
-  const gaByHotel = {}  // hotel_id → { day → { appeared, total } }
+  // Gemini monthly average per hotel NAME: average of daily scores
+  const gaByName = {}  // name → { day → score }
   for (const r of (gaRows || [])) {
-    const day = (r.checked_at || '').split('T')[0]
+    if (typeof r.visibility_score !== 'number' || r.visibility_score < 0) continue
+    if (r.total_queries != null && r.total_queries < 9) continue
+    const day = r.run_date
     if (!day) continue
-    gaByHotel[r.hotel_id] = gaByHotel[r.hotel_id] || {}
-    gaByHotel[r.hotel_id][day] = gaByHotel[r.hotel_id][day] || { appeared: 0, total: 0 }
-    gaByHotel[r.hotel_id][day].total++
-    if (r.appeared) gaByHotel[r.hotel_id][day].appeared++
+    gaByName[r.competitor_name] = gaByName[r.competitor_name] || {}
+    gaByName[r.competitor_name][day] = r.visibility_score
   }
-  const googleAvgForHotel = (hotelId) => {
-    const days = gaByHotel[hotelId]
+  const googleAvgForName = (name) => {
+    const days = gaByName[name]
     if (!days) return null
-    const dailyScores = Object.values(days).map((d) => d.total ? Math.round((d.appeared / d.total) * 100) : null).filter((s) => s !== null)
-    if (!dailyScores.length) return null
-    return Math.round(dailyScores.reduce((a, b) => a + b, 0) / dailyScores.length)
+    const scores = Object.values(days)
+    if (!scores.length) return null
+    return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
   }
 
   // Map partner hotel names → ids (only partners get locked)
@@ -277,7 +303,7 @@ async function lockPreviousMonth() {
       const cg = plats.chatgpt ?? null
       const pp = plats.perplexity ?? null
       if (cat === 'general') {
-        const ga = googleAvgForHotel(hotelId)  // null if no Google AI data this month
+        const ga = googleAvgForName(name)  // Gemini average, null if none this month
         const all = [cg, pp, ga].filter((v) => v !== null)
         if (!all.length) continue
         const blended = Math.round(all.reduce((a, b) => a + b, 0) / all.length)
