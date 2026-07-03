@@ -200,11 +200,12 @@ const myRankChange = myHasLatest && myHasPrev && myLatestRank > 0 && myPrevRank 
     return d !== 0 ? d : new Date(b.checked_at || 0).getTime() - new Date(a.checked_at || 0).getTime()
   })[0]?.visibility_score ?? null
 
-      const latestGoogleDate = googleAiScores?.[0]?.checked_at?.split('T')[0]
-      const latestGoogleScores = googleAiScores?.filter((s: any) => s.checked_at?.startsWith(latestGoogleDate)) || []
-      const googleAppeared = latestGoogleScores.filter((s: any) => s.appeared).length || 0
-      const googleTotal = latestGoogleScores.length || 0
-      const googleScore = googleTotal > 0 ? Math.round((googleAppeared / googleTotal) * 100) : null
+      const googleScore = myOverviewScores
+        .filter((s: any) => s.platform === 'gemini')
+        .sort((a: any, b: any) => {
+          const d = (b.run_date || '').localeCompare(a.run_date || '')
+          return d !== 0 ? d : new Date(b.checked_at || 0).getTime() - new Date(a.checked_at || 0).getTime()
+        })[0]?.visibility_score ?? null
 
       const availableScores = [chatgptScore, perplexityScore, googleScore].filter((s): s is number => s !== null)
       const overallScore = availableScores.length > 0
