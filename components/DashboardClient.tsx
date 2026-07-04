@@ -4095,7 +4095,7 @@ function AdvisorV2Body({ adv, memory, hotel, savedAt }: any) {
         <CaseModal m={foundation} i={cases.length + opportunities.length} onClose={() => setOpenFoundation(false)} model={adv.visibility_model} savedAt={savedAt} />
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))', gap: '1.25rem', alignItems: 'start', marginBottom: '2rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginBottom: '2rem' }}>
         <div>
           <AdvSectionLabel title="Strategic Priorities" />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
