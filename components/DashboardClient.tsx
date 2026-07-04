@@ -4095,7 +4095,7 @@ function AdvisorV2Body({ adv, memory, hotel, savedAt }: any) {
         <CaseModal m={foundation} i={cases.length + opportunities.length} onClose={() => setOpenFoundation(false)} model={adv.visibility_model} savedAt={savedAt} />
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginBottom: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.7fr) minmax(0, 1fr)', gap: '1.5rem', alignItems: 'start', marginBottom: '2rem' }}>
         <div>
           <AdvSectionLabel title="Strategic Priorities" />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
@@ -4153,20 +4153,11 @@ function AdvisorV2Body({ adv, memory, hotel, savedAt }: any) {
           )}
         </div>
 
-        <div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+         <div>
           <AdvSectionLabel title="AI Visibility Score" />
           <ScorePanel model={adv.visibility_model} />
-          {/* AI FOUNDATIONS — the dedicated structural case (all technical lives here) */}
-          {foundation && (
-            <button onClick={() => setOpenFoundation(true)} style={{ width: '100%', textAlign: 'left', cursor: 'pointer', marginTop: '1.25rem', background: WHITE, border: '1px solid rgba(201,169,76,0.3)', borderLeft: '3px solid ' + GOLD, borderRadius: 14, padding: '1.1rem 1.25rem', display: 'block' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A6D1F', flex: 1 }}>AI Foundations</span>
-                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.9rem', color: TEXT_MUTED }}>›</span>
-              </div>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', fontWeight: 600, color: TEXT, margin: '0 0 0.3rem', lineHeight: 1.3 }}>{POSTURE_FOUNDATION_LEAD}</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.45 }}>{foundation.canonicalRecommendation.case.diagnosis}</p>
-            </button>
-          )}
+          
           <FoundationsPanel foundations={adv.foundations} />
         </div>
 
@@ -4176,8 +4167,8 @@ function AdvisorV2Body({ adv, memory, hotel, savedAt }: any) {
           <div style={{ marginTop: '1rem' }}><KnowledgeIntegrityCard hotelId={hotel?.id} /></div>
           <GuestReviewCard adv={adv} />
         </div>
+        </div>
       </div>
-
       <AdvSectionLabel title="Evidence Behind This Advice" />
       <EvidenceRow adv={adv} hotel={hotel} />
 
