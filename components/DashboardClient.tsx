@@ -3649,6 +3649,10 @@ function AiPerformancePanel({ perf: perfProp, swissnet: swissProp, ga4Connected,
       if (res.ok) { setLivePerf(j.ai_performance); setLiveSwiss(j.swissnet_influence) }
     } catch {} finally { setLoadingRange(false) }
   }
+  useEffect(() => {
+    if (!perfProp && hotelId && ga4Connected) loadRange(days)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hotelId, ga4Connected])
 
   const perf = livePerf
   const swissnet = liveSwiss
@@ -4288,9 +4292,6 @@ function AdvisorTab({ hotel }: any) {
       {!loading && adv && (
         <>
           <AdvisorV2Body adv={adv} memory={memory} hotel={hotel} savedAt={savedAt} />
-
-          <AiPerformancePanel perf={adv.ai_performance} swissnet={adv.swissnet_influence} ga4Connected={hotel?.ga4_status === 'connected'} hotelId={hotel?.id} />
-
           {savedAt && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT_MUTED, margin: '1.25rem 0 0', textAlign: 'right' }}>Last generated: {new Date(savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>}
         </>
       )}
@@ -5123,6 +5124,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
                 ))}
               </div>
             </div>
+            <AiPerformancePanel perf={undefined} swissnet={undefined} ga4Connected={hotel?.ga4_status === 'connected'} hotelId={hotel?.id} />
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
               <KPICard label="Official Website Clicks" value={websiteClicks.length} sub={`last ${period} days`} color={GOLD} spark={websiteClicksByDay} />
 <KPICard label="SwissNet Profile Views" value={recentViews.length} sub={`last ${period} days`} color={BLUE} spark={viewsByDay} />              <KPICard label="Direct Savings" value={recentBookings.length > 0 ? `CHF ${Math.round(recentBookings.reduce((sum: number, b: any) => sum + (b.total_chf || 0), 0) * 0.15).toLocaleString()}` : '—'} sub="vs OTA commissions" color={GREEN} />
