@@ -435,8 +435,19 @@ async function runReadiness(prompts: any[], pages: any[], openaiKey: string) {
       if ((readiness === 'YES' || readiness === 'PARTIAL') && ev.length === 0) readiness = 'NO'
       if (readiness !== 'NO' && ev) {
         const en = normEv(ev)
-        const probe = en.length > 60 ? en.slice(0, 60) : en
-        if (en.length >= 12 && probe && !corpusNorm.includes(probe)) readiness = readiness === 'YES' ? 'PARTIAL' : 'NO'
+        // FUZZY VERIFICATION: don't demand an exact 60-char substring (brittle on long,
+        // accented, reformatted content — it wrongly downgrades genuine answers). Instead
+        // confirm the quote genuinely comes from the site by word overlap: most of its
+        // meaningful words must appear in the corpus. A hallucinated quote shares few words
+        // and still gets downgraded; a real but reworded quote passes.
+        const qWords = en.split(' ').filter((w: string) => w.length >= 4)
+        if (qWords.length >= 3) {
+          const hits = qWords.filter((w: string) => corpusNorm.includes(w)).length
+          const ratio = hits / qWords.length
+          if (ratio < 0.6) readiness = readiness === 'YES' ? 'PARTIAL' : 'NO'
+        } else if (en.length >= 12 && !corpusNorm.includes(en)) {
+          readiness = readiness === 'YES' ? 'PARTIAL' : 'NO'
+        }
       }
       let conf = Number.isFinite(a.confidence) ? Math.max(0, Math.min(100, a.confidence)) : 0
       if (readiness === 'NO') conf = Math.min(conf, 20)
