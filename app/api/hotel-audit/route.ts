@@ -403,7 +403,7 @@ function recSchema() {
 }
 async function runReadiness(prompts: any[], pages: any[], openaiKey: string) {
   if (!prompts.length || !pages.length) return []
-  const corpus = pages.map(p => `URL: ${p.url}\nHEADINGS: ${(p.headings || []).slice(0, 12).join(' | ')}\nTEXT: ${(p.text || '').slice(0, 1400)}`).join('\n\n---\n\n')
+  const corpus = pages.map(p => `URL: ${p.url}\nHEADINGS: ${(p.headings || []).slice(0, 12).join(' | ')}\nTEXT: ${(p.text || '').slice(0, 4000)}`).join('\n\n---\n\n')
   // Catalogue prompts carry the recommendability question + the concrete evidence the site
   // must show for a confident YES. When present, grade against THAT (recommendability), not
   // the bare question — this is what makes a PARTIAL/NO point at specific missing evidence.
@@ -870,7 +870,28 @@ export async function POST(req: Request) {
       if (!html) continue
       pageCache[u] = { url: u, schemaTypes: extractSchemaTypes(html), headings: extractHeadings(html), text: extractText(html), links: extractLinks(html, origin) }
     }
-    const pages = Object.values(pageCache)
+    const pages: any[] = Object.values(pageCache)
+    // ── ONE TRUTH: enrich the readiness corpus with the Brain's stored facts. The Brain is the
+    // canonical, complete crawl; the audit's re-scrape can be thinner/truncated. Merge Brain
+    // facts (value + quote) per page so answerability is graded against the full site, not a
+    // partial re-scrape. No-op if no Brain facts exist. ──
+    try {
+      if (hotelId && sbUrl && sbKey) {
+        const sbB = createClient(sbUrl, sbKey)
+        const { data: brainRowRD } = await sbB.from('hotel_brains').select('id').eq('hotel_id', hotelId).order('created_at', { ascending: false }).limit(1).maybeSingle()
+        if (brainRowRD?.id) {
+          const { data: bFacts } = await sbB.from('hotel_facts').select('fact_value, evidence_quote, page_url').eq('brain_id', brainRowRD.id)
+          if (bFacts && bFacts.length) {
+            const byPage: Record<string, string[]> = {}
+            for (const f of bFacts) { const u = (f.page_url || '').replace(/\/$/, ''); if (!u) continue; (byPage[u] ||= []).push(`${f.fact_value}${f.evidence_quote ? ' — ' + f.evidence_quote : ''}`) }
+            for (const p of pages) { const u = (p.url || '').replace(/\/$/, ''); const extra = byPage[u]; if (extra && extra.length) p.text = `${p.text || ''} ${extra.join('. ')}` }
+            // add any Brain pages the audit never scraped at all, so their facts still count
+            const scrapedSet = new Set(pages.map((p: any) => (p.url || '').replace(/\/$/, '')))
+            for (const [u, facts] of Object.entries(byPage)) { if (!scrapedSet.has(u)) pages.push({ url: u, headings: [], text: facts.join('. '), schemaTypes: [], links: [] }) }
+          }
+        }
+      }
+    } catch {}
     if (pages.length === 0) return NextResponse.json({ error: 'Could not read any pages.' }, { status: 502 })
     const robots = await fetchRobots(origin)
 
