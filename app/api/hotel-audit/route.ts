@@ -888,12 +888,14 @@ export async function POST(req: Request) {
     let demandModel: any = null
     let confirmedArchetype: string | null = null
     let confirmedExperiences: string[] = []
+    let manualQuestions: any[] = []
     if (hotelId && sbUrl && sbKey) {
       try {
         const sb = createClient(sbUrl, sbKey)
         const { data: prof } = await sb.from('hotel_profile').select('*').eq('hotel_id', hotelId).maybeSingle()
         demandModel = buildDemandModel(prof || null, { location: effCity })
         if (prof?.taxonomy_status === 'confirmed' && prof?.archetype) { confirmedArchetype = prof.archetype; confirmedExperiences = [...(prof.primary_experiences||[]), ...(prof.secondary_experiences||[])] }
+        try { const { data: hq } = await sb.from('hotels').select('audit_questions').eq('id', hotelId).single(); if (Array.isArray(hq?.audit_questions) && hq.audit_questions.length) manualQuestions = hq.audit_questions } catch {}
       } catch { demandModel = buildDemandModel(null, { location: effCity }) }
     }
     // ── V3 CATALOGUE PATH: if this hotel's confirmed archetype owns a canonical intent
@@ -902,7 +904,17 @@ export async function POST(req: Request) {
     // hotel without a catalogue falls straight through to the existing GPT generator,
     // so all other hotels are completely unaffected.
     const catalogue = getCatalogueForArchetype(confirmedArchetype)
-    if (catalogue && confirmedExperiences.length === 0) {
+    if (manualQuestions.length) {
+      prompts = manualQuestions.map((q: any) => ({
+        question: String(q.question || '').trim(),
+        audit_question: q.audit_question || '',
+        expected_evidence: Array.isArray(q.expected_evidence) ? q.expected_evidence : [],
+        stage: q.stage || '',
+        category: q.category || 'overall',
+        intent_id: q.intent_id || (q.stage ? String(q.stage) + '-manual' : 'manual'),
+        priority: q.priority === 'medium' ? 'medium' : 'high',
+      })).filter((q: any) => q.question)
+    } else if (catalogue && confirmedExperiences.length === 0) {
       const intents = intentsToEvaluate(confirmedArchetype, notOffered, confirmedExperiences)
       prompts = intents.map(it => ({
         question: it.traveller_intent || it.audit_question,
