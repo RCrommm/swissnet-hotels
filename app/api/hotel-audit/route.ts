@@ -887,12 +887,13 @@ export async function POST(req: Request) {
     // behaves exactly as before — so un-profiled hotels are unaffected.
     let demandModel: any = null
     let confirmedArchetype: string | null = null
+    let confirmedExperiences: string[] = []
     if (hotelId && sbUrl && sbKey) {
       try {
         const sb = createClient(sbUrl, sbKey)
         const { data: prof } = await sb.from('hotel_profile').select('*').eq('hotel_id', hotelId).maybeSingle()
         demandModel = buildDemandModel(prof || null, { location: effCity })
-        if (prof?.taxonomy_status === 'confirmed' && prof?.archetype) confirmedArchetype = prof.archetype
+        if (prof?.taxonomy_status === 'confirmed' && prof?.archetype) { confirmedArchetype = prof.archetype; confirmedExperiences = [...(prof.primary_experiences||[]), ...(prof.secondary_experiences||[])] }
       } catch { demandModel = buildDemandModel(null, { location: effCity }) }
     }
     // ── V3 CATALOGUE PATH: if this hotel's confirmed archetype owns a canonical intent
@@ -901,8 +902,8 @@ export async function POST(req: Request) {
     // hotel without a catalogue falls straight through to the existing GPT generator,
     // so all other hotels are completely unaffected.
     const catalogue = getCatalogueForArchetype(confirmedArchetype)
-    if (catalogue) {
-      const intents = intentsToEvaluate(confirmedArchetype, notOffered)
+    if (catalogue && confirmedExperiences.length === 0) {
+      const intents = intentsToEvaluate(confirmedArchetype, notOffered, confirmedExperiences)
       prompts = intents.map(it => ({
         question: it.traveller_intent || it.audit_question,
         audit_question: it.audit_question,

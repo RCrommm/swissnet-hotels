@@ -71,6 +71,9 @@ const LUXURY_CITY: CanonicalIntent[] = [
   { intent_id: 'book-checkin', category: 'overall', stage: 'booking', traveller_intent: 'Confirm check-in/out and early/late options', audit_question: 'Does the website let AI answer check-in / check-out times and early/late options?', variations: ['What time is check-in?', 'Can I check in early?'], expected_evidence: ['Check-in and check-out times stated'], priority: 'medium' },
   { intent_id: 'book-cancellation', category: 'overall', stage: 'booking', traveller_intent: 'Understand cancellation and booking policy', audit_question: 'Does the website let AI answer cancellation and booking-policy questions?', variations: ['What is the cancellation policy?', 'Can I cancel?'], expected_evidence: ['Cancellation / booking policy stated'], priority: 'medium' },
   { intent_id: 'book-practical', category: 'overall', stage: 'booking', traveller_intent: 'Confirm everyday practical amenities', audit_question: 'Does the website let AI answer everyday practical questions — breakfast, Wi-Fi, concierge, luggage storage, airport transfers, room service?', variations: ['Is breakfast included?', 'Is there Wi-Fi?', 'Is there a concierge?', 'Is there an airport transfer?'], expected_evidence: ['Breakfast detail', 'Wi-Fi', 'Concierge / services', 'Airport transfer / luggage storage'], priority: 'medium' },
+  { intent_id: 'rec-wellness', category: 'wellness', stage: 'recommendation', traveller_intent: 'Be recommended for a spa and wellness stay', audit_question: 'Does the website provide enough evidence for AI to confidently recommend this hotel for a spa or wellness-focused stay?', variations: ['Is this a good hotel for a spa stay?', 'Would AI recommend it for wellness?'], expected_evidence: ['Named spa or wellness facilities described', 'Signature treatments, programmes or wellness philosophy', 'What makes the wellness offering distinctive'], priority: 'high' },
+  { intent_id: 'eval-spa-facilities', category: 'wellness', stage: 'evaluation', traveller_intent: 'Understand the spa and wellness facilities', audit_question: 'Does the website let AI accurately explain the spa and wellness facilities, treatments and programmes?', variations: ['What spa facilities are there?', 'What treatments are offered?'], expected_evidence: ['Facilities named (treatment rooms, pool, gym, thermal)', 'Treatment or programme types described', 'Size, setting or standout features stated'], priority: 'high' },
+  { intent_id: 'book-spa-access', category: 'wellness', stage: 'booking', traveller_intent: 'Confirm spa access, hours and policy before booking', audit_question: 'Does the website let AI answer practical spa questions — opening hours, guest access, and whether non-residents can use it?', variations: ['What are the spa hours?', 'Is the spa open to non-residents?'], expected_evidence: ['Spa opening hours stated', 'Guest / non-resident access policy stated'], priority: 'medium' },
 ]
 
 // ─── REGISTRY ───
@@ -85,12 +88,25 @@ export function getCatalogueForArchetype(archetype: string | null | undefined): 
   return CATALOGUES[archetype] || null
 }
 
-export function intentsToEvaluate(archetype: string | null | undefined, excludeCategories: string[] = []): CanonicalIntent[] {
+// Universal categories every hotel is scored on regardless of taxonomy (practical booking
+// filters + overall). Experience-specific categories (wellness, romantic, business, ...) are
+// only scored when the hotel's confirmed taxonomy actually offers them.
+const UNIVERSAL_CATEGORIES = new Set(['overall', 'location', 'accessibility', 'parking', 'pets'])
+export function intentsToEvaluate(archetype: string | null | undefined, excludeCategories: string[] = [], offeredExperiences?: string[]): CanonicalIntent[] {
   const cat = getCatalogueForArchetype(archetype)
   if (!cat) return []
   const ex = new Set(excludeCategories.map(s => s.toLowerCase()))
+  const offered = offeredExperiences ? new Set(offeredExperiences.map(s => s.toLowerCase())) : null
   // Discovery intents are reference-only (measured by AI Visibility); never website-scored.
-  return cat.intents.filter(i => i.stage !== 'discovery' && !ex.has(i.category.toLowerCase()))
+  return cat.intents.filter(i => {
+    if (i.stage === 'discovery') return false
+    const c = i.category.toLowerCase()
+    if (ex.has(c)) return false
+    // Taxonomy filter: when the hotel's offered experiences are known, keep an intent only if
+    // it's a universal category or an experience this hotel actually offers. Omitted -> keep all.
+    if (offered && !UNIVERSAL_CATEGORIES.has(c) && !offered.has(c)) return false
+    return true
+  })
 }
 // ─── GUEST-QUESTION LOOKUP ───
 // Returns the first conversational variation (the real guest-phrased question) for an
