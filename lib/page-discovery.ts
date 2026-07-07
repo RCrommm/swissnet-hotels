@@ -67,8 +67,13 @@ export interface PageInventory {
   ceiling: number
 }
 
-export function buildInventory(homepage: string, candidates: string[]): PageInventory {
-  const discovered = Array.from(new Set([homepage, ...candidates].map(u => u.replace(/\/$/, '') || u)))
+export function buildInventory(homepage: string, candidates: string[], pathPrefix?: string): PageInventory {
+  const _pfx = (pathPrefix || '').replace(/\/+$/, '')
+  const _inScope = (u: string): boolean => {
+    if (!_pfx) return true
+    try { return new URL(u).pathname.replace(/\/+$/, '').startsWith(_pfx) } catch { return false }
+  }
+  const discovered = Array.from(new Set([homepage, ...candidates].map(u => u.replace(/\/$/, '') || u))).filter(_inScope)
   const excluded: { url: string; reason: string }[] = []
 
   const filtered: string[] = []

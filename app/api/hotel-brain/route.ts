@@ -228,7 +228,7 @@ export async function POST(req: Request) {
     const homeLinks = extractLinks(homeHtml, origin)
     const candidates = Array.from(new Set([url, ...sitemapUrls, ...homeLinks]))
     // SHARED PAGE DISCOVERY: one canonical inventory for the whole website (Brain + Audit use the same selected list)
-    const inventory = buildInventory(url, candidates)
+    const inventory = buildInventory(url, candidates, (() => { try { return new URL(url).pathname } catch { return '' } })())
     const toRead = inventory.selected
 
     const htmls = await pool(toRead, 5, async (u) => ({ url: u, html: u === url ? homeHtml : await getPage(u, apiKey, state) }))

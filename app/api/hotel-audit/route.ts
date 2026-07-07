@@ -825,7 +825,7 @@ export async function POST(req: Request) {
     const sitemapLinks = await fetchSitemap(origin)
     const candidates = Array.from(new Set([url, ...homeLinks, ...sitemapLinks]))
     // SHARED PAGE DISCOVERY: classify the SAME canonical inventory the Brain crawls (one truth)
-    const inventory = buildInventory(url, candidates)
+    const inventory = buildInventory(url, candidates, (() => { try { return new URL(url).pathname } catch { return '' } })())
     const discovered = inventory.selected
 
     const matchLink = (kws: string[]) => discovered.find(l => kws.some(k => l.toLowerCase().includes(k)))
