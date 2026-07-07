@@ -55,7 +55,7 @@ function diffFindings(currentFindings: any[], previousKeys: string[]) {
 }
 
 export const maxDuration = 300
-const CRAWL_LIMIT = 22
+const CRAWL_LIMIT = 30
 
 // ── SCRAPE (JS rendering ON so client-rendered FAQs/accordions are visible) ──
 async function scrape(url: string, apiKey: string): Promise<string | null> {
@@ -863,7 +863,7 @@ export async function POST(req: Request) {
       }
     }
 
-    const toScrape = Array.from(new Set(slots.filter(s => s.url).map(s => s.url as string))).slice(0, CRAWL_LIMIT)
+    const toScrape = Array.from(new Set([...slots.filter(s => s.url).map(s => s.url as string), ...discovered])).slice(0, CRAWL_LIMIT)
     const pageCache: Record<string, any> = {}
     for (const u of toScrape) {
       const html = u === url ? homeHtml : await scrape(u, apiKey)
