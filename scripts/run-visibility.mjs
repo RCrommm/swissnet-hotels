@@ -90,7 +90,7 @@ async function queryGemini(query) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: `${query}. Please list all relevant hotels by name.` }] }],
+          contents: [{ parts: [{ text: `${query}. List at least 5 to 8 relevant hotels by name.` }] }],
           tools: [{ google_search: {} }],
         }),
       }
@@ -111,7 +111,7 @@ const PLATFORMS = [
   { id: 'gemini', queryFn: queryGemini, cost: 0 },
 ]
 
-function checkAppeared(hotelName, responseText) {
+function checkAppeared(hotelName, responseText, citations = []) {
   const r = responseText.toLowerCase().replace(/[*#_`\[\]\-–—]/g, ' ').replace(/\s+/g, ' ')
   const n = hotelName.toLowerCase().replace(/[-–—]/g, ' ').replace(/\s+/g, ' ')
   const noAccents = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -124,7 +124,16 @@ function checkAppeared(hotelName, responseText) {
   const firstTwo = noAccents(hotelName.split(' ').slice(0, 2).join(' ').toLowerCase())
   const keyWords = words.slice(0, 3).join(' ')
   const coreDistinct = coreWords.length >= 2 || (coreWords.length === 1 && coreWords[0].length >= 6)
-  return rn.includes(nn) || (coreDistinct && rn.includes(core)) || rn.includes(lastTwo) || rn.includes(firstTwo) || (words.length >= 2 && rn.includes(keyWords))
+  const inProse = rn.includes(nn) || (coreDistinct && rn.includes(core)) || rn.includes(lastTwo) || rn.includes(firstTwo) || (words.length >= 2 && rn.includes(keyWords))
+  if (inProse) return true
+  if (coreDistinct && Array.isArray(citations) && citations.length) {
+    const needle = core.replace(/ /g, '')
+    for (const url of citations) {
+      const u = noAccents(String(url).toLowerCase()).replace(/[^a-z0-9]/g, '')
+      if (needle.length >= 5 && u.includes(needle)) return true
+    }
+  }
+  return false
 }
 
 function domainOf(url) { try { return new URL(url).hostname.replace(/^www\./, '') } catch { return '' } }
@@ -174,11 +183,12 @@ async function runRegion(region) {
   console.log(`[${region}] ${queries.length} queries x ${PLATFORMS.length} platforms, ${allHotels.length} hotels`)
 
   await Promise.all(PLATFORMS.map(async (platform) => {
-    const responseCache = {}; const citationRows = []
+    const responseCache = {}; const citationCache = {}; const citationRows = []
     await mapPool(queries, QUERY_CONCURRENCY, async (q) => {
       try {
         const { text, citations } = await platform.queryFn(q)
         responseCache[q] = text
+        citationCache[q] = citations || []
         for (const url of citations) citationRows.push({ query: q, platform: platform.id, source_url: url, region })
         stats.cost += platform.cost; stats.queries++
       } catch (e) { stats.errors++; responseCache[q] = ''; console.error(`[QUERY FAIL] ${region}/${platform.id} "${q}": ${e?.message}`) }
@@ -187,7 +197,7 @@ async function runRegion(region) {
 
     const appearanceRows = []
     for (const hotel of allHotels) {
-      const perQuery = queries.map((q) => ({ query: q, appeared: checkAppeared(hotel.name, responseCache[q] || '') }))
+      const perQuery = queries.map((q) => ({ query: q, appeared: checkAppeared(hotel.name, responseCache[q] || '', citationCache[q] || []) }))
       const appearances = perQuery.filter((p) => p.appeared).length
       const score = queries.length ? Math.round((appearances / queries.length) * 100) : 0
 
