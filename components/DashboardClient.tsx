@@ -2736,12 +2736,12 @@ function QueryAppearanceBreakdown({ hotelId, hotelName, googleAiScores, onAddFaq
   const latestForPlatform = (plat: string, source: any[]) =>
     [...new Map(
       [...source]
-        .filter((r: any) => plat === 'google_ai' ? true : r.platform === plat)
+        .filter((r: any) => plat === 'google_ai' ? r.platform === 'gemini' : r.platform === plat)
         .sort((a: any, b: any) => new Date(b.checked_at).getTime() - new Date(a.checked_at).getTime())
         .map((r: any) => [r.query, r])
     ).values()]
 
-  const source = platform === 'google_ai' ? (googleAiScores || []) : rows
+  const source = rows
   const latest = latestForPlatform(platform, source)
   const appeared = latest.filter((r: any) => r.appeared)
   const missed = latest.filter((r: any) => !r.appeared)
