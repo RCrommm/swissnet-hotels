@@ -82,14 +82,7 @@ const { data: myChartRows } = await supabase
         .eq('hotel_id', hotelId)
         .eq('platform', 'gemini')
         .order('checked_at', { ascending: false })
-      const { data: legacyGoogleRows } = await supabase
-        .from('ai_visibility_scores')
-        .select('query, appeared, checked_at')
-        .eq('hotel_id', hotelId)
-        .eq('platform', 'google_ai')
-        .lt('checked_at', '2026-07-03')
-        .order('checked_at', { ascending: false })
-      const googleAiScores = [...(geminiRows || []), ...(legacyGoogleRows || [])]
+      const googleAiScores = (geminiRows || [])
         .sort((a: any, b: any) => (b.checked_at || '').localeCompare(a.checked_at || ''))
 
       const { data: crawlerViews } = await supabase
