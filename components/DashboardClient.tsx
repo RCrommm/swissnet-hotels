@@ -2737,7 +2737,7 @@ function QueryAppearanceBreakdown({ hotelId, hotelName, googleAiScores, onAddFaq
     [...new Map(
       [...source]
         .filter((r: any) => plat === 'google_ai' ? r.platform === 'gemini' : r.platform === plat)
-        .sort((a: any, b: any) => new Date(b.checked_at).getTime() - new Date(a.checked_at).getTime())
+        .sort((a: any, b: any) => new Date(a.checked_at).getTime() - new Date(b.checked_at).getTime())
         .map((r: any) => [r.query, r])
     ).values()]
 
