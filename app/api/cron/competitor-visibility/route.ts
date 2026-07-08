@@ -90,6 +90,8 @@ async function queryGemini(query: string): Promise<{ text: string; citations: st
   return { text, citations: [...new Set(citations)] }
 }
 
+
+
 const PLATFORMS = [
   { id: 'chatgpt', queryFn: queryChatGPT },
   { id: 'perplexity', queryFn: queryPerplexity },
@@ -126,7 +128,7 @@ function domainOf(url: string): string {
 
 async function saveCitations(rows: { query: string; platform: string; source_url: string; region: string | null }[], runDate: string, sourceType: 'general' | 'category') {
   try {
-    const JUNK_HOSTS = ['google.com/maps', 'google.com/search', 'bing.com/search', 'duckduckgo.com']
+    const JUNK_HOSTS = ['google.com/maps', 'google.com/search', 'bing.com/search', 'duckduckgo.com', 'vertexaisearch.cloud.google.com']
     const seen = new Set<string>()
     const deduped: any[] = []
     for (const r of rows) {

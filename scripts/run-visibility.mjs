@@ -140,7 +140,7 @@ function domainOf(url) { try { return new URL(url).hostname.replace(/^www\./, ''
 
 async function saveCitations(rows, runDate) {
   try {
-    const JUNK = ['google.com/maps', 'google.com/search', 'bing.com/search', 'duckduckgo.com']
+    const JUNK = ['google.com/maps', 'google.com/search', 'bing.com/search', 'duckduckgo.com', 'vertexaisearch.cloud.google.com']
     const seen = new Set(); const deduped = []
     for (const r of rows) {
       if (!r.source_url || JUNK.some((h) => r.source_url.includes(h))) continue
