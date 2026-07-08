@@ -2780,7 +2780,7 @@ function QueryAppearanceBreakdown({ hotelId, hotelName, googleAiScores, onAddFaq
           {platforms.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}
         </select>
       </div>
-      {platform !== 'google_ai' && !loaded ? (
+      {!loaded ? (
         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: TEXT_MUTED }}>Loading…</p>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
