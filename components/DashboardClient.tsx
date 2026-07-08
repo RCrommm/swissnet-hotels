@@ -2711,7 +2711,7 @@ function CitationSourcesTab({ hotelName, hotelRegion, hotelId, rangeStart, range
   )
 }
 
-function QueryAppearanceBreakdown({ hotelId, hotelName, googleAiScores, onAddFaq }: { hotelId: string; hotelName: string; googleAiScores: any[]; onAddFaq: () => void }) {
+function QueryAppearanceBreakdown({ hotelId, hotelName, onAddFaq }: { hotelId: string; hotelName: string; onAddFaq: () => void }) {
   const [platform, setPlatform] = useState<'chatgpt' | 'perplexity' | 'google_ai'>('chatgpt')
   const [rows, setRows] = useState<any[]>([])
   const [loaded, setLoaded] = useState(false)
@@ -2721,12 +2721,12 @@ function QueryAppearanceBreakdown({ hotelId, hotelName, googleAiScores, onAddFaq
     const load = async () => {
       const { createClient } = await import('@supabase/supabase-js')
       const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-      const { data } = await sb
-        .from('query_appearances')
-        .select('query, platform, appeared, checked_at')
-        .eq('hotel_id', hotelId)
+      let q = sb.from('query_appearances')
+        .select('query, platform, appeared, checked_at, hotel_id, hotel_name')
         .eq('category', 'general')
         .order('checked_at', { ascending: false })
+      q = hotelId ? q.eq('hotel_id', hotelId) : q.eq('hotel_name', hotelName)
+      const { data } = await q
       setRows(data || [])
       setLoaded(true)
     }
@@ -5188,7 +5188,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
                 })}
               </div>
             </div>
-            <QueryAppearanceBreakdown hotelId={hotel?.id} hotelName={hotelName} googleAiScores={googleAiScores} onAddFaq={() => setTab('optimise')} />
+            <QueryAppearanceBreakdown hotelId={hotel?.id} hotelName={hotelName} onAddFaq={() => setTab('optimise')} />
             {/* Visibility over time chart */}
             <div style={{ background: WHITE, border: '1px solid rgba(201,169,76,0.08)', borderRadius: 10, padding: '1.25rem 1.5rem', marginBottom: '1.5rem', overflow: 'hidden', boxShadow: '0 1px 12px rgba(42,26,14,0.04)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
