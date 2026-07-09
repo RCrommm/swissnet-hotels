@@ -18,6 +18,13 @@ export type ReadinessRow = {
   priority?: string
 }
 
+export type UnansweredQuestion = {
+  question: string
+  readiness: 'PARTIAL' | 'NO'
+  blockedBy: string[]
+  section: string | null
+}
+
 export type BlueprintSection = {
   key: string
   title: string
@@ -29,6 +36,7 @@ export type BlueprintSection = {
   facts: { value: string; quote: string; page: string }[]
   status: 'built' | 'partial' | 'gap'
   factCount: number
+  unblocks: number
 }
 
 export type Blueprint = {
@@ -38,6 +46,7 @@ export type Blueprint = {
   sections: BlueprintSection[]
   schema: { present: string[]; recommended: string[] }
   faqSeeds: string[]
+  unanswered: UnansweredQuestion[]
   counts: { sectionsBuilt: number; sectionsPartial: number; sectionsGap: number; factsUsed: number }
 }
 
@@ -227,6 +236,45 @@ const SECTION_DEFS: SectionDef[] = [
 
 const SCHEMA_RECOMMENDED = ['Hotel', 'FAQPage', 'Place', 'Restaurant', 'Review', 'AggregateRating', 'BreadcrumbList']
 
+// Audit readiness categories -> blueprint section. The audit uses intent categories
+// ('luxury', 'romantic'), not fact categories. Anything unmapped still shows at the top
+// of the tab, it just credits no section. Never guess a section for a question.
+const AUDIT_CAT_TO_SECTION: Record<string, string> = {
+  luxury: 'overview', identity: 'overview',
+  location: 'location', transport: 'location',
+  rooms: 'accommodation', accommodation: 'accommodation',
+  dining: 'dining', restaurant: 'dining',
+  spa: 'wellness', wellness: 'wellness',
+  romantic: 'romance', honeymoon: 'romance', weddings: 'romance',
+  family: 'family',
+  business: 'business', meetings: 'business', events: 'business',
+  ski: 'ski', beach: 'beach', golf: 'golf', safari: 'safari',
+  awards: 'awards', trust: 'guest_reviews', reviews: 'guest_reviews',
+  policies: 'good_to_know', parking: 'good_to_know', pets: 'good_to_know', accessibility: 'good_to_know',
+  sustainability: 'sustainability',
+  amenities: 'experiences', offers: 'experiences', experiences: 'experiences',
+}
+
+// Every question the advisor could not answer, straight from the stored audit.
+// blockedBy = the audit's own expected_evidence, falling back to its reasons. Both empty
+// -> blank, never a fabricated cause. NO before PARTIAL: total gaps outrank thin answers.
+function extractUnanswered(auditResult: any): UnansweredQuestion[] {
+  const rows: any[] = auditResult?.recommendation?.results || []
+  const out: UnansweredQuestion[] = []
+  for (const r of rows) {
+    if (!r || !r.question) continue
+    if (r.readiness !== 'NO' && r.readiness !== 'PARTIAL') continue
+    const why = (Array.isArray(r.expected_evidence) && r.expected_evidence.length ? r.expected_evidence : r.reasons) || []
+    out.push({
+      question: r.question,
+      readiness: r.readiness,
+      blockedBy: why.filter((x: any) => typeof x === 'string'),
+      section: AUDIT_CAT_TO_SECTION[(r.category || '').toLowerCase()] || null,
+    })
+  }
+  return out.sort((a, b) => (a.readiness === b.readiness ? 0 : a.readiness === 'NO' ? -1 : 1))
+}
+
 function slugify(s: string): string {
   return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 50)
 }
@@ -246,6 +294,8 @@ export function buildBlueprint(
   const H = hotelName || 'this hotel'
   const C = city || 'the city'
   const notOffered = (opts.notOffered || []).map(s => String(s).toLowerCase())
+
+  const unanswered = extractUnanswered(auditResult)
 
   const sections: BlueprintSection[] = []
   let factsUsed = 0
@@ -277,6 +327,7 @@ export function buildBlueprint(
       steps: def.steps(H, C), tier: def.tier,
       sectionFaqs: def.faqs(H, C),
       facts: secFacts, status, factCount: secFacts.length,
+      unblocks: unanswered.filter(u => u.section === def.key).length,
     })
   }
 
@@ -301,6 +352,6 @@ export function buildBlueprint(
     hotelName, city,
     recommendedUrl: `/discover/${slugify(hotelName) || 'hotel-name'}`,
     sections, schema: { present: schemaPresent, recommended: schemaRecommended },
-    faqSeeds, counts,
+    faqSeeds, unanswered, counts,
   }
 }
