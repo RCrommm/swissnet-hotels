@@ -42,6 +42,12 @@ export type BlueprintSection = {
 
 export type UrlOption = { path: string; note: string; preferred: boolean }
 
+export type FaqSeed = {
+  question: string
+  winsQuery: string | null
+  guidance: string
+}
+
 export type Blueprint = {
   hotelName: string
   city: string
@@ -49,7 +55,7 @@ export type Blueprint = {
   recommendedUrls: UrlOption[]
   sections: BlueprintSection[]
   schema: { present: string[]; recommended: string[] }
-  faqSeeds: string[]
+  faqSeeds: FaqSeed[]
   unanswered: UnansweredQuestion[]
   counts: { sectionsBuilt: number; sectionsPartial: number; sectionsGap: number; factsUsed: number }
 }
@@ -311,6 +317,91 @@ function recommendUrls(auditResult: any): UrlOption[] {
   ]
 }
 
+// The comparison layer. A hotel cannot put "we are the best hotel in London" on its own
+// site — but it can answer "why choose us over other London hotels", and that answer is
+// what a model quotes when a guest asks the first question. Each seed pairs to a real
+// discovery question the audit found unanswered, so winsQuery is never invented.
+//
+// Guidance forces specifics. "Great food" is ignored by models and penalised by our own
+// audit; a named venue with a named chef is cited. Every guidance line names the concrete
+// thing to write, never an adjective to claim.
+function buildFaqSeeds(
+  unanswered: UnansweredQuestion[],
+  hotelName: string,
+  city: string,
+  sections: BlueprintSection[],
+  facts: Fact[]
+): FaqSeed[] {
+  const H = hotelName || 'this hotel'
+  const C = city || 'the city'
+  const has = (k: string) => sections.some(s => s.key === k)
+
+  // Highest-confidence named place from the crawl. Used only where a real name exists;
+  // otherwise the neighbourhood seed is skipped rather than filled with "the area".
+  const entity = facts
+    .filter(f => (f.category || '').toLowerCase() === 'entities' && (f.fact_value || '').trim())
+    .sort((a, b) => (b.confidence || 0) - (a.confidence || 0))[0]?.fact_value || ''
+
+  // Discovery questions the audit could not answer, longest-form first (they carry the
+  // most intent). These become the winsQuery on the comparison seeds.
+  const discovery = unanswered
+    .filter(u => u.section === 'overview' || u.section === 'best_for')
+    .map(u => u.question)
+  const pick = (i: number) => discovery[i] || null
+
+  const seeds: (FaqSeed | null)[] = [
+    { question: `Why choose ${H} over other luxury hotels in ${C}?`,
+      winsQuery: pick(0),
+      guidance: `Name the one thing no other hotel in ${C} has — a building, a chef, a view, a piece of history. Then give two supporting specifics: a named venue, a named designer, a real distance. Never write "unique experience" or "great location".` },
+
+    { question: `Is ${H} worth it?`,
+      winsQuery: pick(1),
+      guidance: 'Answer yes, then justify with what the rate buys that a cheaper hotel does not. Name the room size, the included benefit, the venue. A model repeats the justification, not the yes.' },
+
+    { question: `Who is ${H} best suited for?`,
+      winsQuery: pick(2),
+      guidance: 'Name three guest types and the concrete feature that earns each. Then name who it is not for. The honesty is what a model trusts.' },
+
+    has('accommodation') ? { question: `Which room should I choose at ${H}?`,
+      winsQuery: null,
+      guidance: 'Match each room category to a stay type: short break, long stay, family, signature. Give the size in square metres for each. Never say "all our rooms are beautiful".' } : null,
+
+    has('dining') ? { question: `Can non-guests dine at ${H}?`,
+      winsQuery: null,
+      guidance: 'Answer yes or no directly. Name every venue, its cuisine, and whether reservations are required. This is a high-intent booking question and almost no hotel answers it.' } : null,
+
+    has('dining') ? { question: `Is the restaurant at ${H} worth booking on its own?`,
+      winsQuery: null,
+      guidance: 'Name the chef, the cuisine, any star or award with its year, and one signature dish. A restaurant a model can name is a reason to recommend the hotel.' } : null,
+
+    entity ? { question: `Is ${entity} a good area to stay in ${C}?`,
+      winsQuery: null,
+      guidance: `Say what ${entity} is known for, name the nearest station with a walking time, and name three landmarks with real distances. Then say which guest the area suits.` } : null,
+
+    has('romance') ? { question: `Is ${H} good for couples?`,
+      winsQuery: null,
+      guidance: 'Name the room or suite, the private dining option, and what a couples package actually includes. Never write "romantic" without the feature that makes it so.' } : null,
+
+    has('wellness') ? { question: `Is the spa at ${H} open to non-guests?`,
+      winsQuery: null,
+      guidance: 'Answer directly, then name the signature treatment, the facilities, the opening hours, and the day-pass price if there is one.' } : null,
+
+    has('business') ? { question: `Is ${H} good for business travel?`,
+      winsQuery: null,
+      guidance: 'Name each meeting space with its capacity, the distance to the airport with a real travel time, and the corporate benefit. Numbers, not adjectives.' } : null,
+
+    { question: `What makes ${H} unique?`,
+      winsQuery: pick(3),
+      guidance: 'One paragraph, three facts, zero superlatives. If a sentence could describe any luxury hotel in the city, delete it.' },
+
+    { question: `Is ${H} suitable for a first visit to ${C}?`,
+      winsQuery: null,
+      guidance: 'Name the transport connections with times, what is walkable, and what the concierge arranges. Say plainly whether a first-time visitor should stay here or somewhere else.' },
+  ]
+
+  return seeds.filter((s): s is FaqSeed => s !== null).slice(0, 10)
+}
+
 function slugify(s: string): string {
   return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 50)
 }
@@ -344,7 +435,12 @@ export function buildBlueprint(
       .sort((a, b) => (b.confidence || 0) - (a.confidence || 0))
       .slice(0, 12)
       .map(f => ({ value: f.fact_value, quote: (f.evidence_quote || '').slice(0, 120), page: f.page_url || '' }))
-    if (def.tier === 'optional' && secFacts.length === 0) continue
+    // Optional sections drop out when the hotel has nothing to say. But if the audit asked
+    // questions about this topic and the site could not answer them, the absence IS the
+    // finding — keep the section so the blueprint tells them what to write. not_offered
+    // still wins: owner-confirmed absence is authoritative and never resurrected.
+    const secQCount = unanswered.filter(u => u.section === def.key).length
+    if (def.tier === 'optional' && secFacts.length === 0 && secQCount === 0) continue
     factsUsed += secFacts.length
 
     let status: BlueprintSection['status']
@@ -375,7 +471,11 @@ export function buildBlueprint(
   } catch {}
   const schemaRecommended = SCHEMA_RECOMMENDED.filter(s => !schemaPresent.includes(s))
 
-  const faqSeeds = Array.isArray(opts.blueprintFaqs) ? opts.blueprintFaqs : []
+  // Manual override wins when a hotel has hand-authored FAQs; otherwise generate.
+  const manual = Array.isArray(opts.blueprintFaqs) ? opts.blueprintFaqs.filter(q => typeof q === 'string' && !q.startsWith('##')) : []
+  const faqSeeds: FaqSeed[] = manual.length
+    ? manual.map(q => ({ question: q, winsQuery: null, guidance: '' })).slice(0, 10)
+    : buildFaqSeeds(unanswered, hotelName, city, sections, facts)
 
   const counts = {
     sectionsBuilt: sections.filter(s => s.status === 'built').length,

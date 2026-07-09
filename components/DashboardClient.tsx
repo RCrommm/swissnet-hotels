@@ -4531,9 +4531,11 @@ function KnowledgeBlueprintTab({ hotel }: any) {
 
           {bp.faqSeeds.length > 0 && (
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.5rem 1.75rem' }}>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Questions your AI page should answer</p>
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: '0 0 1.1rem', lineHeight: 1.5 }}>The highest-value questions guests ask AI assistants. Answer each one on your page.</p>
-              <div style={{ background: BG, border: '1px solid ' + BORDER, borderLeft: '3px solid ' + GOLD, borderRadius: 10, padding: '1.1rem 1.3rem', marginBottom: '1.25rem' }}>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.3rem' }}>Recommended FAQs to add</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT_MUTED, margin: '0 0 1.25rem', lineHeight: 1.6, maxWidth: '72ch' }}>
+                You cannot write &ldquo;we are the best hotel in {bp.city || 'the city'}&rdquo; on your own site. You can answer why a guest should choose you over the alternatives — and that answer is what an assistant quotes when someone asks the first question. Add these to your page as a real FAQ section.
+              </p>
+              <div style={{ background: BG, border: '1px solid ' + BORDER, borderLeft: '3px solid ' + GOLD, borderRadius: 10, padding: '1.1rem 1.3rem', marginBottom: '1.4rem' }}>
                 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A6D1F', margin: '0 0 0.7rem' }}>How to write answers AI will use</p>
                 {RULES.map((r, i) => (
                   <div key={i} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', marginBottom: i < RULES.length - 1 ? '0.45rem' : 0 }}>
@@ -4542,21 +4544,25 @@ function KnowledgeBlueprintTab({ hotel }: any) {
                   </div>
                 ))}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                {(() => { let n = 0; return bp.faqSeeds.map((q: string, j: number) => {
-                  if (q.startsWith('##')) {
-                    return (
-                      <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A6D1F', margin: j === 0 ? '0 0 0.5rem' : '1.3rem 0 0.5rem' }}>{q.replace(/^##\s*/, '')}</p>
-                    )
-                  }
-                  n += 1
-                  return (
-                    <div key={j} style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', padding: '0.45rem 0' }}>
-                      <span style={{ color: GOLD, fontSize: '0.8rem', flexShrink: 0 }}>{n}.</span>
-                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, lineHeight: 1.5 }}>{q}</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {bp.faqSeeds.map((f: any, j: number) => (
+                  <div key={j} style={{ border: '1px solid ' + BORDER, borderRadius: 12, padding: '1.1rem 1.3rem', background: WHITE }}>
+                    <div style={{ display: 'flex', gap: '0.7rem', alignItems: 'flex-start' }}>
+                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 700, color: GOLD, flexShrink: 0, marginTop: '0.1rem' }}>{j + 1}.</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.88rem', fontWeight: 600, color: TEXT, margin: 0, lineHeight: 1.45 }}>{f.question}</p>
+                        {f.winsQuery && (
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: '#8A6D1F', margin: '0.45rem 0 0', lineHeight: 1.5 }}>
+                            <span style={{ fontWeight: 700 }}>Wins you:</span> &ldquo;{f.winsQuery}&rdquo; — a question AI cannot currently answer about you.
+                          </p>
+                        )}
+                        {f.guidance && (
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT_MUTED, margin: '0.45rem 0 0', lineHeight: 1.55 }}>{f.guidance}</p>
+                        )}
+                      </div>
                     </div>
-                  )
-                }) })()}
+                  </div>
+                ))}
               </div>
             </div>
           )}
