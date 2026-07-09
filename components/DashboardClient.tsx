@@ -4290,6 +4290,112 @@ function AdvisorTab({ hotel }: any) {
   )
 }
 
+// ── SCHEMA REFERENCE ──
+// Static specification, not derived data. The present/recommended split above it IS
+// derived — this is the manual for each node. Everything here was learned building
+// real pages; the traps are mistakes that shipped and had to be fixed.
+const SCHEMA_SPEC: {
+  type: string; id: string; what: string; why: string
+  must: string[]; worth: string[]; trap: string
+}[] = [
+  { type: 'Organization', id: '/#organization',
+    what: 'The brand or group that owns the hotel.',
+    why: 'Anchors the hotel to a parent entity a model may already know. A single hotel with no brand node is a stranger; one linked to a known group inherits its credibility.',
+    must: ['name', 'url'],
+    worth: ['logo', 'sameAs — every official brand profile', 'foundingDate'],
+    trap: 'Independent hotels still need this. The Organization is the hotel itself, not a group it does not belong to.' },
+
+  { type: 'WebSite', id: '/#website',
+    what: 'The site the page lives on.',
+    why: 'Tells a model this page belongs to the hotel\'s own domain, not an aggregator republishing it.',
+    must: ['url', 'name', 'publisher — pointing at the Organization @id'],
+    worth: ['inLanguage', 'potentialAction (SearchAction) if the site has search'],
+    trap: 'publisher must be an @id reference, not a repeated Organization object. Duplicating the node splits the entity.' },
+
+  { type: 'WebPage + FAQPage', id: '<page-url>#webpage',
+    what: 'This page, typed as both a page and a set of questions and answers.',
+    why: 'FAQPage is the single highest-leverage type on the page. It is what turns your prose into units a model can lift verbatim into an answer.',
+    must: ['@type as an array: ["WebPage", "FAQPage"]', 'url', 'name', 'isPartOf → WebSite @id', 'about → Hotel @id', 'mainEntity — every FAQ as a Question with an acceptedAnswer'],
+    worth: ['datePublished', 'dateModified', 'primaryImageOfPage', 'breadcrumb → BreadcrumbList @id'],
+    trap: 'Every question in the schema must appear visibly on the page, word for word. Schema-only FAQs are a policy violation and get the whole graph ignored. If your CMS renders FAQs from a widget, the text may not be in the page body — check the rendered HTML, not the editor.' },
+
+  { type: 'BreadcrumbList', id: '<page-url>#breadcrumb',
+    what: 'The path from your homepage to this page.',
+    why: 'Shows a model where the page sits in your site, which tells it how central the content is.',
+    must: ['itemListElement — an ordered ListItem for each level, each with position, name and item'],
+    worth: [],
+    trap: 'Positions start at 1, not 0. The last item is the current page and its item should be the page URL itself.' },
+
+  { type: 'Place', id: '<hotel-url>#building',
+    what: 'The building, when the hotel occupies part of a larger property.',
+    why: 'A hotel inside a mixed-use building shares an address with restaurants and retail it does not own. Without a Place node, a model attributes all of it to the hotel — or none of it.',
+    must: ['name', 'address (PostalAddress: streetAddress, addressLocality, postalCode, addressCountry)', 'geo (GeoCoordinates: latitude, longitude)'],
+    worth: ['description', 'publicAccess', 'containedInPlace → the neighbourhood as a Place'],
+    trap: 'Skip this node entirely if the hotel is the whole building. An unnecessary Place node adds a hop between the model and the hotel.' },
+
+  { type: 'Hotel', id: '<hotel-url>#hotel',
+    what: 'The hotel itself. The centre of the graph.',
+    why: 'Everything else exists to describe or connect to this node.',
+    must: ['name', 'url', 'description', 'address', 'geo', 'telephone', 'starRating (Rating with ratingValue)', 'numberOfRooms', 'priceRange', 'checkinTime', 'checkoutTime'],
+    worth: [
+      'disambiguatingDescription — critical for any brand with more than one property. Without it a model merges your Singapore hotel with your London one.',
+      'amenityFeature — a LocationFeatureSpecification for each: pool, spa, gym, wifi, parking, pets, accessibility',
+      'hasCertification — sustainability and quality certifications, with the year',
+      'audience — the guest types you actually serve',
+      'slogan', 'mainEntityOfPage', 'dateModified', 'currenciesAccepted', 'paymentAccepted',
+      'sameAs — see the external URLs section below',
+    ],
+    trap: 'Do not add containsPlace. The graph is fully connected by children pointing up with containedInPlace, and containsPlace triggers Google\'s hotel-partner specification, which most sites cannot satisfy.' },
+
+  { type: 'HotelRoom', id: '<hotel-url>#room-<slug>',
+    what: 'One node per room category. Not per physical room.',
+    why: '"Which room should I choose" is a high-intent question. A model can only answer it if each category is a separate object with a size and an occupancy.',
+    must: ['name', 'occupancy (QuantitativeValue with maxValue)', 'floorSize (QuantitativeValue with unitCode "MTK")', 'containedInPlace → Hotel @id'],
+    worth: ['bed (BedDetails)', 'amenityFeature', 'numberOfRooms — how many of this category exist'],
+    trap: 'floorSize.value must be a number. A range like "28-32" is silently discarded by Google. Ranges need minValue and maxValue instead of value.' },
+
+  { type: 'Restaurant', id: '<hotel-url>#<slug>',
+    what: 'One node per venue, named.',
+    why: 'A restaurant a model can name is a reason to recommend the hotel. "Multiple dining options" is a reason to recommend nothing.',
+    must: ['name', 'servesCuisine', 'openingHoursSpecification', 'containedInPlace → Hotel @id'],
+    worth: ['priceRange', 'acceptsReservations', 'hasMenu', 'award — a star or listing, with the year', 'employee (Person) — the chef, if named'],
+    trap: 'Bars are BarOrPub, not Restaurant. A lobby lounge that serves coffee is a CafeOrCoffeeShop. Typing everything as Restaurant tells a model you have five restaurants when you have two.' },
+
+  { type: 'HealthAndBeautyBusiness + DaySpa', id: '<hotel-url>#<slug>',
+    what: 'The spa, typed as both.',
+    why: 'DaySpa alone implies non-guests can book. The pair keeps it accurate whether or not you sell day passes.',
+    must: ['name', 'openingHoursSpecification', 'containedInPlace → Hotel @id'],
+    worth: ['makesOffer — each named treatment or programme, with a price', 'amenityFeature — pool, sauna, hammam, gym', 'areaServed'],
+    trap: 'If day passes are not sold, say so in the description. A model reading DaySpa will otherwise tell a guest they can book.' },
+
+  { type: 'Review + AggregateRating', id: 'on the Hotel node',
+    what: 'Guest ratings, machine-readable.',
+    why: 'Without it, your reputation is invisible. A model recommending hotels has nothing of yours to cite, however good your reviews are.',
+    must: ['ratingValue — the real number', 'reviewCount — the real count', 'bestRating'],
+    worth: ['individual Review nodes with author, datePublished and reviewBody'],
+    trap: 'Never publish a placeholder. A fabricated rating is a structured-data policy violation and risks the whole graph being ignored. If you do not have the real figures, leave the node out entirely.' },
+]
+
+const EXTERNAL_URLS: { label: string; note: string }[] = [
+  { label: 'Google Business Profile', note: 'The single most-cited source about your hotel. Claim it, keep hours and photos current.' },
+  { label: 'TripAdvisor', note: 'Cited constantly in comparison answers. Your listing exists whether you manage it or not.' },
+  { label: 'Wikipedia or Wikidata', note: 'If the hotel is notable enough to have an entry, this is the strongest single sameAs link a model can follow.' },
+  { label: 'Your booking engine', note: 'The direct-booking URL, so a model sends guests to you rather than an OTA.' },
+  { label: 'Instagram · Facebook · LinkedIn', note: 'Official accounts only. A dead or unofficial profile weakens the entity rather than strengthening it.' },
+  { label: 'Your brand or collection', note: 'Relais & Châteaux, Leading Hotels, Design Hotels, Small Luxury Hotels — the membership page for your property.' },
+  { label: 'Michelin Guide', note: 'If a restaurant is listed, link the restaurant page, not the hotel page.' },
+  { label: 'Awards and certifications', note: 'The awarding body\'s page naming your hotel. A link that can be checked is worth ten that cannot.' },
+]
+
+const GRAPH_RULES: [string, string][] = [
+  ['One @graph, never loose blocks.', 'Six separate script tags give a model six fragments. One graph with @id cross-references gives it a single connected entity.'],
+  ['A node is a thing.', 'Something with a name, an address, hours or a size. Sustainability is not a thing — it is facts about the hotel, and attaches as amenityFeature and hasCertification. There is no Dining node; there are restaurant nodes.'],
+  ['Children point up.', 'Every room, restaurant and spa carries containedInPlace pointing at the Hotel @id. The Hotel node points at nothing below it.'],
+  ['Reference by @id, never repeat.', 'Writing the Organization object twice creates two organizations. Write it once, reference it everywhere.'],
+  ['Everything in the schema is on the page.', 'Schema that describes content a visitor cannot see is a policy violation. The graph documents the page; it does not replace it.'],
+  ['Nothing invented, ever.', 'A guessed rating, a rounded distance, an aspirational certification. Each one, found once, is a reason for a model to distrust every other claim you make.'],
+]
+
 // ── AI KNOWLEDGE BLUEPRINT TAB ──
 // Turns the hotel's real audit + facts into a per-section AI-readable page blueprint.
 // Fetches /api/knowledge-blueprint (server-side, so drafts can use the OpenAI key).
@@ -4300,6 +4406,7 @@ function KnowledgeBlueprintTab({ hotel }: any) {
   const [err, setErr] = useState('')
   const [openKey, setOpenKey] = useState<string | null>(null)
   const [showAllQs, setShowAllQs] = useState(false)
+  const [openSchema, setOpenSchema] = useState<string | null>(null)
 
   useEffect(() => {
     if (!hotel?.id) { setLoading(false); return }
@@ -4546,18 +4653,7 @@ function KnowledgeBlueprintTab({ hotel }: any) {
             })}
           </div>
 
-          <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.5rem 1.75rem', marginBottom: '1.5rem' }}>
-            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: TEXT, margin: '0 0 0.2rem' }}>Structured data (schema)</p>
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: '0 0 1.1rem', lineHeight: 1.5 }}>The machine-readable labelling AI reads first. Your developer adds these, invisible to guests.</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-              {bp.schema.present.map((x: string) => (
-                <span key={x} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: ADV_GREEN_C, background: ADV_GREEN_C + '12', border: '1px solid ' + ADV_GREEN_C + '30', borderRadius: 20, padding: '0.4rem 0.9rem' }}>{x} present</span>
-              ))}
-              {bp.schema.recommended.map((x: string) => (
-                <span key={x} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: '#8A6D1F', background: GOLD_LIGHT, border: '1px solid rgba(201,169,76,0.3)', borderRadius: 20, padding: '0.4rem 0.9rem' }}>add {x}</span>
-              ))}
-            </div>
-          </div>
+          
 
           {bp.faqSeeds.length > 0 && (
             <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.5rem 1.75rem' }}>
@@ -4596,6 +4692,95 @@ function KnowledgeBlueprintTab({ hotel }: any) {
               </div>
             </div>
           )}
+        <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden', marginTop: '1.5rem' }}>
+            <div style={{ padding: '1.5rem 1.75rem 1.25rem', borderBottom: '1px solid ' + BORDER }}>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: TEXT, margin: '0 0 0.3rem' }}>Structured data</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT_MUTED, margin: '0 0 1.1rem', lineHeight: 1.6, maxWidth: '72ch' }}>
+                The machine-readable labelling an assistant reads before it reads a word of your prose. Invisible to guests. Your developer adds it once. Tap any type below for exactly what it needs.
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                {bp.schema.present.map((x: string) => (
+                  <span key={x} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: ADV_GREEN_C, background: ADV_GREEN_C + '12', border: '1px solid ' + ADV_GREEN_C + '30', borderRadius: 20, padding: '0.35rem 0.85rem' }}>✓ {x}</span>
+                ))}
+                {bp.schema.recommended.map((x: string) => (
+                  <span key={x} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: '#8A6D1F', background: GOLD_LIGHT, border: '1px solid rgba(201,169,76,0.3)', borderRadius: 20, padding: '0.35rem 0.85rem' }}>add {x}</span>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ padding: '1.25rem 1.75rem', borderBottom: '1px solid ' + BORDER, background: BG }}>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A6D1F', margin: '0 0 0.8rem' }}>Six rules that decide whether any of it works</p>
+              {GRAPH_RULES.map((r, i) => (
+                <div key={i} style={{ display: 'flex', gap: '0.55rem', alignItems: 'flex-start', marginBottom: i < GRAPH_RULES.length - 1 ? '0.55rem' : 0 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: GOLD, flexShrink: 0, marginTop: '0.4rem' }} />
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT, margin: 0, lineHeight: 1.55 }}><strong>{r[0]}</strong> <span style={{ color: TEXT_MUTED }}>{r[1]}</span></p>
+                </div>
+              ))}
+            </div>
+
+            <div>
+              {SCHEMA_SPEC.map((s) => {
+                const on = openSchema === s.type
+                const isPresent = bp.schema.present.some((p: string) => s.type.startsWith(p))
+                return (
+                  <div key={s.type} style={{ borderBottom: '1px solid ' + BORDER }}>
+                    <button onClick={() => setOpenSchema(on ? null : s.type)} style={{ width: '100%', textAlign: 'left', cursor: 'pointer', background: on ? BG : WHITE, border: 'none', padding: '1rem 1.75rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: isPresent ? ADV_GREEN_C : 'rgba(42,26,14,0.2)', flexShrink: 0 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontFamily: 'monospace', fontSize: '0.8rem', fontWeight: 600, color: TEXT, margin: 0 }}>{s.type}</p>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: '0.15rem 0 0', lineHeight: 1.4 }}>{s.what}</p>
+                      </div>
+                      <span style={{ color: TEXT_MUTED, fontSize: '1rem', flexShrink: 0, transform: on ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
+                    </button>
+                    {on && (
+                      <div style={{ padding: '0.4rem 1.75rem 1.5rem 3.1rem', background: BG }}>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0.7rem 0 0.25rem' }}>Node id</p>
+                        <code style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: TEXT, background: WHITE, padding: '3px 9px', borderRadius: 4, border: '1px solid ' + BORDER }}>{s.id}</code>
+
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '1rem 0 0.25rem' }}>Why AI needs it</p>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, margin: 0, lineHeight: 1.6 }}>{s.why}</p>
+
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '1rem 0 0.4rem' }}>Required</p>
+                        {s.must.map((m, j) => (
+                          <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: TEXT, margin: '0.2rem 0', lineHeight: 1.5, paddingLeft: '0.9rem', position: 'relative' }}><span style={{ position: 'absolute', left: 0, color: GOLD }}>·</span>{m}</p>
+                        ))}
+
+                        {s.worth.length > 0 && (<>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '1rem 0 0.4rem' }}>Worth adding</p>
+                          {s.worth.map((w, j) => (
+                            <p key={j} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: TEXT_MUTED, margin: '0.2rem 0', lineHeight: 1.5, paddingLeft: '0.9rem', position: 'relative' }}><span style={{ position: 'absolute', left: 0, color: 'rgba(42,26,14,0.3)' }}>·</span>{w}</p>
+                          ))}
+                        </>)}
+
+                        <div style={{ marginTop: '1rem', padding: '0.8rem 1rem', background: WHITE, border: '1px solid ' + BORDER, borderLeft: '3px solid ' + ADV_AMBER, borderRadius: 8 }}>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: ADV_AMBER, margin: '0 0 0.25rem' }}>The mistake to avoid</p>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: TEXT, margin: 0, lineHeight: 1.55 }}>{s.trap}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            <div style={{ padding: '1.5rem 1.75rem' }}>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.2rem', color: TEXT, margin: '0 0 0.25rem' }}>External URLs to link</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT_MUTED, margin: '0 0 1rem', lineHeight: 1.6, maxWidth: '72ch' }}>
+                These go in <code style={{ fontFamily: 'monospace', fontSize: '0.72rem', background: BG, padding: '1px 6px', borderRadius: 4, border: '1px solid ' + BORDER }}>sameAs</code> on your Hotel node. Each one tells a model &ldquo;this hotel and that profile are the same entity&rdquo;, so every review, photo and mention on them attaches to you. An unlinked hotel is a hotel a model knows once; a linked one is a hotel it knows from eight sources.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+                {EXTERNAL_URLS.map((e, i) => (
+                  <div key={i} style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start', padding: '0.7rem 0.9rem', background: BG, border: '1px solid ' + BORDER, borderRadius: 9 }}>
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', fontWeight: 600, color: TEXT, flexShrink: 0, width: 190 }}>{e.label}</span>
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT_MUTED, lineHeight: 1.5, flex: 1 }}>{e.note}</span>
+                  </div>
+                ))}
+              </div>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', color: TEXT_MUTED, margin: '1.1rem 0 0', lineHeight: 1.6, fontStyle: 'italic' }}>
+                Only link profiles you control or that genuinely name your hotel. A broken or unofficial link in sameAs weakens the entity rather than strengthening it.
+              </p>
+            </div>
+          </div>
         </>
       )}
     </div>
