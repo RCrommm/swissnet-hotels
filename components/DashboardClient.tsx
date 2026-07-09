@@ -4435,6 +4435,10 @@ function KnowledgeBlueprintTab({ hotel }: any) {
                   style={{ display: 'block', textAlign: 'center', fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 600, color: 'rgba(255,255,255,0.85)', background: 'transparent', border: '1px solid rgba(201,169,76,0.4)', borderRadius: 8, padding: '0.7rem 1.5rem', textDecoration: 'none', whiteSpace: 'nowrap' }}>
                   View it live on their site →
                 </a>
+                <a href={`mailto:contact@swissnethotels.com?subject=${encodeURIComponent('AI page for ' + (hotel?.name || 'our hotel'))}&body=${encodeURIComponent(`Hello SwissNet,\n\nWe would like you to build a personalised AI page for ${hotel?.name || 'our hotel'}, following the COMO Metropolitan Singapore template.\n\nOur website: ${hotel?.direct_booking_url || ''}\n\nThank you.`)}`}
+                  style={{ display: 'block', textAlign: 'center', fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', fontWeight: 600, color: 'rgba(201,169,76,0.9)', background: 'transparent', border: 'none', padding: '0.35rem 0', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                  Or have SwissNet build yours →
+                </a>
               </div>
             </div>
           </div>
