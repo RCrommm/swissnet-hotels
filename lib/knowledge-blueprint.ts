@@ -23,6 +23,7 @@ export type UnansweredQuestion = {
   readiness: 'PARTIAL' | 'NO'
   blockedBy: string[]
   section: string | null
+  auditCategory: string
 }
 
 export type BlueprintSection = {
@@ -84,7 +85,14 @@ const SECTION_DEFS: SectionDef[] = [
     faqs: (h, c) => [`What kind of hotel is ${h}?`, `Is ${h} a boutique hotel?`, `What makes ${h} unique?`, `Is ${h} worth it?`], factCats: ['identity', 'awards', 'trust'] },
 
   { key: 'best_for', title: 'Who it is for', purpose: 'The guest types the hotel genuinely suits.', tier: 'core',
-    includes: ['Each guest type you truly serve', 'One specific feature as the reason, not an adjective', 'Honesty about who it is not for'],
+    includes: [
+      'Each guest type you serve, named plainly: couples, families, business travellers, solo travellers, food-led stays',
+      'For each type, the one concrete feature that earns it — a room, a venue, a distance, a service',
+      'What the stay costs, as a band, so a model can place you against alternatives',
+      'The one thing you do that no nearby hotel does',
+      'Who the hotel is not right for, stated in a line',
+      'The occasion it suits: anniversary, business trip, first visit to the city',
+    ],
     steps: (h, c) => [
       { instruction: 'Name each guest type you genuinely serve.', hint: 'Couples, families, business, food lovers, culture seekers. Only the real ones.', example: '' },
       { instruction: 'Give each type one concrete reason.', hint: 'A specific feature, never an adjective. Not romantic, but why.', example: '' },
@@ -243,7 +251,8 @@ const SCHEMA_RECOMMENDED = ['Hotel', 'FAQPage', 'Place', 'Restaurant', 'Review',
 // ('luxury', 'romantic'), not fact categories. Anything unmapped still shows at the top
 // of the tab, it just credits no section. Never guess a section for a question.
 const AUDIT_CAT_TO_SECTION: Record<string, string> = {
-  luxury: 'overview', identity: 'overview',
+  luxury: 'overview', identity: 'overview', design: 'overview',
+  general: 'best_for', positioning: 'best_for', value: 'best_for', suitability: 'best_for',
   location: 'location', transport: 'location',
   rooms: 'accommodation', accommodation: 'accommodation',
   dining: 'dining', restaurant: 'dining',
@@ -273,6 +282,7 @@ function extractUnanswered(auditResult: any): UnansweredQuestion[] {
       readiness: r.readiness,
       blockedBy: why.filter((x: any) => typeof x === 'string'),
       section: AUDIT_CAT_TO_SECTION[(r.category || '').toLowerCase()] || null,
+      auditCategory: (r.category || '').toLowerCase(),
     })
   }
   return out.sort((a, b) => (a.readiness === b.readiness ? 0 : a.readiness === 'NO' ? -1 : 1))
