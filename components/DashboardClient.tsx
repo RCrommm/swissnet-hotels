@@ -4371,29 +4371,7 @@ function KnowledgeBlueprintTab({ hotel }: any) {
 
       {!loading && bp && (
         <>
-          {/* ── TEMPLATE EXAMPLE ── */}
-          <div style={{ background: 'linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)', borderRadius: 16, padding: '2rem 2.25rem', marginBottom: '1.5rem', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: -40, right: -40, width: 180, height: 180, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,169,76,0.08) 0%, transparent 70%)' }} />
-            <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '2rem', flexWrap: 'wrap' }}>
-              <div style={{ flex: 1, minWidth: 300 }}>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.75)', margin: '0 0 0.6rem' }}>Start with the example</p>
-                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.55rem', fontWeight: 300, color: WHITE, margin: '0 0 0.6rem', lineHeight: 1.3 }}>See a finished page before you write yours</p>
-                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.65, maxWidth: '62ch' }}>
-                  SwissNet built this guide for COMO Metropolitan Singapore, following every section below. It is live on their site and reads exactly as an AI assistant needs. Use it as your reference for structure, depth and tone.
-                </p>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', flexShrink: 0 }}>
-                <a href="https://swissnethotels.com/como-singapore-ai-hotel-guide.pdf" target="_blank" rel="noopener noreferrer"
-                  style={{ display: 'block', textAlign: 'center', fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 700, color: '#1a0e06', background: GOLD, border: 'none', borderRadius: 8, padding: '0.7rem 1.5rem', textDecoration: 'none', whiteSpace: 'nowrap' }}>
-                  Download the template (PDF)
-                </a>
-                <a href="https://www.comohotels.com/singapore/como-metropolitan-singapore/hotel-information" target="_blank" rel="noopener noreferrer"
-                  style={{ display: 'block', textAlign: 'center', fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 600, color: 'rgba(255,255,255,0.85)', background: 'transparent', border: '1px solid rgba(201,169,76,0.4)', borderRadius: 8, padding: '0.7rem 1.5rem', textDecoration: 'none', whiteSpace: 'nowrap' }}>
-                  View it live on their site →
-                </a>
-              </div>
-            </div>
-          </div>
+          
 
           {/* ── QUESTIONS AI COULD NOT ANSWER ── */}
           {unanswered.length > 0 && (
@@ -4436,6 +4414,30 @@ function KnowledgeBlueprintTab({ hotel }: any) {
               )}
             </div>
           )}
+
+          {/* ── TEMPLATE EXAMPLE ── */}
+          <div style={{ background: 'linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)', borderRadius: 16, padding: '2rem 2.25rem', marginBottom: '1.5rem', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: -40, right: -40, width: 180, height: 180, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,169,76,0.08) 0%, transparent 70%)' }} />
+            <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '2rem', flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: 300 }}>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.75)', margin: '0 0 0.6rem' }}>Start with the example</p>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.55rem', fontWeight: 300, color: WHITE, margin: '0 0 0.6rem', lineHeight: 1.3 }}>See a finished page before you write yours</p>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.65, maxWidth: '62ch' }}>
+                  SwissNet built this guide for COMO Metropolitan Singapore, following every section below. It is live on their site and reads exactly as an AI assistant needs. Use it as your reference for structure, depth and tone.
+                </p>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', flexShrink: 0 }}>
+                <a href="https://swissnethotels.com/como-singapore-ai-hotel-guide.pdf" target="_blank" rel="noopener noreferrer"
+                  style={{ display: 'block', textAlign: 'center', fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 700, color: '#1a0e06', background: GOLD, border: 'none', borderRadius: 8, padding: '0.7rem 1.5rem', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                  Download the template (PDF)
+                </a>
+                <a href="https://www.comohotels.com/singapore/como-metropolitan-singapore/hotel-information" target="_blank" rel="noopener noreferrer"
+                  style={{ display: 'block', textAlign: 'center', fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 600, color: 'rgba(255,255,255,0.85)', background: 'transparent', border: '1px solid rgba(201,169,76,0.4)', borderRadius: 8, padding: '0.7rem 1.5rem', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                  View it live on their site →
+                </a>
+              </div>
+            </div>
+          </div>
 
           <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.4rem 1.6rem', marginBottom: '1.25rem' }}>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.3rem' }}>Where to build it</p>
