@@ -4321,11 +4321,7 @@ function KnowledgeBlueprintTab({ hotel }: any) {
   const unanswered: any[] = bp?.unanswered || []
   const noCount = unanswered.filter((u: any) => u.readiness === 'NO').length
 
-  const STATUS: Record<string, { label: string; col: string; bg: string }> = {
-    built: { label: 'Good coverage', col: ADV_GREEN_C, bg: ADV_GREEN_C + '14' },
-    partial: { label: 'Add more', col: ADV_AMBER, bg: ADV_AMBER + '14' },
-    gap: { label: 'Not covered', col: 'rgba(42,26,14,0.5)', bg: 'rgba(42,26,14,0.06)' },
-  }
+  
 
   const RULES: [string, string][] = [
     ['Answer in the first sentence.', 'State the answer directly, then explain. AI lifts the opening line.'],
@@ -4417,14 +4413,22 @@ function KnowledgeBlueprintTab({ hotel }: any) {
             </div>
           )}
 
-          <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1.1rem 1.4rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED }}>Recommended page</span>
-            <code style={{ fontFamily: 'monospace', fontSize: '0.72rem', fontWeight: 600, color: TEXT, background: BG, padding: '5px 11px', borderRadius: 6, border: '1px solid ' + BORDER }}>{bp.recommendedUrl}</code>
+          <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, padding: '1.4rem 1.6rem', marginBottom: '1.25rem' }}>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.3rem' }}>Where to build it</p>
+            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', color: TEXT_MUTED, margin: '0 0 1.1rem', lineHeight: 1.5 }}>One page on your own domain. Any of these work — the first is the one we would choose.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+              {(bp.recommendedUrls || [{ path: bp.recommendedUrl, note: '', preferred: true }]).map((u: any) => (
+                <div key={u.path} style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start', padding: '0.85rem 1rem', background: u.preferred ? GOLD_LIGHT : BG, border: '1px solid ' + (u.preferred ? 'rgba(201,169,76,0.35)' : BORDER), borderRadius: 10 }}>
+                  <code style={{ fontFamily: 'monospace', fontSize: '0.74rem', fontWeight: 600, color: TEXT, background: WHITE, padding: '4px 10px', borderRadius: 5, border: '1px solid ' + BORDER, flexShrink: 0 }}>{u.path}</code>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.5, flex: 1 }}>{u.note}</p>
+                  {u.preferred && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#8A6D1F', flexShrink: 0, marginTop: '0.2rem' }}>Recommended</span>}
+                </div>
+              ))}
+            </div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '1.75rem' }}>
             {bp.sections.map((sec: any) => {
-              const st = STATUS[sec.status] || STATUS.gap
               const isOpen = openKey === sec.key
               const secQs = unanswered.filter((u: any) => u.section === sec.key)
               return (
@@ -4437,7 +4441,6 @@ function KnowledgeBlueprintTab({ hotel }: any) {
                     {sec.unblocks > 0 && (
                       <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: '#8A6D1F', background: GOLD_LIGHT, border: '1px solid rgba(201,169,76,0.35)', padding: '4px 11px', borderRadius: 20, flexShrink: 0, whiteSpace: 'nowrap' }}>Answers {sec.unblocks} {sec.unblocks === 1 ? 'question' : 'questions'}</span>
                     )}
-                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, color: st.col, background: st.bg, padding: '4px 11px', borderRadius: 20, flexShrink: 0, whiteSpace: 'nowrap' }}>{st.label}</span>
                     <span style={{ color: TEXT_MUTED, fontSize: '1.1rem', flexShrink: 0, transform: isOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
                   </button>
 
@@ -4461,7 +4464,22 @@ function KnowledgeBlueprintTab({ hotel }: any) {
                         </div>
                       )}
 
-                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A6D1F', margin: '0 0 1rem' }}>Write it in {(sec.steps || []).length} steps</p>
+                      {sec.includes && sec.includes.length > 0 && (
+                        <div style={{ marginBottom: '1.6rem' }}>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.3rem' }}>What this section must contain</p>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: '0 0 0.85rem', lineHeight: 1.5 }}>Every item below is something AI looks for and cannot infer. Leave one out and the question it answers stays unanswered.</p>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            {sec.includes.map((it: string, j: number) => (
+                              <div key={j} style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start' }}>
+                                <span style={{ width: 16, height: 16, borderRadius: 4, border: '1.5px solid ' + BORDER, flexShrink: 0, marginTop: '0.1rem' }} />
+                                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.8rem', color: TEXT, lineHeight: 1.45 }}>{it}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A6D1F', margin: '0 0 1rem' }}>How to write it</p>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: (sec.sectionFaqs && sec.sectionFaqs.length) ? '1.4rem' : 0 }}>
                         {(sec.steps && sec.steps.length ? sec.steps : sec.includes.map((it: string) => ({ instruction: it, hint: '', example: '' }))).map((step: any, j: number) => (
                           <div key={j} style={{ display: 'flex', gap: '0.85rem', alignItems: 'flex-start' }}>

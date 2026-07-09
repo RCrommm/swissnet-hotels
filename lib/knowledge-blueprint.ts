@@ -39,10 +39,13 @@ export type BlueprintSection = {
   unblocks: number
 }
 
+export type UrlOption = { path: string; note: string; preferred: boolean }
+
 export type Blueprint = {
   hotelName: string
   city: string
   recommendedUrl: string
+  recommendedUrls: UrlOption[]
   sections: BlueprintSection[]
   schema: { present: string[]; recommended: string[] }
   faqSeeds: string[]
@@ -275,6 +278,28 @@ function extractUnanswered(auditResult: any): UnansweredQuestion[] {
   return out.sort((a, b) => (a.readiness === b.readiness ? 0 : a.readiness === 'NO' ? -1 : 1))
 }
 
+// Three real options, ranked. /about wins when it already exists: it carries inbound
+// links and authority a new page has to earn from zero, so the blueprint becomes a
+// rewrite rather than an orphan. Derived from the crawled page list, never assumed.
+function recommendUrls(auditResult: any): UrlOption[] {
+  const paths = new Set<string>()
+  for (const u of (auditResult?.pagesScraped || [])) {
+    try { paths.add(new URL(u).pathname.replace(/\/$/, '').toLowerCase() || '/') } catch {}
+  }
+  const hasAbout = [...paths].some(p => /^\/(about|about-us)$/.test(p))
+  return [
+    { path: '/about', note: hasAbout
+        ? 'You already have this page. Rewriting it to the blueprint keeps the links and authority it has earned.'
+        : 'The page AI expects to find first. Guests click it, so it earns traffic and links a new page would not.',
+      preferred: true },
+    { path: '/hotel-guide', note: hasAbout
+        ? 'Use this if your About page is a heritage story you would rather not rewrite.'
+        : 'A clear alternative if you would rather not name the page About.',
+      preferred: false },
+    { path: '/guest-guide', note: 'The same idea, framed for the reader rather than the property.', preferred: false },
+  ]
+}
+
 function slugify(s: string): string {
   return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 50)
 }
@@ -348,9 +373,12 @@ export function buildBlueprint(
     factsUsed,
   }
 
+  const recommendedUrls = recommendUrls(auditResult)
+
   return {
     hotelName, city,
-    recommendedUrl: `/discover/${slugify(hotelName) || 'hotel-name'}`,
+    recommendedUrl: recommendedUrls[0].path,
+    recommendedUrls,
     sections, schema: { present: schemaPresent, recommended: schemaRecommended },
     faqSeeds, unanswered, counts,
   }
