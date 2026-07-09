@@ -251,7 +251,8 @@ const SCHEMA_RECOMMENDED = ['Hotel', 'FAQPage', 'Place', 'Restaurant', 'Review',
 // ('luxury', 'romantic'), not fact categories. Anything unmapped still shows at the top
 // of the tab, it just credits no section. Never guess a section for a question.
 const AUDIT_CAT_TO_SECTION: Record<string, string> = {
-  luxury: 'overview', identity: 'overview', design: 'overview',
+  luxury: 'overview', identity: 'overview',
+  overall: 'best_for',design: 'overview',
   general: 'best_for', positioning: 'best_for', value: 'best_for', suitability: 'best_for',
   location: 'location', transport: 'location',
   rooms: 'accommodation', accommodation: 'accommodation',
