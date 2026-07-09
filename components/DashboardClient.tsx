@@ -4299,6 +4299,7 @@ function KnowledgeBlueprintTab({ hotel }: any) {
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState('')
   const [openKey, setOpenKey] = useState<string | null>(null)
+  const [showAllQs, setShowAllQs] = useState(false)
 
   useEffect(() => {
     if (!hotel?.id) { setLoading(false); return }
@@ -4317,6 +4318,8 @@ function KnowledgeBlueprintTab({ hotel }: any) {
   }, [hotel?.id])
 
   const bp = data?.blueprint
+  const unanswered: any[] = bp?.unanswered || []
+  const noCount = unanswered.filter((u: any) => u.readiness === 'NO').length
 
   const STATUS: Record<string, { label: string; col: string; bg: string }> = {
     built: { label: 'Good coverage', col: ADV_GREEN_C, bg: ADV_GREEN_C + '14' },
@@ -4334,6 +4337,18 @@ function KnowledgeBlueprintTab({ hotel }: any) {
     ['No marketing fluff.', 'Skip superlatives unless a verifiable fact backs them.'],
   ]
 
+  const sectionTitle = (key: string | null) => {
+    if (!key) return null
+    return (bp?.sections || []).find((s: any) => s.key === key)?.title || null
+  }
+
+  const jumpTo = (key: string | null) => {
+    if (!key) return
+    setOpenKey(key)
+    const el = document.getElementById('bp-sec-' + key)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+
   return (
     <div>
       <div style={{ background: 'linear-gradient(135deg, #2A1A0E 0%, #3D2810 100%)', borderRadius: 18, padding: '2.5rem 3rem', marginBottom: '1.75rem', position: 'relative', overflow: 'hidden' }}>
@@ -4347,7 +4362,7 @@ function KnowledgeBlueprintTab({ hotel }: any) {
           {bp && (
             <div style={{ display: 'flex', gap: '2.5rem', alignItems: 'stretch', flexShrink: 0 }}>
               <div style={{ width: 1, background: 'rgba(255,255,255,0.12)' }} />
-              <div><p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.6rem', fontWeight: 400, color: WHITE, margin: 0, lineHeight: 1 }}>{bp.sections.length}</p><p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0.35rem 0 0' }}>Sections to build</p></div>
+              <div><p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.6rem', fontWeight: 400, color: WHITE, margin: 0, lineHeight: 1 }}>{unanswered.length}</p><p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0.35rem 0 0' }}>Questions AI can't answer</p></div>
               <div><p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.6rem', fontWeight: 400, color: GOLD, margin: 0, lineHeight: 1 }}>{bp.counts.factsUsed}</p><p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(201,169,76,0.7)', margin: '0.35rem 0 0' }}>Facts AI can read</p></div>
             </div>
           )}
@@ -4360,6 +4375,48 @@ function KnowledgeBlueprintTab({ hotel }: any) {
 
       {!loading && bp && (
         <>
+          {/* ── QUESTIONS AI COULD NOT ANSWER ── */}
+          {unanswered.length > 0 && (
+            <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 16, overflow: 'hidden', marginBottom: '1.5rem' }}>
+              <div style={{ padding: '1.5rem 1.75rem 1.25rem', borderBottom: '1px solid ' + BORDER }}>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: TEXT, margin: '0 0 0.3rem' }}>What AI could not answer about you</p>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.6, maxWidth: '70ch' }}>
+                  Guest questions your latest audit ran against your live site. <strong style={{ color: TEXT }}>{noCount} had no answer at all</strong>; the rest had one too thin for AI to act on. Each row shows what was missing. Build the section that answers it.
+                </p>
+              </div>
+              <div>
+                {(showAllQs ? unanswered : unanswered.slice(0, 6)).map((u: any, i: number) => {
+                  const isNo = u.readiness === 'NO'
+                  const col = isNo ? 'rgba(42,26,14,0.5)' : ADV_AMBER
+                  const st = sectionTitle(u.section)
+                  return (
+                    <div key={i} style={{ padding: '1.1rem 1.75rem', borderBottom: '1px solid ' + BORDER, display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                      <span style={{ color: col, fontSize: '0.85rem', flexShrink: 0, marginTop: '0.15rem' }}>{isNo ? '✗' : '◐'}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.88rem', fontWeight: 600, color: TEXT, margin: '0 0 0.35rem', lineHeight: 1.45 }}>&ldquo;{u.question}&rdquo;</p>
+                        {u.blockedBy.length > 0 ? (
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.55 }}>
+                            <span style={{ fontWeight: 600, color: col }}>{isNo ? 'Nothing on your site said:' : 'Not enough on your site to say:'}</span> {u.blockedBy.join(' · ')}
+                          </p>
+                        ) : (
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.76rem', color: TEXT_MUTED, margin: 0, fontStyle: 'italic' }}>No specific cause recorded for this question.</p>
+                        )}
+                      </div>
+                      {st && (
+                        <button onClick={() => jumpTo(u.section)} style={{ flexShrink: 0, fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', fontWeight: 600, color: '#8A6D1F', background: GOLD_LIGHT, border: '1px solid rgba(201,169,76,0.3)', borderRadius: 20, padding: '0.35rem 0.85rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>{st} →</button>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+              {unanswered.length > 6 && (
+                <button onClick={() => setShowAllQs(s => !s)} style={{ width: '100%', background: BG, border: 'none', borderTop: '1px solid ' + BORDER, padding: '0.85rem', fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: TEXT_MUTED, cursor: 'pointer' }}>
+                  {showAllQs ? 'Show fewer' : `Show all ${unanswered.length} questions`}
+                </button>
+              )}
+            </div>
+          )}
+
           <div style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 12, padding: '1.1rem 1.4rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
             <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: TEXT_MUTED }}>Recommended page</span>
             <code style={{ fontFamily: 'monospace', fontSize: '0.72rem', fontWeight: 600, color: TEXT, background: BG, padding: '5px 11px', borderRadius: 6, border: '1px solid ' + BORDER }}>{bp.recommendedUrl}</code>
@@ -4369,15 +4426,19 @@ function KnowledgeBlueprintTab({ hotel }: any) {
             {bp.sections.map((sec: any) => {
               const st = STATUS[sec.status] || STATUS.gap
               const isOpen = openKey === sec.key
+              const secQs = unanswered.filter((u: any) => u.section === sec.key)
               return (
-                <div key={sec.key} style={{ background: WHITE, border: '1px solid ' + BORDER, borderRadius: 14, overflow: 'hidden' }}>
+                <div key={sec.key} id={'bp-sec-' + sec.key} style={{ background: WHITE, border: '1px solid ' + (sec.unblocks > 0 ? 'rgba(201,169,76,0.4)' : BORDER), borderRadius: 14, overflow: 'hidden' }}>
                   <button onClick={() => setOpenKey(isOpen ? null : sec.key)} style={{ width: '100%', textAlign: 'left', cursor: 'pointer', background: isOpen ? BG : WHITE, border: 'none', padding: '1.2rem 1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.35rem', color: TEXT, margin: 0 }}>{sec.title}</p>
                       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: TEXT_MUTED, margin: '0.2rem 0 0', lineHeight: 1.4 }}>{sec.purpose}</p>
                     </div>
+                    {sec.unblocks > 0 && (
+                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', fontWeight: 700, color: '#8A6D1F', background: GOLD_LIGHT, border: '1px solid rgba(201,169,76,0.35)', padding: '4px 11px', borderRadius: 20, flexShrink: 0, whiteSpace: 'nowrap' }}>Answers {sec.unblocks} {sec.unblocks === 1 ? 'question' : 'questions'}</span>
+                    )}
                     <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, color: st.col, background: st.bg, padding: '4px 11px', borderRadius: 20, flexShrink: 0, whiteSpace: 'nowrap' }}>{st.label}</span>
-                    <span style={{ color: TEXT_MUTED, fontSize: '1.1rem', flexShrink: 0, transform: isOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>|</span>
+                    <span style={{ color: TEXT_MUTED, fontSize: '1.1rem', flexShrink: 0, transform: isOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
                   </button>
 
                   {isOpen && (
@@ -4387,6 +4448,19 @@ function KnowledgeBlueprintTab({ hotel }: any) {
                           <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: sec.tier === 'core' ? '#8A6D1F' : TEXT_MUTED, background: sec.tier === 'core' ? GOLD_LIGHT : BG, border: '1px solid ' + BORDER, padding: '3px 10px', borderRadius: 20 }}>{sec.tier === 'core' ? 'Core section' : sec.tier === 'recommended' ? 'Recommended' : 'Optional'}</span>
                         </div>
                       )}
+
+                      {secQs.length > 0 && (
+                        <div style={{ background: BG, border: '1px solid ' + BORDER, borderLeft: '3px solid ' + GOLD, borderRadius: 10, padding: '1rem 1.2rem', marginBottom: '1.4rem' }}>
+                          <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A6D1F', margin: '0 0 0.65rem' }}>Writing this section answers</p>
+                          {secQs.map((u: any, j: number) => (
+                            <div key={j} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', marginBottom: j < secQs.length - 1 ? '0.4rem' : 0 }}>
+                              <span style={{ color: u.readiness === 'NO' ? 'rgba(42,26,14,0.45)' : ADV_AMBER, fontSize: '0.75rem', flexShrink: 0, marginTop: '0.05rem' }}>{u.readiness === 'NO' ? '✗' : '◐'}</span>
+                              <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.78rem', color: TEXT, lineHeight: 1.5 }}>{u.question}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
                       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A6D1F', margin: '0 0 1rem' }}>Write it in {(sec.steps || []).length} steps</p>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: (sec.sectionFaqs && sec.sectionFaqs.length) ? '1.4rem' : 0 }}>
                         {(sec.steps && sec.steps.length ? sec.steps : sec.includes.map((it: string) => ({ instruction: it, hint: '', example: '' }))).map((step: any, j: number) => (
