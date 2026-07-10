@@ -4294,29 +4294,36 @@ function AdvisorTab({ hotel }: any) {
 // Static specification, not derived data. The present/recommended split above it IS
 // derived — this is the manual for each node. Everything here was learned building
 // real pages; the traps are mistakes that shipped and had to be fixed.
+// ── SCHEMA REFERENCE ──
+// Static specification, not derived data. The present/recommended split above it IS
+// derived — this is the manual for each node. Everything here was learned building
+// real pages; the traps are mistakes that shipped and had to be fixed.
 const SCHEMA_SPEC: {
   type: string; id: string; what: string; why: string
   must: string[]; worth: string[]; trap: string
 }[] = [
   { type: 'Organization', id: '/#organization',
-    what: 'The brand or group that owns the hotel.',
-    why: 'Anchors the hotel to a parent entity a model may already know. A single hotel with no brand node is a stranger; one linked to a known group inherits its credibility.',
+    what: 'The parent group that owns the hotel — only when one exists.',
+    why: 'Anchors the hotel to a company a model may already know. A hotel inside a recognised group inherits its credibility; the link tells a model the two are related.',
     must: ['name', 'url'],
-    worth: ['logo', 'sameAs — every official brand profile', 'foundingDate'],
-    trap: 'Independent hotels still need this. The Organization is the hotel itself, not a group it does not belong to.' },
+    worth: ['logo', 'sameAs — every official group profile', 'foundingDate'],
+    trap: 'An independent hotel should NOT add this node. Hotel already inherits from Organization, so a second one splits the entity in two. Only add it when a genuinely separate group owns the property, and link with parentOrganization on the Hotel node.' },
 
   { type: 'WebSite', id: '/#website',
     what: 'The site the page lives on.',
     why: 'Tells a model this page belongs to the hotel\'s own domain, not an aggregator republishing it.',
-    must: ['url', 'name', 'publisher — pointing at the Organization @id'],
+    must: ['url', 'name', 'publisher — pointing at the Organization @id, or the Hotel @id if independent'],
     worth: ['inLanguage', 'potentialAction (SearchAction) if the site has search'],
-    trap: 'publisher must be an @id reference, not a repeated Organization object. Duplicating the node splits the entity.' },
+    trap: 'publisher must be an @id reference, not a repeated object. Duplicating the node splits the entity.' },
 
   { type: 'WebPage + FAQPage', id: '<page-url>#webpage',
     what: 'This page, typed as both a page and a set of questions and answers.',
     why: 'FAQPage is the single highest-leverage type on the page. It is what turns your prose into units a model can lift verbatim into an answer.',
     must: ['@type as an array: ["WebPage", "FAQPage"]', 'url', 'name', 'isPartOf → WebSite @id', 'about → Hotel @id', 'mainEntity — every FAQ as a Question with an acceptedAnswer'],
-    worth: ['datePublished', 'dateModified', 'primaryImageOfPage', 'breadcrumb → BreadcrumbList @id'],
+    worth: [
+      'speakable (SpeakableSpecification) — the one property built for assistants. Use cssSelector to mark the passages meant to be read aloud, typically your opening answer lines.',
+      'datePublished', 'dateModified', 'primaryImageOfPage', 'breadcrumb → BreadcrumbList @id',
+    ],
     trap: 'Every question in the schema must appear visibly on the page, word for word. Schema-only FAQs are a policy violation and get the whole graph ignored. If your CMS renders FAQs from a widget, the text may not be in the page body — check the rendered HTML, not the editor.' },
 
   { type: 'BreadcrumbList', id: '<page-url>#breadcrumb',
@@ -4336,23 +4343,29 @@ const SCHEMA_SPEC: {
   { type: 'Hotel', id: '<hotel-url>#hotel',
     what: 'The hotel itself. The centre of the graph.',
     why: 'Everything else exists to describe or connect to this node.',
-    must: ['name', 'url', 'description', 'address', 'geo', 'telephone', 'starRating (Rating with ratingValue)', 'numberOfRooms', 'priceRange', 'checkinTime', 'checkoutTime'],
+    must: ['name', 'url', 'description', 'address', 'geo', 'telephone', 'numberOfRooms'],
     worth: [
       'disambiguatingDescription — critical for any brand with more than one property. Without it a model merges your Singapore hotel with your London one.',
+      'checkinTime and checkoutTime — a model cannot answer "what time is check-in" without them',
+      'priceRange — a band, never a precise rate you cannot keep current',
+      'starRating (Rating with ratingValue) — only if officially classified',
       'amenityFeature — a LocationFeatureSpecification for each: pool, spa, gym, wifi, parking, pets, accessibility',
       'hasCertification — sustainability and quality certifications, with the year',
       'audience — the guest types you actually serve',
+      'makesOffer — see the Offer node below',
+      'potentialAction (ReserveAction) — see below',
+      'parentOrganization — only if a separate group owns you',
       'slogan', 'mainEntityOfPage', 'dateModified', 'currenciesAccepted', 'paymentAccepted',
       'sameAs — see the external URLs section below',
     ],
-    trap: 'Do not add containsPlace. The graph is fully connected by children pointing up with containedInPlace, and containsPlace triggers Google\'s hotel-partner specification, which most sites cannot satisfy.' },
+    trap: 'Do not add containsPlace. The graph is fully connected by children pointing up with containedInPlace, and containsPlace triggers Google\'s hotel-partner specification, which most sites cannot satisfy. Also: use Hotel only if you are a hotel. A guesthouse, aparthotel or serviced residence is LodgingBusiness; a resort is Resort. The wrong type is worse than a general one.' },
 
   { type: 'HotelRoom', id: '<hotel-url>#room-<slug>',
     what: 'One node per room category. Not per physical room.',
     why: '"Which room should I choose" is a high-intent question. A model can only answer it if each category is a separate object with a size and an occupancy.',
-    must: ['name', 'occupancy (QuantitativeValue with maxValue)', 'floorSize (QuantitativeValue with unitCode "MTK")', 'containedInPlace → Hotel @id'],
+    must: ['name', 'occupancy (QuantitativeValue with maxValue)', 'floorSize (QuantitativeValue)', 'containedInPlace → Hotel @id'],
     worth: ['bed (BedDetails)', 'amenityFeature', 'numberOfRooms — how many of this category exist'],
-    trap: 'floorSize.value must be a number. A range like "28-32" is silently discarded by Google. Ranges need minValue and maxValue instead of value.' },
+    trap: 'floorSize.value must be a number. A range like "28-32" is silently discarded by Google — ranges need minValue and maxValue instead of value. Set unitCode to "MTK" for square metres or "FTK" for square feet; the wrong code makes a 30 m² room read as 30 sq ft.' },
 
   { type: 'Restaurant', id: '<hotel-url>#<slug>',
     what: 'One node per venue, named.',
@@ -4367,6 +4380,27 @@ const SCHEMA_SPEC: {
     must: ['name', 'openingHoursSpecification', 'containedInPlace → Hotel @id'],
     worth: ['makesOffer — each named treatment or programme, with a price', 'amenityFeature — pool, sauna, hammam, gym', 'areaServed'],
     trap: 'If day passes are not sold, say so in the description. A model reading DaySpa will otherwise tell a guest they can book.' },
+
+  { type: 'Offer', id: '<hotel-url>#offer-<slug>',
+    what: 'A package, rate or direct-booking benefit. Attaches to the Hotel via makesOffer.',
+    why: '"Does the hotel have romantic packages" is unanswerable without this. It is also how a model learns what booking direct gets a guest that an OTA does not.',
+    must: ['name', 'description', 'url — the page where it can be booked'],
+    worth: ['price and priceCurrency', 'validFrom and validThrough', 'eligibleCustomerType', 'availability', 'itemOffered — the room or treatment included'],
+    trap: 'Remove expired offers. An Offer with a validThrough in the past teaches a model your site is stale, and staleness is weighed against everything else you publish.' },
+
+  { type: 'Event', id: '<hotel-url>#event-<slug>',
+    what: 'A dated happening: a gala, a festival week, a chef residency.',
+    why: 'Dated content signals an active property. It is also the only way a model can answer "what is on at the hotel in December".',
+    must: ['name', 'startDate', 'location → Hotel @id or the venue @id'],
+    worth: ['endDate', 'description', 'offers (Offer)', 'eventStatus', 'organizer', 'performer'],
+    trap: 'Do not leave last year\'s events in the graph. Past events with no endDate are read as current, and a model recommending a gala that already happened will not do it twice.' },
+
+  { type: 'potentialAction: ReserveAction', id: 'on the Hotel node',
+    what: 'A machine-readable pointer to your booking page.',
+    why: 'A model that recommends you should be able to say where to book. Without this it sends the guest to whichever OTA it already knows.',
+    must: ['target (EntryPoint) with urlTemplate — your direct booking URL', 'result (LodgingReservation)'],
+    worth: ['actionPlatform — the platforms the booking flow supports'],
+    trap: 'Point it at your own booking engine, never at an OTA listing. The whole purpose is to route the guest away from commission.' },
 
   { type: 'Review + AggregateRating', id: 'on the Hotel node',
     what: 'Guest ratings, machine-readable.',
