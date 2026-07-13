@@ -55,6 +55,7 @@ export async function gatherMonthlyReportData(hotelId: string, month?: string) {
 
   const hotel = await resolveHotel(sb, hotelId)
   if (!hotel) throw new Error('Hotel not found')
+  hotelId = hotel.id  // downstream hotel_id queries need the full UUID, not the shorthand prefix
   const region = hotel.region || 'Geneva'
 
   // latest 2 audits → current + prior (improvement vs last audit; baseline if none)
