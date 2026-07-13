@@ -1,8 +1,8 @@
 // ─── MONTHLY REPORT — EMAIL HTML ───
-// Renders the object from gatherMonthlyReportData() into an email-safe HTML string
-// (table layout, inline styles). No-fabrication: missing sections show an honest
-// pending/baseline state; a delta renders ONLY when both months have like-for-like
-// data — never a green improvement built on a partial month.
+// Renders gatherMonthlyReportData() into an email-safe HTML string. No-fabrication:
+// deltas render only when both months have like-for-like data; competitor ranking
+// uses only ChatGPT+Perplexity (platforms tracked for every hotel); Google stays in
+// the hotel's own trend. Missing sections show honest pending/baseline states.
 
 const GOLD = '#C9A84C'
 const BG = '#F8F5EF'
@@ -30,18 +30,28 @@ function delta(cur: number | null | undefined, prev: number | null | undefined):
   if (d < 0) return `<span style="color:${DOWN};font-weight:600">&#9660; ${d}</span>`
   return `<span style="color:${MUTED}">no change</span>`
 }
+function movementLine(cur: number | null, prev: number | null, prevLabel: string): string {
+  if (cur === null || prev === null) return `<span style="color:${MUTED}">First tracked month &mdash; this is your baseline.</span>`
+  const d = cur - prev
+  if (d > 0) return `<span style="color:${UP};font-weight:600">Up ${d} point${d === 1 ? '' : 's'}</span> from ${prevLabel}.`
+  if (d < 0) return `<span style="color:${DOWN};font-weight:600">Down ${-d} point${d === -1 ? '' : 's'}</span> from ${prevLabel}.`
+  return `Unchanged from ${prevLabel}.`
+}
 function sectionWrap(title: string, inner: string): string {
   return `<tr><td style="padding:24px 32px;border-bottom:1px solid ${LINE};">
     <div style="font-family:Georgia,serif;color:${GOLD};font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;">${title}</div>
     ${inner}
   </td></tr>`
 }
+function th(label: string, align = 'left'): string {
+  return `<td align="${align}" style="font-family:Georgia,serif;color:${MUTED};font-size:11px;text-transform:uppercase;letter-spacing:1px;padding:0 8px 6px;">${label}</td>`
+}
 
 function header(name: string, monthLabel: string): string {
   return `<tr><td style="background:${TEXT};padding:28px 32px;">
     <div style="font-family:Georgia,serif;color:${GOLD};font-size:12px;letter-spacing:2px;text-transform:uppercase;">SwissNet Hotels &middot; Monthly Report</div>
     <div style="font-family:Georgia,serif;color:#ffffff;font-size:26px;margin-top:8px;">${name}</div>
-    <div style="font-family:Georgia,serif;color:#c9bda8;font-size:14px;margin-top:4px;">AI Visibility Summary &middot; ${monthLabel}</div>
+    <div style="font-family:Georgia,serif;color:#c9bda8;font-size:14px;margin-top:4px;">How you showed up in AI assistants during ${monthLabel}</div>
   </td></tr>`
 }
 
@@ -54,39 +64,22 @@ function visibilitySection(d: any, monthLabel: string, prevLabel: string): strin
     ['Perplexity', t.perplexity ?? null, l?.perplexity ?? null],
     ['Google AI', t.googleAi ?? null, l?.googleAi ?? null],
   ]
-  const pending = rows.filter(([, cur, prev]) => cur === null && prev !== null).map(r => r[0])
-
-  let movement: string
-  if (baseline || !l) {
-    movement = `<span style="color:${MUTED}">First tracked month &mdash; this is your baseline.</span>`
-  } else if (pending.length) {
-    const scored = rows.filter(([, cur, prev]) => cur !== null && prev !== null)
-    const parts = scored.map(([n, cur, prev]) => `${n} ${delta(cur, prev)}`).join(' &middot; ')
-    movement = `${parts}${parts ? ' &middot; ' : ''}<span style="color:${MUTED}">${pending.join(' &amp; ')} still scoring for ${monthLabel}</span>`
-  } else {
-    movement = `Overall ${delta(t.overall, l.overall)} vs ${prevLabel}`
-  }
-
   const bodyRows = rows.map(([name, cur, prev]) => `<tr>
-    <td style="padding:10px 0;border-bottom:1px solid ${LINE};font-family:Georgia,serif;color:${TEXT};font-size:14px;">${name}</td>
-    <td align="center" style="padding:10px 0;border-bottom:1px solid ${LINE};font-family:Georgia,serif;color:${MUTED};font-size:14px;">${prev ?? '&mdash;'}</td>
-    <td align="center" style="padding:10px 0;border-bottom:1px solid ${LINE};font-family:Georgia,serif;color:${TEXT};font-size:15px;font-weight:600;">${cur ?? '&mdash;'}</td>
-    <td align="right" style="padding:10px 0;border-bottom:1px solid ${LINE};font-family:Georgia,serif;font-size:13px;">${delta(cur, prev)}</td>
+    <td style="padding:10px 8px;border-bottom:1px solid ${LINE};font-family:Georgia,serif;color:${TEXT};font-size:14px;">${name}</td>
+    <td align="center" style="padding:10px 8px;border-bottom:1px solid ${LINE};font-family:Georgia,serif;color:${MUTED};font-size:14px;">${prev ?? '&mdash;'}</td>
+    <td align="center" style="padding:10px 8px;border-bottom:1px solid ${LINE};font-family:Georgia,serif;color:${TEXT};font-size:15px;font-weight:600;">${cur ?? '&mdash;'}</td>
+    <td align="right" style="padding:10px 8px;border-bottom:1px solid ${LINE};font-family:Georgia,serif;font-size:13px;">${delta(cur, prev)}</td>
   </tr>`).join('')
 
-  return sectionWrap('01 &middot; AI Visibility Score', `
+  return sectionWrap('01 &middot; Your AI Visibility Score', `
     <div style="padding-bottom:14px;">
-      <span style="font-family:Georgia,serif;font-size:44px;color:${GOLD};">${t.overall ?? '&mdash;'}</span>
+      <span style="font-family:Georgia,serif;font-size:46px;color:${GOLD};">${t.overall ?? '&mdash;'}</span>
       <span style="font-family:Georgia,serif;font-size:15px;color:${MUTED};"> / 100 overall</span>
-      <div style="font-family:Georgia,serif;font-size:13px;margin-top:6px;">${movement}</div>
+      <div style="font-family:Georgia,serif;font-size:14px;margin-top:6px;color:${TEXT};">${baseline || !l ? movementLine(null, null, prevLabel) : movementLine(t.overall ?? null, l.overall ?? null, prevLabel)}</div>
     </div>
+    <p style="font-family:Georgia,serif;color:${MUTED};font-size:13px;margin:0 0 10px;">This is how often you appeared when travellers asked each AI assistant about hotels in your area.</p>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-      <tr>
-        <td style="font-family:Georgia,serif;color:${MUTED};font-size:11px;text-transform:uppercase;letter-spacing:1px;padding-bottom:6px;">Platform</td>
-        <td align="center" style="font-family:Georgia,serif;color:${MUTED};font-size:11px;text-transform:uppercase;letter-spacing:1px;padding-bottom:6px;">${prevLabel}</td>
-        <td align="center" style="font-family:Georgia,serif;color:${MUTED};font-size:11px;text-transform:uppercase;letter-spacing:1px;padding-bottom:6px;">${monthLabel}</td>
-        <td align="right" style="font-family:Georgia,serif;color:${MUTED};font-size:11px;text-transform:uppercase;letter-spacing:1px;padding-bottom:6px;">Change</td>
-      </tr>
+      <tr>${th('Assistant')}${th(prevLabel, 'center')}${th(monthLabel, 'center')}${th('Change', 'right')}</tr>
       ${bodyRows}
     </table>`)
 }
@@ -94,9 +87,12 @@ function visibilitySection(d: any, monthLabel: string, prevLabel: string): strin
 function competitorSection(d: any, monthLabel: string): string {
   const lb = d.competitors || []
   if (!lb.length) {
-    return sectionWrap('02 &middot; Competitor Comparison', `<p style="font-family:Georgia,serif;color:${MUTED};font-size:14px;margin:0;">No competitor visibility recorded for ${monthLabel} yet &mdash; populates once the month's cross-platform scoring runs.</p>`)
+    return sectionWrap('02 &middot; How You Rank', `<p style="font-family:Georgia,serif;color:${MUTED};font-size:14px;margin:0;">No competitor visibility recorded for ${monthLabel} yet.</p>`)
   }
-  const youIn = lb.some((c: any) => c.isYou)
+  const you = lb.find((c: any) => c.isYou)
+  const headline = you
+    ? `You rank <span style="color:${GOLD};font-weight:700;">#${you.rank}</span> of ${lb.length} hotels in your market this month.`
+    : `Your ${monthLabel} ranking is still being computed.`
   const rows = lb.map((c: any) => {
     const bg = c.isYou ? BG : 'transparent'
     const weight = c.isYou ? '700' : '400'
@@ -107,42 +103,49 @@ function competitorSection(d: any, monthLabel: string): string {
       <td align="right" style="padding:9px 8px;font-family:Georgia,serif;color:${TEXT};font-size:14px;font-weight:${weight};">${c.score}</td>
     </tr>`
   }).join('')
-  const note = youIn ? '' : `<p style="font-family:Georgia,serif;color:${MUTED};font-size:13px;margin:12px 0 0;">Your ${monthLabel} overview score is still being computed &mdash; you'll appear here once ChatGPT &amp; Perplexity score this month.</p>`
-  return sectionWrap('02 &middot; Competitor Comparison', `
+  return sectionWrap('02 &middot; How You Rank', `
+    <p style="font-family:Georgia,serif;color:${TEXT};font-size:15px;margin:0 0 12px;">${headline}</p>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-      <tr>
-        <td style="font-family:Georgia,serif;color:${MUTED};font-size:11px;text-transform:uppercase;letter-spacing:1px;padding:0 8px 6px;">#</td>
-        <td style="font-family:Georgia,serif;color:${MUTED};font-size:11px;text-transform:uppercase;letter-spacing:1px;padding:0 8px 6px;">Hotel</td>
-        <td align="right" style="font-family:Georgia,serif;color:${MUTED};font-size:11px;text-transform:uppercase;letter-spacing:1px;padding:0 8px 6px;">Score</td>
-      </tr>
+      <tr>${th('#')}${th('Hotel')}${th('Score', 'right')}</tr>
       ${rows}
-    </table>${note}`)
+    </table>
+    <p style="font-family:Georgia,serif;color:${MUTED};font-size:12px;margin:12px 0 0;">Ranking uses ChatGPT and Perplexity, where every hotel in your market is tracked equally. Google AI appears in your own trend above.</p>`)
 }
 
 function categorySection(d: any): string {
-  const weak = d.categories?.weakest || []
-  if (!weak.length) {
-    return sectionWrap('03 &middot; Category Performance', `<p style="font-family:Georgia,serif;color:${MUTED};font-size:14px;margin:0;">Category-level scores aren't available for ${fmtMonth(d.month)} yet.</p>`)
+  const scores = d.categories?.scores || {}
+  const ranks = d.categories?.ranks || {}
+  const list = Object.keys(scores)
+    .map(cat => ({ cat, score: scores[cat], rank: ranks[cat]?.rank, total: ranks[cat]?.total }))
+    .sort((a, b) => b.score - a.score)
+  if (!list.length) {
+    return sectionWrap('03 &middot; Category Performance', `<p style="font-family:Georgia,serif;color:${MUTED};font-size:14px;margin:0;">Category scores aren't available for ${fmtMonth(d.month)} yet.</p>`)
   }
-  const items = weak.map((w: any) => `<tr>
-    <td style="padding:10px 0;border-bottom:1px solid ${LINE};font-family:Georgia,serif;color:${TEXT};font-size:14px;text-transform:capitalize;">${esc(w.category)}</td>
-    <td align="center" style="padding:10px 0;border-bottom:1px solid ${LINE};font-family:Georgia,serif;color:${TEXT};font-size:14px;">${w.score}/100</td>
-    <td align="center" style="padding:10px 0;border-bottom:1px solid ${LINE};font-family:Georgia,serif;color:${MUTED};font-size:13px;">#${w.rank} of ${w.total}</td>
-    <td align="right" style="padding:10px 0;border-bottom:1px solid ${LINE};font-family:Georgia,serif;color:${MUTED};font-size:13px;">behind ${esc(w.ahead || '&mdash;')}</td>
-  </tr>`).join('')
-  return sectionWrap('03 &middot; Weakest Categories', `
-    <p style="font-family:Georgia,serif;color:${MUTED};font-size:13px;margin:0 0 12px;">Where you're losing the most ground to competitors &mdash; these drive this month's focus.</p>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${items}</table>`)
+  const best = list[0]?.cat, worst = list[list.length - 1]?.cat
+  const rows = list.map(x => {
+    const tag = x.cat === best ? ` <span style="color:${UP};font-size:11px;">strongest</span>` : x.cat === worst ? ` <span style="color:${DOWN};font-size:11px;">focus</span>` : ''
+    return `<tr>
+      <td style="padding:9px 8px;border-bottom:1px solid ${LINE};font-family:Georgia,serif;color:${TEXT};font-size:14px;text-transform:capitalize;">${esc(x.cat)}${tag}</td>
+      <td align="center" style="padding:9px 8px;border-bottom:1px solid ${LINE};font-family:Georgia,serif;color:${TEXT};font-size:14px;">${x.score}/100</td>
+      <td align="right" style="padding:9px 8px;border-bottom:1px solid ${LINE};font-family:Georgia,serif;color:${MUTED};font-size:13px;">${x.rank ? `#${x.rank} of ${x.total}` : '&mdash;'}</td>
+    </tr>`
+  }).join('')
+  return sectionWrap('03 &middot; Category Performance', `
+    <p style="font-family:Georgia,serif;color:${MUTED};font-size:13px;margin:0 0 12px;">Where you're winning and where to push, by travel intent.</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>${th('Category')}${th('Score', 'center')}${th('Rank', 'right')}</tr>
+      ${rows}
+    </table>`)
 }
 
 function websiteSection(d: any, prevLabel: string): string {
   const a = d.websiteAudit
   if (!a) {
-    return sectionWrap('04 &middot; Website Analysis', `<p style="font-family:Georgia,serif;color:${MUTED};font-size:14px;margin:0;">The AI Advisor website audit hasn't run for this hotel yet &mdash; this section populates after the first audit.</p>`)
+    return sectionWrap('04 &middot; Website Analysis', `<p style="font-family:Georgia,serif;color:${MUTED};font-size:14px;margin:0;">The AI Advisor website audit hasn't run for this hotel yet.</p>`)
   }
   const deltaLine = a.baseline ? `<span style="color:${MUTED}">baseline audit</span>` : `${delta(a.score, a.priorScore)} vs ${prevLabel}`
   const findings = (a.failedFindings || []).slice(0, 5).map((f: any) => `<tr>
-    <td valign="top" style="padding:8px 0;font-family:Georgia,serif;color:${f.priority === 'High' ? DOWN : TEXT};font-size:12px;font-weight:600;width:70px;">${esc(f.priority || '')}</td>
+    <td valign="top" style="padding:8px 8px 8px 0;font-family:Georgia,serif;color:${f.priority === 'High' ? DOWN : TEXT};font-size:12px;font-weight:600;width:64px;">${esc(f.priority || '')}</td>
     <td style="padding:8px 0;font-family:Georgia,serif;color:${TEXT};font-size:13px;">${esc(f.label)}${f.detail ? `<br><span style="color:${MUTED};font-size:12px;">${esc(f.detail)}</span>` : ''}</td>
   </tr>`).join('')
   const findingsBlock = findings
@@ -159,14 +162,14 @@ function focusSection(d: any): string {
   const weak = d.categories?.weakest || []
   const missed = d.recommendationInputs?.missed || []
   if (!weak.length && !missed.length) {
-    return sectionWrap('05 &middot; Recommendations', `<p style="font-family:Georgia,serif;color:${MUTED};font-size:14px;margin:0;">Detailed recommendations generate once the AI Advisor runs for this hotel.</p>`)
+    return sectionWrap('05 &middot; This Month&rsquo;s Focus', `<p style="font-family:Georgia,serif;color:${MUTED};font-size:14px;margin:0;">Detailed recommendations generate once the AI Advisor runs for this hotel.</p>`)
   }
   const focusList = weak.map((w: any) => `<li style="margin-bottom:6px;">Lift <b style="text-transform:capitalize;">${esc(w.category)}</b> (currently ${w.score}/100, #${w.rank} of ${w.total})</li>`).join('')
   const missedList = missed.slice(0, 8).map((q: any) => `<li style="margin-bottom:4px;color:${MUTED};">${esc(q)}</li>`).join('')
   return sectionWrap('05 &middot; This Month&rsquo;s Focus', `
     <p style="font-family:Georgia,serif;color:${TEXT};font-size:13px;margin:0 0 10px;">Priority areas from your live data:</p>
     <ul style="font-family:Georgia,serif;color:${TEXT};font-size:14px;margin:0 0 16px;padding-left:20px;">${focusList}</ul>
-    ${missed.length ? `<p style="font-family:Georgia,serif;color:${TEXT};font-size:13px;margin:0 0 8px;">Queries you're not appearing in yet${missed.length > 8 ? ` (top 8 of ${missed.length})` : ''}:</p>
+    ${missed.length ? `<p style="font-family:Georgia,serif;color:${TEXT};font-size:13px;margin:0 0 8px;">Searches you're not appearing in yet${missed.length > 8 ? ` (top 8 of ${missed.length})` : ''}:</p>
     <ul style="font-family:Georgia,serif;font-size:13px;margin:0;padding-left:20px;">${missedList}</ul>` : ''}
     <p style="font-family:Georgia,serif;color:${MUTED};font-size:12px;margin:16px 0 0;font-style:italic;">Specific FAQs and page-level fixes are generated by the AI Advisor and appear here once it runs for this hotel.</p>`)
 }
@@ -175,7 +178,7 @@ function footer(monthLabel: string): string {
   return `<tr><td style="padding:20px 32px;background:${BG};">
     <div style="font-family:Georgia,serif;color:${MUTED};font-size:11px;line-height:1.6;">
       Automated monthly report &middot; SwissNet Hotels &middot; ${monthLabel}<br>
-      Figures are drawn directly from tracked AI-assistant responses. Sections marked pending or baseline have no data yet and show nothing invented.
+      Every figure is drawn directly from tracked AI-assistant responses. Nothing on this page is estimated or invented.
     </div>
   </td></tr>`
 }

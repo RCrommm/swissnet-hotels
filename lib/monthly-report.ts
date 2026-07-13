@@ -20,9 +20,12 @@ function shiftMonth(y: number, mo: number, delta: number) {
   const idx = y * 12 + (mo - 1) + delta
   return { y: Math.floor(idx / 12), mo: (idx % 12) + 1 }
 }
-function currentMonth(): string {
+function lastCompleteMonth(): string {
+  // month-end report covers the month that just ended → default target = previous calendar month
   const d = new Date()
-  return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}`
+  const first = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1))
+  first.setUTCMonth(first.getUTCMonth() - 1)
+  return `${first.getUTCFullYear()}-${pad2(first.getUTCMonth() + 1)}`
 }
 
 function adjust(platform: string, score: number) {
@@ -41,7 +44,7 @@ async function resolveHotel(sb: any, hotelId: string) {
 }
 
 export async function gatherMonthlyReportData(hotelId: string, month?: string) {
-  const targetMonth = month && ymParts(month) ? month : currentMonth()
+  const targetMonth = month && ymParts(month) ? month : lastCompleteMonth()
   const p = ymParts(targetMonth)!
   const targetStart = firstOf(p.y, p.mo)
   const nx = shiftMonth(p.y, p.mo, 1); const nextStart = firstOf(nx.y, nx.mo)
