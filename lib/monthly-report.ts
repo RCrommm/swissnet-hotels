@@ -136,11 +136,19 @@ export async function gatherMonthlyReportData(hotelId: string, month?: string) {
   const d = (a: number | null, b: number | null) => (a !== null && b !== null) ? a - b : null
   const visibilityDelta = hasLast ? { chatgpt: d(thisMonth.chatgpt, lastMonth.chatgpt), perplexity: d(thisMonth.perplexity, lastMonth.perplexity), googleAi: d(thisMonth.googleAi, lastMonth.googleAi), overall: d(thisMonth.overall, lastMonth.overall) } : null
 
-  // ── 2) competitor comparison — overview leaderboard for the target month ──
+  // ── 2) competitor comparison — overview leaderboard, MONTHLY AVERAGE basis ──
+  // Same per-platform month-average math as section 1, locked to the platforms every
+  // hotel is tracked on for overview (chatgpt + perplexity). Google/Gemini is not
+  // tracked for competitors, so it stays in the hotel's own trend, never the ranking.
+  const RANK_PLATFORMS = ['chatgpt', 'perplexity']
   const overviewThis = (comp || []).filter((r: any) => r.category === null && inMonth(dateOf(r), targetStart, nextStart))
+  const overviewMonthAvg = (rows: any[]) => {
+    const perPlat = RANK_PLATFORMS.map(p => platMonthAvg(rows, p)).filter((x): x is number => x !== null)
+    return perPlat.length ? Math.round(perPlat.reduce((a, b) => a + b, 0) / perPlat.length) : null
+  }
   const compNames = [...new Set(overviewThis.map((r: any) => r.competitor_name))]
   const leaderboard = compNames
-    .map((n: any) => ({ name: n, score: latestScore(overviewThis.filter((r: any) => r.competitor_name === n)) }))
+    .map((n: any) => ({ name: n, score: overviewMonthAvg(overviewThis.filter((r: any) => r.competitor_name === n)) }))
     .filter(x => x.score !== null)
     .sort((a: any, b: any) => (b.score as number) - (a.score as number))
     .map((x, i) => ({ rank: i + 1, name: x.name, score: x.score as number, isYou: x.name === hotel.name }))
