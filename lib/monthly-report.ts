@@ -137,13 +137,15 @@ export async function gatherMonthlyReportData(hotelId: string, month?: string) {
   const visibilityDelta = hasLast ? { chatgpt: d(thisMonth.chatgpt, lastMonth.chatgpt), perplexity: d(thisMonth.perplexity, lastMonth.perplexity), googleAi: d(thisMonth.googleAi, lastMonth.googleAi), overall: d(thisMonth.overall, lastMonth.overall) } : null
 
   // ── 2) competitor comparison — overview leaderboard, MONTHLY AVERAGE basis ──
-  // Same per-platform month-average math as section 1, locked to the platforms every
-  // hotel is tracked on for overview (chatgpt + perplexity). Google/Gemini is not
-  // tracked for competitors, so it stays in the hotel's own trend, never the ranking.
-  const RANK_PLATFORMS = ['chatgpt', 'perplexity']
+  // Ranking basis is DYNAMIC per month: use whatever platforms actually wrote overview
+  // rows that month, so every hotel is compared on the same set. No hardcoding — a
+  // platform only enters the ranking once it has real data for the month (e.g. Gemini
+  // has no overview rows before 2026-07-03, so June auto-ranks on chatgpt+perplexity,
+  // July+ on all three). Never invents a platform's score for a month it didn't run.
   const overviewThis = (comp || []).filter((r: any) => r.category === null && inMonth(dateOf(r), targetStart, nextStart))
+  const rankPlatforms = [...new Set(overviewThis.map((r: any) => r.platform))].sort()
   const overviewMonthAvg = (rows: any[]) => {
-    const perPlat = RANK_PLATFORMS.map(p => platMonthAvg(rows, p)).filter((x): x is number => x !== null)
+    const perPlat = rankPlatforms.map(p => platMonthAvg(rows, p)).filter((x): x is number => x !== null)
     return perPlat.length ? Math.round(perPlat.reduce((a, b) => a + b, 0) / perPlat.length) : null
   }
   const compNames = [...new Set(overviewThis.map((r: any) => r.competitor_name))]
@@ -196,6 +198,7 @@ export async function gatherMonthlyReportData(hotelId: string, month?: string) {
     visibility: { thisMonth, lastMonth: hasLast ? lastMonth : null, delta: visibilityDelta, baseline: !hasLast },
 
     competitors: leaderboard,
+    rankBasis: rankPlatforms,
     categories: { scores: categoryScores, ranks: categoryRanks, weakest: weakestCategories },
 
     // 3) citations — STUB: needs the Citation Sources table (name + columns). Not fabricating a query.

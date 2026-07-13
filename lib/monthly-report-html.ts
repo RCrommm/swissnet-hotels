@@ -13,6 +13,14 @@ const LINE = '#e7dfd2'
 const UP = '#2e7d32'
 const DOWN = '#c0392b'
 
+function platformLabel(basis: string[] | undefined): string {
+  const names: Record<string, string> = { chatgpt: 'ChatGPT', perplexity: 'Perplexity', gemini: 'Google AI', google_ai: 'Google AI' }
+  const list = (basis || []).map(p => names[p] || p)
+  if (!list.length) return 'the tracked assistants'
+  if (list.length === 1) return list[0]
+  return `${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`
+}
+
 function esc(s: any): string {
   return String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' } as Record<string, string>)[c])
 }
@@ -109,7 +117,7 @@ function competitorSection(d: any, monthLabel: string): string {
       <tr>${th('#')}${th('Hotel')}${th('Score', 'right')}</tr>
       ${rows}
     </table>
-    <p style="font-family:Georgia,serif;color:${MUTED};font-size:12px;margin:12px 0 0;">Ranking uses ChatGPT and Perplexity, where every hotel in your market is tracked equally. Google AI appears in your own trend above.</p>`)
+    <p style="font-family:Georgia,serif;color:${MUTED};font-size:12px;margin:12px 0 0;">Ranking uses ${platformLabel(d.rankBasis)}, where every hotel in your market is tracked equally on the same assistants for this month.</p>`)
 }
 
 function categorySection(d: any): string {
