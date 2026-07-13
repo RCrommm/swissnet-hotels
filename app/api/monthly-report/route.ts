@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { gatherMonthlyReportData } from '@/lib/monthly-report'
 import { renderMonthlyReportHtml } from '@/lib/monthly-report-html'
+import { gatherMonthlyReportData, debugCompVisibility } from '@/lib/monthly-report'
 
 const ADMIN_PASSWORD = process.env.ADMIN_REPORT_PASSWORD || 'RCrom2004Romeo'
 export const maxDuration = 60
@@ -11,6 +11,7 @@ export async function POST(req: Request) {
     const { hotelId, month, password, format } = body
     if (password !== ADMIN_PASSWORD) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     if (!hotelId) return NextResponse.json({ error: 'Missing hotelId' }, { status: 400 })
+    if (format === 'debug') return NextResponse.json(await debugCompVisibility(hotelId))
     const data = await gatherMonthlyReportData(hotelId, month)
     if (format === 'html') {
       return new NextResponse(renderMonthlyReportHtml(data), { headers: { 'Content-Type': 'text/html; charset=utf-8' } })

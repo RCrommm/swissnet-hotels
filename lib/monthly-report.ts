@@ -203,3 +203,47 @@ export async function gatherMonthlyReportData(hotelId: string, month?: string) {
     performance: { thisMonth: perfThis, lastMonth: perfPrev, baseline: !perfPrev },
   }
 }
+export async function debugCompVisibility(hotelIdArg: string) {
+  const sb = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+  let hotel: any = null
+  const exact = await sb.from('hotels').select('id,name,region').eq('id', hotelIdArg).maybeSingle()
+  if (exact.data) hotel = exact.data
+  else {
+    const { data: all } = await sb.from('hotels').select('id,name,region')
+    hotel = (all || []).find((h: any) => String(h.id).startsWith(hotelIdArg)) || null
+  }
+  if (!hotel) throw new Error('Hotel not found')
+  const region = hotel.region || 'Geneva'
+
+  const since = new Date(Date.now() - 75 * 864e5).toISOString().split('T')[0]
+  const { data: comp } = await sb.from('competitor_visibility')
+    .select('competitor_name, category, platform, visibility_score, run_date, checked_at')
+    .eq('region', region).gte('run_date', since).limit(8000)
+
+  const dateOf = (r: any) => r.run_date || (r.checked_at ? r.checked_at.split('T')[0] : null)
+  const groups: Record<string, { rows: number; hotels: Set<string>; includesYou: boolean; scoreSum: number }> = {}
+  for (const r of comp || []) {
+    const d = dateOf(r); if (!d) continue
+    const kind = r.category === null ? 'overview' : `cat:${r.category}`
+    const key = `${r.platform} | ${d.slice(0, 7)} | ${kind}`
+    const g = (groups[key] ||= { rows: 0, hotels: new Set(), includesYou: false, scoreSum: 0 })
+    g.rows++; g.hotels.add(r.competitor_name); g.scoreSum += r.visibility_score || 0
+    if (r.competitor_name === hotel.name) g.includesYou = true
+  }
+  const competitorVisibility = Object.entries(groups)
+    .map(([key, v]) => ({ key, rows: v.rows, hotels: v.hotels.size, includesYou: v.includesYou, avg: v.rows ? Math.round(v.scoreSum / v.rows) : null }))
+    .sort((a, b) => (a.key < b.key ? -1 : 1))
+
+  const { data: g } = await sb.from('ai_visibility_scores')
+    .select('appeared, checked_at').eq('hotel_id', hotel.id).eq('platform', 'google_ai')
+  const googleByMonth: Record<string, { rows: number; appeared: number }> = {}
+  for (const r of g || []) {
+    const m = r.checked_at?.slice(0, 7); if (!m) continue
+    const x = (googleByMonth[m] ||= { rows: 0, appeared: 0 }); x.rows++; if (r.appeared) x.appeared++
+  }
+
+  return { hotel: { name: hotel.name, region, id: hotel.id }, competitorVisibility, googleByMonth }
+}
