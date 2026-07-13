@@ -30,6 +30,16 @@ function adjust(platform: string, score: number) {
 }
 const inMonth = (d: string | undefined, s: string, e: string) => !!d && d >= s && d < e
 
+async function resolveHotel(sb: any, hotelId: string) {
+  // exact full-UUID match first; on invalid-uuid or no row, fall back to prefix (your shorthand)
+  const exact = await sb.from('hotels').select('*').eq('id', hotelId).maybeSingle()
+  if (exact.data) return exact.data
+  const { data: all } = await sb.from('hotels').select('*')
+  const matches = (all || []).filter((h: any) => String(h.id).startsWith(hotelId))
+  if (matches.length > 1) throw new Error(`Ambiguous hotelId "${hotelId}" — ${matches.length} matches`)
+  return matches[0] || null
+}
+
 export async function gatherMonthlyReportData(hotelId: string, month?: string) {
   const targetMonth = month && ymParts(month) ? month : currentMonth()
   const p = ymParts(targetMonth)!
@@ -43,7 +53,7 @@ export async function gatherMonthlyReportData(hotelId: string, month?: string) {
     process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 
-  const { data: hotel } = await sb.from('hotels').select('*').eq('id', hotelId).single()
+  const hotel = await resolveHotel(sb, hotelId)
   if (!hotel) throw new Error('Hotel not found')
   const region = hotel.region || 'Geneva'
 
