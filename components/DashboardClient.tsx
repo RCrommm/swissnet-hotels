@@ -5276,6 +5276,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
     { heading: 'AI visibility', items: [
       { id: 'ai-visibility', label: 'AI Visibility' },
       { id: 'competitors', label: 'Competitors' },
+      { id: 'citations', label: 'Citation Sources', minTier: 2 },
     ] },
     { heading: 'Your official website', items: [
       { id: 'website', label: 'Official Website', minTier: 2, maxTier: 2 },
@@ -5286,7 +5287,6 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
       { id: 'performance', label: 'Performance' },
       { id: 'schema', label: 'SwissNet Profile', minTier: 2 },
       { id: 'optimise', label: 'Optimise', minTier: 2 },
-      { id: 'citations', label: 'Citation Sources', minTier: 2 },
     ] },
     { heading: 'Account', items: [
       { id: 'reports', label: 'Monthly Reports', minTier: 3 },
