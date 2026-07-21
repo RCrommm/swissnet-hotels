@@ -4572,7 +4572,7 @@ function KnowledgeBlueprintTab({ hotel }: any) {
                   style={{ display: 'block', textAlign: 'center', fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 700, color: '#1a0e06', background: GOLD, border: 'none', borderRadius: 8, padding: '0.7rem 1.5rem', textDecoration: 'none', whiteSpace: 'nowrap' }}>
                   Download the template (PDF)
                 </a>
-                <a href="https://www.comohotels.com/singapore/como-metropolitan-singapore/hotel-information" target="_blank" rel="noopener noreferrer"
+                <a href="https://www.comohotels.com/singapore/como-metropolitan-singapore/hotel-guide" target="_blank" rel="noopener noreferrer"
                   style={{ display: 'block', textAlign: 'center', fontFamily: 'Montserrat, sans-serif', fontSize: '0.68rem', fontWeight: 600, color: 'rgba(255,255,255,0.85)', background: 'transparent', border: '1px solid rgba(201,169,76,0.4)', borderRadius: 8, padding: '0.7rem 1.5rem', textDecoration: 'none', whiteSpace: 'nowrap' }}>
                   View it live on their site →
                 </a>
