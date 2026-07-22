@@ -2956,7 +2956,15 @@ function PriorityCard({ m, i, onOpen }: any) {
   const topic = rec.targeting?.affected_entity || m.topic || ''
   const topicLabel = (topic || '').toString().toUpperCase() === '__SITE__' ? 'FOUNDATION' : (topic || '').toString().toUpperCase()
   const POSTURE_LEAD: Record<string, string> = { Commit: 'Protect your strongest advantage', 'Fix-foundation': 'Remove operational AI friction', Confirm: 'Confirm this offering', Defer: 'Hold for later' }
-  const lead = m.posture === 'Convert' ? ('Unlock your ' + topic.toLowerCase() + ' opportunity') : m.posture === 'Strengthen' ? ('Deepen your ' + topic.toLowerCase()) : m.posture === 'Commit' ? ('Protect your ' + topic.toLowerCase()) : (POSTURE_LEAD[m.posture] || topic)
+  const hasPage = !!(rec.targeting?.canonical_page)
+  const t = topic.toLowerCase()
+  const lead = !hasPage
+    ? ('Create a ' + t + ' page')
+    : m.posture === 'Convert' ? ('Improve your ' + t + ' page')
+    : m.posture === 'Strengthen' ? ('Improve your ' + t + ' page')
+    : m.posture === 'Commit' ? ('Strengthen your ' + t + ' page')
+    : m.posture === 'Fix-foundation' ? 'Fix your site foundations'
+    : ('Improve your ' + t + ' page')
 
   const statusTag = (() => {
     const h = rec.history
@@ -3022,7 +3030,15 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
   const topicLabel = (topic || '').toString().toUpperCase() === '__SITE__' ? 'FOUNDATION' : (topic || '').toString().toUpperCase()
   const topicTitle = topicLabel.charAt(0) + topicLabel.slice(1).toLowerCase()
   const POSTURE_LEAD: Record<string, string> = { Commit: 'Protect your strongest advantage', 'Fix-foundation': 'Remove operational AI friction', Confirm: 'Confirm this offering', Defer: 'Hold for later' }
-  const lead = m.posture === 'Convert' ? ('Unlock your ' + topic.toLowerCase() + ' opportunity') : m.posture === 'Strengthen' ? ('Deepen your ' + topic.toLowerCase()) : m.posture === 'Commit' ? ('Protect your ' + topic.toLowerCase()) : (POSTURE_LEAD[m.posture] || topic)
+  const hasPage = !!(rec.targeting?.canonical_page)
+  const t = topic.toLowerCase()
+  const lead = !hasPage
+    ? ('Create a ' + t + ' page')
+    : m.posture === 'Convert' ? ('Improve your ' + t + ' page')
+    : m.posture === 'Strengthen' ? ('Improve your ' + t + ' page')
+    : m.posture === 'Commit' ? ('Strengthen your ' + t + ' page')
+    : m.posture === 'Fix-foundation' ? 'Fix your site foundations'
+    : ('Improve your ' + t + ' page')
   const proof = c.proof || {}
 
   const hasWebsite = Array.isArray(proof.quotes) && proof.quotes.length > 0
@@ -4056,6 +4072,7 @@ function KnowledgeIntegrityCard({ hotelId }: any) {
 
 function AdvisorV2Body({ adv, memory, hotel, savedAt }: any) {
   const [openCase, setOpenCase] = useState<number | null>(null)
+  const [showAllCases, setShowAllCases] = useState(false)
   const [openOpp, setOpenOpp] = useState<number | null>(null)
   const [openFoundation, setOpenFoundation] = useState(false)
   const [showOpps, setShowOpps] = useState(false)
@@ -4100,7 +4117,7 @@ function AdvisorV2Body({ adv, memory, hotel, savedAt }: any) {
         <div>
           <AdvSectionLabel title="Strategic Priorities" />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-            {cases.map((m: any, i: number) => (
+            {(showAllCases ? cases : cases.slice(0, 4)).map((m: any, i: number) => (
               <div key={i}>
                 <PriorityCard m={m} i={i} onOpen={() => setOpenCase(i)} />
                 {(() => { const c = counts(m); return c ? (
@@ -4112,6 +4129,12 @@ function AdvisorV2Body({ adv, memory, hotel, savedAt }: any) {
                 ) : null })()}
               </div>
             ))}
+            {cases.length > 4 && (
+              <button onClick={() => setShowAllCases(!showAllCases)} style={{ width: '100%', textAlign: 'left', cursor: 'pointer', border: '1px solid rgba(42,26,14,0.08)', background: WHITE, borderRadius: 12, padding: '0.7rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: TEXT }}>{showAllCases ? 'Show fewer' : `See ${cases.length - 4} more recommendations`}</span>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.9rem', color: TEXT_MUTED }}>{showAllCases ? '⌃' : '›'}</span>
+              </button>
+            )}
           </div>
 
           {/* ADDITIONAL OPPORTUNITIES — quieter, collapsed by default */}
@@ -4132,7 +4155,15 @@ function AdvisorV2Body({ adv, memory, hotel, savedAt }: any) {
                     const topic = rec.targeting?.affected_entity || m.topic || ''
                     const topicLabel = (topic || '').toString().toUpperCase() === '__SITE__' ? 'FOUNDATION' : (topic || '').toString().toUpperCase()
                     const POSTURE_LEAD: Record<string, string> = { Commit: 'Protect your strongest advantage', 'Fix-foundation': 'Remove operational AI friction', Confirm: 'Confirm this offering', Defer: 'Hold for later' }
-                    const lead = m.posture === 'Convert' ? ('Unlock your ' + topic.toLowerCase() + ' opportunity') : m.posture === 'Strengthen' ? ('Deepen your ' + topic.toLowerCase()) : m.posture === 'Commit' ? ('Protect your ' + topic.toLowerCase()) : (POSTURE_LEAD[m.posture] || topic)
+                    const hasPage = !!(rec.targeting?.canonical_page)
+  const t = topic.toLowerCase()
+  const lead = !hasPage
+    ? ('Create a ' + t + ' page')
+    : m.posture === 'Convert' ? ('Improve your ' + t + ' page')
+    : m.posture === 'Strengthen' ? ('Improve your ' + t + ' page')
+    : m.posture === 'Commit' ? ('Strengthen your ' + t + ' page')
+    : m.posture === 'Fix-foundation' ? 'Fix your site foundations'
+    : ('Improve your ' + t + ' page')
                     const ct = counts(m)
                     return (
                       <button key={i} onClick={() => setOpenOpp(i)} style={{ width: '100%', textAlign: 'left', cursor: 'pointer', border: '1px solid rgba(42,26,14,0.08)', background: WHITE, borderRadius: 12, padding: '0.85rem 1rem', display: 'block' }}>
