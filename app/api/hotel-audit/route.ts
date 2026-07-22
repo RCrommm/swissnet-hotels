@@ -250,7 +250,7 @@ const EXP_TO_QCAT: Record<string, string> = {
 }
 const UNIVERSAL_QCATS = ['location', 'accessibility', 'parking', 'pets', 'overall']
 
-async function generateQuestions(ctx: { name: string; city: string; type: string; pages: string[]; amenities: string[]; demand?: any }, openaiKey: string): Promise<any[]> {
+async function generateQuestions(ctx: { name: string; city: string; type: string; pages: string[]; amenities: string[]; demand?: any; regionQueries?: string[] }, openaiKey: string): Promise<any[]> {
   const demand = ctx.demand || null
   // Allowed categories = this hotel's experience categories + universal filters. When there's
   // no confirmed profile, fall back to the original full fixed set (behaviour preserved).
@@ -266,7 +266,10 @@ async function generateQuestions(ctx: { name: string; city: string; type: string
     demandBlock = '\n(No confirmed hotel profile — using generic demand across all standard categories.)\n'
   }
   const intents = intentsFor(categories)
-  const user = `HOTEL: ${ctx.name || '(unknown name)'}\nCITY: ${ctx.city || '(unknown city)'}\nTYPE: ${ctx.type || 'luxury hotel'}\nPAGES FOUND: ${ctx.pages.length ? ctx.pages.join(', ') : '(none detected)'}\nAMENITY SIGNALS: ${ctx.amenities.length ? ctx.amenities.join(', ') : '(none detected)'}\n${demandBlock}\nALLOWED CATEGORIES (use EXACTLY these): ${categories.join(', ')}\n\nFor EACH question you MUST also assign an "intent_id" from the allowed list — pick the ONE that best matches what the question is really asking. The intent_id is the stable identity of the question's purpose; the same underlying need must always get the same intent_id even if you word the question differently. Only use "other" if no listed intent fits. Aim to cover a SPREAD of distinct intents rather than several questions sharing one intent_id.\nALLOWED INTENT IDS: ${intents.join(', ')}`
+  const regionBlock = (ctx.regionQueries && ctx.regionQueries.length)
+    ? `\nREAL AI-SEARCH QUERIES PEOPLE ASK IN THIS REGION (source of truth — your questions MUST cover these themes, collapsing near-duplicates so each theme is asked ONCE):\n${ctx.regionQueries.map((q, i) => `${i + 1}. ${q}`).join('\n')}\nAlso include ~6 practical BOOKING questions (parking/EV, pets, accessibility, airport transfer, direct-booking benefits, cancellation/check-in). Mention each theme once, check it once.\n`
+    : ''
+  const user = `HOTEL: ${ctx.name || '(unknown name)'}\nCITY: ${ctx.city || '(unknown city)'}\nTYPE: ${ctx.type || 'luxury hotel'}\nPAGES FOUND: ${ctx.pages.length ? ctx.pages.join(', ') : '(none detected)'}\nAMENITY SIGNALS: ${ctx.amenities.length ? ctx.amenities.join(', ') : '(none detected)'}\n${demandBlock}${regionBlock}\nALLOWED CATEGORIES (use EXACTLY these): ${categories.join(', ')}\n\nFor EACH question you MUST also assign an "intent_id" from the allowed list — pick the ONE that best matches what the question is really asking. The intent_id is the stable identity of the question's purpose; the same underlying need must always get the same intent_id even if you word the question differently. Only use "other" if no listed intent fits. Aim to cover a SPREAD of distinct intents rather than several questions sharing one intent_id.\nALLOWED INTENT IDS: ${intents.join(', ')}`
   try {
     const res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
@@ -815,14 +818,14 @@ export async function POST(req: Request) {
     const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-    let effCity = city || '', effType = hotelType || '', effName = ''
+    let effCity = city || '', effType = hotelType || '', effName = '', effRegion = ''
     let overrides: Record<string, string> = {}
     let notOffered: string[] = []
     if (hotelId && sbUrl && sbKey) {
       try {
         const sb = createClient(sbUrl, sbKey)
         const { data: h } = await sb.from('hotels').select('name, region, location, category, not_offered').eq('id', hotelId).single()
-        if (h) { effName = effName || h.name || ''; effCity = effCity || h.location || h.region || ''; effType = effType || h.category || ''; if (Array.isArray(h.not_offered)) notOffered = h.not_offered }
+        if (h) { effName = effName || h.name || ''; effCity = effCity || h.location || h.region || ''; effType = effType || h.category || ''; if (Array.isArray(h.not_offered)) notOffered = h.not_offered; effRegion = effRegion || h.region || '' }
         try {
           const { data: ov } = await sb.from('hotel_priority_pages').select('page_key, url').eq('hotel_id', hotelId)
           if (ov) for (const row of ov) if (row.page_key && row.url) overrides[row.page_key] = row.url
@@ -958,7 +961,15 @@ export async function POST(req: Request) {
         priority: it.priority,
       }))
     } else {
-      prompts = await generateQuestions({ name: effName, city: effCity, type: effType, pages: detectedPages, amenities: amenitySignals, demand: demandModel }, openaiKey)
+      let regionQueries: string[] = []
+      if (effRegion && sbUrl && sbKey) {
+        try {
+          const sbRq = createClient(sbUrl, sbKey)
+          const { data: rq } = await sbRq.from('region_queries').select('query').eq('region', effRegion).eq('is_active', true)
+          regionQueries = (rq || []).map((r: any) => r.query).filter(Boolean)
+        } catch {}
+      }
+      prompts = await generateQuestions({ name: effName, city: effCity, type: effType, pages: detectedPages, amenities: amenitySignals, demand: demandModel, regionQueries }, openaiKey)
     }
     if (!prompts.length && sbUrl && sbKey) {
       try {

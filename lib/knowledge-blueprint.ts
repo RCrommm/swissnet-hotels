@@ -283,6 +283,13 @@ function extractUnanswered(auditResult: any): UnansweredQuestion[] {
   for (const r of rows) {
     if (!r || !r.question) continue
     if (r.readiness !== 'NO' && r.readiness !== 'PARTIAL') continue
+    // drop booking-hygiene questions — they're not high-intent AI discovery queries.
+    // Filter on stage when present (some audits set it), else on category (La Réserve-era
+    // rows have no stage), covering parking/pets/accessibility/cancellation either way.
+    if (r.stage === 'booking') continue
+    const _lowIntent = ['parking', 'pets', 'accessibility']
+    if (_lowIntent.includes((r.category || '').toLowerCase())) continue
+    if ((r.category || '').toLowerCase() === 'overall' && /cancellation|check-?in|check-?out/i.test(r.question || '')) continue
     const why = (Array.isArray(r.expected_evidence) && r.expected_evidence.length ? r.expected_evidence : r.reasons) || []
     out.push({
       question: r.question,
