@@ -2957,13 +2957,15 @@ function PriorityCard({ m, i, onOpen }: any) {
   const topicLabel = (topic || '').toString().toUpperCase() === '__SITE__' ? 'FOUNDATION' : (topic || '').toString().toUpperCase()
   const POSTURE_LEAD: Record<string, string> = { Commit: 'Protect your strongest advantage', 'Fix-foundation': 'Remove operational AI friction', Confirm: 'Confirm this offering', Defer: 'Hold for later' }
   const hasPage = !!(rec.targeting?.canonical_page)
+  const isFoundation = topicLabel === 'FOUNDATION'
   const t = topic.toLowerCase()
-  const lead = !hasPage
+  const lead = isFoundation
+    ? 'Fix your site foundations'
+    : !hasPage
     ? ('Create a ' + t + ' page')
     : m.posture === 'Convert' ? ('Improve your ' + t + ' page')
     : m.posture === 'Strengthen' ? ('Improve your ' + t + ' page')
     : m.posture === 'Commit' ? ('Strengthen your ' + t + ' page')
-    : m.posture === 'Fix-foundation' ? 'Fix your site foundations'
     : ('Improve your ' + t + ' page')
 
   const statusTag = (() => {
@@ -3031,13 +3033,15 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
   const topicTitle = topicLabel.charAt(0) + topicLabel.slice(1).toLowerCase()
   const POSTURE_LEAD: Record<string, string> = { Commit: 'Protect your strongest advantage', 'Fix-foundation': 'Remove operational AI friction', Confirm: 'Confirm this offering', Defer: 'Hold for later' }
   const hasPage = !!(rec.targeting?.canonical_page)
+  const isFoundation = topicLabel === 'FOUNDATION'
   const t = topic.toLowerCase()
-  const lead = !hasPage
+  const lead = isFoundation
+    ? 'Fix your site foundations'
+    : !hasPage
     ? ('Create a ' + t + ' page')
     : m.posture === 'Convert' ? ('Improve your ' + t + ' page')
     : m.posture === 'Strengthen' ? ('Improve your ' + t + ' page')
     : m.posture === 'Commit' ? ('Strengthen your ' + t + ' page')
-    : m.posture === 'Fix-foundation' ? 'Fix your site foundations'
     : ('Improve your ' + t + ' page')
   const proof = c.proof || {}
 
@@ -4156,13 +4160,15 @@ function AdvisorV2Body({ adv, memory, hotel, savedAt }: any) {
                     const topicLabel = (topic || '').toString().toUpperCase() === '__SITE__' ? 'FOUNDATION' : (topic || '').toString().toUpperCase()
                     const POSTURE_LEAD: Record<string, string> = { Commit: 'Protect your strongest advantage', 'Fix-foundation': 'Remove operational AI friction', Confirm: 'Confirm this offering', Defer: 'Hold for later' }
                     const hasPage = !!(rec.targeting?.canonical_page)
+  const isFoundation = topicLabel === 'FOUNDATION'
   const t = topic.toLowerCase()
-  const lead = !hasPage
+  const lead = isFoundation
+    ? 'Fix your site foundations'
+    : !hasPage
     ? ('Create a ' + t + ' page')
     : m.posture === 'Convert' ? ('Improve your ' + t + ' page')
     : m.posture === 'Strengthen' ? ('Improve your ' + t + ' page')
     : m.posture === 'Commit' ? ('Strengthen your ' + t + ' page')
-    : m.posture === 'Fix-foundation' ? 'Fix your site foundations'
     : ('Improve your ' + t + ' page')
                     const ct = counts(m)
                     return (
