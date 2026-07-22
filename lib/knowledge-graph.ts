@@ -33,7 +33,7 @@ export interface KnowledgeGraph {
 const TRANSIENT = /(news|careers?|press|thank-you|post-stay|reservation|booking|check-rates|contact|privacy|terms|cookie|sitemap|gift|voucher)/i
 
 const TOPICS: { topic: string; label: string; homeRe: RegExp; catRe: RegExp; importance: 'High'|'Medium'|'Low'; qRe: RegExp }[] = [
-  { topic: 'rooms',    label: 'Rooms & suites',    homeRe: /(accommodation|rooms?|suites?)/i,             catRe: /(rooms?)/i,                 importance: 'High',   qRe: /(rooms?|luxury|overall)/i },
+  { topic: 'rooms',    label: 'Rooms & suites',    homeRe: /(accommodation|rooms?|suites?)/i,             catRe: /(rooms?)/i,                 importance: 'High',   qRe: /(rooms?)/i },
   { topic: 'dining',   label: 'Dining',            homeRe: /(restaurant|dining|bar|brasserie|afternoon)/i, catRe: /(dining|restaurant|bar)/i, importance: 'High',   qRe: /(dining)/i },
   { topic: 'meetings', label: 'Business & meetings', homeRe: /(meeting|event|conference|private-dining|banquet|venue)/i, catRe: /(meeting|business)/i, importance: 'High', qRe: /(business)/i },
   { topic: 'weddings', label: 'Weddings & romance', homeRe: /(wedding|civil|ceremon|romantic)/i,           catRe: /(wedding|romantic)/i,       importance: 'High',   qRe: /(romantic)/i },

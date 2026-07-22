@@ -3225,8 +3225,8 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
 
           {/* WAYS TO GET THERE — evidence-backed options; the hotel chooses */}
           {Array.isArray(c.implementation_options) && c.implementation_options.length > 0 && (
-            <Block label="Ways to get there">
-              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', color: TEXT_MUTED, fontStyle: 'italic', margin: '0 0 0.75rem', lineHeight: 1.5 }}>Any of these can close the gap — choose what fits your site. Your current page structure is fine unless connecting things would genuinely help.</p>
+            <Block label="What to do">
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', color: TEXT_MUTED, fontStyle: 'italic', margin: '0 0 0.75rem', lineHeight: 1.5 }}>Pick whichever fits your site — any one of these closes the gap.</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                 {c.implementation_options.map((o: any, j: number) => (
                   <div key={j} style={{ padding: '0.85rem 1rem', background: BG, border: '1px solid ' + BORDER, borderRadius: 10 }}>
@@ -3298,8 +3298,9 @@ function CaseModal({ m, i, onClose, model, savedAt }: any) {
             </Block>
           ))}
 
-          {/* IMPLEMENTATION — plan, collapsed */}
-          {(detected.length > 0 || outstanding.length > 0) && (
+          {/* IMPLEMENTATION — plan, collapsed. Foundation card only; on topic cards it
+              just re-lists WAYS TO GET THERE and stamps the generic schema step. */}
+          {topicLabel === 'FOUNDATION' && (detected.length > 0 || outstanding.length > 0) && (
             <div style={{ marginTop: '1.6rem', borderTop: '1px solid ' + BORDER, paddingTop: '1.6rem' }}>
               <button onClick={() => setShowImpl(s => !s)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}>
                 <span>

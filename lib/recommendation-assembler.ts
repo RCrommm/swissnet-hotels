@@ -65,7 +65,7 @@ export function toCanonicalRecommendation(move: any, ctx: Ctx): Recommendation {
   // rooms questions under 'luxury', etc.). Without this, failed_queries never match and
   // the proof comes back empty while prose still describes failures (no-invention violation).
   const TOPIC_TO_AUDIT_CATS: Record<string,string[]> = {
-    rooms: ['luxury', 'family', 'romantic', 'rooms'],
+    rooms: ['rooms'],
     dining: ['dining'],
     meetings: ['business', 'meetings'],
     weddings: ['romantic', 'weddings'],
@@ -86,14 +86,14 @@ export function toCanonicalRecommendation(move: any, ctx: Ctx): Recommendation {
   // SEPARATE from TOPIC_TO_AUDIT_CATS (which stays broad for the old failed_queries proof).
   // Discovery intents are never here (the audit never scores them). Deterministic.
   const RECO_TOPIC_TO_CATS: Record<string, string[]> = {
-    rooms:    ['luxury', 'overall'],   // luxury positioning, differentiation, atmosphere, room types
+    rooms:    ['rooms'],               // rooms Case = accommodation questions only
     dining:   ['dining'],
-    meetings: ['business'],            // business + meetings + weddings intents are category 'business'
-    weddings: ['romantic'],            // the couples/romantic story lives in the weddings Case
+    meetings: ['business'],
+    weddings: ['romantic'],            // romantic/honeymoon lives on the weddings Case
     family:   ['family'],
     location: ['location'],
     spa:      ['spa', 'wellness'],
-    offers:   ['offers'],
+    offers:   ['overall', 'offers'],   // whole-hotel positioning ("best luxury hotel") lives on offers/overall
   }
   const recoCats = new Set(RECO_TOPIC_TO_CATS[topic] || [])
   const recoResults = recoCats.size
