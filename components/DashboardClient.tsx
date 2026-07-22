@@ -4151,6 +4151,8 @@ function AdvisorV2Body({ adv, memory, hotel, savedAt }: any) {
               )}
             </div>
           )}
+          <div style={{ marginTop: '1.5rem' }}><KnowledgeIntegrityCard hotelId={hotel?.id} /></div>
+          <div style={{ marginTop: '1rem' }}><GuestReviewCard adv={adv} /></div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -4164,8 +4166,6 @@ function AdvisorV2Body({ adv, memory, hotel, savedAt }: any) {
         <div>
           <AdvSectionLabel title="Activity Since Last Audit" />
           <ActivityPanel memory={memory} />
-          <div style={{ marginTop: '1rem' }}><KnowledgeIntegrityCard hotelId={hotel?.id} /></div>
-          <GuestReviewCard adv={adv} />
         </div>
         </div>
       </div>
