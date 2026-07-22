@@ -283,7 +283,7 @@ async function generateQuestions(ctx: { name: string; city: string; type: string
     const c = data?.choices?.[0]?.message?.content
     if (!c) return []
     const parsed = JSON.parse(c)
-    const qs = (parsed.questions || []).filter((q: any) => q && q.question).map((q: any) => ({ question: String(q.question).trim(), category: q.category || 'overall', intent_id: q.intent_id || 'other', priority: q.priority === 'high' ? 'high' : 'medium' }))
+    const qs = (parsed.questions || []).filter((q: any) => q && q.question).map((q: any) => ({ question: String(q.question).trim(), category: q.category || 'overall', intent_id: q.intent_id || 'other', priority: q.priority === 'high' ? 'high' : 'medium', stage: q.stage || (/(^|\b)(best|top|most|which|where should)\b/i.test(String(q.question)) ? 'discovery' : (/(parking|pet|accessibility|cancellation|check-?in|airport)/i.test(String(q.question)) ? 'booking' : 'evaluation')) }))
     // De-dup on category:intent_id so two questions never collide on the same stable key.
     // First occurrence wins; later collisions are dropped (keeps the key set stable + unique).
     const seen = new Set<string>()
