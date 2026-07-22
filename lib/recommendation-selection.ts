@@ -118,10 +118,14 @@ export function selectStrategicDecisions(knowledgeGraph: any, technical: any, au
   }
 
   const ACTIVE = new Set(['Commit', 'Convert', 'Fix-foundation', 'Confirm'])
-  const headline3 = cand.filter(c => ACTIVE.has(c.posture) && c.value >= VALUE_FLOOR).sort((a, b) => b.value - a.value).slice(0, 3)
-  const chosen = new Set(headline3)
+  // A "create the page" opportunity — guests actively asking about a topic the site has no page for — is a top priority, not a low-value afterthought. Force it to the front regardless of its computed value.
+  const isCreatePage = (c: StrategicDecision) => c.posture === 'Confirm' && c.demand > 0 && SEGMENT.has(c.topic)
+  const headlines = cand
+    .filter(c => ACTIVE.has(c.posture) && (c.value >= VALUE_FLOOR || isCreatePage(c)))
+    .sort((a, b) => (isCreatePage(b) ? 1 : 0) - (isCreatePage(a) ? 1 : 0) || b.value - a.value)
+  const chosen = new Set(headlines)
   const declineCands = cand.filter(c => c.posture === 'Decline')
   const declined = declineCands.length ? { topics: declineCands.map(c => c.topic), labels: declineCands.map(c => c.label), rationale: `Absent, segment-specific, no real guest demand — declined deliberately so focus isn't diluted chasing gaps that aren't your market.` } : null
   const deferred = cand.filter(c => !chosen.has(c) && c.posture !== 'Decline')
-  return { decisions: headline3, declined, deferred }
+  return { decisions: headlines, declined, deferred }
 }
