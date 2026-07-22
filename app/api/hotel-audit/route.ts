@@ -55,7 +55,7 @@ function diffFindings(currentFindings: any[], previousKeys: string[]) {
 }
 
 export const maxDuration = 300
-const CRAWL_LIMIT = 30
+const CRAWL_LIMIT = 20
 
 // ── SCRAPE (JS rendering ON so client-rendered FAQs/accordions are visible) ──
 async function scrape(url: string, apiKey: string): Promise<string | null> {
@@ -879,11 +879,16 @@ export async function POST(req: Request) {
 
     const toScrape = Array.from(new Set([...slots.filter(s => s.url).map(s => s.url as string), ...discovered])).slice(0, CRAWL_LIMIT)
     const pageCache: Record<string, any> = {}
-    for (const u of toScrape) {
-      const html = u === url ? homeHtml : await scrape(u, apiKey)
-      if (!html) continue
-      pageCache[u] = { url: u, schemaTypes: extractSchemaTypes(html), headings: extractHeadings(html), text: extractText(html), links: extractLinks(html, origin) }
-    }
+    // Crawl pages in parallel (was sequential await in a loop — 30 pages x several seconds
+    // each blew past the 300s function limit). Promise.all fetches them concurrently.
+    const scraped = await Promise.all(toScrape.map(async (u) => {
+      try {
+        const html = u === url ? homeHtml : await scrape(u, apiKey)
+        if (!html) return null
+        return { u, page: { url: u, schemaTypes: extractSchemaTypes(html), headings: extractHeadings(html), text: extractText(html), links: extractLinks(html, origin) } }
+      } catch { return null }
+    }))
+    for (const r of scraped) { if (r) pageCache[r.u] = r.page }
     const pages: any[] = Object.values(pageCache)
     // ── ONE TRUTH: enrich the readiness corpus with the Brain's stored facts. The Brain is the
     // canonical, complete crawl; the audit's re-scrape can be thinner/truncated. Merge Brain
