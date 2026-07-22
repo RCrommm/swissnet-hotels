@@ -72,7 +72,10 @@ export function selectStrategicDecisions(knowledgeGraph: any, technical: any, au
     const topic = c.topic, facts = c.facts || 0, state = c.cluster_state
     const imp = c.commercial_importance || 'Medium', coverage = c.coverage || 0
     const hasSubstance = facts > 0 || state !== 'absent'
-    const demandCount = hasSubstance ? (rawDemand[topic] || 0) : 0
+    // Demand is real even when the topic is absent — guests asking questions the site
+    // can't answer IS the finding. Don't zero it out just because there are no facts;
+    // an absent-but-demanded topic becomes a "create the page" opportunity below.
+    const demandCount = rawDemand[topic] || 0
     const ms = hasSchemaGap && facts >= SUBSTANCE_MIN && state !== 'absent'
 
     let posture: DecisionPosture, action: StrategicDecision['action_intent'] = null, reason = ''
@@ -85,8 +88,12 @@ export function selectStrategicDecisions(knowledgeGraph: any, technical: any, au
       posture = 'Confirm'; action = 'verify'; reason = `Universal guest dealbreaker with no confirmed answer — verify and state the policy.`
     } else if (facts > 0 && imp === 'High') {
       posture = 'Confirm'; action = 'investigate'; reason = `${facts} facts, ${state}, high importance — confirm the real position before investing.`
+    } else if (SEGMENT.has(topic) && demandCount > 0) {
+      // Absent, but guests are actively asking — surface it as an opportunity to create
+      // the page, not a decline. Accurate: the absence against real demand is the finding.
+      posture = 'Confirm'; action = 'verify'; reason = `Guests are asking about ${c.label.toLowerCase()} but your site has no ${c.label.toLowerCase()} content — create a dedicated page to answer them.`
     } else if (SEGMENT.has(topic)) {
-      posture = 'Decline'; reason = `Absent (${facts} facts), segment-specific, no real demand.`
+      posture = 'Decline'; reason = `Absent (${facts} facts), segment-specific, no guest demand.`
     } else {
       posture = 'Decline'; reason = `${facts} facts, ${state}, ${imp} importance — insufficient substance or demand.`
     }
