@@ -9,6 +9,8 @@ export default function HotelCard({ hotel }: { hotel: Hotel }) {
   const text = '#3D2B1F'
   const textMuted = 'rgba(61,43,31,0.5)'
   const border = 'rgba(201,169,110,0.25)'
+  const currency = (hotel as any).currency || 'CHF'
+  const symbol = currency === 'GBP' ? '£' : currency === 'EUR' ? '€' : 'CHF '
 
   const hotelHomepage = (hotel.direct_booking_url || '')
     .replace('/book', '')
@@ -143,7 +145,7 @@ const bookTrackingUrl = `/api/track?hotel_id=${hotel.id}&hotel_name=${encodeURIC
           <div>
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: textMuted, letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 0.2rem' }}>From</p>
             <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 400, color: text, margin: 0 }}>
-              CHF {hotel.nightly_rate_chf.toLocaleString()}
+              {symbol}{hotel.nightly_rate_chf.toLocaleString()}
               <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, fontWeight: 300 }}> /night</span>
             </p>
           </div>

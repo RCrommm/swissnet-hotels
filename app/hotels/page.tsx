@@ -12,9 +12,9 @@ interface Props {
   searchParams: Promise<{ q?: string; region?: string; category?: string }>
 }
 export const metadata = {
-  title: 'Luxury Swiss Hotels — Book Direct | SwissNet Hotels',
+  title: 'Luxury Hotels — Book Direct | SwissNet Hotels',
 
-  description: 'Browse all luxury partner hotels in Switzerland. Book direct for the best rate with no OTA fees.',
+  description: 'Browse all luxury partner hotels. Book direct for the best rate with no OTA fees.',
   alternates: {
     canonical: 'https://swissnethotels.com/hotels',
   },
