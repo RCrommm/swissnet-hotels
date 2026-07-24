@@ -107,7 +107,7 @@ function SchemaMarkup({ hotel, keywords, roomTypes, faqs, restaurants, spaData, 
         significantLink: [
           `${pageUrl}/rooms`,
           `${pageUrl}/dining`,
-          `${pageUrl}/spa`,
+          ...(hotel.has_spa ? [`${pageUrl}/spa`] : []),
           `${pageUrl}/experiences`,
           `${pageUrl}/events`,
           ...relatedPages,
