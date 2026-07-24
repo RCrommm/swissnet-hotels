@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { sym } from '@/lib/locale'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -154,7 +155,7 @@ export default function HotelsClient({ hotels, initialRegion, initialCategory, i
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '1rem', borderTop: '1px solid rgba(201,169,110,0.15)' }}>
                       <div>
                         <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', color: 'rgba(61,43,31,0.4)', letterSpacing: '0.12em', textTransform: 'uppercase' as const, margin: '0 0 0.15rem' }}>From</p>
-                        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.45rem', fontWeight: 400, color: '#3D2B1F', margin: 0 }}>CHF {hotel.nightly_rate_chf.toLocaleString()}<span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: 'rgba(61,43,31,0.4)', fontWeight: 300 }}> /night</span></p>
+                        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.45rem', fontWeight: 400, color: '#3D2B1F', margin: 0 }}>{sym(hotel)}{hotel.nightly_rate_chf.toLocaleString()}<span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: 'rgba(61,43,31,0.4)', fontWeight: 300 }}> /night</span></p>
                       </div>
                       <div style={{ display: 'flex', gap: '0.5rem', position: 'relative', zIndex: 2 }}>
                         {(hotel.is_partner || hotel.direct_booking_url) && (
