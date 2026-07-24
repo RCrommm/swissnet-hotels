@@ -99,19 +99,23 @@ const PLATFORMS = [
 ]
 
 function checkAppeared(hotelName: string, responseText: string): boolean {
-  const r = responseText.toLowerCase().replace(/[*#_`\[\]\-–—]/g, ' ').replace(/\s+/g, ' ')
-  const n = hotelName.toLowerCase().replace(/[-–—]/g, ' ').replace(/\s+/g, ' ')
+  const stripApos = (s: string) => String(s).replace(/['\u2018\u2019\u02BC\u00B4]/g, '')
+  const r = stripApos(responseText).toLowerCase().replace(/[*#_`\[\]\-–—]/g, ' ').replace(/\s+/g, ' ')
+  const n = stripApos(hotelName).toLowerCase().replace(/[-–—]/g, ' ').replace(/\s+/g, ' ')
   const noAccents = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
   const rn = noAccents(r)
   const nn = noAccents(n)
-  const CITIES = ['geneva','zurich','zermatt','lausanne','interlaken','gstaad','andermatt','lucerne','lugano','montreux','ascona','basel','bern','crans','montana','stmoritz','st moritz','pontresina','vitznau']
+  // names that collide with places/streets — full phrase only, no partial tests
+  const EXACT_ONLY = ['covent garden hotel','the bloomsbury hotel','st martins lane hotel','the henrietta hotel']
+  if (EXACT_ONLY.includes(nn)) return rn.includes(nn)
+  const CITIES = ['geneva','zurich','zermatt','lausanne','interlaken','gstaad','andermatt','lucerne','lugano','montreux','ascona','basel','bern','crans','montana','stmoritz','st moritz','pontresina','vitznau','london']
   const words = nn.split(' ').filter((w: string) => !['hotel','the','le','la','les','grand','de','du','au','aux','by','at','and','&'].includes(w))
   // distinctive name = full normalized name minus any trailing city word
   const nameWords = nn.split(' ').filter(Boolean)
   const coreWords = nameWords.filter(w => !CITIES.includes(w))
   const core = coreWords.join(' ')
-  const lastTwo = noAccents(hotelName.split(' ').slice(-2).join(' ').toLowerCase())
-  const firstTwo = noAccents(hotelName.split(' ').slice(0, 2).join(' ').toLowerCase())
+  const lastTwo = noAccents(stripApos(hotelName).split(' ').slice(-2).join(' ').toLowerCase())
+  const firstTwo = noAccents(stripApos(hotelName).split(' ').slice(0, 2).join(' ').toLowerCase())
   const keyWords = words.slice(0, 3).join(' ')
   // require the core to be distinctive enough (2+ words, or one long word) to avoid false matches
   const coreDistinct = coreWords.length >= 2 || (coreWords.length === 1 && coreWords[0].length >= 6)
