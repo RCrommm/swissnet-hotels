@@ -15,6 +15,7 @@ function localeOf(hotel: any) {
     country,
     currency,
     code: country === 'United Kingdom' ? 'GB' : 'CH',
+    symbol: currency === 'GBP' ? '£' : currency === 'EUR' ? '€' : 'CHF ',
     wikidata: country === 'United Kingdom'
       ? 'https://www.wikidata.org/wiki/Q145'
       : 'https://www.wikidata.org/wiki/Q39',
@@ -416,7 +417,7 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
   {[
     { label: 'Location', value: `${hotel.location}, ${loc.country}` },
     { label: 'Stars', value: '★'.repeat(hotel.star_classification || 5) },
-    { label: 'From', value: `${loc.currency} ${hotel.nightly_rate_chf?.toLocaleString()}/night` },
+    { label: 'From', value: `${loc.symbol}${hotel.nightly_rate_chf?.toLocaleString()}/night` },
     hotel.category && { label: 'Type', value: hotel.category },
     hotel.has_spa && { label: 'Spa', value: 'Yes' },
     hotel.has_michelin_restaurant && { label: 'Michelin', value: 'Yes' },
@@ -494,7 +495,7 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
                         </div>
                         {offer.price_from && (
                           <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '2rem' }}>
-                            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', color: gold, margin: 0 }}>{loc.currency} {Number(offer.price_from).toLocaleString()}</p>
+                            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', color: gold, margin: 0 }}>{loc.symbol}{Number(offer.price_from).toLocaleString()}</p>
                           </div>
                         )}
                       </div>
@@ -527,7 +528,7 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
                         </div>
                         {rt.base_rate_chf && (
                           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: text, margin: 0, flexShrink: 0, marginLeft: '1rem' }}>
-                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: textMuted, marginRight: '0.2rem' }}>from</span>{loc.currency} {rt.base_rate_chf.toLocaleString()}<span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: textMuted }}>/night</span>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: textMuted, marginRight: '0.2rem' }}>from</span>{loc.symbol}{rt.base_rate_chf.toLocaleString()}<span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: textMuted }}>/night</span>
                           </p>
                         )}
                       </div>
@@ -559,7 +560,7 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
                           spa.pool && 'Swimming pool',
                           spa.sauna && 'Sauna',
                           spa.hammam && 'Hammam',
-                          spa.price_from && `Treatments from ${loc.currency} ${spa.price_from}`,
+                          spa.price_from && `Treatments from ${loc.symbol}${spa.price_from}`,
                         ].filter(Boolean).map((item: any) => (
                           <li key={item} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted, display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                             <span style={{ width: 4, height: 4, borderRadius: '50%', background: gold, flexShrink: 0, display: 'inline-block' }} />
@@ -624,7 +625,7 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
       <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>Experiences</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
         {[
-          {
+          hotel.has_spa && {
             label: spaSection?.title || 'Spa & Wellness',
             desc: spaSection?.short_description || 'Treatments, pools and Alpine rituals',
             href: `/hotels/${hotelUrl}/spa`
@@ -641,7 +642,7 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
           },
           {
             label: experiencesSection?.title || 'Activities & Experiences',
-            desc: experiencesSection?.short_description || 'Curated experiences and Alpine adventures',
+            desc: experiencesSection?.short_description || 'Curated experiences and local highlights',
             href: `/hotels/${hotelUrl}/experiences`
           },
           {
@@ -649,7 +650,7 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
             desc: 'Time-limited events, seasonal packages and exclusive offers',
             href: `/hotels/${hotelUrl}/events`
           },
-        ].map(exp => (
+        ].filter(Boolean).map((exp: any) => (
           <Link key={exp.label} href={exp.href} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', marginBottom: '0.5rem', background: white, border: `1px solid ${border}`, borderRadius: 4, textDecoration: 'none', boxShadow: '0 1px 8px rgba(0,0,0,0.04)' }}>
             <div>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', fontWeight: 400, color: text, margin: '0 0 0.2rem' }}>{exp.label}</p>
@@ -844,7 +845,7 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
               <div style={{ marginBottom: '1.5rem' }}>
                 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: textMuted, margin: '0 0 0.4rem' }}>Pricing</p>
                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.75rem', fontWeight: 300, color: text, margin: '0 0 0.25rem', lineHeight: 1 }}>
-  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: textMuted, letterSpacing: '0.1em', textTransform: 'uppercase', marginRight: '0.4rem' }}>From</span>{loc.currency} {hotel.nightly_rate_chf?.toLocaleString()}
+  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: textMuted, letterSpacing: '0.1em', textTransform: 'uppercase', marginRight: '0.4rem' }}>From</span>{loc.symbol}{hotel.nightly_rate_chf?.toLocaleString()}
 </p>
 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: textMuted, margin: 0 }}>per night · typical direct rate</p>
 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: textMuted, margin: '0.75rem 0 0', paddingTop: '0.75rem', borderTop: `1px solid ${border}` }}>
@@ -863,7 +864,7 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
                   </p>
                   <div style={{ paddingTop: '1.25rem', borderTop: `1px solid ${border}` }}>
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, color: textMuted, margin: '0 0 0.5rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Booking options</p>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: '0 0 0.25rem' }}>✓ Direct — from {loc.currency} {hotel.nightly_rate_chf?.toLocaleString()}</p>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: '0 0 0.25rem' }}>✓ Direct — from {loc.symbol}{hotel.nightly_rate_chf?.toLocaleString()}</p>
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: '0 0 0.5rem' }}>○ OTAs — same or higher rate, no extras</p>
 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: textMuted, margin: 0, fontStyle: 'italic' }}>Direct bookings include hotel benefits OTAs don't offer</p>
                   </div>
