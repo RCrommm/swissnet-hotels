@@ -8,6 +8,19 @@ import HeroCarousel from '@/components/HeroCarousel'
 import { getBestPagesForHotel } from '@/app/best/[slug]/page'
 export const revalidate = 3600
 
+function localeOf(hotel: any) {
+  const country = hotel.country || 'Switzerland'
+  const currency = hotel.currency || 'CHF'
+  return {
+    country,
+    currency,
+    code: country === 'United Kingdom' ? 'GB' : 'CH',
+    wikidata: country === 'United Kingdom'
+      ? 'https://www.wikidata.org/wiki/Q145'
+      : 'https://www.wikidata.org/wiki/Q39',
+  }
+}
+
 export async function generateStaticParams() {
   const { data: hotels } = await supabase
     .from('hotels')
@@ -55,6 +68,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 function SchemaMarkup({ hotel, keywords, roomTypes, faqs, restaurants, spaData, awards }: any) {
+  const loc = localeOf(hotel)
   const hotelId = `https://swissnethotels.com/hotels/${hotel.slug || hotel.id}#hotel`
   const pageUrl = `https://swissnethotels.com/hotels/${hotel.slug || hotel.id}`
 
@@ -123,22 +137,22 @@ function SchemaMarkup({ hotel, keywords, roomTypes, faqs, restaurants, spaData, 
       image: (hotel.images || []).slice(0, 3).filter(Boolean),
       telephone: hotel.telephone || undefined,
       email: hotel.contact_email || undefined,
-      priceRange: `CHF ${hotel.nightly_rate_chf}+`,
+      priceRange: `${loc.currency} ${hotel.nightly_rate_chf}+`,
       address: {
         '@type': 'PostalAddress',
         streetAddress: hotel.street_address || undefined,
         addressLocality: hotel.location,
         addressRegion: hotel.region,
         postalCode: hotel.postal_code || undefined,
-        addressCountry: 'CH',
+        addressCountry: loc.code,
       },
       containedInPlace: {
         '@type': 'City',
         name: hotel.location,
         containedInPlace: {
           '@type': 'Country',
-          name: 'Switzerland',
-          sameAs: 'https://www.wikidata.org/wiki/Q39',
+          name: loc.country,
+          sameAs: loc.wikidata,
         },
       },
       geo: hotel.latitude && hotel.longitude ? {
@@ -189,7 +203,7 @@ hotel.accessibility && { '@type': 'LocationFeatureSpecification', name: hotel.ac
         name: m.award_name,
       })) : undefined,
       award: actualAwards.length > 0 ? actualAwards.map((a: any) => a.award_name) : undefined,
-      keywords: [...(hotel.amenities || []), ...(hotel.best_for || []), hotel.region, hotel.category, hotel.name, 'luxury hotel Switzerland', 'hôtel de luxe Suisse', 'Luxushotel Schweiz', ...keywords.map((k: any) => k.keyword)].filter(Boolean).join(', '),
+      keywords: [...(hotel.amenities || []), ...(hotel.best_for || []), hotel.region, hotel.category, hotel.name, `luxury hotel ${loc.country}`, ...keywords.map((k: any) => k.keyword)].filter(Boolean).join(', '),
       sameAs: [hotel.direct_booking_url, hotel.tripadvisor_url, hotel.booking_url, hotel.google_maps_url, hotel.wikipedia_url, hotel.michelin_url, hotel.lhw_url, hotel.swiss_deluxe_url].filter(Boolean),
       subjectOf: relatedPages.map((url: string) => ({
         '@type': 'WebPage',
@@ -265,6 +279,7 @@ export default async function HotelPage({ params }: { params: Promise<{ slug: st
 
   const showSchema = hotel.is_partner || hotel.show_schema
   const hotelUrl = hotel.slug || hotel.id
+  const loc = localeOf(hotel)
 
   const [
     { data: keywords },
@@ -371,7 +386,7 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
                     <span key={i} style={{ color: gold, fontSize: '0.7rem' }}>★</span>
                   ))}
                 </div>
-                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.6)' }}>📍 {hotel.location}, Switzerland</span>
+                <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: 'rgba(255,255,255,0.6)' }}>📍 {hotel.location}, {loc.country}</span>
               </div>
             </div>
             {hotel.is_partner && trackingUrl && (
@@ -399,9 +414,9 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
 {/* AI Fact Box */}
 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.5rem' }}>
   {[
-    { label: 'Location', value: `${hotel.location}, Switzerland` },
+    { label: 'Location', value: `${hotel.location}, ${loc.country}` },
     { label: 'Stars', value: '★'.repeat(hotel.star_classification || 5) },
-    { label: 'From', value: `CHF ${hotel.nightly_rate_chf?.toLocaleString()}/night` },
+    { label: 'From', value: `${loc.currency} ${hotel.nightly_rate_chf?.toLocaleString()}/night` },
     hotel.category && { label: 'Type', value: hotel.category },
     hotel.has_spa && { label: 'Spa', value: 'Yes' },
     hotel.has_michelin_restaurant && { label: 'Michelin', value: 'Yes' },
@@ -479,7 +494,7 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
                         </div>
                         {offer.price_from && (
                           <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '2rem' }}>
-                            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', color: gold, margin: 0 }}>CHF {Number(offer.price_from).toLocaleString()}</p>
+                            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', color: gold, margin: 0 }}>{loc.currency} {Number(offer.price_from).toLocaleString()}</p>
                           </div>
                         )}
                       </div>
@@ -512,7 +527,7 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
                         </div>
                         {rt.base_rate_chf && (
                           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.25rem', color: text, margin: 0, flexShrink: 0, marginLeft: '1rem' }}>
-                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: textMuted, marginRight: '0.2rem' }}>from</span>CHF {rt.base_rate_chf.toLocaleString()}<span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: textMuted }}>/night</span>
+                            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: textMuted, marginRight: '0.2rem' }}>from</span>{loc.currency} {rt.base_rate_chf.toLocaleString()}<span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: textMuted }}>/night</span>
                           </p>
                         )}
                       </div>
@@ -544,7 +559,7 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
                           spa.pool && 'Swimming pool',
                           spa.sauna && 'Sauna',
                           spa.hammam && 'Hammam',
-                          spa.price_from && `Treatments from CHF ${spa.price_from}`,
+                          spa.price_from && `Treatments from ${loc.currency} ${spa.price_from}`,
                         ].filter(Boolean).map((item: any) => (
                           <li key={item} style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted, display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                             <span style={{ width: 4, height: 4, borderRadius: '50%', background: gold, flexShrink: 0, display: 'inline-block' }} />
@@ -660,12 +675,12 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         {[
           { label: `Best luxury hotels in ${hotel.region}`, href: `/destinations/${hotel.region?.toLowerCase().replace(/\s+/g, '-')}` },
-          { label: `Best luxury hotels in Switzerland`, href: `/best/luxury-hotels-switzerland` },
-          hotel.category === 'Ski Resort' && { label: `Best ski hotels in Switzerland`, href: `/best/ski-hotels-switzerland` },
-          hotel.category === 'Wellness Retreat' && { label: `Best wellness hotels in Switzerland`, href: `/best/wellness-hotels-switzerland` },
-          hotel.has_spa && { label: `Best spa hotels in Switzerland`, href: `/best/spa-hotels-switzerland` },
-          hotel.lakefront && { label: `Best lake hotels in Switzerland`, href: `/best/lake-hotels-switzerland` },
-          hotel.romantic && { label: `Best romantic hotels in Switzerland`, href: `/best/romantic-hotels-switzerland` },
+          loc.country === 'Switzerland' && { label: `Best luxury hotels in Switzerland`, href: `/best/luxury-hotels-switzerland` },
+          loc.country === 'Switzerland' && hotel.category === 'Ski Resort' && { label: `Best ski hotels in Switzerland`, href: `/best/ski-hotels-switzerland` },
+          loc.country === 'Switzerland' && hotel.category === 'Wellness Retreat' && { label: `Best wellness hotels in Switzerland`, href: `/best/wellness-hotels-switzerland` },
+          loc.country === 'Switzerland' && hotel.has_spa && { label: `Best spa hotels in Switzerland`, href: `/best/spa-hotels-switzerland` },
+          loc.country === 'Switzerland' && hotel.lakefront && { label: `Best lake hotels in Switzerland`, href: `/best/lake-hotels-switzerland` },
+          loc.country === 'Switzerland' && hotel.romantic && { label: `Best romantic hotels in Switzerland`, href: `/best/romantic-hotels-switzerland` },
         ].filter(Boolean).map((link: any) => (
           <Link key={link.label} href={link.href} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.875rem 1.25rem', background: white, border: `1px solid ${border}`, borderRadius: 4, textDecoration: 'none' }}>
             <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: text }}>{link.label}</span>
@@ -752,15 +767,15 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
 
             <section style={{ marginBottom: '4rem' }}>
   <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.25em', textTransform: 'uppercase', color: gold, margin: '0 0 1.5rem' }}>Location</p>
-<p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, margin: '0 0 1rem' }}>📍 {hotel.street_address ? `${hotel.street_address}, ` : ''}{hotel.location}, Switzerland{hotel.postal_code ? ` ${hotel.postal_code}` : ''}</p>
+<p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.72rem', color: textMuted, margin: '0 0 1rem' }}>📍 {hotel.street_address ? `${hotel.street_address}, ` : ''}{hotel.location}, {loc.country}{hotel.postal_code ? ` ${hotel.postal_code}` : ''}</p>
   <iframe
-    src={`https://maps.google.com/maps?q=${encodeURIComponent(hotel.name + ', ' + hotel.location + ', Switzerland')}&output=embed`}
+    src={`https://maps.google.com/maps?q=${encodeURIComponent(hotel.name + ', ' + hotel.location + ', ' + loc.country)}&output=embed`}
     width="100%"
     height="240"
     style={{ border: 0, display: 'block', borderRadius: 4, marginBottom: '0.75rem' }}
     loading="lazy"
   />
-  <a href={`https://www.google.com/maps/search/${encodeURIComponent(hotel.name + ', ' + hotel.location + ', Switzerland')}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: gold, textDecoration: 'none', fontWeight: 600 }}>
+  <a href={`https://www.google.com/maps/search/${encodeURIComponent(hotel.name + ', ' + hotel.location + ', ' + loc.country)}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: gold, textDecoration: 'none', fontWeight: 600 }}>
     View on Google Maps →
   </a>
 </section>
@@ -829,7 +844,7 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
               <div style={{ marginBottom: '1.5rem' }}>
                 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: textMuted, margin: '0 0 0.4rem' }}>Pricing</p>
                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '2.75rem', fontWeight: 300, color: text, margin: '0 0 0.25rem', lineHeight: 1 }}>
-  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: textMuted, letterSpacing: '0.1em', textTransform: 'uppercase', marginRight: '0.4rem' }}>From</span>CHF {hotel.nightly_rate_chf?.toLocaleString()}
+  <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 700, color: textMuted, letterSpacing: '0.1em', textTransform: 'uppercase', marginRight: '0.4rem' }}>From</span>{loc.currency} {hotel.nightly_rate_chf?.toLocaleString()}
 </p>
 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: textMuted, margin: 0 }}>per night · typical direct rate</p>
 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: textMuted, margin: '0.75rem 0 0', paddingTop: '0.75rem', borderTop: `1px solid ${border}` }}>
@@ -848,7 +863,7 @@ if (isBadDescription) hotel.description = 'Profile currently being curated by Sw
                   </p>
                   <div style={{ paddingTop: '1.25rem', borderTop: `1px solid ${border}` }}>
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', fontWeight: 600, color: textMuted, margin: '0 0 0.5rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Booking options</p>
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: '0 0 0.25rem' }}>✓ Direct — from CHF {hotel.nightly_rate_chf?.toLocaleString()}</p>
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: '0 0 0.25rem' }}>✓ Direct — from {loc.currency} {hotel.nightly_rate_chf?.toLocaleString()}</p>
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted, margin: '0 0 0.5rem' }}>○ OTAs — same or higher rate, no extras</p>
 <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: textMuted, margin: 0, fontStyle: 'italic' }}>Direct bookings include hotel benefits OTAs don't offer</p>
                   </div>
