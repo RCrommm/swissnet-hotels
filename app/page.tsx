@@ -346,9 +346,9 @@ export default async function HomePage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
         {[
           { q: '1', d: 'property', v: 'Full price' },
-          { q: '2–4', d: 'properties', v: '~15% off' },
-          { q: '5–9', d: 'properties', v: '~25% off' },
-          { q: '10+', d: 'properties', v: '~35% off' },
+          { q: '2–4', d: 'properties', v: '~10% off' },
+          { q: '5–9', d: 'properties', v: '~20% off' },
+          { q: '10+', d: 'properties', v: '~30% off' },
         ].map(t => (
           <div key={t.q} style={{ textAlign: 'center', padding: '1rem 0.5rem', background: 'rgba(201,169,76,0.06)', border: '1px solid ' + border }}>
             <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 400, color: '#2A1208', margin: '0 0 0.1rem', lineHeight: 1 }}>{t.q}</p>
