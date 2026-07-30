@@ -10,7 +10,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/pricing`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
   ]
 
-  const destinations = ['zermatt', 'geneva', 'st-moritz', 'interlaken', 'zurich', 'gstaad', 'lucerne', 'verbier', 'davos', 'crans-montana', 'flims', 'bern', 'basel', 'lugano', 'ascona', 'andermatt', 'montreux', 'lausanne', 'grindelwald']
+  const destinations = ['central-london', 'zermatt', 'geneva', 'st-moritz', 'interlaken', 'zurich', 'gstaad', 'lucerne', 'verbier', 'davos', 'crans-montana', 'flims', 'bern', 'basel', 'lugano', 'ascona', 'andermatt', 'montreux', 'lausanne', 'grindelwald']
    const destinationPages: MetadataRoute.Sitemap = destinations.map(slug => ({
     url: `${baseUrl}/destinations/${slug}`,
     lastModified: new Date(),
@@ -19,6 +19,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }))
 
  const promptSlugs = [
+  'luxury-hotels-central-london', 'boutique-hotels-london', 'historic-hotels-london',
+  'hotel-restaurants-london', 'afternoon-tea-hotels-london', 'romantic-hotels-london',
+  'hotels-near-british-museum-london', 'hotels-for-special-occasions-london',
   'luxury-hotels-zermatt', 'ski-hotels-zermatt', 'luxury-hotels-geneva',
   'luxury-hotels-zurich', 'luxury-hotels-interlaken', 'luxury-hotels-bern',
   'ski-hotels-switzerland', 'romantic-hotels-switzerland',
@@ -63,16 +66,27 @@ const subPageUrls: MetadataRoute.Sitemap = partnerHotels.flatMap((hotel: any) =>
 
 
 
-const comparePages: MetadataRoute.Sitemap = partnerHotels.flatMap((hotelA: any) =>
-  (hotels || [])
-    .filter((hotelB: any) => hotelB.id !== hotelA.id && hotelB.region === hotelA.region)
-    .slice(0, 3)
-    .map((hotelB: any) => ({
-      url: `${baseUrl}/compare/${hotelA.slug}-vs-${hotelB.slug}`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly' as const,
-      priority: 0.7,
-    }))
-)
+const PINNED_COMPARE_PAIRS = [
+  'loscar-london-vs-rosewood-london',
+  'loscar-london-vs-nomad-london',
+  'loscar-london-vs-the-bloomsbury-hotel',
+]
+
+const generatedPairs: string[] = partnerHotels
+  .filter((hotelA: any) => Boolean(hotelA.slug))
+  .flatMap((hotelA: any) =>
+    (hotels || [])
+      .filter((hotelB: any) => hotelB.id !== hotelA.id && hotelB.region === hotelA.region && Boolean(hotelB.slug))
+      .slice(0, 3)
+      .map((hotelB: any) => `${hotelA.slug}-vs-${hotelB.slug}`)
+  )
+
+const comparePages: MetadataRoute.Sitemap = Array.from(new Set([...PINNED_COMPARE_PAIRS, ...generatedPairs]))
+  .map(pair => ({
+    url: `${baseUrl}/compare/${pair}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly' as const,
+    priority: 0.7,
+  }))
 
 return [...staticPages, ...destinationPages, ...promptPages, ...hotelPages, ...subPageUrls, ...comparePages]}
