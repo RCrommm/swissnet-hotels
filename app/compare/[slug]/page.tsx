@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import CompareProfileLink from './HotelCard'
+import { sym, cur, iso } from '@/lib/locale'
 
 export const revalidate = 3600
 
@@ -22,6 +23,13 @@ export async function generateStaticParams() {
   if (!partners || !allHotels) return []
 
   const pairs = new Set<string>()
+
+  const PINNED_PAIRS = [
+    'loscar-london-vs-rosewood-london',
+    'loscar-london-vs-nomad-london',
+    'loscar-london-vs-the-bloomsbury-hotel',
+  ]
+  for (const p of PINNED_PAIRS) pairs.add(p)
 
   for (const partner of partners) {
     const comparable = allHotels.filter(h =>
@@ -49,11 +57,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!hotelA || !hotelB) return {}
   return {
     title: `${hotelA.name} vs ${hotelB.name} — Which to Choose? | SwissNet Hotels`,
-    description: `Expert comparison of ${hotelA.name} and ${hotelB.name}. Atmosphere, traveler fit, dining, spa and verdict to help you choose the right luxury hotel in Switzerland.`,
+    description: `Expert comparison of ${hotelA.name} and ${hotelB.name}. Atmosphere, traveler fit, dining, spa and verdict to help you choose the right luxury hotel in ${(hotelA as any).region || 'Europe'}.`,
     alternates: { canonical: `https://swissnethotels.com/compare/${slug}` },
     openGraph: {
       title: `${hotelA.name} vs ${hotelB.name} | SwissNet Hotels`,
-      description: `Side-by-side comparison of two of Switzerland's finest luxury hotels — with expert verdict and direct booking links.`,
+      description: `Side-by-side comparison of two of the finest luxury hotels in ${(hotelA as any).region} — with expert verdict and direct booking links.`,
     }
   }
 }
@@ -182,6 +190,18 @@ h.category === hotelB.category
         privacy: 'formal',
         scale: 'grand',
         primaryDraw: 'central city position and business facilities',
+      }
+    }
+
+    // Boutique in a city — must be tested before the mountain boutique branches
+    if (isBoutique && isCentral) {
+      return {
+        identity: 'boutique city hotel',
+        setting: 'city-centre',
+        energy: 'intimate and design-led',
+        privacy: 'private',
+        scale: 'boutique',
+        primaryDraw: 'its building and intimate scale',
       }
     }
 
@@ -322,6 +342,14 @@ h.category === hotelB.category
       return `${hotelA.name} and ${hotelB.name} are both lakefront properties in ${hotelA.region}, but with different characters. ${hotelA.name} is a ${posA.identity} — ${posA.energy}, with ${posA.primaryDraw} at its core. ${hotelB.name} has a ${posB.energy} character, centred on ${posB.primaryDraw}. At this level the distinction is one of atmosphere and personal style rather than quality.`
     }
 
+    // Boutique vs full-service, both central
+    if (sA === 'city-centre' && sB === 'city-centre' && posA.scale === 'boutique' && posB.scale !== 'boutique') {
+      return `${hotelA.name} and ${hotelB.name} both sit in ${hotelA.region}, close enough to walk between, but they are not the same kind of hotel. ${hotelA.name} is a ${posA.identity} — the building and the room count are the reason to stay, and the scale means guests are recognised rather than processed. ${hotelB.name} is a ${posB.identity}, larger and more complete in facilities, better suited to ${fitsB.slice(0, 2).join(' and ').toLowerCase()}. The choice is between a hotel defined by its building and a hotel defined by its infrastructure.`
+    }
+    if (sA === 'city-centre' && sB === 'city-centre' && posB.scale === 'boutique' && posA.scale !== 'boutique') {
+      return `${hotelA.name} and ${hotelB.name} both sit in ${hotelA.region} but operate at different scales. ${hotelA.name} is a ${posA.identity} — larger, more complete in facilities, oriented toward ${fitsA.slice(0, 2).join(' and ').toLowerCase()}. ${hotelB.name} is a ${posB.identity}, where the building and the intimate scale are the point rather than the amenity list.`
+    }
+
     // Both city
     if (sA === 'city-centre' && sB === 'city-centre') {
       const aMoreBusiness = hotelA.business_hotel && !hotelB.business_hotel
@@ -395,8 +423,8 @@ h.category === hotelB.category
         const cheaper = hotelA.nightly_rate_chf > hotelB.nightly_rate_chf ? hotelB : hotelA
         const pricierPos = getPositioning(pricier)
         return diff > 150
-          ? `${pricier.name} starts higher at CHF ${pricier.nightly_rate_chf.toLocaleString()}/night versus ${cheaper.name} from CHF ${cheaper.nightly_rate_chf.toLocaleString()}/night. The premium reflects ${pricierPos.primaryDraw} — for travelers who prioritise that, the difference is justified. For those whose priorities align more with ${getPositioning(cheaper).primaryDraw}, ${cheaper.name} represents the stronger value.`
-          : `Both hotels are comparably priced at CHF ${hotelA.nightly_rate_chf.toLocaleString()} and CHF ${hotelB.nightly_rate_chf.toLocaleString()}/night respectively. At this price parity the decision is better guided by atmosphere and traveler fit than by budget.`
+          ? `${pricier.name} starts higher at ${sym(pricier)}${pricier.nightly_rate_chf.toLocaleString()}/night versus ${cheaper.name} from ${sym(cheaper)}${cheaper.nightly_rate_chf.toLocaleString()}/night. The premium reflects ${pricierPos.primaryDraw} — for travelers who prioritise that, the difference is justified. For those whose priorities align more with ${getPositioning(cheaper).primaryDraw}, ${cheaper.name} represents the stronger value.`
+          : `Both hotels are comparably priced at ${sym(hotelA)}${hotelA.nightly_rate_chf.toLocaleString()} and ${sym(hotelB)}${hotelB.nightly_rate_chf.toLocaleString()}/night respectively. At this price parity the decision is better guided by atmosphere and traveler fit than by budget.`
       })()
     }] : []),
     {
@@ -434,7 +462,7 @@ h.category === hotelB.category
     { label: 'Setting', a: posA.identity, b: posB.identity },
     { label: 'Style', a: hotelA.category, b: hotelB.category },
     { label: 'Stars', a: '★'.repeat(hotelA.star_classification || 5), b: '★'.repeat(hotelB.star_classification || 5) },
-    { label: 'From', a: hotelA.nightly_rate_chf ? `CHF ${hotelA.nightly_rate_chf.toLocaleString()}/night` : null, b: hotelB.nightly_rate_chf ? `CHF ${hotelB.nightly_rate_chf.toLocaleString()}/night` : null },
+    { label: 'From', a: hotelA.nightly_rate_chf ? `${sym(hotelA)}${hotelA.nightly_rate_chf.toLocaleString()}/night` : null, b: hotelB.nightly_rate_chf ? `${sym(hotelB)}${hotelB.nightly_rate_chf.toLocaleString()}/night` : null },
     { label: 'Spa', a: hotelA.has_spa === true ? 'Yes' : hotelA.has_spa === false ? 'No' : null, b: hotelB.has_spa === true ? 'Yes' : hotelB.has_spa === false ? 'No' : null },
     { label: 'Michelin Dining', a: hotelA.has_michelin_restaurant === true ? 'Yes' : hotelA.has_michelin_restaurant === false ? 'No' : null, b: hotelB.has_michelin_restaurant === true ? 'Yes' : hotelB.has_michelin_restaurant === false ? 'No' : null },
     { label: 'Ski Access', a: hotelA.ski_in_ski_out === true ? 'Ski-in ski-out' : hotelA.near_ski_lifts === true ? 'Near lifts' : null, b: hotelB.ski_in_ski_out === true ? 'Ski-in ski-out' : hotelB.near_ski_lifts === true ? 'Near lifts' : null },
@@ -468,7 +496,7 @@ h.category === hotelB.category
         name: h.name,
         url: `https://swissnethotels.com/hotels/${h.slug || h.id}`,
         ...(h.description ? { description: h.description } : {}),
-        priceRange: h.nightly_rate_chf ? `CHF ${h.nightly_rate_chf}+` : undefined,
+        priceRange: h.nightly_rate_chf ? `${cur(h)} ${h.nightly_rate_chf}+` : undefined,
         starRating: { '@type': 'Rating', ratingValue: h.star_classification || 5 },
         ...(h.rating_value && h.rating_count ? {
           aggregateRating: {
@@ -479,7 +507,7 @@ h.category === hotelB.category
             worstRating: 1,
           },
         } : {}),
-        address: { '@type': 'PostalAddress', addressLocality: h.location, addressRegion: h.region, addressCountry: 'CH' },
+        address: { '@type': 'PostalAddress', addressLocality: h.location, addressRegion: h.region, addressCountry: iso(h) },
       })),
       {
         '@type': 'BreadcrumbList',
@@ -714,7 +742,7 @@ h.category === hotelB.category
                     {i === 1 && <div style={{ height: 1, background: border, marginBottom: '1rem' }} />}
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 600, color: text, margin: '0 0 0.2rem' }}>{hotel.name}</p>
                     <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: textMuted, margin: '0 0 0.25rem', lineHeight: 1.5 }}>{getAtmosphere(hotel)} · {hotel.location}</p>
-                    {hotel.nightly_rate_chf && <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: gold, margin: 0 }}>CHF {hotel.nightly_rate_chf.toLocaleString()}<span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: textMuted }}>/night</span></p>}
+                    {hotel.nightly_rate_chf && <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.1rem', color: gold, margin: 0 }}>{sym(hotel)}{hotel.nightly_rate_chf.toLocaleString()}<span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: textMuted }}>/night</span></p>}
                   </div>
                 ))}
               </div>

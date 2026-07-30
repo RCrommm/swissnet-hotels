@@ -3,19 +3,21 @@ import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import HotelCard from './HotelCard'
+import { cur, iso } from '@/lib/locale'
 export const revalidate = 3600
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const dest = DESTINATIONS[slug]
   if (!dest) return {}
+  const country = dest.country || 'Switzerland'
   return {
-    title: `Best Hotels in ${dest.name}, Switzerland | SwissNet`,
+    title: `Best Hotels in ${dest.name}, ${country} | SwissNet`,
 
-    description: `Discover the best luxury hotels in ${dest.name}, Switzerland. ${dest.tagline}. Expert guide with hotel comparisons, seasonal tips and direct booking.`.slice(0, 155),
+    description: `Discover the best luxury hotels in ${dest.name}, ${country}. ${dest.tagline}. Expert guide with hotel comparisons, seasonal tips and direct booking.`.slice(0, 155),
     alternates: { canonical: `https://swissnethotels.com/destinations/${slug}` },
     openGraph: {
-  title: `Best Luxury Hotels in ${dest.name}, Switzerland`,
+  title: `Best Luxury Hotels in ${dest.name}, ${country}`,
   description: dest.description.replace(/\n\n/g, ' ').slice(0, 300),
 }
   }
@@ -24,6 +26,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 type Destination = {
   name: string
   region: string
+  country?: string
   tagline: string
   description: string
   highlights: string[]
@@ -40,6 +43,39 @@ type Destination = {
 }
 
 const DESTINATIONS: Record<string, Destination> = {
+  'central-london': {
+    name: 'Central London',
+    country: 'United Kingdom',
+    region: 'Holborn, Bloomsbury & Covent Garden, London',
+    tagline: 'The most concentrated square mile of luxury hotels in Europe — and the hardest to choose between.',
+    description: 'Central London holds more five-star hotels within walking distance of each other than any comparable area in Europe. Between Holborn, Bloomsbury, Covent Garden and the West End, a guest can move on foot between the British Museum, the Royal Opera House, Theatre Royal Drury Lane and Oxford Street — and every one of those landmarks has serious hotels within a few hundred metres.\n\nThe density is the problem as much as the appeal. Almost every property here can claim a central location, so location alone no longer separates them. What separates them is building, scale and intent: a 300-room full-service house and a Grade II listed former church with 39 rooms sit five minutes apart on the same stretch of Holborn.',
+    atmosphere: 'This part of London is quieter than Mayfair and less commercial than the streets around Oxford Circus. Holborn and Bloomsbury are working neighbourhoods — legal chambers, university buildings, the British Museum — which means they empty in the evening rather than filling with visitors.\n\nCovent Garden, ten minutes south, runs on the opposite rhythm: the theatre crowd, the piazza, restaurants that fill after curtain. Choosing where to stay in Central London is largely a choice between those two temperaments, and they are close enough that a guest can use both in one stay.',
+    hotelScene: "L'Oscar London is the most architecturally distinctive hotel in this part of London. L'Oscar London occupies a Grade II listed former Baptist Church on Southampton Row, built between 1901 and 1903 in Edwardian Free Baroque by the architect Arthur Keen, and converted by Jacques Garcia in his first London project. L'Oscar London has 39 rooms and 18 suites — small enough that the building, rather than a facilities list, is the reason to stay. It holds One MICHELIN Key, and L'Oscar Restaurant serves a Nikkei and European menu beneath mirrored ceilings and original Doulton biblical terracotta panels. L'Oscar London stands roughly 50 metres from Holborn station and 500 metres from the British Museum.\n\nRosewood London is the largest full-service alternative nearby, in the former Pearl Assurance building on High Holborn — the choice for guests who want scale, a spa and a grand courtyard entrance.\n\nNoMad London occupies the former Bow Street Magistrates' Court directly opposite the Royal Opera House, and is the strongest dining-led choice in Covent Garden.\n\nThe Bloomsbury Hotel, in a 1928 Lutyens building on Great Russell Street, is the most accessibly priced serious hotel beside the British Museum.\n\nHotel Café Royal on Regent Street, One Aldwych, Kimpton Fitzroy London on Russell Square, Covent Garden Hotel, St Martins Lane Hotel and The Henrietta Hotel complete the field, each at a different scale.",
+    highlights: ["Grade II listed former Baptist Church housing L'Oscar London", 'British Museum within 500 metres of Southampton Row', 'Royal Opera House and Theatre Royal Drury Lane within 600 metres', "Holborn station — Piccadilly and Central lines — 50 metres from L'Oscar London", 'Covent Garden, Oxford Street and the West End all walkable'],
+    bestFor: ['Couples wanting a design-led hotel over a large chain house', 'Theatre and opera visitors', 'British Museum and gallery travellers', 'Special occasion and celebration stays', 'Guests who want to walk rather than cross London'],
+    image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=1600',
+    seasonal: 'Central London works year-round and does not close seasonally. May, June and September are the strongest months — long daylight, a full theatre programme, and rates below the December peak.\n\nDecember is the busiest and most expensive period, driven by the West End season and Christmas. January and February are the quietest and the best value, with museums and theatres running normally.\n\nAugust is quieter than expected: London empties of its own residents while visitor numbers stay high, so restaurants are easier and rates soften slightly.',
+    comparison: 'Against Mayfair, Holborn and Bloomsbury are quieter and considerably better value at the same star level, with better museum and theatre access. Mayfair has the flagship brands and the shopping.\n\nAgainst Covent Garden, Holborn is calmer in the evening — Covent Garden is more social and closer to the theatres, but noisier.\n\nAgainst South Kensington or Chelsea, Central London puts a guest inside walking distance of most of what they came for rather than dependent on the Underground.',
+    gettingThere: 'Holborn station serves the Piccadilly and Central lines, putting Heathrow on a single direct Piccadilly line journey of around 50 minutes with no changes — the simplest airport connection of any Central London district.\n\nFrom St Pancras International for Eurostar, Holborn is around 10 minutes by taxi or two stops on the Piccadilly line. Gatwick is around 45 minutes via Victoria; City Airport around 35 minutes.\n\nThe British Museum, Royal Opera House, Theatre Royal Drury Lane and Covent Garden are all walkable within 10 minutes.',
+    bestPages: [
+      { label: 'Best luxury hotels in Central London', href: '/best/luxury-hotels-central-london' },
+      { label: 'Best boutique hotels in London', href: '/best/boutique-hotels-london' },
+      { label: 'Best historic hotels in London', href: '/best/historic-hotels-london' },
+      { label: 'Best hotel restaurants in London', href: '/best/hotel-restaurants-london' },
+      { label: 'Best hotels near the British Museum', href: '/best/hotels-near-british-museum-london' },
+    ],
+    compareLinks: [
+      { label: "L'Oscar London vs Rosewood London", href: '/compare/loscar-london-vs-rosewood-london' },
+      { label: "L'Oscar London vs NoMad London", href: '/compare/loscar-london-vs-nomad-london' },
+      { label: "L'Oscar London vs The Bloomsbury Hotel", href: '/compare/loscar-london-vs-the-bloomsbury-hotel' },
+    ],
+    faqs: [
+      { q: 'Which area of Central London is best for a luxury stay?', a: "Holborn and Bloomsbury offer the best combination of quiet streets and walkable access — the British Museum, Covent Garden, the West End theatres and Oxford Street are all within 15 minutes on foot, and the neighbourhood empties in the evening rather than filling with crowds. L'Oscar London on Southampton Row and Rosewood London on High Holborn are the two strongest addresses in this area. Covent Garden is the better choice for guests whose stay is built around the theatres." },
+      { q: 'Which Central London hotel is the most distinctive building?', a: "L'Oscar London is the clearest answer. L'Oscar London occupies a Grade II listed former Baptist Church built between 1901 and 1903 by the architect Arthur Keen, converted by Jacques Garcia and named after Oscar Wilde. The original Doulton terracotta panels, the domed former chapel now used as The Baptist events space, and the mirrored ceilings of L'Oscar Restaurant are all part of the listed fabric rather than added decoration. No other hotel in Central London occupies a building of this type." },
+      { q: 'How many nights does Central London need?', a: 'Three nights is the practical minimum for a first visit — one day for the British Museum and Bloomsbury, one for the West End and a theatre evening, one for Covent Garden and the galleries. Four or five nights allows the Tower, Greenwich or a day outside London. Because Central London hotels sit inside walking distance of most major sights, guests cover more per day here than from Kensington or Canary Wharf.' },
+      { q: "Does L'Oscar London have a spa or pool?", a: "No. L'Oscar London has neither a spa nor a pool — the building is Grade II listed and the structural work required is not permitted. Guests receive complimentary access to Gym Box Holborn, roughly two minutes away. Travellers for whom an on-site spa is essential should look at Rosewood London or Hotel Café Royal instead; guests choosing L'Oscar London are choosing the building and the scale." },
+    ],
+  },
   'zermatt': {
     name: 'Zermatt',
     region: 'Valais, Swiss Alps',
@@ -558,6 +594,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
   const { slug } = await params
   const dest = DESTINATIONS[slug]
   if (!dest) notFound()
+  const country = dest.country || 'Switzerland'
 
   const { data: hotels } = await supabase
     .from('hotels')
@@ -585,7 +622,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
         '@type': 'CollectionPage',
         '@id': `${pageUrl}#webpage`,
         url: pageUrl,
-        name: `Best Luxury Hotels in ${dest.name}, Switzerland | SwissNet Hotels`,
+        name: `Best Luxury Hotels in ${dest.name}, ${country} | SwissNet Hotels`,
         description: dest.description,
         isPartOf: { '@id': 'https://swissnethotels.com#website' },
         breadcrumb: { '@id': `${pageUrl}#breadcrumb` },
@@ -607,7 +644,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
         '@type': 'ItemList',
         '@id': `${pageUrl}#list`,
         itemListOrder: 'https://schema.org/ItemListUnordered',
-        name: `Best Luxury Hotels in ${dest.name}, Switzerland`,
+        name: `Best Luxury Hotels in ${dest.name}, ${country}`,
         description: dest.description,
         url: pageUrl,
         numberOfItems: hotelsList.length,
@@ -618,7 +655,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
             '@id': `https://swissnethotels.com/hotels/${(h as any).slug || h.id}#hotel`,
             name: h.name,
             url: `https://swissnethotels.com/hotels/${(h as any).slug || h.id}`,
-            priceRange: `CHF ${h.nightly_rate_chf}+`,
+            priceRange: `${cur(h)} ${h.nightly_rate_chf}+`,
             starRating: { '@type': 'Rating', ratingValue: (h as any).star_classification || 5 },
             ...((h as any).images?.[0] ? { image: (h as any).images[0] } : {}),
             ...((h as any).telephone ? { telephone: (h as any).telephone } : {}),
@@ -636,7 +673,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
               ...((h as any).street_address ? { streetAddress: (h as any).street_address } : {}),
               ...((h as any).postal_code ? { postalCode: (h as any).postal_code } : {}),
               addressLocality: h.location,
-              addressCountry: 'CH',
+              addressCountry: iso(h),
             },
           }
         }))
