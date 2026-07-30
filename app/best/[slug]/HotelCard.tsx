@@ -1,7 +1,9 @@
 'use client'
 import Link from 'next/link'
+import { sym } from '@/lib/locale'
 
 const PARTNER_HOTEL_NAMES = new Set([
+  "L'Oscar London",
   'La Réserve Genève','La Réserve Eden au Lac Zurich','Mont Cervin Palace',
   'Victoria-Jungfrau Grand Hotel Interlaken','Victoria-Jungfrau Grand Hotel & Spa',
   'Bellevue Palace','Hotel Adula','Alpengold Hotel','Crans Ambassador',
@@ -44,7 +46,7 @@ export default function BestHotelCard({ hotel, slug, gold, border, bg, text, tex
           {hotel.nightly_rate_chf && (
             <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '1rem' }}>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: textMuted, margin: '0 0 0.2rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>From</p>
-              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 400, color: gold, margin: 0, lineHeight: 1 }}>CHF {hotel.nightly_rate_chf?.toLocaleString()}</p>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem', fontWeight: 400, color: gold, margin: 0, lineHeight: 1 }}>{sym(hotel)}{hotel.nightly_rate_chf?.toLocaleString()}</p>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.55rem', color: textMuted, margin: '0.1rem 0 0' }}>/night</p>
             </div>
           )}

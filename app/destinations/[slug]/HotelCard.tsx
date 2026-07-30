@@ -1,5 +1,6 @@
 'use client'
 import Link from 'next/link'
+import { sym } from '@/lib/locale'
 
 export default function HotelCard({ hotel, slug, index, gold, border, bg, text, textMuted }: any) {
   const handleClick = () => {
@@ -28,7 +29,7 @@ export default function HotelCard({ hotel, slug, index, gold, border, bg, text, 
               ))}
             </span>
             <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>{hotel.category}</span>
-            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: gold }}>From CHF {hotel.nightly_rate_chf?.toLocaleString()}/night</span>
+            <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: gold }}>From {sym(hotel)}{hotel.nightly_rate_chf?.toLocaleString()}/night</span>
           </div>
           <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: textMuted, margin: 0, lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
             {hotel.description}
