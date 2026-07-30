@@ -42,7 +42,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const { data: hotels } = await supabase
     .from('hotels')
-    .select('id, slug, updated_at, is_partner, region')
+    .select('id, slug, updated_at, is_partner, region, not_offered')
     .eq('is_active', true)
 
   const hotelPages: MetadataRoute.Sitemap = (hotels || []).map((hotel: any) => ({
@@ -55,13 +55,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   
   const partnerHotels = (hotels || []).filter((h: any) => h.is_partner)
 const subPages = ['rooms', 'dining', 'spa', 'experiences', 'events']
+const INTENT_TO_EXPERIENCE: Record<string, string> = { spa: 'wellness' }
 const subPageUrls: MetadataRoute.Sitemap = partnerHotels.flatMap((hotel: any) =>
-  subPages.map(page => ({
-    url: `${baseUrl}/hotels/${hotel.slug || hotel.id}/${page}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: 0.8,
-  }))
+  subPages
+    .filter(page => {
+      const excluded: string[] = hotel.not_offered || []
+      return !excluded.includes(INTENT_TO_EXPERIENCE[page] || page)
+    })
+    .map(page => ({
+      url: `${baseUrl}/hotels/${hotel.slug || hotel.id}/${page}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
+    }))
 )
 
 

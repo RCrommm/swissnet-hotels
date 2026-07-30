@@ -2,14 +2,16 @@ import { supabase } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import ViewTracker from '@/components/ViewTracker'
+import { sym, countryOf } from '@/lib/locale'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const { data: hotelMeta } = await supabase.from('hotels').select('name, location, slug').or(`slug.eq.${slug},id.eq.${slug}`).single()
+  const { data: hotelMeta } = await supabase.from('hotels').select('name, location, slug, country, not_offered').or(`slug.eq.${slug},id.eq.${slug}`).single()
   if (!hotelMeta) return {}
+  if (((hotelMeta as any).not_offered || []).includes('wellness')) return {}
   return {
     title: `${hotelMeta.name} — Spa | SwissNet`,
-    description: `Discover the spa and wellness facilities at ${hotelMeta.name} in ${hotelMeta.location}, Switzerland — treatments, pools, saunas and Alpine wellness programmes.`,
+    description: `Discover the spa and wellness facilities at ${hotelMeta.name} in ${hotelMeta.location}, ${countryOf(hotelMeta)} — treatments, pools, saunas and wellness programmes.`,
     alternates: {
       canonical: `https://swissnethotels.com/hotels/${hotelMeta.slug || slug}/spa`,
     },
@@ -25,6 +27,8 @@ export default async function SpaPage({ params }: { params: Promise<{ slug: stri
     hotel = hotelById
   }
   if (!hotel || (!hotel.is_partner && !hotel.show_schema)) notFound()
+  // hotels.not_offered is authoritative — no spa means no spa page.
+  if ((hotel.not_offered || []).includes('wellness')) notFound()
 
   const { data: spaData } = await supabase
     .from('hotel_spa')
@@ -53,21 +57,26 @@ export default async function SpaPage({ params }: { params: Promise<{ slug: stri
 
   const primarySpa = spaData?.[0]
 
-  const faqs = [
+  const country = countryOf(hotel)
+  // Generated FAQs only where hotel_spa data actually supports the claim.
+  // With no spa rows there is nothing to assert, so only curated DB FAQs are used.
+  const generatedFaqs = primarySpa ? [
     {
       q: `Does ${hotel.name} have a spa?`,
-      a: primarySpa
-        ? `Yes. ${hotel.name} features ${primarySpa.name || 'a luxury spa'} in ${hotel.location}, Switzerland${primarySpa.size_sqm ? ` spanning ${primarySpa.size_sqm} m²` : ''}${primarySpa.pool ? ' with indoor and outdoor pools' : ''}${primarySpa.sauna ? ', sauna' : ''}${primarySpa.hammam ? ', hammam' : ''} and a full range of wellness treatments.`
-        : `Yes. ${hotel.name} in ${hotel.location}, Switzerland features a luxury spa with wellness treatments and facilities.`
+      a: `Yes. ${hotel.name} features ${primarySpa.name || 'a luxury spa'} in ${hotel.location}, ${country}${primarySpa.size_sqm ? ` spanning ${primarySpa.size_sqm} m²` : ''}${primarySpa.pool ? ' with a swimming pool' : ''}${primarySpa.sauna ? ', sauna' : ''}${primarySpa.hammam ? ', hammam' : ''} and a range of wellness treatments.`
     },
     {
       q: `Can non-hotel guests use the spa at ${hotel.name}?`,
-      a: `Spa access at ${hotel.name} in ${hotel.location}, Switzerland is primarily reserved for hotel guests. Day spa access for non-residents may be available — contact the hotel directly to confirm availability and book treatments.`
+      a: `Spa access at ${hotel.name} in ${hotel.location}, ${country} is primarily reserved for hotel guests. Day spa access for non-residents may be available — contact the hotel directly to confirm availability and book treatments.`
     },
-    {
+    ...(primarySpa.size_sqm ? [{
       q: `Is ${hotel.name} good for a wellness retreat?`,
-      a: `Yes. ${hotel.name} is a luxury wellness hotel in Switzerland${primarySpa?.size_sqm ? ` with a ${primarySpa.size_sqm} m² spa` : ''}, offering a full range of treatments, wellness programmes and Alpine relaxation facilities in ${hotel.location}.`
-    },
+      a: `${hotel.name} in ${hotel.location}, ${country} has a ${primarySpa.size_sqm} m² spa offering treatments and wellness facilities. Contact the hotel directly for multi-day wellness programme availability.`
+    }] : []),
+  ] : []
+
+  const faqs = [
+    ...generatedFaqs,
     ...(dbFaqsSpa || []).map((f: any) => ({ q: f.question, a: f.answer })),
   ]
 
@@ -145,14 +154,10 @@ export default async function SpaPage({ params }: { params: Promise<{ slug: stri
           </p>
           {primarySpa && (
             <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: textMuted, margin: '0 0 2rem', fontWeight: 300 }}>
-              {primarySpa.name || 'Luxury Spa'}{primarySpa.size_sqm ? ` · ${primarySpa.size_sqm} m²` : ''}{primarySpa.pool ? ' · Indoor & outdoor pools' : ''}{primarySpa.sauna ? ' · Sauna' : ''}{primarySpa.hammam ? ' · Hammam' : ''}{primarySpa.price_from ? ` · Treatments from CHF ${primarySpa.price_from}` : ''}
+              {primarySpa.name || 'Luxury Spa'}{primarySpa.size_sqm ? ` · ${primarySpa.size_sqm} m²` : ''}{primarySpa.pool ? ' · Indoor & outdoor pools' : ''}{primarySpa.sauna ? ' · Sauna' : ''}{primarySpa.hammam ? ' · Hammam' : ''}{primarySpa.price_from ? ` · Treatments from ${sym(hotel)}${primarySpa.price_from}` : ''}
             </p>
           )}
-          {!primarySpa && (
-            <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: textMuted, margin: '0 0 2rem', fontWeight: 300 }}>
-              Alpine wellness traditions · Signature treatments · World-class facilities
-            </p>
-          )}
+          
           <a href={trackingUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', background: gold, color: '#1a0e06', fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0.875rem 2rem', textDecoration: 'none', borderRadius: 2 }}>
             Official Website →
           </a>
@@ -196,7 +201,7 @@ export default async function SpaPage({ params }: { params: Promise<{ slug: stri
                       {spa.sauna && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>🧖 Sauna</span>}
                       {spa.hammam && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>♨️ Hammam</span>}
                       {spa.opening_hours && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: textMuted }}>🕐 {spa.opening_hours}</span>}
-                      {spa.price_from && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: gold, fontWeight: 600 }}>From CHF {spa.price_from}</span>}
+                      {spa.price_from && <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.65rem', color: gold, fontWeight: 600 }}>From {sym(hotel)}{spa.price_from}</span>}
                     </div>
                     {spa.description && <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.75rem', color: textMuted, lineHeight: 1.8, margin: '0 0 1rem', fontWeight: 300 }}>{spa.description}</p>}
                     {spa.treatments && (
