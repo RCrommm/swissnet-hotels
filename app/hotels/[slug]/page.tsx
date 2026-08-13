@@ -105,11 +105,14 @@ function SchemaMarkup({ hotel, keywords, roomTypes, faqs, restaurants, spaData, 
         dateModified: new Date().toISOString().split('T')[0],
         relatedLink: relatedPages,
         significantLink: [
-          `${pageUrl}/rooms`,
-          `${pageUrl}/dining`,
-          ...(hotel.has_spa ? [`${pageUrl}/spa`] : []),
-          `${pageUrl}/experiences`,
-          `${pageUrl}/events`,
+          // Sub-pages 404 for non-partners, so only advertise them where they exist.
+          ...((hotel.is_partner || hotel.show_schema) ? [
+            `${pageUrl}/rooms`,
+            `${pageUrl}/dining`,
+            ...(hotel.has_spa && !((hotel.not_offered || []).includes('wellness')) ? [`${pageUrl}/spa`] : []),
+            `${pageUrl}/experiences`,
+            `${pageUrl}/events`,
+          ] : []),
           ...relatedPages,
         ],
       },
@@ -213,7 +216,7 @@ hotel.accessibility && { '@type': 'LocationFeatureSpecification', name: hotel.ac
       containsPlace: [
         ...(roomTypes || []).map((rt: any) => ({
           '@type': 'HotelRoom',
-          '@id': `${pageUrl}/rooms/${rt.name?.toLowerCase().replace(/\s+/g, '-')}#room`,
+          '@id': `${pageUrl}#room-${rt.name?.toLowerCase().replace(/\s+/g, '-')}`,
           name: rt.name,
           description: rt.description,
           occupancy: { '@type': 'QuantitativeValue', maxValue: rt.max_occupancy || 2 },
@@ -222,7 +225,7 @@ hotel.accessibility && { '@type': 'LocationFeatureSpecification', name: hotel.ac
         })),
         ...(restaurants || []).map((r: any) => ({
           '@type': 'Restaurant',
-          '@id': `${pageUrl}/dining/${r.name?.toLowerCase().replace(/\s+/g, '-')}#restaurant`,
+          '@id': `${pageUrl}#restaurant-${r.name?.toLowerCase().replace(/\s+/g, '-')}`,
           name: r.name,
           description: r.description || undefined,
           servesCuisine: r.cuisine_type || undefined,
