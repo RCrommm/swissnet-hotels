@@ -5265,6 +5265,7 @@ const missedList = latestPerQuery.filter((r: any) => !r.appeared)
     lake: 'Lake Hotel',
     business: 'Business',
     family: 'Family',
+    celebrations: 'Celebrations',
   }
 
   const tierRank: Record<string, number> = { monitor: 1, optimise: 2, premium: 3 }
@@ -5847,6 +5848,7 @@ return { date: d, score: avg }
     {competitorView === 'business' && 'Tracks visibility for business travel, corporate stays and congress hotel searches'}
     {competitorView === 'ski' && 'Tracks visibility for ski hotel, ski resort and alpine winter sports searches'}
     {competitorView === 'family' && 'Tracks visibility for family hotel, kids friendly and family resort searches'}
+    {competitorView === 'celebrations' && 'Tracks visibility for special occasion, celebration and private event hotel searches'}
   </p>
 </div>
               </div>

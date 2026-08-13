@@ -57,6 +57,22 @@ export default function DashboardWrapper() {
 
       const region = hotel?.region || 'Geneva'
 
+      // Categories to score. Taken from whatever the pipeline actually wrote for this
+      // region, so a new category never needs a code change here. Falls back to the
+      // hotel's own list, then the legacy Swiss set.
+      const { data: catRows } = await supabase
+        .from('competitor_visibility')
+        .select('category')
+        .eq('region', region)
+        .not('category', 'is', null)
+        .gte('run_date', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
+      const catsFromData = [...new Set((catRows || []).map((r: any) => r.category).filter(Boolean))] as string[]
+      const TRACKED_CATEGORIES: string[] = catsFromData.length > 0
+        ? catsFromData
+        : (Array.isArray(hotel?.categories) && hotel.categories.length > 0
+            ? hotel.categories
+            : ['spa', 'ski', 'dining', 'romantic', 'lake', 'business', 'family'])
+
       // Fetch all daily snapshots ordered by run_date
 const { data: allCompVisibility } = await supabase
   .from('competitor_visibility')
@@ -158,7 +174,7 @@ const prevRanking = allHotelNames
         const visibilityScore = getLatestScore(hotelAllScores, h.name)
 
         const catScores: Record<string, number> = {}
-        for (const cat of ['spa', 'ski', 'dining', 'romantic', 'lake', 'business', 'family']) {
+        for (const cat of TRACKED_CATEGORIES) {
   const catEntries = allCompVisibility?.filter((s: any) => s.competitor_name === h.name && s.category === cat) || []
   const score = getLatestScore(catEntries, h.name)
   if (score !== null) catScores[cat] = score
@@ -231,7 +247,7 @@ const myRankChange = myHasLatest && myHasPrev && myLatestRank > 0 && myPrevRank 
       }
 
       const hotelCatScores: Record<string, number> = {}
-      for (const cat of ['spa', 'ski', 'dining', 'romantic', 'lake', 'business', 'family']) {
+      for (const cat of TRACKED_CATEGORIES) {
         const catEntries = allCompVisibility?.filter((s: any) => s.competitor_name === hotel?.name && s.category === cat) || []
         const liveAvg = currentMonthCatAvg(catEntries)
         if (liveAvg !== null) {
