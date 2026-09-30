@@ -187,3 +187,59 @@ export async function fetchGa4MonthBySource(
   }
   return { rows }
 }
+// ── KEY EVENT BREAKDOWN ──
+// GA4's `keyEvents` metric counts EVERY event the property marked as a key event —
+// scroll, outbound click, form_start, purchase, all of it. Summing it and calling the
+// result a "conversion rate" overstates bookings, sometimes wildly. This pull names
+// each key event so the UI can label what it is actually counting.
+
+export interface Ga4KeyEventRow {
+  eventName: string
+  source: string
+  keyEvents: number
+}
+
+export async function fetchGa4KeyEvents(
+  propertyId: string,
+  opts: { days?: number; pathPrefix?: string | null } = {},
+): Promise<{ rows: Ga4KeyEventRow[] } | null> {
+  const rawKey = process.env.GA4_SERVICE_ACCOUNT_KEY
+  if (!rawKey) return null
+  let credentials: any
+  try { credentials = JSON.parse(rawKey) } catch { return null }
+
+  const cleanId = String(propertyId || '').replace(/[^0-9]/g, '')
+  if (!cleanId) return null
+  const windowDays = Math.max(1, Math.min(365, opts.days ?? 28))
+
+  const client = new BetaAnalyticsDataClient({ credentials })
+  const [report] = await client.runReport({
+    property: `properties/${cleanId}`,
+    dateRanges: [{ startDate: `${windowDays}daysAgo`, endDate: 'today' }],
+    dimensions: [{ name: 'eventName' }, { name: 'sessionSource' }],
+    metrics: [{ name: 'keyEvents' }],
+    ...(opts.pathPrefix ? {
+      dimensionFilter: {
+        filter: {
+          fieldName: 'pagePath',
+          stringFilter: { matchType: 'BEGINS_WITH', value: opts.pathPrefix, caseSensitive: false },
+        },
+      },
+    } : {}),
+    limit: 1000,
+  })
+
+  const rows: Ga4KeyEventRow[] = []
+  for (const r of report?.rows || []) {
+    const dims = r.dimensionValues || []
+    const mets = r.metricValues || []
+    const keyEvents = parseInt(mets[0]?.value || '0', 10) || 0
+    if (keyEvents <= 0) continue
+    rows.push({
+      eventName: dims[0]?.value || '',
+      source: (dims[1]?.value || '').toLowerCase(),
+      keyEvents,
+    })
+  }
+  return { rows }
+}

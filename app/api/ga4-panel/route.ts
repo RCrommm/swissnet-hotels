@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { fetchGa4Rows, fetchGa4BySource } from '@/lib/ga4-fetch'
+import { fetchGa4Rows, fetchGa4BySource, fetchGa4KeyEvents } from '@/lib/ga4-fetch'
 import { buildAiPerformance } from '@/lib/ai-performance'
 import { buildSwissnetInfluence } from '@/lib/swissnet-influence'
 
@@ -48,13 +48,18 @@ export async function POST(req: Request) {
     // Reuses the same builder as the consultant; honest-null when revenue absent.
     let ai_performance: any = null
     let ga4SourceRows: any[] | null = null
+    let keyEventRows: any[] | null = null
     if (ga4Connected) {
       const ga4 = await fetchGa4Rows(propertyId, { days: windowDays, previous: wantCompare, pathPrefix: hotelRow?.ga4_path_prefix })
       if (ga4) {
         ai_performance = buildAiPerformance(ga4.rows, { periodDays: ga4.periodDays, previousRows: ga4.previousRows })
       }
-      const src = await fetchGa4BySource(propertyId, { days: windowDays })
+      // pathPrefix was missing here: on a shared group property the source rows
+      // included other hotels' traffic while the page rows did not.
+      const src = await fetchGa4BySource(propertyId, { days: windowDays, pathPrefix: hotelRow?.ga4_path_prefix })
       if (src) ga4SourceRows = src.rows
+      const ke = await fetchGa4KeyEvents(propertyId, { days: windowDays, pathPrefix: hotelRow?.ga4_path_prefix })
+      if (ke) keyEventRows = ke.rows
     }
 
     // ── SWISSNET INFLUENCE ──
@@ -90,6 +95,14 @@ export async function POST(req: Request) {
       compared: wantCompare,
       ai_performance,
       swissnet_influence,
+      key_events: keyEventRows
+        ? Object.entries(
+            keyEventRows.reduce((acc: Record<string, number>, r: any) => {
+              acc[r.eventName] = (acc[r.eventName] || 0) + r.keyEvents
+              return acc
+            }, {})
+          ).map(([eventName, count]) => ({ eventName, count })).sort((a: any, b: any) => (b.count as number) - (a.count as number))
+        : null,
       capability: {
         ga4_connected: ga4Connected,
         ecommerce_available,
