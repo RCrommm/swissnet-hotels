@@ -3723,6 +3723,7 @@ function AiPerformancePanel({ perf: perfProp, swissnet: swissProp, ga4Connected,
   const pct = (n: number | null) => n === null || n === undefined ? '—' : n + '%'
   const change = perf.ai_sessions_change_pct
   const PLAT_COL: Record<string, string> = { ChatGPT: '#10a37f', Perplexity: '#20808d', Gemini: '#4285f4', Claude: GOLD, Copilot: '#0078d4', 'Bing / Copilot': '#0078d4' }
+  const curSym = bookings?.currency === 'GBP' ? '£' : 'CHF '
 
   return (
     <Wrap>
@@ -3733,7 +3734,7 @@ function AiPerformancePanel({ perf: perfProp, swissnet: swissProp, ga4Connected,
             { label: 'AI sessions', value: fmt(perf.ai_sessions), sub: change !== null ? ((change >= 0 ? '↑ ' : '↓ ') + Math.abs(change) + '% vs last period') : 'this period', subcol: change !== null ? (change >= 0 ? ADV_GREEN_C : RED) : TEXT_MUTED },
             { label: 'Share of all traffic', value: pct(perf.ai_share_pct), sub: 'of total sessions', subcol: TEXT_MUTED },
             { label: 'Bookings from AI', value: bookings ? fmt(bookings.from_ai) : '—', sub: bookings ? `of ${fmt(bookings.total)} on the whole site` : 'measuring', subcol: TEXT_MUTED },
-            { label: 'AI revenue', value: bookings?.total_revenue == null ? 'Not tracked' : ('CHF ' + fmt(bookings.total_revenue)), sub: bookings?.total_revenue == null ? 'bookings carry no value in GA4' : 'this period', subcol: TEXT_MUTED },
+            { label: 'Revenue from AI', value: bookings?.ai_revenue == null ? (bookings?.total_revenue == null ? 'Not tracked' : (curSym + fmt(bookings.total_revenue) + ' site-wide')) : (curSym + fmt(bookings.ai_revenue)), sub: bookings?.ai_revenue == null ? (bookings?.total_revenue == null ? 'bookings carry no value in GA4' : 'no revenue from AI bookings yet') : 'from AI-sourced bookings', subcol: TEXT_MUTED },
           ].map((k, i) => (
             <div key={i} style={{ background: BG, borderRadius: 10, padding: '1rem 1.15rem' }}>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.5rem' }}>{k.label}</p>

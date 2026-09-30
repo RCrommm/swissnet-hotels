@@ -120,6 +120,9 @@ export async function POST(req: Request) {
           total_revenue: totalRev > 0 ? Math.round(totalRev) : null,
           from_ai: aiRows.reduce((a: number, r: any) => a + r.purchases, 0),
           from_swissnet: swissRows.reduce((a: number, r: any) => a + r.purchases, 0),
+          // Revenue from AI-sourced purchases only, not the whole site.
+          ai_revenue: (() => { const v = aiRows.reduce((a: number, r: any) => a + (r.revenue || 0), 0); return v > 0 ? Math.round(v) : null })(),
+          swissnet_revenue: (() => { const v = swissRows.reduce((a: number, r: any) => a + (r.revenue || 0), 0); return v > 0 ? Math.round(v) : null })(),
           by_ai_platform: Object.entries(byPlat)
             .map(([platform, purchases]) => ({ platform, purchases }))
             .sort((a, b) => b.purchases - a.purchases),
