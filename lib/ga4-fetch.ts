@@ -311,3 +311,56 @@ export async function fetchGa4PurchasesBySource(
   }
   return { rows }
 }
+// ── MONTHLY AI SESSIONS ──
+// Month-by-month AI traffic for the trend chart. Grouped by yearMonth + source so the
+// AI classifier can run over it.
+
+export interface Ga4MonthlySourceRow {
+  yearMonth: string   // 'YYYYMM'
+  source: string
+  sessions: number
+}
+
+export async function fetchGa4MonthlyBySource(
+  propertyId: string,
+  opts: { months?: number; pathPrefix?: string | null } = {},
+): Promise<{ rows: Ga4MonthlySourceRow[] } | null> {
+  const rawKey = process.env.GA4_SERVICE_ACCOUNT_KEY
+  if (!rawKey) return null
+  let credentials: any
+  try { credentials = JSON.parse(rawKey) } catch { return null }
+
+  const cleanId = String(propertyId || '').replace(/[^0-9]/g, '')
+  if (!cleanId) return null
+  const months = Math.max(2, Math.min(24, opts.months ?? 12))
+
+  const client = new BetaAnalyticsDataClient({ credentials })
+  const [report] = await client.runReport({
+    property: `properties/${cleanId}`,
+    dateRanges: [{ startDate: `${months * 31}daysAgo`, endDate: 'today' }],
+    dimensions: [{ name: 'yearMonth' }, { name: 'sessionSource' }],
+    metrics: [{ name: 'sessions' }],
+    ...(opts.pathPrefix ? {
+      dimensionFilter: {
+        filter: {
+          fieldName: 'pagePath',
+          stringFilter: { matchType: 'BEGINS_WITH' as const, value: opts.pathPrefix, caseSensitive: false },
+        },
+      },
+    } : {}),
+    limit: 5000,
+  })
+
+  const rows: Ga4MonthlySourceRow[] = []
+  for (const r of report?.rows || []) {
+    const dims = r.dimensionValues || []
+    const sessions = parseInt(r.metricValues?.[0]?.value || '0', 10) || 0
+    if (sessions <= 0) continue
+    rows.push({
+      yearMonth: dims[0]?.value || '',
+      source: (dims[1]?.value || '').toLowerCase(),
+      sessions,
+    })
+  }
+  return { rows }
+}

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { fetchGa4Rows, fetchGa4BySource, fetchGa4KeyEvents, fetchGa4PurchasesBySource } from '@/lib/ga4-fetch'
+import { fetchGa4Rows, fetchGa4BySource, fetchGa4KeyEvents, fetchGa4PurchasesBySource, fetchGa4MonthlyBySource } from '@/lib/ga4-fetch'
 import { isAiSource, aiPlatformOf } from '@/lib/ga4-behavioral'
 import { buildAiPerformance } from '@/lib/ai-performance'
 import { buildSwissnetInfluence } from '@/lib/swissnet-influence'
@@ -51,6 +51,7 @@ export async function POST(req: Request) {
     let ga4SourceRows: any[] | null = null
     let keyEventRows: any[] | null = null
     let purchaseRows: any[] | null = null
+    let monthlyRows: any[] | null = null
     if (ga4Connected) {
       const ga4 = await fetchGa4Rows(propertyId, { days: windowDays, previous: wantCompare, pathPrefix: hotelRow?.ga4_path_prefix })
       if (ga4) {
@@ -64,6 +65,8 @@ export async function POST(req: Request) {
       if (ke) keyEventRows = ke.rows
       const pu = await fetchGa4PurchasesBySource(propertyId, { days: windowDays, pathPrefix: hotelRow?.ga4_path_prefix })
       if (pu) purchaseRows = pu.rows
+      const mo = await fetchGa4MonthlyBySource(propertyId, { months: 12, pathPrefix: hotelRow?.ga4_path_prefix })
+      if (mo) monthlyRows = mo.rows
     }
 
     // ── SWISSNET INFLUENCE ──
@@ -128,6 +131,17 @@ export async function POST(req: Request) {
             .sort((a: any, b: any) => b.purchases - a.purchases)
             .slice(0, 15),
         }
+      })() : null,
+      // Monthly AI sessions for the trend chart.
+      monthly_ai_sessions: monthlyRows ? (() => {
+        const byMonth: Record<string, number> = {}
+        for (const r of monthlyRows) {
+          if (!isAiSource(r.source)) continue
+          byMonth[r.yearMonth] = (byMonth[r.yearMonth] || 0) + r.sessions
+        }
+        return Object.entries(byMonth)
+          .map(([month, sessions]) => ({ month, sessions }))
+          .sort((a, b) => a.month.localeCompare(b.month))
       })() : null,
       key_events: keyEventRows
         ? Object.entries(
