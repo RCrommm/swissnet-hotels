@@ -243,3 +243,71 @@ export async function fetchGa4KeyEvents(
   }
   return { rows }
 }
+// ── PURCHASES BY SOURCE ──
+// The only event that is actually a booking. GA4's `keyEvents` metric lumps every
+// flagged event together — on La Réserve that is 98% button clicks — so a "conversion
+// rate" built on it is meaningless. This isolates `purchase` and splits it by source,
+// giving three honest numbers: total bookings, bookings from AI, bookings from SwissNet.
+
+export interface Ga4PurchaseRow {
+  source: string
+  purchases: number
+  revenue: number
+}
+
+export async function fetchGa4PurchasesBySource(
+  propertyId: string,
+  opts: { days?: number; pathPrefix?: string | null } = {},
+): Promise<{ rows: Ga4PurchaseRow[] } | null> {
+  const rawKey = process.env.GA4_SERVICE_ACCOUNT_KEY
+  if (!rawKey) return null
+  let credentials: any
+  try { credentials = JSON.parse(rawKey) } catch { return null }
+
+  const cleanId = String(propertyId || '').replace(/[^0-9]/g, '')
+  if (!cleanId) return null
+  const windowDays = Math.max(1, Math.min(365, opts.days ?? 28))
+
+  const pathFilter = opts.pathPrefix ? [{
+    filter: {
+      fieldName: 'pagePath',
+      stringFilter: { matchType: 'BEGINS_WITH' as const, value: opts.pathPrefix, caseSensitive: false },
+    },
+  }] : []
+
+  const client = new BetaAnalyticsDataClient({ credentials })
+  const [report] = await client.runReport({
+    property: `properties/${cleanId}`,
+    dateRanges: [{ startDate: `${windowDays}daysAgo`, endDate: 'today' }],
+    dimensions: [{ name: 'sessionSource' }],
+    metrics: [{ name: 'eventCount' }, { name: 'totalRevenue' }],
+    dimensionFilter: {
+      andGroup: {
+        expressions: [
+          {
+            filter: {
+              fieldName: 'eventName',
+              stringFilter: { matchType: 'EXACT' as const, value: 'purchase', caseSensitive: false },
+            },
+          },
+          ...pathFilter,
+        ],
+      },
+    },
+    limit: 1000,
+  })
+
+  const rows: Ga4PurchaseRow[] = []
+  for (const r of report?.rows || []) {
+    const dims = r.dimensionValues || []
+    const mets = r.metricValues || []
+    const purchases = parseInt(mets[0]?.value || '0', 10) || 0
+    if (purchases <= 0) continue
+    rows.push({
+      source: (dims[0]?.value || '').toLowerCase(),
+      purchases,
+      revenue: parseFloat(mets[1]?.value || '0') || 0,
+    })
+  }
+  return { rows }
+}

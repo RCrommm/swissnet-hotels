@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { fetchGa4Rows, fetchGa4BySource, fetchGa4KeyEvents } from '@/lib/ga4-fetch'
+import { fetchGa4Rows, fetchGa4BySource, fetchGa4KeyEvents, fetchGa4PurchasesBySource } from '@/lib/ga4-fetch'
+import { isAiSource, aiPlatformOf } from '@/lib/ga4-behavioral'
 import { buildAiPerformance } from '@/lib/ai-performance'
 import { buildSwissnetInfluence } from '@/lib/swissnet-influence'
 
@@ -49,6 +50,7 @@ export async function POST(req: Request) {
     let ai_performance: any = null
     let ga4SourceRows: any[] | null = null
     let keyEventRows: any[] | null = null
+    let purchaseRows: any[] | null = null
     if (ga4Connected) {
       const ga4 = await fetchGa4Rows(propertyId, { days: windowDays, previous: wantCompare, pathPrefix: hotelRow?.ga4_path_prefix })
       if (ga4) {
@@ -60,6 +62,8 @@ export async function POST(req: Request) {
       if (src) ga4SourceRows = src.rows
       const ke = await fetchGa4KeyEvents(propertyId, { days: windowDays, pathPrefix: hotelRow?.ga4_path_prefix })
       if (ke) keyEventRows = ke.rows
+      const pu = await fetchGa4PurchasesBySource(propertyId, { days: windowDays, pathPrefix: hotelRow?.ga4_path_prefix })
+      if (pu) purchaseRows = pu.rows
     }
 
     // ── SWISSNET INFLUENCE ──
@@ -95,6 +99,29 @@ export async function POST(req: Request) {
       compared: wantCompare,
       ai_performance,
       swissnet_influence,
+      // BOOKINGS — `purchase` only, split by source. This is the number a hotel
+      // should read. Revenue is null wherever GA4 returns no value on the event.
+      bookings: purchaseRows ? (() => {
+        const total = purchaseRows.reduce((a: number, r: any) => a + r.purchases, 0)
+        const totalRev = purchaseRows.reduce((a: number, r: any) => a + (r.revenue || 0), 0)
+        const aiRows = purchaseRows.filter((r: any) => isAiSource(r.source))
+        const swissRows = purchaseRows.filter((r: any) => r.source.includes('swissnet'))
+        const byPlat: Record<string, number> = {}
+        for (const r of aiRows) {
+          const p = aiPlatformOf(r.source)
+          if (!p) continue
+          byPlat[p] = (byPlat[p] || 0) + r.purchases
+        }
+        return {
+          total,
+          total_revenue: totalRev > 0 ? Math.round(totalRev) : null,
+          from_ai: aiRows.reduce((a: number, r: any) => a + r.purchases, 0),
+          from_swissnet: swissRows.reduce((a: number, r: any) => a + r.purchases, 0),
+          by_ai_platform: Object.entries(byPlat)
+            .map(([platform, purchases]) => ({ platform, purchases }))
+            .sort((a, b) => b.purchases - a.purchases),
+        }
+      })() : null,
       key_events: keyEventRows
         ? Object.entries(
             keyEventRows.reduce((acc: Record<string, number>, r: any) => {
