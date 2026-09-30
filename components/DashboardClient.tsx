@@ -3864,11 +3864,11 @@ function AiPerformancePanel({ perf: perfProp, swissnet: swissProp, ga4Connected,
                   <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 400, color: TEXT, margin: 0, lineHeight: 1 }}>{clicks.toLocaleString('en-CH')}</p>
                 </div>
                 <div style={{ background: GOLD_LIGHT, borderRadius: 10, padding: '1rem 1.15rem' }}>
-                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: ADV_AMBER, margin: '0 0 0.5rem' }}>Revenue influenced</p>
-                  {full
-                    ? <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 400, color: TEXT, margin: 0, lineHeight: 1 }}>{fmtChf(swissnet.swissnet_revenue)}</p>
-                    : <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.35, paddingTop: 4 }}>Not available for your booking engine</p>
-                  }
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: ADV_AMBER, margin: '0 0 0.5rem' }}>Bookings from SwissNet</p>
+                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 400, color: TEXT, margin: 0, lineHeight: 1 }}>{bookings ? bookings.from_swissnet.toLocaleString('en-CH') : '—'}</p>
+                  {bookings?.swissnet_revenue != null && (
+                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT_MUTED, margin: '0.3rem 0 0' }}>{curSym}{bookings.swissnet_revenue.toLocaleString('en-CH')}</p>
+                  )}
                 </div>
                 {full && (
                   <div style={{ background: GOLD_LIGHT, borderRadius: 10, padding: '1rem 1.15rem' }}>
@@ -3878,10 +3878,7 @@ function AiPerformancePanel({ perf: perfProp, swissnet: swissProp, ga4Connected,
                 )}
               </div>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.5, fontStyle: 'italic' }}>
-                {full
-                  ? `SwissNet sent ${clicks.toLocaleString('en-CH')} ${clicks === 1 ? 'visitor' : 'visitors'} to your site this period. Google Analytics attributes ${fmtChf(swissnet.swissnet_revenue)} in bookings to those journeys. Attribution, not causation.`
-                  : `SwissNet sent ${clicks.toLocaleString('en-CH')} ${clicks === 1 ? 'visitor' : 'visitors'} to your site this period. Your booking engine doesn't pass revenue back to Google Analytics, so we can't attribute bookings — only the traffic.`
-                }
+                {`SwissNet sent ${clicks.toLocaleString('en-CH')} ${clicks === 1 ? 'visitor' : 'visitors'} to your site this period${bookings ? `, and Google Analytics credits ${bookings.from_swissnet} ${bookings.from_swissnet === 1 ? 'booking' : 'bookings'} to that source` : ''}. Google Analytics credits the last source before a booking, so a guest who arrives via SwissNet and returns later through another channel is counted elsewhere.`}
               </p>
             </div>
           )
