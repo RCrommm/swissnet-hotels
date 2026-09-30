@@ -3655,6 +3655,9 @@ function AiPerformancePanel({ perf: perfProp, swissnet: swissProp, ga4Connected,
   const [days, setDays] = useState(28)
   const [livePerf, setLivePerf] = useState<any>(perfProp)
   const [liveSwiss, setLiveSwiss] = useState<any>(swissProp)
+  const [bookings, setBookings] = useState<any>(null)
+  const [keyEvents, setKeyEvents] = useState<any[] | null>(null)
+  const [monthly, setMonthly] = useState<any[] | null>(null)
   const [loadingRange, setLoadingRange] = useState(false)
 
   const loadRange = async (d: number) => {
@@ -3667,7 +3670,12 @@ function AiPerformancePanel({ perf: perfProp, swissnet: swissProp, ga4Connected,
         body: JSON.stringify({ hotelId, days: d, compare: true }),
       })
       const j = await res.json()
-      if (res.ok) { setLivePerf(j.ai_performance); setLiveSwiss(j.swissnet_influence) }
+      if (res.ok) {
+        setLivePerf(j.ai_performance); setLiveSwiss(j.swissnet_influence)
+        setBookings(j.bookings ?? null)
+        setKeyEvents(j.key_events ?? null)
+        setMonthly(j.monthly_ai_sessions ?? null)
+      }
     } catch {} finally { setLoadingRange(false) }
   }
   useEffect(() => {
@@ -3724,8 +3732,8 @@ function AiPerformancePanel({ perf: perfProp, swissnet: swissProp, ga4Connected,
           {[
             { label: 'AI sessions', value: fmt(perf.ai_sessions), sub: change !== null ? ((change >= 0 ? '↑ ' : '↓ ') + Math.abs(change) + '% vs last period') : 'this period', subcol: change !== null ? (change >= 0 ? ADV_GREEN_C : RED) : TEXT_MUTED },
             { label: 'Share of all traffic', value: pct(perf.ai_share_pct), sub: 'of total sessions', subcol: TEXT_MUTED },
-            { label: 'AI conversion rate', value: pct(perf.ai_conversion_rate), sub: perf.ai_conversions !== null ? fmt(perf.ai_conversions) + ' conversions' : '', subcol: TEXT_MUTED },
-            { label: 'AI revenue', value: perf.ai_revenue === null ? 'Not tracked' : ('CHF ' + fmt(perf.ai_revenue)), sub: perf.ai_revenue === null ? 'connect revenue tracking' : 'this period', subcol: TEXT_MUTED },
+            { label: 'Bookings from AI', value: bookings ? fmt(bookings.from_ai) : '—', sub: bookings ? `of ${fmt(bookings.total)} on the whole site` : 'measuring', subcol: TEXT_MUTED },
+            { label: 'AI revenue', value: bookings?.total_revenue == null ? 'Not tracked' : ('CHF ' + fmt(bookings.total_revenue)), sub: bookings?.total_revenue == null ? 'bookings carry no value in GA4' : 'this period', subcol: TEXT_MUTED },
           ].map((k, i) => (
             <div key={i} style={{ background: BG, borderRadius: 10, padding: '1rem 1.15rem' }}>
               <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_MUTED, margin: '0 0 0.5rem' }}>{k.label}</p>
@@ -3734,6 +3742,134 @@ function AiPerformancePanel({ perf: perfProp, swissnet: swissProp, ga4Connected,
             </div>
           ))}
         </div>
+
+        {/* Monthly AI sessions — 13-month trend */}
+        {monthly && monthly.length > 1 && (() => {
+          const maxS = Math.max(...monthly.map((m: any) => m.sessions)) || 1
+          const label = (ym: string) => {
+            const y = ym.slice(0, 4), mo = parseInt(ym.slice(4), 10)
+            return new Date(Number(y), mo - 1, 1).toLocaleDateString('en-GB', { month: 'short' })
+          }
+          const last = monthly[monthly.length - 1]
+          return (
+            <div style={{ marginBottom: '1.75rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.9rem' }}>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT, margin: 0 }}>AI sessions by month</p>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED, margin: 0 }}>{monthly.length} months</p>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.35rem', height: 110 }}>
+                {monthly.map((m: any, i: number) => {
+                  const h = Math.max(3, Math.round((m.sessions / maxS) * 88))
+                  const isLast = i === monthly.length - 1
+                  return (
+                    <div key={m.month} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.3rem' }} title={`${m.month}: ${m.sessions} sessions`}>
+                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 600, color: isLast ? GOLD : TEXT_MUTED }}>{m.sessions}</span>
+                      <div style={{ width: '100%', height: h, background: isLast ? GOLD : 'rgba(201,169,76,0.3)', borderRadius: '3px 3px 0 0' }} />
+                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', color: TEXT_MUTED }}>{label(m.month)}</span>
+                    </div>
+                  )
+                })}
+              </div>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: '0.7rem 0 0', fontStyle: 'italic' }}>
+                The current month is still in progress. {last ? `${last.sessions} AI sessions so far.` : ''}
+              </p>
+            </div>
+          )
+        })()}
+
+        {/* What AI visitors do — key events, tiered so clicks are never called bookings */}
+        {keyEvents && keyEvents.length > 0 && (() => {
+          const isBooking = (n: string) => n === 'purchase'
+          const isEnquiry = (n: string) => /form|reservation|contact|enquir|request/i.test(n) && !isBooking(n)
+          const tier = (n: string) => isBooking(n) ? 'book' : isEnquiry(n) ? 'enq' : 'eng'
+          const sums = { book: 0, enq: 0, eng: 0 } as Record<string, number>
+          for (const e of keyEvents) sums[tier(e.eventName)] += e.count
+          const rows = [
+            { label: 'Bookings', n: sums.book, note: 'completed reservations', col: ADV_GREEN_C },
+            { label: 'Direct enquiries', n: sums.enq, note: 'forms and table reservations', col: GOLD },
+            { label: 'Engagement', n: sums.eng, note: 'button and link clicks', col: 'rgba(42,26,14,0.35)' },
+          ]
+          return (
+            <div style={{ marginBottom: '1.5rem' }}>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT, margin: '0 0 0.3rem' }}>What visitors do on the site</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: '0 0 0.9rem' }}>All traffic, not AI only. Separated so clicks are never counted as bookings.</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {rows.map(r => (
+                  <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', padding: '0.6rem 0.9rem', background: BG, borderRadius: 8, border: '1px solid ' + BORDER }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: r.col, flexShrink: 0 }} />
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', fontWeight: 600, color: TEXT, width: 130, flexShrink: 0 }}>{r.label}</span>
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: TEXT_MUTED, flex: 1 }}>{r.note}</span>
+                    <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', color: TEXT, flexShrink: 0 }}>{fmt(r.n)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })()}
+
+        {/* Monthly AI sessions — 13-month trend */}
+        {monthly && monthly.length > 1 && (() => {
+          const maxS = Math.max(...monthly.map((m: any) => m.sessions)) || 1
+          const label = (ym: string) => {
+            const y = ym.slice(0, 4), mo = parseInt(ym.slice(4), 10)
+            return new Date(Number(y), mo - 1, 1).toLocaleDateString('en-GB', { month: 'short' })
+          }
+          const last = monthly[monthly.length - 1]
+          return (
+            <div style={{ marginBottom: '1.75rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.9rem' }}>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT, margin: 0 }}>AI sessions by month</p>
+                <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.6rem', color: TEXT_MUTED, margin: 0 }}>{monthly.length} months</p>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.35rem', height: 110 }}>
+                {monthly.map((m: any, i: number) => {
+                  const h = Math.max(3, Math.round((m.sessions / maxS) * 88))
+                  const isLast = i === monthly.length - 1
+                  return (
+                    <div key={m.month} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.3rem' }} title={`${m.month}: ${m.sessions} sessions`}>
+                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', fontWeight: 600, color: isLast ? GOLD : TEXT_MUTED }}>{m.sessions}</span>
+                      <div style={{ width: '100%', height: h, background: isLast ? GOLD : 'rgba(201,169,76,0.3)', borderRadius: '3px 3px 0 0' }} />
+                      <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.5rem', color: TEXT_MUTED }}>{label(m.month)}</span>
+                    </div>
+                  )
+                })}
+              </div>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', color: TEXT_MUTED, margin: '0.7rem 0 0', fontStyle: 'italic' }}>
+                The current month is still in progress. {last ? `${last.sessions} AI sessions so far.` : ''}
+              </p>
+            </div>
+          )
+        })()}
+
+        {/* What AI visitors do — key events, tiered so clicks are never called bookings */}
+        {keyEvents && keyEvents.length > 0 && (() => {
+          const isBooking = (n: string) => n === 'purchase'
+          const isEnquiry = (n: string) => /form|reservation|contact|enquir|request/i.test(n) && !isBooking(n)
+          const tier = (n: string) => isBooking(n) ? 'book' : isEnquiry(n) ? 'enq' : 'eng'
+          const sums = { book: 0, enq: 0, eng: 0 } as Record<string, number>
+          for (const e of keyEvents) sums[tier(e.eventName)] += e.count
+          const rows = [
+            { label: 'Bookings', n: sums.book, note: 'completed reservations', col: ADV_GREEN_C },
+            { label: 'Direct enquiries', n: sums.enq, note: 'forms and table reservations', col: GOLD },
+            { label: 'Engagement', n: sums.eng, note: 'button and link clicks', col: 'rgba(42,26,14,0.35)' },
+          ]
+          return (
+            <div style={{ marginBottom: '1.5rem' }}>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT, margin: '0 0 0.3rem' }}>What visitors do on the site</p>
+              <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.62rem', color: TEXT_MUTED, margin: '0 0 0.9rem' }}>All traffic, not AI only. Separated so clicks are never counted as bookings.</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {rows.map(r => (
+                  <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', padding: '0.6rem 0.9rem', background: BG, borderRadius: 8, border: '1px solid ' + BORDER }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: r.col, flexShrink: 0 }} />
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', fontWeight: 600, color: TEXT, width: 130, flexShrink: 0 }}>{r.label}</span>
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.66rem', color: TEXT_MUTED, flex: 1 }}>{r.note}</span>
+                    <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.3rem', color: TEXT, flexShrink: 0 }}>{fmt(r.n)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })()}
 
         {/* By platform */}
         {perf.by_platform && perf.by_platform.length > 0 && (
@@ -3750,7 +3886,7 @@ function AiPerformancePanel({ perf: perfProp, swissnet: swissProp, ga4Connected,
                       <div style={{ width: Math.max(2, Math.round((pl.sessions / maxS) * 100)) + '%', height: '100%', background: col, borderRadius: 4 }} />
                     </div>
                     <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.74rem', fontWeight: 700, color: TEXT, width: 54, textAlign: 'right', flexShrink: 0 }}>{fmt(pl.sessions)}</span>
-                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: TEXT_MUTED, width: 70, textAlign: 'right', flexShrink: 0 }}>{pl.conversion_rate === null ? '' : pl.conversion_rate + '% conv'}</span>
+                    <span style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.64rem', color: TEXT_MUTED, width: 70, textAlign: 'right', flexShrink: 0 }}>{(() => { const b = bookings?.by_ai_platform?.find((x: any) => x.platform === pl.platform); return b && b.purchases > 0 ? b.purchases + ' booking' + (b.purchases > 1 ? 's' : '') : '' })()}</span>
                   </div>
                 )
               })}
