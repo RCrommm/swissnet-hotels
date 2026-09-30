@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     // Hotel's GA4 connection state.
     const { data: hotelRow } = await sb
       .from('hotels')
-      .select('ga4_property_id, ga4_status, ga4_path_prefix')
+      .select('ga4_property_id, ga4_status, ga4_path_prefix, currency, country')
       .eq('id', hotelId)
       .single()
 
@@ -120,6 +120,7 @@ export async function POST(req: Request) {
           total_revenue: totalRev > 0 ? Math.round(totalRev) : null,
           from_ai: aiRows.reduce((a: number, r: any) => a + r.purchases, 0),
           from_swissnet: swissRows.reduce((a: number, r: any) => a + r.purchases, 0),
+          currency: (hotelRow?.currency === 'GBP' || hotelRow?.country === 'United Kingdom') ? 'GBP' : 'CHF',
           // Revenue from AI-sourced purchases only, not the whole site.
           ai_revenue: (() => { const v = aiRows.reduce((a: number, r: any) => a + (r.revenue || 0), 0); return v > 0 ? Math.round(v) : null })(),
           swissnet_revenue: (() => { const v = swissRows.reduce((a: number, r: any) => a + (r.revenue || 0), 0); return v > 0 ? Math.round(v) : null })(),
