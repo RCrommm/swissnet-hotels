@@ -280,7 +280,7 @@ export async function fetchGa4PurchasesBySource(
     property: `properties/${cleanId}`,
     dateRanges: [{ startDate: `${windowDays}daysAgo`, endDate: 'today' }],
     dimensions: [{ name: 'sessionSource' }],
-    metrics: [{ name: 'eventCount' }, { name: 'itemRevenue' }],
+    metrics: [{ name: 'eventCount' }, { name: 'purchaseRevenue' }],
     dimensionFilter: {
       andGroup: {
         expressions: [
