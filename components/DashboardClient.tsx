@@ -3858,7 +3858,7 @@ function AiPerformancePanel({ perf: perfProp, swissnet: swissProp, ga4Connected,
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.15rem', fontWeight: 300, color: TEXT, margin: '0 0 1rem', lineHeight: 1.3 }}>
                 {full ? 'Bookings influenced by SwissNet journeys' : 'Visitors SwissNet sent to your site'}
               </p>
-              <div style={{ display: 'grid', gridTemplateColumns: full ? '1fr 1fr 1fr' : '1fr 1fr', gap: 12, marginBottom: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: '1rem' }}>
                 <div style={{ background: GOLD_LIGHT, borderRadius: 10, padding: '1rem 1.15rem' }}>
                   <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: ADV_AMBER, margin: '0 0 0.5rem' }}>Clicks sent</p>
                   <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 400, color: TEXT, margin: 0, lineHeight: 1 }}>{clicks.toLocaleString('en-CH')}</p>
@@ -3866,9 +3866,13 @@ function AiPerformancePanel({ perf: perfProp, swissnet: swissProp, ga4Connected,
                 <div style={{ background: GOLD_LIGHT, borderRadius: 10, padding: '1rem 1.15rem' }}>
                   <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: ADV_AMBER, margin: '0 0 0.5rem' }}>Bookings from SwissNet</p>
                   <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 400, color: TEXT, margin: 0, lineHeight: 1 }}>{bookings ? bookings.from_swissnet.toLocaleString('en-CH') : '—'}</p>
-                  {bookings?.swissnet_revenue != null && (
-                    <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.7rem', color: TEXT_MUTED, margin: '0.3rem 0 0' }}>{curSym}{bookings.swissnet_revenue.toLocaleString('en-CH')}</p>
-                  )}
+                  </div>
+                <div style={{ background: GOLD_LIGHT, borderRadius: 10, padding: '1rem 1.15rem' }}>
+                  <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.56rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: ADV_AMBER, margin: '0 0 0.5rem' }}>Revenue from SwissNet</p>
+                  {bookings?.swissnet_revenue != null
+                    ? <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.75rem', fontWeight: 400, color: TEXT, margin: 0, lineHeight: 1 }}>{curSym}{bookings.swissnet_revenue.toLocaleString('en-CH')}</p>
+                    : <p style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '0.82rem', color: TEXT_MUTED, margin: 0, lineHeight: 1.35, paddingTop: 4 }}>{bookings?.from_swissnet ? 'No value on these bookings' : 'No bookings yet'}</p>
+                  }
                 </div>
                 {full && (
                   <div style={{ background: GOLD_LIGHT, borderRadius: 10, padding: '1rem 1.15rem' }}>
