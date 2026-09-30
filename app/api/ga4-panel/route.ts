@@ -120,6 +120,13 @@ export async function POST(req: Request) {
           by_ai_platform: Object.entries(byPlat)
             .map(([platform, purchases]) => ({ platform, purchases }))
             .sort((a, b) => b.purchases - a.purchases),
+          // Every source the purchases actually came from. If these are dominated by
+          // (direct) or the booking engine's own domain, attribution is broken at the
+          // handoff and "0 from AI" means "not measurable", not "none".
+          by_source: purchaseRows
+            .map((r: any) => ({ source: r.source, purchases: r.purchases }))
+            .sort((a: any, b: any) => b.purchases - a.purchases)
+            .slice(0, 15),
         }
       })() : null,
       key_events: keyEventRows
